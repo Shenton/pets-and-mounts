@@ -1,19 +1,14 @@
 ﻿-- ********************************************************************************
--- Alts Anywhere
--- Store informations about your alts, making it accessible from any of your toons.
+-- Broker Pets & Mounts
+-- Data Broker display for easy acces to pets and mounts.
 -- By: Shenton
 --
 -- Core.lua
--- Ace3 libs, common functions and variables, Ace3 init.
 -- ********************************************************************************
 
 -- Ace libs (<3)
-local A = LibStub("AceAddon-3.0"):NewAddon("BrokerPAM", "AceHook-3.0");
+local A = LibStub("AceAddon-3.0"):NewAddon("BrokerPAM", "AceConsole-3.0", "AceHook-3.0");
 A.aceDB = LibStub("AceDB-3.0");
---A.aceConfig = LibStub("AceConfig-3.0");
---A.aceConfigDialog = LibStub("AceConfigDialog-3.0");
---A.aceDBOptions = LibStub("AceDBOptions-3.0");
---A.aceGUI = LibStub("AceGUI-3.0");
 local L = LibStub("AceLocale-3.0"):GetLocale("BrokerPAM");
 
 -- Data Broker libs (<3)
@@ -32,6 +27,7 @@ A.version = GetAddOnMetadata("Broker_PAM", "Version");
 
 -- Text colors
 A.color = {};
+A.color["RED"] = "|cFFFF3333";
 A.color["GREEN"] = "|cFF33FF99";
 A.color["WHITE"] = "|cFFFFFFFF";
 A.color["RESET"] = "|r";
@@ -40,6 +36,37 @@ A.color["RESET"] = "|r";
 -- Functions
 -- ********************************************************************************
 
+--- Send a message to the chat frame with the addon name colored
+-- @param text The message to display
+-- @param color Bool, if true will color in red
+function A:Message(text, color)
+	if ( color ) then
+		color = A.color["RED"];
+	else
+		color = A.color["GREEN"]
+	end
+
+	DEFAULT_CHAT_FRAME:AddMessage(color..L["ADDON_NAME"]..": "..A.color["RESET"]..text);
+end
+
+--- Handle the slash command
+-- @param input The string returned after the command
+function A:SlashCommand(input)
+    A.db.profile.ldbi.hide = nil;
+    A:ShowHideMinimap();
+end
+
+--- Show or hide the minimap icon
+function A:ShowHideMinimap()
+	if ( A.db.profile.ldbi.hide ) then
+		A:Message(L["HIDE_MINIMAP"], true);
+		A.ldbi:Hide("BrokerPAMLDBI");
+	else
+		A.ldbi:Show("BrokerPAMLDBI");
+	end
+end
+
+--- Build the companions table used by the dropdown menu
 function A:BuildPetsTable()
     local out = {};
 
@@ -62,6 +89,7 @@ function A:BuildPetsTable()
     return out;
 end
 
+--- Build the mounts table used by the dropdown menu
 function A:BuildMountsTable()
     local out = {};
 
@@ -114,6 +142,19 @@ local function PetsMenu(self, level)
             UIDropDownMenu_AddButton(self.info, level);
         end
 
+        -- Blank separator
+        wipe(self.info);
+        self.info.disabled = true;
+        self.info.notCheckable = true;
+        UIDropDownMenu_AddButton(self.info, level);
+
+        -- Options menu
+        self.info.text = "   "..L["OPTIONS"];
+		self.info.value = "OPTIONS";
+        self.info.disabled = nil;
+		self.info.hasArrow = true;
+		UIDropDownMenu_AddButton(self.info, level);
+
         -- Close
         self.info.text = L["CLOSE"];
         self.info.hasArrow = nil;
@@ -159,6 +200,19 @@ local function PetsMenu(self, level)
                 end
             end
         end
+
+        if ( UIDROPDOWNMENU_MENU_VALUE == "OPTIONS" ) then
+            wipe(self.info);
+
+            -- Show/hide minimap icon
+            self.info.text = L["SHOW_HIDE_MINIMAP"];
+            self.info.checked = not A.db.profile.ldbi.hide;
+            self.info.func = function()
+                A.db.profile.ldbi.hide = not A.db.profile.ldbi.hide;
+                A:ShowHideMinimap();
+            end;
+            UIDropDownMenu_AddButton(self.info, level);
+        end
     end
 end
 
@@ -187,6 +241,19 @@ local function MountsMenu(self, level)
             self.info.value = k;
             UIDropDownMenu_AddButton(self.info, level);
         end
+
+        -- Blank separator
+        wipe(self.info);
+        self.info.disabled = true;
+        self.info.notCheckable = true;
+        UIDropDownMenu_AddButton(self.info, level);
+
+        -- Options menu
+        self.info.text = "   "..L["OPTIONS"];
+		self.info.value = "OPTIONS";
+        self.info.disabled = nil;
+		self.info.hasArrow = true;
+		UIDropDownMenu_AddButton(self.info, level);
 
         -- Close
         self.info.text = L["CLOSE"];
@@ -232,6 +299,19 @@ local function MountsMenu(self, level)
                     buttonIndex = buttonIndex + 1;
                 end
             end
+        end
+
+        if ( UIDROPDOWNMENU_MENU_VALUE == "OPTIONS" ) then
+            wipe(self.info);
+
+            -- Show/hide minimap icon
+            self.info.text = L["SHOW_HIDE_MINIMAP"];
+            self.info.checked = not A.db.profile.ldbi.hide;
+            self.info.func = function()
+                A.db.profile.ldbi.hide = not A.db.profile.ldbi.hide;
+                A:ShowHideMinimap();
+            end;
+            UIDropDownMenu_AddButton(self.info, level);
         end
     end
 end
@@ -312,7 +392,11 @@ function A:OnEnable()
     end
 
     -- LDBIcon
-    if ( not A.ldbi:IsRegistered("AaLDBI") ) then A.ldbi:Register("AaLDBI", A.ldbObject, A.db.profile.ldbi); end
+    if ( not A.ldbi:IsRegistered("BrokerPAMLDBI") ) then A.ldbi:Register("BrokerPAMLDBI", A.ldbObject, A.db.profile.ldbi); end
+
+    -- Slash command
+	A:RegisterChatCommand("petsandmounts", "SlashCommand");
+	A:RegisterChatCommand("pam", "SlashCommand");
 
     -- Menu frame & table
     A.menuFrame = CreateFrame("Frame", "BrokerPAMMenuFrame");
