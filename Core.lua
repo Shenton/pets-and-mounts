@@ -20,7 +20,7 @@ A.ldbi = LibStub("LibDBIcon-1.0");
 -- ********************************************************************************
 
 -- LUA globals to locals
-local pairs, ipairs, ssub = pairs, ipairs, string.sub;
+local pairs, ipairs, ssub, smatch = pairs, ipairs, string.sub, string.match;
 
 -- AddOn version
 A.version = GetAddOnMetadata("Broker_PAM", "Version");
@@ -31,6 +31,9 @@ A.color["RED"] = "|cFFFF3333";
 A.color["GREEN"] = "|cFF33FF99";
 A.color["WHITE"] = "|cFFFFFFFF";
 A.color["RESET"] = "|r";
+
+-- Max button index
+A.maxButtonIndex = 0;
 
 -- ********************************************************************************
 -- Functions
@@ -112,6 +115,17 @@ function A:BuildMountsTable()
     return out;
 end
 
+--- Close dropdown menu and remove every scripts
+function A:CloseDropDownMenu()
+    DropDownList1:SetScript("OnHide", nil);
+    for i=1,A.maxButtonIndex do
+        _G["DropDownList2Button"..i]:SetScript("OnEnter", nil);
+        _G["DropDownList2Button"..i]:SetScript("OnEnter", nil);
+    end
+    A.maxButtonIndex = 0;
+    CloseDropDownMenus();
+end
+
 -- ********************************************************************************
 -- Dropdown menu
 -- ********************************************************************************
@@ -158,11 +172,7 @@ local function PetsMenu(self, level)
         -- Close
         self.info.text = L["CLOSE"];
         self.info.hasArrow = nil;
-        self.info.func = function()
-            A:Unhook("CloseDropDownMenus");
-            DropDownList1:SetScript("OnHide", nil);
-            CloseDropDownMenus();
-        end;
+        self.info.func = function() A:CloseDropDownMenu(); end;
         UIDropDownMenu_AddButton(self.info, level);
     elseif (level == 2 ) then
         wipe(self.info);
@@ -196,6 +206,7 @@ local function PetsMenu(self, level)
                         model:Show();
                     end);
                     _G["DropDownList2Button"..buttonIndex]:SetScript("OnLeave", function() model:Hide(); end);
+                    if ( buttonIndex > A.maxButtonIndex ) then A.maxButtonIndex = buttonIndex; end
                     buttonIndex = buttonIndex + 1;
                 end
             end
@@ -258,11 +269,7 @@ local function MountsMenu(self, level)
         -- Close
         self.info.text = L["CLOSE"];
         self.info.hasArrow = nil;
-        self.info.func = function()
-            A:Unhook("CloseDropDownMenus");
-            DropDownList1:SetScript("OnHide", nil);
-            CloseDropDownMenus();
-        end;
+        self.info.func = function() A:CloseDropDownMenu(); end;
         UIDropDownMenu_AddButton(self.info, level);
     elseif (level == 2 ) then
         wipe(self.info);
@@ -296,6 +303,7 @@ local function MountsMenu(self, level)
                         model:Show();
                     end);
                     _G["DropDownList2Button"..buttonIndex]:SetScript("OnLeave", function() model:Hide(); end);
+                    if ( buttonIndex > A.maxButtonIndex ) then A.maxButtonIndex = buttonIndex; end
                     buttonIndex = buttonIndex + 1;
                 end
             end
@@ -321,7 +329,26 @@ end
 -- ********************************************************************************
 
 function A:CloseDropDownMenus()
-    DropDownList1:SetScript("OnHide", function() DropDownList1:Show(); end);
+print("A:CloseDropDownMenus()")
+    DropDownList1:SetScript("OnHide", function()
+        print("TEST")
+        DropDownList1:Show();
+    end);
+end
+
+function A:ToggleDropDownMenu(...)
+    local _,_,_, name = ...;
+
+    if ( name and smatch(name, "BrokerPAMLDBI") ) then
+        A:CloseDropDownMenu();
+        DropDownList1:SetScript("OnHide", function() DropDownList1:Show(); end);
+        A.hooks.ToggleDropDownMenu(...);
+    elseif ( name and not smatch(name, "BrokerPAMLDBI") ) then
+        A:CloseDropDownMenu();
+        A.hooks.ToggleDropDownMenu(...);
+    else
+        A.hooks.ToggleDropDownMenu(...);
+    end
 end
 
 -- ********************************************************************************
@@ -354,7 +381,7 @@ function A:OnEnable()
     if ( A.ldb:GetDataObjectByName("BrokerPAMLDB") ) then
         A.ldbObject = A.ldb:GetDataObjectByName("BrokerPAMLDB");
     else
-        A.ldbObject = A.ldb:NewDataObject("AaLDB", {
+        A.ldbObject = A.ldb:NewDataObject("BrokerPAMLDB", {
             type = "data source",
             text = L["ADDON_NAME"],
             label = L["ADDON_NAME"],
@@ -362,22 +389,10 @@ function A:OnEnable()
             tocname = "Broker_PAM",
             OnClick = function(self, button)
                 if (button == "LeftButton") then
-                    if ( A:IsHooked("CloseDropDownMenus") ) then
-                        A:Unhook("CloseDropDownMenus");
-                        DropDownList1:SetScript("OnHide", nil);
-                        CloseDropDownMenus();
-                    end
-                    A:RawHook("CloseDropDownMenus", true);
                     A.menuFrame.initialize = MountsMenu;
                     ToggleDropDownMenu(1, nil, A.menuFrame, self:GetName(), 0, 0);
                     GameTooltip:Hide();
                 elseif ( button == "RightButton" ) then
-                    if ( A:IsHooked("CloseDropDownMenus") ) then
-                        A:Unhook("CloseDropDownMenus");
-                        DropDownList1:SetScript("OnHide", nil);
-                        CloseDropDownMenus();
-                    end
-                    A:RawHook("CloseDropDownMenus", true);
                     A.menuFrame.initialize = PetsMenu;
                     ToggleDropDownMenu(1, nil, A.menuFrame, self:GetName(), 0, 0);
                     GameTooltip:Hide();
@@ -402,4 +417,6 @@ function A:OnEnable()
     A.menuFrame = CreateFrame("Frame", "BrokerPAMMenuFrame");
     A.menuFrame.displayMode = "MENU";
     A.menuFrame.info = {};
+
+    A:RawHook("ToggleDropDownMenu", true);
 end
