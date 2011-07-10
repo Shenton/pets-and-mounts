@@ -1,0 +1,12 @@
+﻿## Interface: 40200
+## Title: Broker Pets & Mounts
+## Notes: Data Broker display for easy acces to pets and mounts.
+## Author: Shenton
+## SavedVariables: pamDB
+## Version: 0.1
+
+Embeds.xml
+
+Localization\Locales-enUS.lua
+
+Core.lua
