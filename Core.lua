@@ -20,7 +20,7 @@ A.ldbi = LibStub("LibDBIcon-1.0");
 -- ********************************************************************************
 
 -- LUA globals to locals
-local pairs, ipairs, ssub, smatch = pairs, ipairs, string.sub, string.match;
+local pairs, ipairs, ssub, smatch, tsort = pairs, ipairs, string.sub, string.match, table.sort;
 
 -- AddOn version
 A.version = GetAddOnMetadata("Broker_PAM", "Version");
@@ -31,9 +31,6 @@ A.color["RED"] = "|cFFFF3333";
 A.color["GREEN"] = "|cFF33FF99";
 A.color["WHITE"] = "|cFFFFFFFF";
 A.color["RESET"] = "|r";
-
--- Max button index
-A.maxButtonIndex = 0;
 
 -- ********************************************************************************
 -- Functions
@@ -69,17 +66,49 @@ function A:ShowHideMinimap()
 	end
 end
 
+--- pairs function with alphabetic sort
+function A:PairsByKeys(t, f)
+    local a, i = {}, 0;
+
+    for n in pairs(t) do a[#a+1] = n; end
+    tsort(a, f);
+
+    local iter = function()
+        i = i + 1;
+        if ( not a[i] ) then
+            return nil;
+        else
+            return a[i], t[a[i]];
+        end
+    end
+
+    return iter;
+end
+
+--- Return anchor points depending on cursor position
+function A:GetAnchor()
+    local w = GetScreenWidth();
+    local x = GetCursorPosition();
+
+    w = (w * UIParent:GetEffectiveScale()) / 2;
+
+    if ( x > w ) then return "TOPRIGHT", "TOPLEFT"; end
+
+    return "TOPLEFT", "TOPRIGHT";
+end
+
 --- Build the companions table used by the dropdown menu
+local contentTable;
 function A:BuildPetsTable()
-    local out = {};
+    contentTable = {};
 
     for i=1,GetNumCompanions("CRITTER") do
         local creatureID, creatureName,_, icon, isSummoned = GetCompanionInfo("CRITTER", i);
         local leadingLetter = ssub(creatureName, 1, 1);
 
-        if ( not out[leadingLetter] ) then out[leadingLetter] = {}; end
+        if ( not contentTable[leadingLetter] ) then contentTable[leadingLetter] = {}; end
 
-        out[leadingLetter][#out[leadingLetter]+1] =
+        contentTable[leadingLetter][#contentTable[leadingLetter]+1] =
         {
             i = i,
             id = creatureID,
@@ -89,20 +118,20 @@ function A:BuildPetsTable()
         };
     end
 
-    return out;
+    return contentTable;
 end
 
 --- Build the mounts table used by the dropdown menu
 function A:BuildMountsTable()
-    local out = {};
+    contentTable = {};
 
     for i=1,GetNumCompanions("MOUNT") do
         local creatureID, creatureName,_, icon, isSummoned = GetCompanionInfo("MOUNT", i);
         local leadingLetter = ssub(creatureName, 1, 1);
 
-        if ( not out[leadingLetter] ) then out[leadingLetter] = {}; end
+        if ( not contentTable[leadingLetter] ) then contentTable[leadingLetter] = {}; end
 
-        out[leadingLetter][#out[leadingLetter]+1] =
+        contentTable[leadingLetter][#contentTable[leadingLetter]+1] =
         {
             i = i,
             id = creatureID,
@@ -112,36 +141,25 @@ function A:BuildMountsTable()
         };
     end
 
-    return out;
-end
-
---- Close dropdown menu and remove every scripts
-function A:CloseDropDownMenu()
-    DropDownList1:SetScript("OnHide", nil);
-    for i=1,A.maxButtonIndex do
-        _G["DropDownList2Button"..i]:SetScript("OnEnter", nil);
-        _G["DropDownList2Button"..i]:SetScript("OnEnter", nil);
-    end
-    A.maxButtonIndex = 0;
-    CloseDropDownMenus();
+    return contentTable;
 end
 
 -- ********************************************************************************
 -- Dropdown menu
 -- ********************************************************************************
 
+local rotation, rotationTime;
 local function PetsMenu(self, level)
     if ( not level ) then return; end
 
-    local pets = A:BuildPetsTable();
-
-    wipe(self.info);
+    local contentTable = A:BuildPetsTable();
 
     if ( level == 1 ) then
         -- Menu title
         self.info.isTitle = 1;
         self.info.text = L["COMPANIONS"];
         self.info.notCheckable = 1;
+        self.info.icon = nil;
         UIDropDownMenu_AddButton(self.info, level);
 
         -- Set options
@@ -150,36 +168,36 @@ local function PetsMenu(self, level)
         self.info.isTitle = nil;
         self.info.disabled = nil;
 
-        for k,_ in pairs(pets) do
+        for k in A:PairsByKeys(contentTable) do
             self.info.text = "   "..k;
             self.info.value = k;
             UIDropDownMenu_AddButton(self.info, level);
         end
 
         -- Blank separator
-        wipe(self.info);
-        self.info.disabled = true;
-        self.info.notCheckable = true;
+        self.info.text = "";
+        self.info.disabled = 1;
+        self.info.notCheckable = 1;
+        self.info.hasArrow = nil;
         UIDropDownMenu_AddButton(self.info, level);
 
         -- Options menu
         self.info.text = "   "..L["OPTIONS"];
 		self.info.value = "OPTIONS";
         self.info.disabled = nil;
-		self.info.hasArrow = true;
+		self.info.hasArrow = 1;
 		UIDropDownMenu_AddButton(self.info, level);
 
         -- Close
         self.info.text = L["CLOSE"];
         self.info.hasArrow = nil;
-        self.info.func = function() A:CloseDropDownMenu(); end;
+        self.info.func = function() CloseDropDownMenus(); end;
         UIDropDownMenu_AddButton(self.info, level);
     elseif (level == 2 ) then
-        wipe(self.info);
         self.info.notCheckable = 1;
         self.info.hasArrow = nil;
 
-        for k,v in pairs(pets) do
+        for k,v in A:PairsByKeys(contentTable) do
             local buttonIndex = 1;
 
             for _,vv in ipairs(v) do
@@ -188,41 +206,68 @@ local function PetsMenu(self, level)
                     self.info.icon = vv.icon;
                     self.info.disabled = vv.isSummoned;
                     self.info.keepShownOnClick = 1;
-                    self.info.swatchFunc = function() print("Doh!"); end;
                     self.info.func = function() CallCompanion("CRITTER", vv.i); end;
                     UIDropDownMenu_AddButton(self.info, level);
 
-                    local model = CreateFrame("PlayerModel");
-                    model:SetSize(150, 150);
-                    model:SetCreature(vv.id);
-                    model:SetBackdrop({bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-                        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-                        tile = true, tileSize = 16, edgeSize = 16,
-                        insets = { left = 4, right = 4, top = 4, bottom = 4 }});
-                    model:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b);
-					model:SetBackdropColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b);
-                    _G["DropDownList2Button"..buttonIndex]:SetScript("OnEnter", function()
-                        model:SetPoint("TOPRIGHT", DropDownList2, "TOPLEFT", 0, 0);
-                        model:Show();
+                    _G["DropDownList2Button"..buttonIndex]:HookScript("OnEnter", function()
+                        -- Model
+                        A.modelFrame:ClearModel();
+                        A.modelFrame:SetCreature(vv.id);
+                        if ( A.db.profile.modelRotation ) then
+                            rotation, rotationTime = 0, GetTime();
+                            A.modelFrame:SetScript("OnUpdate", function()
+                                local t = GetTime();
+
+                                if ( rotationTime and rotationTime + 0.01 < t ) then
+                                    A.modelFrame:SetRotation(rotation);
+                                    rotation = rotation + 0.01;
+                                    rotationTime = t;
+                                end
+                            end);
+                        else
+                            rotationTime = nil;
+                            A.modelFrame:SetRotation(0);
+                        end
+
+                        -- Frame pos
+                        local point, relativePoint = A:GetAnchor();
+                        A.modelFrame:ClearAllPoints()
+                        A.modelFrame:SetPoint(point, DropDownList2, relativePoint, 0, 0);
+                        A.modelFrame:Show();
                     end);
-                    _G["DropDownList2Button"..buttonIndex]:SetScript("OnLeave", function() model:Hide(); end);
-                    if ( buttonIndex > A.maxButtonIndex ) then A.maxButtonIndex = buttonIndex; end
+                    _G["DropDownList2Button"..buttonIndex]:HookScript("OnLeave", function() A.modelFrame:Hide(); end);
                     buttonIndex = buttonIndex + 1;
                 end
             end
         end
 
         if ( UIDROPDOWNMENU_MENU_VALUE == "OPTIONS" ) then
-            wipe(self.info);
-
             -- Show/hide minimap icon
             self.info.text = L["SHOW_HIDE_MINIMAP"];
+            self.info.icon = nil;
+            self.info.notCheckable = nil;
             self.info.checked = not A.db.profile.ldbi.hide;
             self.info.func = function()
                 A.db.profile.ldbi.hide = not A.db.profile.ldbi.hide;
                 A:ShowHideMinimap();
             end;
             UIDropDownMenu_AddButton(self.info, level);
+
+            _G["DropDownList2Button1"]:HookScript("OnEnter", function()
+                A.modelFrame:ClearModel();
+                A.modelFrame:Hide();
+            end);
+
+            -- Model rotation
+            self.info.text = L["MODEL_ROTATION"];
+            self.info.checked = A.db.profile.modelRotation;
+            self.info.func = function() A.db.profile.modelRotation = not A.db.profile.modelRotation; end;
+            UIDropDownMenu_AddButton(self.info, level);
+
+            _G["DropDownList2Button2"]:HookScript("OnEnter", function()
+                A.modelFrame:ClearModel();
+                A.modelFrame:Hide();
+            end);
         end
     end
 end
@@ -230,15 +275,14 @@ end
 local function MountsMenu(self, level)
     if ( not level ) then return; end
 
-    local pets = A:BuildMountsTable();
-
-    wipe(self.info);
+    local contentTable = A:BuildMountsTable();
 
     if ( level == 1 ) then
         -- Menu title
         self.info.isTitle = 1;
         self.info.text = L["MOUNTS"];
         self.info.notCheckable = 1;
+        self.info.icon = nil;
         UIDropDownMenu_AddButton(self.info, level);
 
         -- Set options
@@ -247,36 +291,36 @@ local function MountsMenu(self, level)
         self.info.isTitle = nil;
         self.info.disabled = nil;
 
-        for k,_ in pairs(pets) do
+        for k in A:PairsByKeys(contentTable) do
             self.info.text = "   "..k;
             self.info.value = k;
             UIDropDownMenu_AddButton(self.info, level);
         end
 
         -- Blank separator
-        wipe(self.info);
-        self.info.disabled = true;
-        self.info.notCheckable = true;
+        self.info.text = "";
+        self.info.hasArrow = nil;
+        self.info.disabled = 1;
+        self.info.notCheckable = 1;
         UIDropDownMenu_AddButton(self.info, level);
 
         -- Options menu
         self.info.text = "   "..L["OPTIONS"];
 		self.info.value = "OPTIONS";
         self.info.disabled = nil;
-		self.info.hasArrow = true;
+		self.info.hasArrow = 1;
 		UIDropDownMenu_AddButton(self.info, level);
 
         -- Close
         self.info.text = L["CLOSE"];
         self.info.hasArrow = nil;
-        self.info.func = function() A:CloseDropDownMenu(); end;
+        self.info.func = function() CloseDropDownMenus(); end;
         UIDropDownMenu_AddButton(self.info, level);
     elseif (level == 2 ) then
-        wipe(self.info);
         self.info.notCheckable = 1;
         self.info.hasArrow = nil;
 
-        for k,v in pairs(pets) do
+        for k,v in A:PairsByKeys(contentTable) do
             local buttonIndex = 1;
 
             for _,vv in ipairs(v) do
@@ -285,69 +329,69 @@ local function MountsMenu(self, level)
                     self.info.icon = vv.icon;
                     self.info.disabled = vv.isSummoned;
                     self.info.keepShownOnClick = 1;
-                    self.info.swatchFunc = function() print("Doh!"); end;
                     self.info.func = function() CallCompanion("MOUNT", vv.i); end;
                     UIDropDownMenu_AddButton(self.info, level);
 
-                    local model = CreateFrame("PlayerModel");
-                    model:SetSize(150, 150);
-                    model:SetCreature(vv.id);
-                    model:SetBackdrop({bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-                        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-                        tile = true, tileSize = 16, edgeSize = 16,
-                        insets = { left = 4, right = 4, top = 4, bottom = 4 }});
-                    model:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b);
-					model:SetBackdropColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b);
-                    _G["DropDownList2Button"..buttonIndex]:SetScript("OnEnter", function()
-                        model:SetPoint("TOPRIGHT", DropDownList2, "TOPLEFT", 0, 0);
-                        model:Show();
+                    _G["DropDownList2Button"..buttonIndex]:HookScript("OnEnter", function()
+                        -- Model
+                        A.modelFrame:ClearModel();
+                        A.modelFrame:SetCreature(vv.id);
+                        if ( A.db.profile.modelRotation ) then
+                            rotation, rotationTime = 0, GetTime();
+                            A.modelFrame:SetScript("OnUpdate", function()
+                                local t = GetTime();
+
+                                if ( rotationTime and rotationTime + 0.01 < t ) then
+                                    A.modelFrame:SetRotation(rotation);
+                                    rotation = rotation + 0.01;
+                                    rotationTime = t;
+                                end
+                            end);
+                        else
+                            rotationTime = nil;
+                            A.modelFrame:SetRotation(0);
+                        end
+
+                        -- Frame pos
+                        local point, relativePoint = A:GetAnchor();
+                        A.modelFrame:ClearAllPoints()
+                        A.modelFrame:SetPoint(point, DropDownList2, relativePoint, 0, 0);
+                        A.modelFrame:Show();
                     end);
-                    _G["DropDownList2Button"..buttonIndex]:SetScript("OnLeave", function() model:Hide(); end);
-                    if ( buttonIndex > A.maxButtonIndex ) then A.maxButtonIndex = buttonIndex; end
+                    _G["DropDownList2Button"..buttonIndex]:HookScript("OnLeave", function() A.modelFrame:Hide(); end);
                     buttonIndex = buttonIndex + 1;
                 end
             end
         end
 
         if ( UIDROPDOWNMENU_MENU_VALUE == "OPTIONS" ) then
-            wipe(self.info);
-
             -- Show/hide minimap icon
             self.info.text = L["SHOW_HIDE_MINIMAP"];
+            self.info.notCheckable = nil;
+            self.info.icon = nil;
             self.info.checked = not A.db.profile.ldbi.hide;
             self.info.func = function()
                 A.db.profile.ldbi.hide = not A.db.profile.ldbi.hide;
                 A:ShowHideMinimap();
             end;
             UIDropDownMenu_AddButton(self.info, level);
+
+            _G["DropDownList2Button1"]:HookScript("OnEnter", function()
+                A.modelFrame:ClearModel();
+                A.modelFrame:Hide();
+            end);
+
+            -- Model rotation
+            self.info.text = L["MODEL_ROTATION"];
+            self.info.checked = not A.db.profile.modelRotation;
+            self.info.func = function() A.db.profile.modelRotation = not A.db.profile.modelRotation; end;
+            UIDropDownMenu_AddButton(self.info, level);
+
+            _G["DropDownList2Button2"]:HookScript("OnEnter", function()
+                A.modelFrame:ClearModel();
+                A.modelFrame:Hide();
+            end);
         end
-    end
-end
-
--- ********************************************************************************
--- Callbacks
--- ********************************************************************************
-
-function A:CloseDropDownMenus()
-print("A:CloseDropDownMenus()")
-    DropDownList1:SetScript("OnHide", function()
-        print("TEST")
-        DropDownList1:Show();
-    end);
-end
-
-function A:ToggleDropDownMenu(...)
-    local _,_,_, name = ...;
-
-    if ( name and smatch(name, "BrokerPAMLDBI") ) then
-        A:CloseDropDownMenu();
-        DropDownList1:SetScript("OnHide", function() DropDownList1:Show(); end);
-        A.hooks.ToggleDropDownMenu(...);
-    elseif ( name and not smatch(name, "BrokerPAMLDBI") ) then
-        A:CloseDropDownMenu();
-        A.hooks.ToggleDropDownMenu(...);
-    else
-        A.hooks.ToggleDropDownMenu(...);
     end
 end
 
@@ -359,6 +403,7 @@ A.aceDefaultDB =
 {
     profile =
     {
+        modelRotation = 1,
         ldbi = {}
     }
 };
@@ -418,5 +463,15 @@ function A:OnEnable()
     A.menuFrame.displayMode = "MENU";
     A.menuFrame.info = {};
 
-    A:RawHook("ToggleDropDownMenu", true);
+    -- Model Frame
+    A.modelFrame = CreateFrame("PlayerModel", "BrokerPamModelFrame", UIParent);
+    A.modelFrame:SetFrameStrata("TOOLTIP");
+    A.modelFrame:SetSize(150, 150);
+    A.modelFrame:SetBackdrop({bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 16, edgeSize = 16,
+        insets = { left = 4, right = 4, top = 4, bottom = 4 }});
+    A.modelFrame:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b);
+    A.modelFrame:SetBackdropColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b);
+    A.modelFrame:Hide();
 end
