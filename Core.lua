@@ -32,6 +32,60 @@ A.color["GREEN"] = "|cFF33FF99";
 A.color["WHITE"] = "|cFFFFFFFF";
 A.color["RESET"] = "|r";
 
+-- Model adjust
+A.modelAdjust =
+{
+    [2671] = -- Mechanical Squirrel
+    {
+        s = 1.5,
+        x = 0,
+        y = 0,
+        z = 0
+    },
+    [8376] = -- Mechanical Chicken
+    {
+        s = 2.5,
+        x = 0,
+        y = 0,
+        z = 0
+    },
+    [7394] = -- Ancona Chicken
+    {
+        s = 2.5,
+        x = 0,
+        y = 0,
+        z = 0
+    },
+    [14421] = -- Brown Prairie Dog
+    {
+        s = 2.5,
+        x = 0,
+        y = 0,
+        z = 0
+    },
+    [29147] = -- Ghostly Skull
+    {
+        s = 2.5,
+        x = 0,
+        y = 0,
+        z = 0
+    },
+    [24480] = -- Mojo
+    {
+        s = 2.5,
+        x = 0,
+        y = 0,
+        z = 0
+    },
+    [14878] = -- Jubling
+    {
+        s = 2.5,
+        x = 0,
+        y = 0,
+        z = 0
+    }
+};
+
 -- ********************************************************************************
 -- Functions
 -- ********************************************************************************
@@ -213,6 +267,18 @@ local function PetsMenu(self, level)
                         -- Model
                         A.modelFrame:ClearModel();
                         A.modelFrame:SetCreature(vv.id);
+                        --
+                        --print(vv.id);
+                        --print(A.modelFrame:GetPosition())
+                        --
+                        --A.modelFrame:SetCamera(2);
+                        if ( A.modelAdjust[vv.id] ) then
+                            A.modelFrame:SetPosition(0 + A.modelAdjust[vv.id].x, 0 + A.modelAdjust[vv.id].y, 0 + A.modelAdjust[vv.id].z);
+                            A.modelFrame:SetModelScale(A.modelAdjust[vv.id].s);
+                        else
+                            A.modelFrame:SetPosition(0, 0, 0);
+                            A.modelFrame:SetModelScale(1);
+                        end
                         if ( A.db.profile.modelRotation ) then
                             rotation, rotationTime = 0, GetTime();
                             A.modelFrame:SetScript("OnUpdate", function()
@@ -268,6 +334,95 @@ local function PetsMenu(self, level)
                 A.modelFrame:ClearModel();
                 A.modelFrame:Hide();
             end);
+
+            -- Model frame size
+            self.info.text = L["MODEL_FRAME_SIZE"];
+            self.info.notCheckable = 1;
+            self.info.hasArrow = 1;
+            self.info.value = "FRAMESIZE";
+            self.info.func = function() A.db.profile.modelRotation = not A.db.profile.modelRotation; end;
+            UIDropDownMenu_AddButton(self.info, level);
+
+            _G["DropDownList2Button3"]:HookScript("OnEnter", function()
+                A.modelFrame:ClearModel();
+                A.modelFrame:Hide();
+            end);
+        end
+    elseif (level == 3 ) then
+        if ( UIDROPDOWNMENU_MENU_VALUE == "FRAMESIZE" ) then
+            -- 100x100
+            self.info.text = "100x100";
+            self.info.icon = nil;
+            self.info.notCheckable = nil;
+            self.info.hasArrow = nil;
+            self.info.keepShownOnClick = nil;
+            self.info.checked = function()
+                if ( A.db.profile.modelFrameWidth == 100 ) then return 1; end
+
+                return nil;
+            end;
+            self.info.func = function()
+                A.db.profile.modelFrameWidth = 100;
+                A.db.profile.modelFrameHeight = 100;
+                A.modelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
+            end;
+            UIDropDownMenu_AddButton(self.info, level);
+
+            -- 150x150
+            self.info.text = "150x150";
+            self.info.checked = function()
+                if ( A.db.profile.modelFrameWidth == 150 ) then return 1; end
+
+                return nil;
+            end;
+            self.info.func = function()
+                A.db.profile.modelFrameWidth = 150;
+                A.db.profile.modelFrameHeight = 150;
+                A.modelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
+            end;
+            UIDropDownMenu_AddButton(self.info, level);
+
+            -- 200x200
+            self.info.text = "200x200";
+            self.info.checked = function()
+                if ( A.db.profile.modelFrameWidth == 200 ) then return 1; end
+
+                return nil;
+            end;
+            self.info.func = function()
+                A.db.profile.modelFrameWidth = 200;
+                A.db.profile.modelFrameHeight = 200;
+                A.modelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
+            end;
+            UIDropDownMenu_AddButton(self.info, level);
+
+            -- 250x250
+            self.info.text = "250x250";
+            self.info.checked = function()
+                if ( A.db.profile.modelFrameWidth == 250 ) then return 1; end
+
+                return nil;
+            end;
+            self.info.func = function()
+                A.db.profile.modelFrameWidth = 250;
+                A.db.profile.modelFrameHeight = 250;
+                A.modelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
+            end;
+            UIDropDownMenu_AddButton(self.info, level);
+
+            -- 300x300
+            self.info.text = "300x300";
+            self.info.checked = function()
+                if ( A.db.profile.modelFrameWidth == 300 ) then return 1; end
+
+                return nil;
+            end;
+            self.info.func = function()
+                A.db.profile.modelFrameWidth = 300;
+                A.db.profile.modelFrameHeight = 300;
+                A.modelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
+            end;
+            UIDropDownMenu_AddButton(self.info, level);
         end
     end
 end
@@ -383,7 +538,7 @@ local function MountsMenu(self, level)
 
             -- Model rotation
             self.info.text = L["MODEL_ROTATION"];
-            self.info.checked = not A.db.profile.modelRotation;
+            self.info.checked = A.db.profile.modelRotation;
             self.info.func = function() A.db.profile.modelRotation = not A.db.profile.modelRotation; end;
             UIDropDownMenu_AddButton(self.info, level);
 
@@ -391,6 +546,95 @@ local function MountsMenu(self, level)
                 A.modelFrame:ClearModel();
                 A.modelFrame:Hide();
             end);
+
+            -- Model frame size
+            self.info.text = L["MODEL_FRAME_SIZE"];
+            self.info.notCheckable = 1;
+            self.info.hasArrow = 1;
+            self.info.value = "FRAMESIZE";
+            self.info.func = function() A.db.profile.modelRotation = not A.db.profile.modelRotation; end;
+            UIDropDownMenu_AddButton(self.info, level);
+
+            _G["DropDownList2Button3"]:HookScript("OnEnter", function()
+                A.modelFrame:ClearModel();
+                A.modelFrame:Hide();
+            end);
+        end
+    elseif (level == 3 ) then
+        if ( UIDROPDOWNMENU_MENU_VALUE == "FRAMESIZE" ) then
+            -- 100x100
+            self.info.text = "100x100";
+            self.info.icon = nil;
+            self.info.notCheckable = nil;
+            self.info.hasArrow = nil;
+            self.info.keepShownOnClick = nil;
+            self.info.checked = function()
+                if ( A.db.profile.modelFrameWidth == 100 ) then return 1; end
+
+                return nil;
+            end;
+            self.info.func = function()
+                A.db.profile.modelFrameWidth = 100;
+                A.db.profile.modelFrameHeight = 100;
+                A.modelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
+            end;
+            UIDropDownMenu_AddButton(self.info, level);
+
+            -- 150x150
+            self.info.text = "150x150";
+            self.info.checked = function()
+                if ( A.db.profile.modelFrameWidth == 150 ) then return 1; end
+
+                return nil;
+            end;
+            self.info.func = function()
+                A.db.profile.modelFrameWidth = 150;
+                A.db.profile.modelFrameHeight = 150;
+                A.modelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
+            end;
+            UIDropDownMenu_AddButton(self.info, level);
+
+            -- 200x200
+            self.info.text = "200x200";
+            self.info.checked = function()
+                if ( A.db.profile.modelFrameWidth == 200 ) then return 1; end
+
+                return nil;
+            end;
+            self.info.func = function()
+                A.db.profile.modelFrameWidth = 200;
+                A.db.profile.modelFrameHeight = 200;
+                A.modelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
+            end;
+            UIDropDownMenu_AddButton(self.info, level);
+
+            -- 250x250
+            self.info.text = "250x250";
+            self.info.checked = function()
+                if ( A.db.profile.modelFrameWidth == 250 ) then return 1; end
+
+                return nil;
+            end;
+            self.info.func = function()
+                A.db.profile.modelFrameWidth = 250;
+                A.db.profile.modelFrameHeight = 250;
+                A.modelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
+            end;
+            UIDropDownMenu_AddButton(self.info, level);
+
+            -- 300x300
+            self.info.text = "300x300";
+            self.info.checked = function()
+                if ( A.db.profile.modelFrameWidth == 300 ) then return 1; end
+
+                return nil;
+            end;
+            self.info.func = function()
+                A.db.profile.modelFrameWidth = 300;
+                A.db.profile.modelFrameHeight = 300;
+                A.modelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
+            end;
+            UIDropDownMenu_AddButton(self.info, level);
         end
     end
 end
@@ -404,6 +648,8 @@ A.aceDefaultDB =
     profile =
     {
         modelRotation = 1,
+        modelFrameWidth = 200,
+        modelFrameHeight = 200,
         ldbi = {}
     }
 };
@@ -466,7 +712,7 @@ function A:OnEnable()
     -- Model Frame
     A.modelFrame = CreateFrame("PlayerModel", "BrokerPamModelFrame", UIParent);
     A.modelFrame:SetFrameStrata("TOOLTIP");
-    A.modelFrame:SetSize(150, 150);
+    A.modelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
     A.modelFrame:SetBackdrop({bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
         tile = true, tileSize = 16, edgeSize = 16,
