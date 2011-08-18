@@ -206,6 +206,8 @@ local rotation, rotationTime;
 local function PetsMenu(self, level)
     if ( not level ) then return; end
 
+    A.isBrokerPamMenu = 1;
+
     local contentTable = A:BuildPetsTable();
 
     if ( level == 1 ) then
@@ -264,6 +266,12 @@ local function PetsMenu(self, level)
                     UIDropDownMenu_AddButton(self.info, level);
 
                     _G["DropDownList2Button"..buttonIndex]:HookScript("OnEnter", function()
+                        if ( not A.isBrokerPamMenu ) then
+                            A.modelFrame:Hide();
+
+                            return;
+                        end
+
                         -- Model
                         A.modelFrame:ClearModel();
                         A.modelFrame:SetCreature(vv.id);
@@ -430,6 +438,8 @@ end
 local function MountsMenu(self, level)
     if ( not level ) then return; end
 
+    A.isBrokerPamMenu = 1;
+
     local contentTable = A:BuildMountsTable();
 
     if ( level == 1 ) then
@@ -488,6 +498,12 @@ local function MountsMenu(self, level)
                     UIDropDownMenu_AddButton(self.info, level);
 
                     _G["DropDownList2Button"..buttonIndex]:HookScript("OnEnter", function()
+                        if ( not A.isBrokerPamMenu ) then
+                            A.modelFrame:Hide();
+
+                            return;
+                        end
+
                         -- Model
                         A.modelFrame:ClearModel();
                         A.modelFrame:SetCreature(vv.id);
@@ -708,6 +724,9 @@ function A:OnEnable()
     A.menuFrame = CreateFrame("Frame", "BrokerPAMMenuFrame");
     A.menuFrame.displayMode = "MENU";
     A.menuFrame.info = {};
+    DropDownList1:HookScript("OnHide", function(self)
+        A.isBrokerPamMenu = nil;
+    end);
 
     -- Model Frame
     A.modelFrame = CreateFrame("PlayerModel", "BrokerPamModelFrame", UIParent);
