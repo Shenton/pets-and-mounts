@@ -94,13 +94,13 @@ A.modelAdjust =
 -- @param text The message to display
 -- @param color Bool, if true will color in red
 function A:Message(text, color)
-	if ( color ) then
-		color = A.color["RED"];
-	else
-		color = A.color["GREEN"]
-	end
+    if ( color ) then
+        color = A.color["RED"];
+    else
+        color = A.color["GREEN"]
+    end
 
-	DEFAULT_CHAT_FRAME:AddMessage(color..L["ADDON_NAME"]..": "..A.color["RESET"]..text);
+    DEFAULT_CHAT_FRAME:AddMessage(color..L["ADDON_NAME"]..": "..A.color["RESET"]..text);
 end
 
 --- Handle the slash command
@@ -112,12 +112,12 @@ end
 
 --- Show or hide the minimap icon
 function A:ShowHideMinimap()
-	if ( A.db.profile.ldbi.hide ) then
-		A:Message(L["HIDE_MINIMAP"], true);
-		A.ldbi:Hide("BrokerPAMLDBI");
-	else
-		A.ldbi:Show("BrokerPAMLDBI");
-	end
+    if ( A.db.profile.ldbi.hide ) then
+        A:Message(L["HIDE_MINIMAP"], true);
+        A.ldbi:Hide("BrokerPAMLDBI");
+    else
+        A.ldbi:Show("BrokerPAMLDBI");
+    end
 end
 
 --- pairs function with alphabetic sort
@@ -139,6 +139,22 @@ function A:PairsByKeys(t, f)
     return iter;
 end
 
+--- Return the position of an item in a table
+-- @param table The table
+-- @param item The item
+-- @return the item pos or false
+function A:Exists(table, name)
+    local index = 1;
+
+    while table[index] do
+        if ( name == table[index]["name"] ) then return 1; end
+
+        index = index+1;
+   end
+
+   return nil;
+end
+
 --- Return anchor points depending on cursor position
 function A:GetAnchor()
     local w = GetScreenWidth();
@@ -153,23 +169,51 @@ end
 
 --- Build the companions table used by the dropdown menu
 local contentTable;
+-- function A:OLD_BuildPetsTable()
+    -- contentTable = {};
+
+    -- for i=1,GetNumCompanions("CRITTER") do
+        -- local creatureID, creatureName,_, icon, isSummoned = GetCompanionInfo("CRITTER", i);
+        -- local leadingLetter = ssub(creatureName, 1, 1);
+
+        -- if ( not contentTable[leadingLetter] ) then contentTable[leadingLetter] = {}; end
+
+        -- contentTable[leadingLetter][#contentTable[leadingLetter]+1] =
+        -- {
+            -- i = i,
+            -- id = creatureID,
+            -- name = creatureName,
+            -- icon = icon,
+            -- isSummoned = isSummoned
+        -- };
+    -- end
+
+    -- return contentTable;
+-- end
 function A:BuildPetsTable()
     contentTable = {};
 
-    for i=1,GetNumCompanions("CRITTER") do
-        local creatureID, creatureName,_, icon, isSummoned = GetCompanionInfo("CRITTER", i);
-        local leadingLetter = ssub(creatureName, 1, 1);
+    local numPets, numOwned = C_PetJournal.GetNumPets(false);
 
-        if ( not contentTable[leadingLetter] ) then contentTable[leadingLetter] = {}; end
+    for i=1,numPets do
+        local petID, _, isOwned, customName, _, _, _, creatureName, icon, _, creatureID = C_PetJournal.GetPetInfoByIndex(i, false);
+        --local petID, speciesID, isOwned, customName, level, favorite, isRevoked, name, icon, petType, creatureID, sourceText, description, isWildPet, canBattle = C_PetJournal.GetPetInfoByIndex(index, isWild);
 
-        contentTable[leadingLetter][#contentTable[leadingLetter]+1] =
-        {
-            i = i,
-            id = creatureID,
-            name = creatureName,
-            icon = icon,
-            isSummoned = isSummoned
-        };
+        if ( isOwned ) then
+            local leadingLetter = ssub(creatureName, 1, 1);
+
+            if ( not contentTable[leadingLetter] ) then contentTable[leadingLetter] = {}; end
+
+            if ( not A:Exists(contentTable[leadingLetter], creatureName) ) then
+                contentTable[leadingLetter][#contentTable[leadingLetter]+1] =
+                {
+                    petID = petID,
+                    name = creatureName,
+                    icon = icon,
+                    creatureID = creatureID,
+                };
+            end
+        end
     end
 
     return contentTable;
@@ -209,6 +253,7 @@ local function PetsMenu(self, level)
     A.isBrokerPamMenu = 1;
 
     local contentTable = A:BuildPetsTable();
+    local summonedPet;
 
     if ( level == 1 ) then
         -- Menu title
@@ -239,10 +284,10 @@ local function PetsMenu(self, level)
 
         -- Options menu
         self.info.text = "   "..L["OPTIONS"];
-		self.info.value = "OPTIONS";
+        self.info.value = "OPTIONS";
         self.info.disabled = nil;
-		self.info.hasArrow = 1;
-		UIDropDownMenu_AddButton(self.info, level);
+        self.info.hasArrow = 1;
+        UIDropDownMenu_AddButton(self.info, level);
 
         -- Close
         self.info.text = L["CLOSE"];
@@ -258,11 +303,19 @@ local function PetsMenu(self, level)
 
             for _,vv in ipairs(v) do
                 if ( UIDROPDOWNMENU_MENU_VALUE == k ) then
+                    if ( vv.petID == C_PetJournal.GetSummonedPetID() ) then
+                        summonedPet = 1;
+                    else
+                        summonedPet = nil;
+                    end
                     self.info.text = vv.name;
                     self.info.icon = vv.icon;
-                    self.info.disabled = vv.isSummoned;
+                    self.info.disabled = summonedPet;
                     self.info.keepShownOnClick = 1;
-                    self.info.func = function() CallCompanion("CRITTER", vv.i); end;
+                    self.info.func = function()
+                        --CallCompanion("CRITTER", vv.i);
+                        C_PetJournal.SummonPetByID(vv.petID);
+                    end;
                     UIDropDownMenu_AddButton(self.info, level);
 
                     _G["DropDownList2Button"..buttonIndex]:HookScript("OnEnter", function()
@@ -274,7 +327,7 @@ local function PetsMenu(self, level)
 
                         -- Model
                         A.modelFrame:ClearModel();
-                        A.modelFrame:SetCreature(vv.id);
+                        A.modelFrame:SetCreature(vv.creatureID);
                         --
                         --print(vv.id);
                         --print(A.modelFrame:GetPosition())
@@ -471,10 +524,10 @@ local function MountsMenu(self, level)
 
         -- Options menu
         self.info.text = "   "..L["OPTIONS"];
-		self.info.value = "OPTIONS";
+        self.info.value = "OPTIONS";
         self.info.disabled = nil;
-		self.info.hasArrow = 1;
-		UIDropDownMenu_AddButton(self.info, level);
+        self.info.hasArrow = 1;
+        UIDropDownMenu_AddButton(self.info, level);
 
         -- Close
         self.info.text = L["CLOSE"];
@@ -717,8 +770,8 @@ function A:OnEnable()
     if ( not A.ldbi:IsRegistered("BrokerPAMLDBI") ) then A.ldbi:Register("BrokerPAMLDBI", A.ldbObject, A.db.profile.ldbi); end
 
     -- Slash command
-	A:RegisterChatCommand("petsandmounts", "SlashCommand");
-	A:RegisterChatCommand("pam", "SlashCommand");
+    A:RegisterChatCommand("petsandmounts", "SlashCommand");
+    A:RegisterChatCommand("pam", "SlashCommand");
 
     -- Menu frame & table
     A.menuFrame = CreateFrame("Frame", "BrokerPAMMenuFrame");
