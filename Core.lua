@@ -750,11 +750,11 @@ function A:OnEnable()
             OnClick = function(self, button)
                 if (button == "LeftButton") then
                     A.menuFrame.initialize = MountsMenu;
-                    ToggleDropDownMenu(1, nil, A.menuFrame, self:GetName(), 0, 0);
+                    ToggleDropDownMenu(1, nil, A.menuFrame, self, 0, 0);
                     GameTooltip:Hide();
                 elseif ( button == "RightButton" ) then
                     A.menuFrame.initialize = PetsMenu;
-                    ToggleDropDownMenu(1, nil, A.menuFrame, self:GetName(), 0, 0);
+                    ToggleDropDownMenu(1, nil, A.menuFrame, self, 0, 0);
                     GameTooltip:Hide();
                 end
             end,
