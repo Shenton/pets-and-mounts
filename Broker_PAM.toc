@@ -10,3 +10,6 @@ Embeds.xml
 Localization\Locales-enUS.lua
 
 Core.lua
+
+Config.lua
+Summon.lua
