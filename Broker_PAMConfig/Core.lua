@@ -9,38 +9,7 @@
 local A = _G["BrokerPAMGlobal"];
 local L = A.L;
 
-A.aceDefaultDB =
-{
-    profile =
-    {
-        debug = nil, -- d
-        modelRotation = 1, -- d
-        modelFrameWidth = 200, -- d
-        modelFrameHeight = 200, -- d
-        configModelRotation = 1, -- d
-        configModelFrameWidth = 400, -- d
-        configModelFrameHeight = 400, -- d
-        filterMultiple = 1, -- d
-        noFilterCustom = 1, -- d
-        autoPet = 1, -- d
-        mainTimer = 10, -- d
-        shiftTimer = 5, -- d
-        alreadyGotPet = 1, -- d
-        notWhenStealthed = 1, -- d
-        noHybridWhenGround = 1, -- d
-        dismountFlying = 1, -- d
-        ldbi = {}, -- d
-        favoritePets = {}, -- d
-        favoriteMounts = -- d
-        {
-            [1] = {}, -- Ground
-            [2] = {}, -- Fly
-            [3] = {}, -- Hybrid (ground & fly)
-            [4] = {}, -- Aquatic
-            [5] = {}, -- with passengers
-        },
-    }
-};
+A.AceConfigDialog = LibStub("AceConfigDialog-3.0");
 
 local modelFrameSizeSelect =
 {
@@ -239,7 +208,14 @@ function A:AceConfig()
                                 name = L["Model rotation"],
                                 desc = L["Activate the model rotation in the frame."],
                                 type = "toggle",
-                                set = function(info, val) A.db.profile.configModelRotation = not A.db.profile.configModelRotation; end,
+                                set = function(info, val)
+                                    A.db.profile.configModelRotation = not A.db.profile.configModelRotation;
+
+                                    if ( not A.db.profile.configModelRotation ) then
+                                        A.modelFrameConfig.rotation = 0;
+                                        A.modelFrameConfig:SetRotation(A.modelFrameConfig.rotation);
+                                    end
+                                end,
                                 get = function(info) return A.db.profile.configModelRotation; end,
                             },
                             configSize =
@@ -572,30 +548,8 @@ function A:AceConfig()
                 name = petName,
                 desc = function(self)
                     -- Model
-                    A.modelFrameConfig:ClearModel();
+                    A.modelFrameConfig.rotation = 0;
                     A.modelFrameConfig:SetCreature(vv.creatureID);
-                    -- if ( A.modelAdjust[vv.id] ) then
-                        -- A.modelFrameConfig:SetPosition(0 + A.modelAdjust[vv.id].x, 0 + A.modelAdjust[vv.id].y, 0 + A.modelAdjust[vv.id].z);
-                        -- A.modelFrameConfig:SetModelScale(A.modelAdjust[vv.id].s);
-                    -- else
-                        -- A.modelFrameConfig:SetPosition(0, 0, 0);
-                        -- A.modelFrameConfig:SetModelScale(1);
-                    -- end
-                    if ( A.db.profile.configModelRotation ) then
-                        rotation, rotationTime = 0, GetTime();
-                        A.modelFrameConfig:SetScript("OnUpdate", function()
-                            local t = GetTime();
-
-                            if ( rotationTime and rotationTime + 0.01 < t ) then
-                                A.modelFrameConfig:SetRotation(rotation);
-                                rotation = rotation + 0.01;
-                                rotationTime = t;
-                            end
-                        end);
-                    else
-                        rotationTime = nil;
-                        A.modelFrameConfig:SetRotation(0);
-                    end
 
                     -- Frame pos
                     A.modelFrameConfig:ClearAllPoints()
@@ -665,30 +619,8 @@ function A:AceConfig()
                         name = vvv.name,
                         desc = function(self)
                             -- Model
-                            A.modelFrameConfig:ClearModel();
+                            A.modelFrameConfig.rotation = 0;
                             A.modelFrameConfig:SetCreature(vvv.creatureID);
-                            -- if ( A.modelAdjust[vv.id] ) then
-                                -- A.modelFrameConfig:SetPosition(0 + A.modelAdjust[vv.id].x, 0 + A.modelAdjust[vv.id].y, 0 + A.modelAdjust[vv.id].z);
-                                -- A.modelFrameConfig:SetModelScale(A.modelAdjust[vv.id].s);
-                            -- else
-                                -- A.modelFrameConfig:SetPosition(0, 0, 0);
-                                -- A.modelFrameConfig:SetModelScale(1);
-                            -- end
-                            if ( A.db.profile.configModelRotation ) then
-                                rotation, rotationTime = 0, GetTime();
-                                A.modelFrameConfig:SetScript("OnUpdate", function()
-                                    local t = GetTime();
-
-                                    if ( rotationTime and rotationTime + 0.01 < t ) then
-                                        A.modelFrameConfig:SetRotation(rotation);
-                                        rotation = rotation + 0.01;
-                                        rotationTime = t;
-                                    end
-                                end);
-                            else
-                                rotationTime = nil;
-                                A.modelFrameConfig:SetRotation(0);
-                            end
 
                             -- Frame pos
                             A.modelFrameConfig:ClearAllPoints()
@@ -699,14 +631,14 @@ function A:AceConfig()
                         end,
                         type = "toggle",
                         set = function(info, val)
-                            if ( tContains(A.db.profile.favoriteMounts[k], vvv.id) ) then
-                                A:TableRemove(A.db.profile.favoriteMounts[k], vvv.id);
+                            if ( tContains(A.db.profile.favoriteMounts[k], vvv.spellId) ) then
+                                A:TableRemove(A.db.profile.favoriteMounts[k], vvv.spellId);
                             else
-                                A.db.profile.favoriteMounts[k][#A.db.profile.favoriteMounts[k]+1] = vvv.id;
+                                A.db.profile.favoriteMounts[k][#A.db.profile.favoriteMounts[k]+1] = vvv.spellId;
                             end
                         end,
                         get = function(info)
-                            if ( tContains(A.db.profile.favoriteMounts[k], vvv.id) ) then
+                            if ( tContains(A.db.profile.favoriteMounts[k], vvv.spellId) ) then
                                 return 1;
                             else
                                 return nil;
@@ -726,3 +658,8 @@ function A:AceConfig()
 
     return options;
 end
+
+LibStub("AceConfig-3.0"):RegisterOptionsTable("BrokerPAMConfig", A.AceConfig);
+A.AceConfigDialog:SetDefaultSize("BrokerPAMConfig", 800, 500);
+A.configFrame = A.AceConfigDialog:AddToBlizOptions("BrokerPAMConfig", L["Pets & Mounts"]);
+A.configFrame:HookScript("OnHide", function() A.modelFrameConfig:Hide(); end);

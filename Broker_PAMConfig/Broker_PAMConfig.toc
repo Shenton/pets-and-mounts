@@ -1,0 +1,11 @@
+﻿## Interface: 50001
+## Title: Broker Pets & Mounts Configuration
+## Notes: Configuration panel for Broker Broker Pets & Mounts.
+## Author: Shenton
+## LoadOnDemand: true
+## Dependencies: Broker_PAM
+## OptionalDeps: Ace3
+
+Embeds.xml
+
+Core.lua

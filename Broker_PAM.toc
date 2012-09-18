@@ -4,6 +4,7 @@
 ## Author: Shenton
 ## SavedVariables: pamDB
 ## Version: 0.1
+## OptionalDeps: Ace3
 
 Embeds.xml
 

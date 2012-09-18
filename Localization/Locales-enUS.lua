@@ -65,6 +65,9 @@ L["Config frame"] = true;
 L["Activate the model rotation in the frame."] = true;
 L["Menu frame"] = true;
 L["Select the model frame size."] = true;
+L["Pets & Mounts config loader"] = true;
+L["Failed to load configuration, reason: %s."] = true;
+L["Load configuration"] = true;
 L["Minimap icon is hidden if you want to show it back use: /pam or /petsandmounts"] = true;
 L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random pet.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open the configuration panel."] = true;
 end

@@ -42,60 +42,6 @@ A.pamTable =
 
 A.mountCat = {L["Ground"],L["Fly"],L["Hybrid"],L["Aquatic"],L["Passenger"]};
 
--- Model adjust
-A.modelAdjust =
-{
-    [2671] = -- Mechanical Squirrel
-    {
-        s = 1.5,
-        x = 0,
-        y = 0,
-        z = 0
-    },
-    [8376] = -- Mechanical Chicken
-    {
-        s = 2.5,
-        x = 0,
-        y = 0,
-        z = 0
-    },
-    [7394] = -- Ancona Chicken
-    {
-        s = 2.5,
-        x = 0,
-        y = 0,
-        z = 0
-    },
-    [14421] = -- Brown Prairie Dog
-    {
-        s = 2.5,
-        x = 0,
-        y = 0,
-        z = 0
-    },
-    [29147] = -- Ghostly Skull
-    {
-        s = 2.5,
-        x = 0,
-        y = 0,
-        z = 0
-    },
-    [24480] = -- Mojo
-    {
-        s = 2.5,
-        x = 0,
-        y = 0,
-        z = 0
-    },
-    [14878] = -- Jubling
-    {
-        s = 2.5,
-        x = 0,
-        y = 0,
-        z = 0
-    }
-};
-
 -- Mounts spellID with passengers
 -- Thanks http://mounts.wowlogy.com/special/mounts-with-passengers/
 A.passengerMounts =
@@ -138,9 +84,13 @@ function A:Message(text, color)
 end
 
 --- Send a debug message
-function A:DebugMessage(text)
+function A:DebugMessage(...)
     if ( A.db.profile.debug ) then
-        DEFAULT_CHAT_FRAME:AddMessage(A.color["BLUE"]..L["Pets & Mounts"]..": "..A.color["RESET"]..text);
+        if ( ... ) then
+            DEFAULT_CHAT_FRAME:AddMessage(A.color["BLUE"]..L["Pets & Mounts"]..": "..A.color["RESET"]..(...));
+        else
+            DEFAULT_CHAT_FRAME:AddMessage(A.color["BLUE"]..L["Pets & Mounts"]..": "..A.color["RESET"].."Arg == nil");
+        end
     end
 end
 
@@ -240,7 +190,10 @@ local _, class = UnitClass("player");
 function A:IsStealthed()
     if ( class == "HUNTER" or class == "MAGE" ) then
         for k,v in ipairs(stealthAuras) do
-            if ( UnitBuff("player", v) ) then return 1; end
+            if ( UnitBuff("player", v) ) then
+                A:DebugMessage("IsStealthed() - Stealth buff found");
+                return 1;
+            end
         end
 
         return nil;
@@ -372,23 +325,37 @@ function A:BuildMountsTable()
         leadingLetter = ssub(creatureName, 1, 1);
 
         if ( A.passengerMounts[spellId] ) then
-            cat = 5;
-        else
-            cat = A:GetMountCategory(mountType);
+            if ( not A.pamTable.mounts[5][leadingLetter] ) then A.pamTable.mounts[5][leadingLetter] = {}; end
+
+            A.pamTable.mountsIds[5][#A.pamTable.mountsIds[5]+1] = spellId;
+
+            A.pamTable.mounts[5][leadingLetter][#A.pamTable.mounts[5][leadingLetter]+1] =
+            {
+                id = i,
+                spellId = spellId,
+                creatureID = creatureID,
+                name = creatureName,
+                icon = icon,
+                isSummoned = isSummoned,
+                mountType = mountType,
+            };
         end
+
+        cat = A:GetMountCategory(mountType);
 
         if ( not A.pamTable.mounts[cat][leadingLetter] ) then A.pamTable.mounts[cat][leadingLetter] = {}; end
 
-        A.pamTable.mountsIds[cat][#A.pamTable.mountsIds[cat]+1] = i;
+        A.pamTable.mountsIds[cat][#A.pamTable.mountsIds[cat]+1] = spellId;
 
         A.pamTable.mounts[cat][leadingLetter][#A.pamTable.mounts[cat][leadingLetter]+1] =
         {
             id = i,
+            spellId = spellId,
             creatureID = creatureID,
             name = creatureName,
             icon = icon,
-            --isSummoned = isSummoned,
-            --mountType = mountType,
+            isSummoned = isSummoned,
+            mountType = mountType,
         };
     end
 end
@@ -396,6 +363,7 @@ end
 function A:BuildBothTables()
     A:BuildPetsTable();
     A:BuildMountsTable();
+    A:DebugMessage("Companions available");
 end
 
 -- ********************************************************************************
@@ -521,11 +489,6 @@ local function PAMMenu(self, level)
             end;
             UIDropDownMenu_AddButton(self.info, level);
 
-            -- _G["DropDownList2Button1"]:HookScript("OnEnter", function()
-                -- A.modelFrame:ClearModel();
-                -- A.modelFrame:Hide();
-            -- end);
-
             -- Model rotation
             self.info.text = L["Model rotation"];
             self.info.checked = A.db.profile.modelRotation;
@@ -535,11 +498,6 @@ local function PAMMenu(self, level)
             end;
             UIDropDownMenu_AddButton(self.info, level);
 
-            -- _G["DropDownList2Button2"]:HookScript("OnEnter", function()
-                -- A.modelFrame:ClearModel();
-                -- A.modelFrame:Hide();
-            -- end);
-
             -- Model frame size
             self.info.text = L["Model frame size"];
             self.info.notCheckable = 1;
@@ -547,11 +505,6 @@ local function PAMMenu(self, level)
             self.info.value = "FRAMESIZE";
             self.info.func = function() A.db.profile.modelRotation = not A.db.profile.modelRotation; end;
             UIDropDownMenu_AddButton(self.info, level);
-
-            -- _G["DropDownList2Button3"]:HookScript("OnEnter", function()
-                -- A.modelFrame:ClearModel();
-                -- A.modelFrame:Hide();
-            -- end);
         end
     elseif (level == 3 ) then
         local summonedPet = C_PetJournal.GetSummonedPetID();
@@ -578,7 +531,7 @@ local function PAMMenu(self, level)
                     end
 
                     self.info.icon = vv.icon;
-                    self.info.disabled = iSsummoned;
+                    self.info.disabled = isSummoned;
                     self.info.keepShownOnClick = 1;
                     self.info.func = function() C_PetJournal.SummonPetByID(vv.petID); end;
                     UIDropDownMenu_AddButton(self.info, level);
@@ -591,30 +544,7 @@ local function PAMMenu(self, level)
                         end
 
                         -- Model
-                        A.modelFrame:ClearModel();
                         A.modelFrame:SetCreature(vv.creatureID);
-                        -- if ( A.modelAdjust[vv.id] ) then
-                            -- A.modelFrame:SetPosition(0 + A.modelAdjust[vv.id].x, 0 + A.modelAdjust[vv.id].y, 0 + A.modelAdjust[vv.id].z);
-                            -- A.modelFrame:SetModelScale(A.modelAdjust[vv.id].s);
-                        -- else
-                            -- A.modelFrame:SetPosition(0, 0, 0);
-                            -- A.modelFrame:SetModelScale(1);
-                        -- end
-                        if ( A.db.profile.modelRotation ) then
-                            rotation, rotationTime = 0, GetTime();
-                            A.modelFrame:SetScript("OnUpdate", function()
-                                local t = GetTime();
-
-                                if ( rotationTime and rotationTime + 0.01 < t ) then
-                                    A.modelFrame:SetRotation(rotation);
-                                    rotation = rotation + 0.01;
-                                    rotationTime = t;
-                                end
-                            end);
-                        else
-                            rotationTime = nil;
-                            A.modelFrame:SetRotation(0);
-                        end
 
                         -- Frame pos
                         local point, relativePoint = A:GetAnchor();
@@ -775,23 +705,7 @@ local function PAMMenu(self, level)
                                 end
 
                                 -- Model
-                                A.modelFrame:ClearModel();
                                 A.modelFrame:SetCreature(vvv.creatureID);
-                                if ( A.db.profile.modelRotation ) then
-                                    rotation, rotationTime = 0, GetTime();
-                                    A.modelFrame:SetScript("OnUpdate", function()
-                                        local t = GetTime();
-
-                                        if ( rotationTime and rotationTime + 0.01 < t ) then
-                                            A.modelFrame:SetRotation(rotation);
-                                            rotation = rotation + 0.01;
-                                            rotationTime = t;
-                                        end
-                                    end);
-                                else
-                                    rotationTime = nil;
-                                    A.modelFrame:SetRotation(0);
-                                end
 
                                 -- Frame pos
                                 local point, relativePoint = A:GetAnchor();
@@ -815,21 +729,25 @@ end
 
 function A:PLAYER_REGEN_DISABLED()
     A.noAutoPet = 1;
+    A:DebugMessage("PLAYER_REGEN_DISABLED() - +Combat");
 end
 
 function A:PLAYER_REGEN_ENABLED()
-    A.noAutoPet = nil;
+    A:AutoPetDelay();
+    A:DebugMessage("PLAYER_REGEN_ENABLED() - -Combat");
 end
 
 function A:AutoPetDelay()
     A:CancelTimer(A.shiftTimer, 1);
-    A.shiftTimer = A:ScheduleTimer("AutoPetCallback", A.db.profile.shiftTimer);
+    A.shiftTimer = A:ScheduleTimer("AutoPetDelayCallback", A.db.profile.shiftTimer);
     A.noAutoPet = 1; -- No auto summon when on timer delay
+    A:DebugMessage("AutoPetDelay()");
 end
 
-function A:AutoPetDelay()
+function A:AutoPetDelayCallback()
     A.noAutoPet = nil;
     A:AutoPet();
+    A:DebugMessage("AutoPetDelayCallback()");
 end
 
 function A:UPDATE_STEALTH()
@@ -841,24 +759,121 @@ function A:UPDATE_STEALTH()
         A:CancelTimer(A.shiftTimer, 1);
         A:ScheduleTimer("AutoPet", A.db.profile.shiftTimer);
     end
+    A:DebugMessage("UPDATE_STEALTH()");
 end
 
+-- Other stealth buffs, no timed summon here too spammy
 function A:UNIT_AURA(self, unit)
     if ( unit == "player") then
         if ( not A.db.profile.notWhenStealthed ) then return; end
 
-        if ( C_PetJournal.GetSummonedPetID() ) then
-            A:AutoPet();
-        else
-            A:CancelTimer(A.shiftTimer, 1);
-            A:ScheduleTimer("AutoPet", A.db.profile.shiftTimer);
-        end
+        A:AutoPet();
     end
 end
 
-function A:PET_JOURNAL_LIST_UPDATE(...)
-    A:BuildBothTables();
-    A:UnregisterEvent("PET_JOURNAL_LIST_UPDATE");
+function A:LOOT_OPENED()
+    A.noAutoPet = 1;
+end
+
+function A:LOOT_CLOSED()
+    A.noAutoPet = nil;
+end
+
+-- function A:UNIT_SPELLCAST_START(...)
+    -- print(...)
+-- end
+-- function A:UNIT_SPELLCAST_SUCCEEDED(...)
+    -- print(...)
+-- end
+
+-- ********************************************************************************
+-- Ace DB & Config panel loader
+-- ********************************************************************************
+
+A.aceDefaultDB =
+{
+    profile =
+    {
+        debug = nil, -- d
+        modelRotation = 1, -- d
+        modelFrameWidth = 200, -- d
+        modelFrameHeight = 200, -- d
+        configModelRotation = 1, -- d
+        configModelFrameWidth = 400, -- d
+        configModelFrameHeight = 400, -- d
+        filterMultiple = 1, -- d
+        noFilterCustom = 1, -- d
+        autoPet = 1, -- d
+        mainTimer = 30, -- d
+        shiftTimer = 10, -- d
+        alreadyGotPet = 1, -- d
+        notWhenStealthed = 1, -- d
+        noHybridWhenGround = 1, -- d
+        dismountFlying = 1, -- d
+        ldbi = {}, -- d
+        favoritePets = {}, -- d
+        favoriteMounts = -- d
+        {
+            [1] = {}, -- Ground
+            [2] = {}, -- Fly
+            [3] = {}, -- Hybrid (ground & fly)
+            [4] = {}, -- Aquatic
+            [5] = {}, -- with passengers
+        },
+    }
+};
+
+--- Load config addon and remove config loader from Blizzard options frame
+function A:LoadAddonConfig()
+    local loaded, reason = LoadAddOn("Broker_PAMConfig");
+
+    if ( loaded ) then
+        for k,v in ipairs(INTERFACEOPTIONS_ADDONCATEGORIES) do
+            if ( v.name == L["Pets & Mounts config loader"] ) then
+                INTERFACEOPTIONS_ADDONCATEGORIES[k] = nil;
+            end
+        end
+    elseif ( reason ) then
+        reason = _G["ADDON_"..reason];
+        A:Message(L["Failed to load configuration, reason: %s."]:format(reason), 1, 1);
+    end
+
+    return loaded;
+end
+
+--- Add to blizzard options frame a temporary category
+function A:AddToBlizzTemp()
+    local f  = CreateFrame("Frame");
+    f.name = L["Pets & Mounts config loader"];
+
+    local b = CreateFrame("Button", nil, f, "UIPanelButtonTemplate");
+    b:SetSize(140, 22);
+    b:SetPoint("TOPLEFT", f, "TOPLEFT", 20, -20);
+    b:SetText(L["Load configuration"]);
+    b:SetScript("OnClick", function(self)
+        local loaded = A:LoadAddonConfig();
+
+        if ( loaded ) then
+            InterfaceAddOnsList_Update();
+            InterfaceOptionsFrame_OpenToCategory(A.configFrame);
+        end
+    end);
+
+    InterfaceOptions_AddCategory(f);
+end
+
+--- Display configuration panel
+-- Load it if needed
+function A:OpenConfigPanel()
+    if ( A.AceConfigDialog ) then
+        InterfaceOptionsFrame_OpenToCategory(A.configFrame);
+    else
+        local loaded = A:LoadAddonConfig();
+
+        if ( loaded ) then
+            InterfaceOptionsFrame_OpenToCategory(A.configFrame);
+        end
+    end
 end
 
 -- ********************************************************************************
@@ -893,7 +908,7 @@ function A:OnEnable()
                     ToggleDropDownMenu(1, nil, A.menuFrame, self, 0, 0);
                     GameTooltip:Hide();
                 elseif ( button == "MiddleButton" ) then
-                    InterfaceOptionsFrame_OpenToCategory(A.configFrame);
+                    A:OpenConfigPanel();
                 end
             end,
             OnTooltipShow = function(tooltip)
@@ -929,6 +944,19 @@ function A:OnEnable()
         insets = { left = 4, right = 4, top = 4, bottom = 4 }});
     A.modelFrame:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b);
     A.modelFrame:SetBackdropColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b);
+    A.modelFrame:SetScript("OnShow", function(self) self.rotation, self.rotationTime = 0, GetTime(); end);
+    A.modelFrame:SetScript("OnHide", function(self) self:ClearModel(); end);
+    A.modelFrame:SetScript("OnUpdate", function(self)
+        if ( A.db.profile.modelRotation ) then
+            local t = GetTime();
+
+            if ( self.rotationTime and self.rotationTime + 0.01 < t ) then
+                self:SetRotation(self.rotation);
+                self.rotation = self.rotation + 0.01;
+                self.rotationTime = t;
+            end
+        end
+    end);
     A.modelFrame:Hide();
 
     -- Model frame config
@@ -941,29 +969,86 @@ function A:OnEnable()
         insets = { left = 4, right = 4, top = 4, bottom = 4 }});
     A.modelFrameConfig:SetBackdropBorderColor(.6, .6, .6, .9);
     A.modelFrameConfig:SetBackdropColor(.9, .9, .9, .9);
+    A.modelFrameConfig:EnableMouse(1);
+    A.modelFrameConfig:SetScript("OnShow", function(self) self.rotation, self.rotationTime = 0, GetTime(); end);
+    A.modelFrameConfig:SetScript("OnHide", function(self)
+        self.manualRotation = nil;
+        self.isRotating = nil;
+        self.rotation = nil;
+        self.rotationTime = nil;
+        self:ClearModel();
+    end);
+    A.modelFrameConfig:SetScript("OnEnter", function(self)
+        self.mouseOver = 1;
+    end);
+    A.modelFrameConfig:SetScript("OnLeave", function(self)
+        self.mouseOver = nil;
+        self.manualRotation = nil;
+        self.isRotating = nil;
+    end);
+    A.modelFrameConfig:SetScript("OnMouseDown", function(self)
+        self.manualRotation = 1;
+        self.isRotating = 1;
+        self.rotation = self.rotation or 0;
+        self.xOrigin = GetCursorPosition();
+    end);
+    A.modelFrameConfig:SetScript("OnMouseUp", function(self) self.isRotating = nil; end);
+    A.modelFrameConfig:SetScript("OnUpdate", function(self)
+        if ( self.manualRotation ) then
+            if ( self.isRotating ) then
+                local x = GetCursorPosition();
+                local diff = (x - self.xOrigin) * MODELFRAME_DRAG_ROTATION_CONSTANT;
+
+                self.xOrigin = GetCursorPosition();
+                self.rotation = self.rotation + diff;
+
+                if ( self.rotation < 0 ) then
+                    self.rotation = self.rotation + (2 * PI);
+                end
+
+                if ( self.rotation > (2 * PI) ) then
+                    self.rotation = self.rotation - (2 * PI);
+                end
+
+                self:SetRotation(self.rotation, false);
+            end
+        elseif ( A.db.profile.configModelRotation and not self.mouseOver ) then
+            local t = GetTime();
+
+            if ( self.rotationTime and self.rotationTime + 0.03 < t ) then
+                self:SetRotation(self.rotation);
+                self.rotation = self.rotation + 0.03;
+                self.rotationTime = t;
+            end
+        end
+    end);
     A.modelFrameConfig:Hide();
 
     -- Events
     A:RegisterEvent("COMPANION_LEARNED", "BuildBothTables");
     A:RegisterEvent("COMPANION_UNLEARNED", "BuildBothTables");
-    A:RegisterEvent("PLAYER_REGEN_DISABLED"); -- Combat
-    A:RegisterEvent("PLAYER_REGEN_ENABLED"); -- Out of combat
-    A:RegisterEvent("PLAYER_ENTERING_WORLD", "AutoPetDelay"); -- Every loading screen
-    A:RegisterEvent("PLAYER_CONTROL_GAINED", "AutoPetDelay"); -- After a cc or fly path
-    A:RegisterEvent("PLAYER_UNGHOST", "AutoPetDelay"); -- It's alive!!
-    A:RegisterEvent("PLAYER_LOSES_VEHICLE_DATA", "AutoPetDelay"); -- Quitting a vehicule or a multi mount
-    A:RegisterEvent("UPDATE_STEALTH"); -- Gain or loose stealth
-    A:RegisterEvent("UNIT_AURA"); -- Damn hunters and mages
-    A:RegisterEvent("PET_JOURNAL_LIST_UPDATE"); -- I assume at this point pets are available from server
-
-    -- Config panel
-    LibStub("AceConfig-3.0"):RegisterOptionsTable("BrokerPAMConfig", A.AceConfig);
-    LibStub("AceConfigDialog-3.0"):SetDefaultSize("BrokerPAMConfig", 800, 500);
-    A.configFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("BrokerPAMConfig", A.L["Pets & Mounts"]);
-    A.configFrame:HookScript("OnHide", function()
-        A.modelFrameConfig:Hide();
-    end);
+    A:RegisterEvent("PLAYER_REGEN_DISABLED"); -- Combat.
+    A:RegisterEvent("PLAYER_REGEN_ENABLED"); -- Out of combat.
+    A:RegisterEvent("PLAYER_ENTERING_WORLD", "AutoPetDelay"); -- Every loading screen.
+    A:RegisterEvent("PLAYER_CONTROL_GAINED", "AutoPetDelay"); -- After a cc or fly path.
+    A:RegisterEvent("PLAYER_UNGHOST", "AutoPetDelay"); -- It's alive!! (Corpse run, zoning)
+    A:RegisterEvent("PLAYER_ALIVE", "AutoPetDelay"); -- It's alive!! (Res, also fire when releasing)
+    A:RegisterEvent("PLAYER_LOSES_VEHICLE_DATA", "AutoPetDelay"); -- Quitting a vehicule or a multi mount you control.
+    A:RegisterEvent("UNIT_EXITED_VEHICLE", "AutoPetDelay"); -- Exiting a vehicule.
+    A:RegisterEvent("UPDATE_STEALTH"); -- Gain or loose stealth.
+    A:RegisterEvent("UNIT_AURA"); -- Damn hunters and mages..
+    A:RegisterEvent("LOOT_OPENED"); -- Looting. Summoning a pet close the panel.
+    A:RegisterEvent("LOOT_CLOSED"); -- End looting.
+    --A:RegisterEvent("COMPANION_UPDATE"); -- Do not want to use this, too spammy, seriously too, wtf blizzard with that. And no args? derp (at least unit :/)
+    --A:RegisterEvent("UNIT_SPELLCAST_START"); -- Perhaps I will use it for preventing summon in rare case, if it happen when testing.
+    --A:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED"); -- Same.
 
     -- Main timer
     if ( A.db.profile.autoPet ) then A.mainTimer = A:ScheduleRepeatingTimer("AutoPet", A.db.profile.mainTimer); end
+
+    -- Build companions table (need a better way)
+    A:ScheduleTimer("BuildBothTables", 5);
+
+    -- Add the config loader to blizzard addon configuration panel
+    A:AddToBlizzTemp();
 end
