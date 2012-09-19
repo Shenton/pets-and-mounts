@@ -13,4 +13,4 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 == Installation
 
-AddOn folder must have the same name as the .toc file.
+AddOn folder must have the same name as the .toc file. Broker_PAMConfig need to be is the AddOns folder.

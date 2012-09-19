@@ -787,7 +787,7 @@ end
 -- end
 
 -- ********************************************************************************
--- Ace DB & Config panel loader
+-- Ace DB
 -- ********************************************************************************
 
 A.aceDefaultDB =
@@ -823,6 +823,10 @@ A.aceDefaultDB =
     }
 };
 
+-- ********************************************************************************
+-- Config panel loader
+-- ********************************************************************************
+
 --- Load config addon and remove config loader from Blizzard options frame
 function A:LoadAddonConfig()
     local loaded, reason = LoadAddOn("Broker_PAMConfig");
@@ -843,7 +847,7 @@ end
 
 --- Add to blizzard options frame a temporary category
 function A:AddToBlizzTemp()
-    local f  = CreateFrame("Frame");
+    local f  = CreateFrame("Frame", "BrokerPAMTempConfigFrame");
     f.name = L["Pets & Mounts config loader"];
 
     local b = CreateFrame("Button", nil, f, "UIPanelButtonTemplate");
@@ -885,46 +889,6 @@ end
 function A:OnInitialize()
     -- Database
     A.db = LibStub("AceDB-3.0"):New("pamDB", A.aceDefaultDB);
-end
-
---- AceAddon callback
--- Called during the PLAYER_LOGIN event
-function A:OnEnable()
-    -- LDB
-    if ( LibStub("LibDataBroker-1.1"):GetDataObjectByName("BrokerPAMLDB") ) then
-        A.ldbObject = LibStub("LibDataBroker-1.1"):GetDataObjectByName("BrokerPAMLDB");
-    else
-        A.ldbObject = LibStub("LibDataBroker-1.1"):NewDataObject("BrokerPAMLDB", {
-            type = "data source",
-            text = L["Pets & Mounts"],
-            label = L["Pets & Mounts"],
-            icon = "Interface\\ICONS\\Achievement_WorldEvent_Brewmaster",
-            tocname = "Broker_PAM",
-            OnClick = function(self, button)
-                if (button == "LeftButton") then
-                    A:RandomPet();
-                elseif ( button == "RightButton" ) then
-                    A.menuFrame.initialize = PAMMenu;
-                    ToggleDropDownMenu(1, nil, A.menuFrame, self, 0, 0);
-                    GameTooltip:Hide();
-                elseif ( button == "MiddleButton" ) then
-                    A:OpenConfigPanel();
-                end
-            end,
-            OnTooltipShow = function(tooltip)
-                tooltip:AddDoubleLine(A.color["WHITE"]..L["Pets & Mounts"], A.color["GREEN"].."v"..A.version);
-                tooltip:AddLine(" ");
-                tooltip:AddLine(L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random pet.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open the configuration panel."]);
-            end
-        });
-    end
-
-    -- LDBIcon
-    if ( not LibStub("LibDBIcon-1.0"):IsRegistered("BrokerPAMLDBI") ) then LibStub("LibDBIcon-1.0"):Register("BrokerPAMLDBI", A.ldbObject, A.db.profile.ldbi); end
-
-    -- Slash command
-    A:RegisterChatCommand("petsandmounts", "SlashCommand");
-    A:RegisterChatCommand("pam", "SlashCommand");
 
     -- Menu frame & table
     A.menuFrame = CreateFrame("Frame", "BrokerPAMMenuFrame");
@@ -1023,6 +987,46 @@ function A:OnEnable()
         end
     end);
     A.modelFrameConfig:Hide();
+end
+
+--- AceAddon callback
+-- Called during the PLAYER_LOGIN event
+function A:OnEnable()
+    -- LDB
+    if ( LibStub("LibDataBroker-1.1"):GetDataObjectByName("BrokerPAMLDB") ) then
+        A.ldbObject = LibStub("LibDataBroker-1.1"):GetDataObjectByName("BrokerPAMLDB");
+    else
+        A.ldbObject = LibStub("LibDataBroker-1.1"):NewDataObject("BrokerPAMLDB", {
+            type = "data source",
+            text = L["Pets & Mounts"],
+            label = L["Pets & Mounts"],
+            icon = "Interface\\ICONS\\Achievement_WorldEvent_Brewmaster",
+            tocname = "Broker_PAM",
+            OnClick = function(self, button)
+                if (button == "LeftButton") then
+                    A:RandomPet();
+                elseif ( button == "RightButton" ) then
+                    A.menuFrame.initialize = PAMMenu;
+                    ToggleDropDownMenu(1, nil, A.menuFrame, self, 0, 0);
+                    GameTooltip:Hide();
+                elseif ( button == "MiddleButton" ) then
+                    A:OpenConfigPanel();
+                end
+            end,
+            OnTooltipShow = function(tooltip)
+                tooltip:AddDoubleLine(A.color["WHITE"]..L["Pets & Mounts"], A.color["GREEN"].."v"..A.version);
+                tooltip:AddLine(" ");
+                tooltip:AddLine(L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random pet.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open the configuration panel."]);
+            end
+        });
+    end
+
+    -- LDBIcon
+    if ( not LibStub("LibDBIcon-1.0"):IsRegistered("BrokerPAMLDBI") ) then LibStub("LibDBIcon-1.0"):Register("BrokerPAMLDBI", A.ldbObject, A.db.profile.ldbi); end
+
+    -- Slash command
+    A:RegisterChatCommand("petsandmounts", "SlashCommand");
+    A:RegisterChatCommand("pam", "SlashCommand");
 
     -- Events
     A:RegisterEvent("COMPANION_LEARNED", "BuildBothTables");
