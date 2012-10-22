@@ -9,7 +9,18 @@
 local A = _G["BrokerPAMGlobal"];
 local L = A.L;
 
+-- Lua globals to locals
+local ipairs, pairs, type = ipairs, pairs, type;
+
+-- WoW globals to locals
+local tContains, strtrim = tContains, strtrim;
+
+-- Ace3 libs <3
 A.AceConfigDialog = LibStub("AceConfigDialog-3.0");
+A.AceConfigRegistry = LibStub("AceConfigRegistry-3.0");
+
+-- Init addon databases
+A:Initialize();
 
 local modelFrameSizeSelect =
 {
@@ -20,6 +31,98 @@ local modelFrameSizeSelect =
     [300] = "300x300",
     [350] = "350x350",
     [400] = "400x400",
+};
+
+-- Set overwrite or dif name popup dialog
+StaticPopupDialogs["BrokerPamOverwriteOrChangeNameSet"] =
+{
+    text = L["You already got a set named %s.\n\nEnter a new name or leave it blank to overwrite."],
+    button1 = L["Accept"],
+    button2 = L["Cancel"],
+    hasEditBox = true,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+    enterClicksFirstButton = true,
+    OnShow = function(self) self.button1:Disable(); end,
+    OnHide = function()
+        A.newPetSetName = nil;
+        A.newMountSetName = nil;
+        A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+    end,
+    EditBoxOnTextChanged = function (self) self:GetParent().button1:Enable(); end,
+    EditBoxOnEnterPressed = function(self)
+        local name = strtrim(self:GetParent().editBox:GetText());
+
+        if ( not name or name == "" ) then
+            if ( A.newPetSetName ) then
+                A.db.profile.savedSets.pets[A.newPetSetName] = A:CopyTable(A.db.profile.favoritePets);
+                A.newPetSetName = nil;
+            elseif ( A.newMountSetName ) then
+                A.db.profile.savedSets.mounts[A.newMountSetName] = A:CopyTable(A.db.profile.favoriteMounts);
+                A.newMountSetName = nil;
+            end
+
+            A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+            return;
+        end
+
+        if ( A.newPetSetName ) then
+            if ( A.db.profile.savedSets.pets[name] ) then
+                A:Message(L["Set %s already exists."]:format(name), 1);
+            else
+                A.db.profile.savedSets.pets[name] = A:CopyTable(A.db.profile.favoritePets);
+                A.newPetSetName = nil;
+                self:GetParent():Hide();
+            end
+        elseif ( A.newMountSetName ) then
+            if ( A.db.profile.savedSets.mounts[name] ) then
+                A:Message(L["Set %s already exists."]:format(name), 1);
+            else
+                A.db.profile.savedSets.mounts[name] = A:CopyTable(A.db.profile.favoriteMounts);
+                A.newPetSetName = nil;
+                self:GetParent():Hide();
+            end
+
+            A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+        end
+    end,
+    EditBoxOnEscapePressed = function(self) self:GetParent():Hide(); end,
+    OnAccept = function(self)
+        local name = strtrim(self.editBox:GetText());
+
+        if ( not name or name == "" ) then
+            if ( A.newPetSetName ) then
+                A.db.profile.savedSets.pets[A.newPetSetName] = A:CopyTable(A.db.profile.favoritePets);
+                A.newPetSetName = nil;
+            elseif ( A.newMountSetName ) then
+                A.db.profile.savedSets.mounts[A.newMountSetName] = A:CopyTable(A.db.profile.favoriteMounts);
+                A.newMountSetName = nil;
+            end
+
+            A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+            return;
+        end
+
+        if ( A.newPetSetName ) then
+            if ( A.db.profile.savedSets.pets[name] ) then
+                A:Message(L["Set %s already exists."]:format(name), 1);
+            else
+                A.db.profile.savedSets.pets[name] = A:CopyTable(A.db.profile.favoritePets);
+                A.newPetSetName = nil;
+            end
+        elseif ( A.newMountSetName ) then
+            if ( A.db.profile.savedSets.mounts[name] ) then
+                A:Message(L["Set %s already exists."]:format(name), 1);
+            else
+                A.db.profile.savedSets.mounts[name] = A:CopyTable(A.db.profile.favoriteMounts);
+                A.newPetSetName = nil;
+            end
+
+            A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+        end
+    end,
+    preferredIndex = 3,
 };
 
 local options, orderGroup, orderItem, petName;
@@ -222,7 +325,7 @@ function A:AceConfig()
                             {
                                 order = 2,
                                 name = L["Size"],
-                                desc = A.L["Select the model frame size."],
+                                desc = L["Select the model frame size."],
                                 type = "select",
                                 values = modelFrameSizeSelect,
                                 get = function() return A.db.profile.configModelFrameWidth; end,
@@ -251,7 +354,7 @@ function A:AceConfig()
                             {
                                 order = 12,
                                 name = L["Size"],
-                                desc = A.L["Select the model frame size."],
+                                desc = L["Select the model frame size."],
                                 type = "select",
                                 values = modelFrameSizeSelect,
                                 get = function() return A.db.profile.modelFrameWidth; end,
@@ -505,17 +608,375 @@ function A:AceConfig()
                 order = 10,
                 name = L["Companions"],
                 type = "group",
-                args =
-                {
-                },
+                args = {},
             },
             mounts =
             {
                 order = 20,
                 name = L["Mounts"],
                 type = "group",
+                args = {},
+            },
+            sets =
+            {
+                order = 30,
+                name = L["Sets"],
+                type = "group",
                 args =
                 {
+                    pets =
+                    {
+                        order = 0,
+                        name = L["Companions"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            current =
+                            {
+                                order = 0,
+                                name = function()
+                                    -- retrieve current set
+                                    local current = "Not implemented yet";
+                                    return L["Currently using set: %s"]:format(current);
+                                end,
+                                type = "description",
+                            },
+                            load =
+                            {
+                                order = 10,
+                                name = L["Load"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
+                                    select =
+                                    {
+                                        order = 0,
+                                        name = L["Load"],
+                                        type = "select",
+                                        values = function()
+                                            local out = {};
+
+                                            for k in pairs(A.db.profile.savedSets.pets) do
+                                                out[k] = k;
+                                            end
+
+                                            return out;
+                                        end;
+                                        get = nil,
+                                        set = function(info, val)
+                                            if ( A.db.profile.savedSets.pets[val] ) then
+                                                A.db.profile.favoritePets = {};
+                                                A:CopyTable(A.db.profile.savedSets.pets[val], A.db.profile.favoritePets);
+                                            end
+                                        end,
+                                    },
+                                },
+                            },
+                            save =
+                            {
+                                order = 20,
+                                name = L["Save"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
+                                    input =
+                                    {
+                                        order = 0,
+                                        name = L["Name"],
+                                        type = "input",
+                                        set = function(info, val) A.newPetSetName = val; end,
+                                    },
+                                    exec =
+                                    {
+                                        order = 1,
+                                        name = L["Save"],
+                                        type = "execute",
+                                        disabled = not A.newPetSetName,
+                                        func = function()
+                                            if ( A.db.profile.savedSets.pets[A.newPetSetName] ) then
+                                                StaticPopup_Show("BrokerPamOverwriteOrChangeNameSet", A.newPetSetName);
+                                            else
+                                                A.db.profile.savedSets.pets[A.newPetSetName] = A:CopyTable(A.db.profile.favoritePets);
+                                                A.newPetSetName = nil;
+                                            end
+                                        end;
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    mounts =
+                    {
+                        order = 0,
+                        name = L["Mounts"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            current =
+                            {
+                                order = 0,
+                                name = function()
+                                    -- retrieve current set
+                                    local current = "Not implemented yet";
+                                    return L["Currently using set: %s"]:format(current);
+                                end,
+                                type = "description",
+                            },
+                            load =
+                            {
+                                order = 10,
+                                name = L["Load"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
+                                    select =
+                                    {
+                                        order = 0,
+                                        name = L["Load"],
+                                        type = "select",
+                                        values = function()
+                                            local out = {};
+
+                                            for k in pairs(A.db.profile.savedSets.mounts) do
+                                                out[k] = k;
+                                            end
+
+                                            return out;
+                                        end;
+                                        get = nil,
+                                        set = function(info, val)
+                                            if ( A.db.profile.savedSets.mounts[val] ) then
+                                                A.db.profile.favoriteMounts = {};
+                                                A:CopyTable(A.db.profile.savedSets.mounts[val], A.db.profile.favoriteMounts);
+                                            end
+                                        end,
+                                    },
+                                },
+                            },
+                            save =
+                            {
+                                order = 20,
+                                name = L["Save"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
+                                    input =
+                                    {
+                                        order = 0,
+                                        name = L["Name"],
+                                        type = "input",
+                                        set = function(info, val) A.newMountSetName = val; end,
+                                    },
+                                    exec =
+                                    {
+                                        order = 1,
+                                        name = L["Save"],
+                                        type = "execute",
+                                        disabled = not A.newMountSetName,
+                                        func = function()
+                                            if ( A.db.profile.savedSets.mounts[A.newMountSetName] ) then
+                                                StaticPopup_Show("BrokerPamOverwriteOrChangeNameSet", A.newMountSetName);
+                                            else
+                                                A.db.profile.savedSets.mounts[A.newMountSetName] = A:CopyTable(A.db.profile.favoriteMounts);
+                                                A.newMountSetName = nil;
+                                            end
+                                        end;
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            forceOne =
+            {
+                order = 40,
+                name = L["Force One"],
+                type = "group",
+                args =
+                {
+                    pets =
+                    {
+                        order = 0,
+                        name = L["Companions"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            pet =
+                            {
+                                order = 0,
+                                name = L["Companions"],
+                                desc = L["Select the companion to force summon."],
+                                type = "select",
+                                values = function()
+                                    local out = { [0] = L["None"] };
+
+                                    for k,v in A:PairsByKeys(A.pamTable.pets) do
+                                        for kk,vv in ipairs(v) do
+                                            out[vv.petID] = vv.name;
+                                        end
+                                    end
+
+                                    return out;
+                                end,
+                                get = function() return A.db.profile.forceOne.pet; end,
+                                set = function(self, val)
+                                    if ( val == 0 ) then
+                                        A.db.profile.forceOne.pet = nil;
+                                    elseif ( type(val) == "number" ) then
+                                        A.db.profile.forceOne.pet = val;
+                                    end
+                                end,
+                            },
+                        },
+                    },
+                    mounts =
+                    {
+                        order = 10,
+                        name = L["Mounts"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            aquatic =
+                            {
+                                order = 0,
+                                name = L["Aquatic"],
+                                desc = L["Select the %s mount to force summon."]:format(L["Aquatic"]),
+                                type = "select",
+                                values = function()
+                                    local out = { [0] = L["None"] };
+
+                                    for k,v in A:PairsByKeys(A.pamTable.mounts[4]) do
+                                        for kk,vv in ipairs(v) do
+                                            out[vv.spellId] = vv.name;
+                                        end
+                                    end
+
+                                    return out;
+                                end,
+                                get = function() return A.db.profile.forceOne.mount[4]; end,
+                                set = function(self, val)
+                                    if ( val == 0 ) then
+                                        A.db.profile.forceOne.mount[4] = nil;
+                                    else
+                                        A.db.profile.forceOne.mount[4] = val;
+                                    end
+                                end,
+                            },
+                            ground =
+                            {
+                                order = 1,
+                                name = L["Ground"],
+                                desc = L["Select the %s mount to force summon."]:format(L["Ground"]),
+                                type = "select",
+                                values = function()
+                                    local out = { [0] = L["None"] };
+
+                                    for k,v in A:PairsByKeys(A.pamTable.mounts[1]) do
+                                        for kk,vv in ipairs(v) do
+                                            out[vv.spellId] = vv.name;
+                                        end
+                                    end
+
+                                    return out;
+                                end,
+                                get = function() return A.db.profile.forceOne.mount[1]; end,
+                                set = function(self, val)
+                                    if ( val == 0 ) then
+                                        A.db.profile.forceOne.mount[1] = nil;
+                                    else
+                                        A.db.profile.forceOne.mount[1] = val;
+                                    end
+                                end,
+                            },
+                            fly =
+                            {
+                                order = 2,
+                                name = L["Fly"],
+                                desc = L["Select the %s mount to force summon."]:format(L["Fly"]),
+                                type = "select",
+                                values = function()
+                                    local out = { [0] = L["None"] };
+
+                                    for k,v in A:PairsByKeys(A.pamTable.mounts[2]) do
+                                        for kk,vv in ipairs(v) do
+                                            out[vv.spellId] = vv.name;
+                                        end
+                                    end
+
+                                    return out;
+                                end,
+                                get = function() return A.db.profile.forceOne.mount[2]; end,
+                                set = function(self, val)
+                                    if ( val == 0 ) then
+                                        A.db.profile.forceOne.mount[2] = nil;
+                                    else
+                                        A.db.profile.forceOne.mount[2] = val;
+                                    end
+                                end,
+                            },
+                            hybrid =
+                            {
+                                order = 3,
+                                name = L["Hybrid"],
+                                desc = L["Select the %s mount to force summon."]:format(L["Hybrid"]),
+                                type = "select",
+                                values = function()
+                                    local out = { [0] = L["None"] };
+
+                                    for k,v in A:PairsByKeys(A.pamTable.mounts[3]) do
+                                        for kk,vv in ipairs(v) do
+                                            out[vv.spellId] = vv.name;
+                                        end
+                                    end
+
+                                    return out;
+                                end,
+                                get = function() return A.db.profile.forceOne.mount[3]; end,
+                                set = function(self, val)
+                                    if ( val == 0 ) then
+                                        A.db.profile.forceOne.mount[3] = nil;
+                                    else
+                                        A.db.profile.forceOne.mount[3] = val;
+                                    end
+                                end,
+                            },
+                            passenger =
+                            {
+                                order = 4,
+                                name = L["Passenger"],
+                                desc = L["Select the %s mount to force summon."]:format(L["Passenger"]),
+                                type = "select",
+                                values = function()
+                                    local out = { [0] = L["None"] };
+
+                                    for k,v in A:PairsByKeys(A.pamTable.mounts[5]) do
+                                        for kk,vv in ipairs(v) do
+                                            out[vv.spellId] = vv.name;
+                                        end
+                                    end
+
+                                    return out;
+                                end,
+                                get = function() return A.db.profile.forceOne.mount[5]; end,
+                                set = function(self, val)
+                                    if ( val == 0 ) then
+                                        A.db.profile.forceOne.mount[5] = nil;
+                                    else
+                                        A.db.profile.forceOne.mount[5] = val;
+                                    end
+                                end,
+                            },
+                        },
+                    },
                 },
             },
         },
@@ -558,6 +1019,8 @@ function A:AceConfig()
 
                     return L["Add %s to favorite."]:format(vv.name);
                 end,
+                --icon = string.gsub(vv.icon, "\\", "\\\\"),
+                image = vv.icon,
                 type = "toggle",
                 set = function(info, val)
                     if ( tContains(A.db.profile.favoritePets, vv.petID) ) then
@@ -629,6 +1092,7 @@ function A:AceConfig()
 
                             return L["Add %s to favorite."]:format(vvv.name);
                         end,
+                        image = vvv.icon,
                         type = "toggle",
                         set = function(info, val)
                             if ( tContains(A.db.profile.favoriteMounts[k], vvv.spellId) ) then
@@ -660,6 +1124,6 @@ function A:AceConfig()
 end
 
 LibStub("AceConfig-3.0"):RegisterOptionsTable("BrokerPAMConfig", A.AceConfig);
-A.AceConfigDialog:SetDefaultSize("BrokerPAMConfig", 800, 500);
+--A.AceConfigDialog:SetDefaultSize("BrokerPAMConfig", 800, 500);
 A.configFrame = A.AceConfigDialog:AddToBlizOptions("BrokerPAMConfig", L["Pets & Mounts"]);
 A.configFrame:HookScript("OnHide", function() A.modelFrameConfig:Hide(); end);
