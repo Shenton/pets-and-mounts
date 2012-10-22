@@ -1,0 +1,41 @@
+﻿<Ui xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
+    <Button name="BrokerPAMSecureButton" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
+        <Scripts>
+            <PreClick>
+                BrokerPAMGlobal:PreClick(self);
+            </PreClick>
+        </Scripts>
+    </Button>
+
+    <Button name="BrokerPAMSecureButtonPassengers" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
+        <Scripts>
+            <PreClick>
+                BrokerPAMGlobal:PreClick(self);
+            </PreClick>
+        </Scripts>
+    </Button>
+
+    <Button name="BrokerPAMSecureButtonFlying" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
+        <Scripts>
+            <PreClick>
+                BrokerPAMGlobal:PreClick(self);
+            </PreClick>
+        </Scripts>
+    </Button>
+
+    <Button name="BrokerPAMSecureButtonGround" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
+        <Scripts>
+            <PreClick>
+                BrokerPAMGlobal:PreClick(self);
+            </PreClick>
+        </Scripts>
+    </Button>
+
+    <Button name="BrokerPAMSecureButtonAquatic" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
+        <Scripts>
+            <PreClick>
+                BrokerPAMGlobal:PreClick(self);
+            </PreClick>
+        </Scripts>
+    </Button>
+</Ui>

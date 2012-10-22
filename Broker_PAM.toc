@@ -8,6 +8,8 @@
 
 Embeds.xml
 
+Buttons.xml
+
 Localization\Locales-enUS.lua
 
 Core.lua

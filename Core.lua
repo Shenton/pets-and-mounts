@@ -18,7 +18,11 @@ _G["BrokerPAMGlobal"] = A;
 -- ********************************************************************************
 
 -- LUA globals to locals
-local pairs, ipairs, ssub, smatch, tsort = pairs, ipairs, string.sub, string.match, table.sort;
+local pairs, ipairs, string = pairs, ipairs, string;
+local table, tostring, type = table, tostring, type;
+
+-- WoW globals to locals
+local strsplit, tContains = strsplit, tContains;
 
 -- AddOn version
 A.version = GetAddOnMetadata("Broker_PAM", "Version");
@@ -58,6 +62,13 @@ A.passengerMounts =
     [93326] = 1, -- Sandstone Drake
 };
 
+-- Those companions will not be auto summoned
+A.bannedPets =
+{
+    15705, -- Winter's Little Helper
+    15698, -- Father Winter's Helper
+};
+
 -- Binding UI localization
 BINDING_HEADER_BROKERPAM = L["Pets & Mounts"];
 BINDING_NAME_BROKERPAMMOUNT = L["Random mount"];
@@ -80,6 +91,7 @@ function A:Message(text, color)
         color = A.color["GREEN"]
     end
 
+    PlaySound("TellMessage");
     DEFAULT_CHAT_FRAME:AddMessage(color..L["Pets & Mounts"]..": "..A.color["RESET"]..text);
 end
 
@@ -97,8 +109,19 @@ end
 --- Handle the slash command
 -- @param input The string returned after the command
 function A:SlashCommand(input)
-    A.db.profile.ldbi.hide = nil;
-    A:ShowHideMinimap();
+    local arg1, arg2 = strsplit(" ", input);
+
+    if ( arg1 == "" ) then
+        A:OpenConfigPanel();
+    elseif ( arg1 == "test" ) then
+        -- Doh!
+    elseif ( arg1 == "refresh" ) then
+        A:BuildBothTables();
+        A:Message(L["Companions and mounts informations updated."]);
+    elseif ( arg1 == "show" )then
+        A.db.profile.ldbi.hide = nil;
+        A:ShowHideMinimap();
+    end
 end
 
 --- Show or hide the minimap icon
@@ -116,7 +139,7 @@ function A:PairsByKeys(t, f)
     local a, i = {}, 0;
 
     for n in pairs(t) do a[#a+1] = n; end
-    tsort(a, f);
+    table.sort(a, f);
 
     local iter = function()
         i = i + 1;
@@ -150,7 +173,7 @@ end
 function A:TableRemove(table, item)
     for i=1,#table do
         if ( table[i] == item ) then
-            tremove(table, i);
+            table.remove(table, i);
             return;
         end
     end
@@ -179,6 +202,7 @@ function A:GetAnchor()
     return "TOPLEFT", "TOPRIGHT";
 end
 
+--- Check if the player is stealthed/invis
 -- 51755 Camouflage (hunter)
 -- 32612 Invis (mage)
 local stealthAuras =
@@ -188,18 +212,56 @@ local stealthAuras =
 };
 local _, class = UnitClass("player");
 function A:IsStealthed()
-    if ( class == "HUNTER" or class == "MAGE" ) then
+    if ( IsStealthed() ) then
+        A:DebugMessage("IsStealthed() - Stealthed");
+        return 1;
+    elseif ( class == "HUNTER" or class == "MAGE" ) then
         for k,v in ipairs(stealthAuras) do
             if ( UnitBuff("player", v) ) then
-                A:DebugMessage("IsStealthed() - Stealth buff found");
+                A:DebugMessage("IsStealthed() - Stealth/Invis buff found");
                 return 1;
             end
         end
-
-        return nil;
-    else
-        return IsStealthed();
     end
+
+    return nil;
+end
+
+--- Check if the player is eating or drinking
+function A:InitHasRegenBuff()
+    A.foodBuffLocalized = GetSpellInfo(104935); -- Food
+    A.drinkBuffLocalized = GetSpellInfo(104270); -- Drink
+end
+function A:HasRegenBuff()
+    if ( not A.foodBuffLocalized or not A.drinkBuffLocalized ) then A:InitHasRegenBuff(); end
+    if ( UnitBuff("player", A.foodBuffLocalized) ) then
+        A:DebugMessage("HasRegenBuff() - Has food buff");
+        return 1;
+    end
+    if ( UnitBuff("player", A.drinkBuffLocalized) ) then
+        A:DebugMessage("HasRegenBuff() - Has drink buff");
+        return 1;
+    end
+    return nil;
+end
+
+--- Simple shallow copy for copying specialization profiles
+-- Shamelessly ripped off from Ace3 AceDB-3.0
+-- Did I say I love you guys? :p
+function A:CopyTable(src, dest)
+    if ( type(dest) ~= "table" ) then dest = {}; end
+
+    if ( type(src) == "table" ) then
+        for k,v in pairs(src) do
+            if ( type(v) == "table" ) then
+                v = A:CopyTable(v, dest[k]);
+            end
+
+            dest[k] = v;
+        end
+    end
+
+    return dest;
 end
 
 --- Return the mount type depending on the bitfield
@@ -264,7 +326,7 @@ function A:BuildPetsTable()
 
         if ( isOwned ) then
             if ( customName and A.db.profile.noFilterCustom ) then
-                local leadingLetter = ssub(customName, 1, 1);
+                local leadingLetter = string.sub(customName, 1, 1);
 
                 if ( not A.pamTable.pets[leadingLetter] ) then A.pamTable.pets[leadingLetter] = {}; end
 
@@ -278,12 +340,12 @@ function A:BuildPetsTable()
                     creatureID = creatureID,
                 };
             else
-                local leadingLetter = ssub(creatureName, 1, 1);
+                local leadingLetter = string.sub(creatureName, 1, 1);
 
                 if ( not A.pamTable.pets[leadingLetter] ) then A.pamTable.pets[leadingLetter] = {}; end
 
-                if ( (not A:Exists(A.pamTable.pets[leadingLetter], creatureName)
-                or A:Exists(A.pamTable.pets[leadingLetter], creatureName) and not A.db.profile.filterMultiple)
+                if ( not A:Exists(A.pamTable.pets[leadingLetter], creatureName)
+                --or (A:Exists(A.pamTable.pets[leadingLetter], creatureName) and not A.db.profile.filterMultiple)
                 or not A.db.profile.filterMultiple ) then
                     A.pamTable.petsIds[#A.pamTable.petsIds+1] = petID;
 
@@ -322,7 +384,7 @@ function A:BuildMountsTable()
 
     for i=1,GetNumCompanions("MOUNT") do
         creatureID, creatureName, spellId, icon, isSummoned, mountType = GetCompanionInfo("MOUNT", i);
-        leadingLetter = ssub(creatureName, 1, 1);
+        leadingLetter = string.sub(creatureName, 1, 1);
 
         if ( A.passengerMounts[spellId] ) then
             if ( not A.pamTable.mounts[5][leadingLetter] ) then A.pamTable.mounts[5][leadingLetter] = {}; end
@@ -360,10 +422,87 @@ function A:BuildMountsTable()
     end
 end
 
+--- Build companions and mounts tables
 function A:BuildBothTables()
     A:BuildPetsTable();
     A:BuildMountsTable();
-    A:DebugMessage("Companions available");
+    A:DebugMessage("Databases available");
+end
+
+--- Initialize the addon (building databases if needed)
+function A:Initialize()
+    if ( A.initialized ) then return; end
+
+    A:DebugMessage("Initializing addon");
+    A:BuildBothTables();
+    A.initialized = 1;
+end
+
+--- Check if a pet is banned
+function CheckBannedPet(id)
+    local _, _, _, _, _, _, _, _, _, creatureID = C_PetJournal.GetPetInfoByPetID(id);
+
+    if ( tContains(A.bannedPets, creatureID) ) then return 1; end
+
+    return nil;
+end
+
+-- ********************************************************************************
+-- Bindings & SecureBurrons handling
+-- ********************************************************************************
+
+--- Set bindings
+local bindings =
+{
+    ["BROKERPAMMOUNT"] = "BrokerPAMSecureButton",
+    ["BROKERPAMMOUNTPASSENGERS"] = "BrokerPAMSecureButtonPassengers",
+    ["BROKERPAMMOUNTFLYING"] = "BrokerPAMSecureButtonFlying",
+    ["BROKERPAMMOUNTGROUND"] = "BrokerPAMSecureButtonGround",
+    ["BROKERPAMMOUNTAQUATIC"] = "BrokerPAMSecureButtonAquatic",
+};
+function A:SetBindings()
+    if ( InCombatLockdown() ) then
+        A.delayedBindings = 1;
+    else
+        for k,v in pairs(bindings) do
+            local key1, key2 = GetBindingKey(k);
+            if ( key1 ) then SetOverrideBindingClick(_G[v], 1, key1, v); end
+
+            if ( key2 ) then SetOverrideBindingClick(_G[v], 1, key2, v); end
+        end
+    end
+end
+
+--- Buttons preclik handler
+local buttonsMacro =
+{
+    [1] = -- With form
+    {
+        ["BrokerPAMSecureButton"] = "/cancelform\n/run BrokerPAMGlobal:RandomMount()",
+        ["BrokerPAMSecureButtonPassengers"] = "/cancelform\n/run BrokerPAMGlobal:RandomMount(5)",
+        ["BrokerPAMSecureButtonFlying"] = "/cancelform\n/run BrokerPAMGlobal:RandomMount(2)",
+        ["BrokerPAMSecureButtonGround"] = "/cancelform\n/run BrokerPAMGlobal:RandomMount(1)",
+        ["BrokerPAMSecureButtonAquatic"] = "/cancelform\n/run BrokerPAMGlobal:RandomMount(4)",
+    },
+    [2] = -- Without
+    {
+        ["BrokerPAMSecureButton"] = "/run BrokerPAMGlobal:RandomMount()",
+        ["BrokerPAMSecureButtonPassengers"] = "/run BrokerPAMGlobal:RandomMount(5)",
+        ["BrokerPAMSecureButtonFlying"] = "/run BrokerPAMGlobal:RandomMount(2)",
+        ["BrokerPAMSecureButtonGround"] = "/run BrokerPAMGlobal:RandomMount(1)",
+        ["BrokerPAMSecureButtonAquatic"] = "/run BrokerPAMGlobal:RandomMount(4)",
+    },
+};
+function A:PreClick(button)
+    if ( InCombatLockdown() ) then return; end
+
+    if ( A.playerClass == "DRUID" or A.playerClass == "SHAMAN" ) then
+        button:SetAttribute("type", "macro");
+        button:SetAttribute("macrotext", buttonsMacro[1][button:GetName()]);
+    else
+        button:SetAttribute("type", "macro");
+        button:SetAttribute("macrotext", buttonsMacro[2][button:GetName()]);
+    end
 end
 
 -- ********************************************************************************
@@ -373,6 +512,8 @@ end
 local rotation, rotationTime, isSummoned, buttonIndex;
 local function PAMMenu(self, level)
     if ( not level ) then return; end
+
+    A:Initialize();
 
     A.isBrokerPamMenu = 1;
 
@@ -728,29 +869,38 @@ end
 -- ********************************************************************************
 
 function A:PLAYER_REGEN_DISABLED()
-    A.noAutoPet = 1;
     A:DebugMessage("PLAYER_REGEN_DISABLED() - +Combat");
+    A:CancelTimer(A.shiftTimer, 1);
+    A.noAutoPet = 1;
 end
 
 function A:PLAYER_REGEN_ENABLED()
-    A:AutoPetDelay();
     A:DebugMessage("PLAYER_REGEN_ENABLED() - -Combat");
+
+    if ( A.delayedBindings ) then
+        A:SetBindings();
+        A.delayedBindings = nil;
+    end
+
+    A:AutoPetDelay();
 end
 
 function A:AutoPetDelay()
+    A:DebugMessage("AutoPetDelay()");
     A:CancelTimer(A.shiftTimer, 1);
     A.shiftTimer = A:ScheduleTimer("AutoPetDelayCallback", A.db.profile.shiftTimer);
     A.noAutoPet = 1; -- No auto summon when on timer delay
-    A:DebugMessage("AutoPetDelay()");
 end
 
 function A:AutoPetDelayCallback()
+    A:DebugMessage("AutoPetDelayCallback()");
     A.noAutoPet = nil;
     A:AutoPet();
-    A:DebugMessage("AutoPetDelayCallback()");
 end
 
 function A:UPDATE_STEALTH()
+    A:DebugMessage("UPDATE_STEALTH()");
+
     if ( not A.db.profile.notWhenStealthed ) then return; end
 
     if ( C_PetJournal.GetSummonedPetID() ) then
@@ -759,12 +909,11 @@ function A:UPDATE_STEALTH()
         A:CancelTimer(A.shiftTimer, 1);
         A:ScheduleTimer("AutoPet", A.db.profile.shiftTimer);
     end
-    A:DebugMessage("UPDATE_STEALTH()");
 end
 
 -- Other stealth buffs, no timed summon here too spammy
 function A:UNIT_AURA(self, unit)
-    if ( unit == "player") then
+    if ( unit == "player" and (A.playerClass == "MAGE" or A.playerClass == "hunter") ) then
         if ( not A.db.profile.notWhenStealthed ) then return; end
 
         A:AutoPet();
@@ -784,6 +933,12 @@ end
 -- end
 -- function A:UNIT_SPELLCAST_SUCCEEDED(...)
     -- print(...)
+-- end
+
+-- function A:ZONE_CHANGED_NEW_AREA()
+    -- SetMapToCurrentZone();
+    -- local mapId = GetCurrentMapAreaID();
+    -- print(mapId, GetMapNameByID(mapId));
 -- end
 
 -- ********************************************************************************
@@ -819,6 +974,23 @@ A.aceDefaultDB =
             [3] = {}, -- Hybrid (ground & fly)
             [4] = {}, -- Aquatic
             [5] = {}, -- with passengers
+        },
+        forceOne = -- d
+        {
+            pet = nil,
+            mount =
+            {
+                [1] = nil, -- Ground
+                [2] = nil, -- Fly
+                [3] = nil, -- Hybrid (ground & fly)
+                [4] = nil, -- Aquatic
+                [5] = nil, -- with passengers
+            },
+        },
+        savedSets =
+        {
+            pets = {},
+            mounts = {},
         },
     }
 };
@@ -1004,7 +1176,12 @@ function A:OnEnable()
             tocname = "Broker_PAM",
             OnClick = function(self, button)
                 if (button == "LeftButton") then
-                    A:RandomPet();
+                    if ( IsShiftKeyDown() ) then
+                        local current = C_PetJournal.GetSummonedPetID();
+                        if ( current ) then C_PetJournal.SummonPetByID(current); end
+                    else
+                        A:RandomPet();
+                    end
                 elseif ( button == "RightButton" ) then
                     A.menuFrame.initialize = PAMMenu;
                     ToggleDropDownMenu(1, nil, A.menuFrame, self, 0, 0);
@@ -1016,7 +1193,7 @@ function A:OnEnable()
             OnTooltipShow = function(tooltip)
                 tooltip:AddDoubleLine(A.color["WHITE"]..L["Pets & Mounts"], A.color["GREEN"].."v"..A.version);
                 tooltip:AddLine(" ");
-                tooltip:AddLine(L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random pet.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open the configuration panel."]);
+                tooltip:AddLine(L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random pet.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Revoke current pet.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open the configuration panel."]);
             end
         });
     end
@@ -1046,12 +1223,20 @@ function A:OnEnable()
     --A:RegisterEvent("COMPANION_UPDATE"); -- Do not want to use this, too spammy, seriously too, wtf blizzard with that. And no args? derp (at least unit :/)
     --A:RegisterEvent("UNIT_SPELLCAST_START"); -- Perhaps I will use it for preventing summon in rare case, if it happen when testing.
     --A:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED"); -- Same.
+    --A:RegisterEvent("ZONE_CHANGED_NEW_AREA");
 
     -- Main timer
     if ( A.db.profile.autoPet ) then A.mainTimer = A:ScheduleRepeatingTimer("AutoPet", A.db.profile.mainTimer); end
 
     -- Build companions table (need a better way)
-    A:ScheduleTimer("BuildBothTables", 5);
+    --A:ScheduleTimer("BuildBothTables", 5);
+
+    -- Set player class
+    local _, class = UnitClass("player");
+    A.playerClass = class;
+
+    -- Set bindings
+    A:SetBindings();
 
     -- Add the config loader to blizzard addon configuration panel
     A:AddToBlizzTemp();

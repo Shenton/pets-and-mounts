@@ -1,17 +1,7 @@
 ﻿<Bindings>
-    <Binding name="BROKERPAMMOUNT" header="BROKERPAM">
-        BrokerPAMGlobal:RandomMount();
-    </Binding>
-    <Binding name="BROKERPAMMOUNTPASSENGERS" header="BROKERPAM">
-        BrokerPAMGlobal:RandomMount(5);
-    </Binding>
-    <Binding name="BROKERPAMMOUNTFLYING" header="BROKERPAM">
-        BrokerPAMGlobal:RandomMount(2);
-    </Binding>
-    <Binding name="BROKERPAMMOUNTGROUND" header="BROKERPAM">
-        BrokerPAMGlobal:RandomMount(1);
-    </Binding>
-    <Binding name="BROKERPAMMOUNTAQUATIC" header="BROKERPAM">
-        BrokerPAMGlobal:RandomMount(4);
-    </Binding>
+    <Binding name="BROKERPAMMOUNT" header="BROKERPAM"></Binding>
+    <Binding name="BROKERPAMMOUNTPASSENGERS" header="BROKERPAM"></Binding>
+    <Binding name="BROKERPAMMOUNTFLYING" header="BROKERPAM"></Binding>
+    <Binding name="BROKERPAMMOUNTGROUND" header="BROKERPAM"></Binding>
+    <Binding name="BROKERPAMMOUNTAQUATIC" header="BROKERPAM"></Binding>
 </Bindings>
