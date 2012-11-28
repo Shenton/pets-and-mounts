@@ -39,7 +39,7 @@ function A:RandomPet(auto)
 
     -- Recall this method if we already got the same pet, will work if the player got at least 10 pets (global an fav)
     if ( #A.pamTable.petsIds > 10 and #A.db.profile.favoritePets > 10 ) then
-        if ( C_PetJournal.GetSummonedPetID() and C_PetJournal.GetSummonedPetID() == id ) then
+        if ( C_PetJournal.GetSummonedPetGUID() and C_PetJournal.GetSummonedPetGUID() == id ) then
             A:RandomPet();
             A:DebugMessage("RandomPet() - Already got that pet, resummon");
             return;
@@ -65,18 +65,31 @@ function A:RandomPet(auto)
             end
         end
 
+        if ( A.stealthCasted ) then
+            A.stealthCasted = nil;
+            return;
+        end
         C_PetJournal.SummonPetByID(id);
+    end
+end
+
+--- Revoke current pet
+function A:RevokePet()
+    if ( A.currentPet ) then
+        C_PetJournal.SummonPetByID(A.currentPet);
+    elseif ( C_PetJournal.GetSummonedPetGUID() ) then
+        C_PetJournal.SummonPetByID(C_PetJournal.GetSummonedPetGUID());
     end
 end
 
 --- Check if a pet can be summoned
 function A:AutoPet()
-    local currentPet = C_PetJournal.GetSummonedPetID();
+    local currentPet = C_PetJournal.GetSummonedPetGUID();
 
     -- Got a pet, option is set to not have a pet when stealthed
     if ( currentPet and A.db.profile.notWhenStealthed and A:IsStealthed() ) then
-        C_PetJournal.SummonPetByID(currentPet);
         A:DebugMessage("AutoPet() - Stealthed revoking pet");
+        A:RevokePet();
         return;
     end
 
@@ -86,15 +99,18 @@ function A:AutoPet()
     or UnitCastingInfo("player") -- Not when casting.
     or UnitChannelInfo("player") -- Not when channeling.
     or UnitIsDeadOrGhost("player") -- Not when dead (thanks captain).
+    or InCombatLockdown() -- Not when in combat.
     or A.noAutoPet -- Combat, reviving, fly path end, etc, delay.
     or IsMounted() -- Not when mounted.
     or IsFlying() -- Not when flying, dunno if this is usefull, perhaps when using a flying "mount" from a dungeon event.
     or IsFalling() -- Not when falling.
     or UnitHasVehicleUI("player") -- Not when in a vehicule.
     or UnitOnTaxi("player") -- Not on a fly path.
-    or A:HasRegenBuff() -- Not when eating/drinking
-    or not HasFullControl() ) then -- Not when not having full control
+    or A:HasRegenBuff() -- Not when eating/drinking.
+    or A.stealthCasted -- A stealth/invis spell was casted, this will prevent some rare case of unsteatlth by summoning pet.
+    or not HasFullControl() ) then -- Not when not having full control.
         A:DebugMessage("AutoPet() - No summon filter");
+        A.stealthCasted = nil;
         return;
     end
 

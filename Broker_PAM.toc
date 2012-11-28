@@ -1,9 +1,9 @@
-﻿## Interface: 50001
+﻿## Interface: 50100
 ## Title: Broker Pets & Mounts
 ## Notes: Data Broker display for easy acces to pets and mounts.
 ## Author: Shenton
 ## SavedVariables: pamDB
-## Version: 0.1
+## Version: 1.0.0
 ## OptionalDeps: Ace3
 
 Embeds.xml

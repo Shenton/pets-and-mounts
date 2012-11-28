@@ -20,6 +20,7 @@ _G["BrokerPAMGlobal"] = A;
 -- LUA globals to locals
 local pairs, ipairs, string = pairs, ipairs, string;
 local table, tostring, type = table, tostring, type;
+local time = time;
 
 -- WoW globals to locals
 local strsplit, tContains = strsplit, tContains;
@@ -53,8 +54,11 @@ A.passengerMounts =
     [60424] = 1, -- Mekgineer's Chopper
     [61465] = 1, -- Grand Black War Mammoth (Alliance)
     [61467] = 1, -- Grand Black War Mammoth (Horde)
+    [122708] = 1, -- Grand Expedition Yak
     [61469] = 1, -- Grand Ice Mammoth (Horde)
     [61470] = 1, -- Grand Ice Mammoth (Alliance)
+    [121820] = 1, -- Obsidian Nightwing
+    [93326] = 1, -- Sandstone Drake
     [61425] = 1, -- Traveler's Tundra Mammoth (Alliance)
     [61447] = 1, -- Traveler's Tundra Mammoth (Horde)
     [55531] = 1, -- Mechano-Hog
@@ -84,14 +88,17 @@ BINDING_NAME_BROKERPAMMOUNTAQUATIC = L["Random aquatic mount"];
 --- Send a message to the chat frame with the addon name colored
 -- @param text The message to display
 -- @param color Bool, if true will color in red
-function A:Message(text, color)
+function A:Message(text, color, silent)
     if ( color ) then
         color = A.color["RED"];
     else
         color = A.color["GREEN"]
     end
 
-    PlaySound("TellMessage");
+    if ( not silent ) then
+        PlaySound("TellMessage");
+    end
+
     DEFAULT_CHAT_FRAME:AddMessage(color..L["Pets & Mounts"]..": "..A.color["RESET"]..text);
 end
 
@@ -157,11 +164,11 @@ end
 -- @param table The table
 -- @param item The item
 -- @return the item pos or false
-function A:Exists(table, name)
+function A:Exists(tbl, name)
     local index = 1;
 
-    while table[index] do
-        if ( name == table[index]["name"] ) then return 1; end
+    while tbl[index] do
+        if ( name == tbl[index]["name"] ) then return 1; end
 
         index = index+1;
    end
@@ -170,10 +177,10 @@ function A:Exists(table, name)
 end
 
 --- Remove the given item from the given table
-function A:TableRemove(table, item)
-    for i=1,#table do
-        if ( table[i] == item ) then
-            table.remove(table, i);
+function A:TableRemove(tbl, item)
+    for i=1,#tbl do
+        if ( tbl[i] == item ) then
+            table.remove(tbl, i);
             return;
         end
     end
@@ -182,8 +189,8 @@ end
 --- Will check if a table got a least one entry
 -- Dunno why but in Config.lua I use a for loop "for k,v in ipairs(A.pamTable.mounts) do"
 -- #v always return 0, even if the table is not empty
-function A:TableNotEmpty(t)
-    for k,v in pairs(t) do
+function A:TableNotEmpty(tbl)
+    for k,v in pairs(tbl) do
         if ( k ) then return 1; end
     end
 
@@ -648,7 +655,7 @@ local function PAMMenu(self, level)
             UIDropDownMenu_AddButton(self.info, level);
         end
     elseif (level == 3 ) then
-        local summonedPet = C_PetJournal.GetSummonedPetID();
+        local summonedPet = C_PetJournal.GetSummonedPetGUID();
 
         self.info.notCheckable = 1;
         self.info.hasArrow = nil;
@@ -899,16 +906,9 @@ function A:AutoPetDelayCallback()
 end
 
 function A:UPDATE_STEALTH()
-    A:DebugMessage("UPDATE_STEALTH()");
-
     if ( not A.db.profile.notWhenStealthed ) then return; end
 
-    if ( C_PetJournal.GetSummonedPetID() ) then
-        A:AutoPet();
-    else
-        A:CancelTimer(A.shiftTimer, 1);
-        A:ScheduleTimer("AutoPet", A.db.profile.shiftTimer);
-    end
+    A:AutoPetDelay();
 end
 
 -- Other stealth buffs, no timed summon here too spammy
@@ -928,18 +928,34 @@ function A:LOOT_CLOSED()
     A.noAutoPet = nil;
 end
 
--- function A:UNIT_SPELLCAST_START(...)
-    -- print(...)
--- end
--- function A:UNIT_SPELLCAST_SUCCEEDED(...)
-    -- print(...)
--- end
+-- Using this because it is a little faster than event UPDATE_STEALTH
+-- And it prevent using UNIT_AURA for hunters and mages
+A.playerGUID = UnitGUID("player");
+A.stealthSpellsIDs =
+{
+    5215, -- Druid's Prowl
+    102280, -- Druid's Displacer Beast
+    1784, -- Rogue's Stealth
+    1856, -- Rogue's Vanish
+    51753, -- Hunter's Camouflage
+    66, -- Mage's Invisibility
+    110960, -- Mage's Greater Invisibility
+    58984, -- Night Elf's Shadowmeld
+};
+function A:COMBAT_LOG_EVENT_UNFILTERED(event, ...)
+    if ( not A.db.profile.notWhenStealthed ) then return; end
 
--- function A:ZONE_CHANGED_NEW_AREA()
-    -- SetMapToCurrentZone();
-    -- local mapId = GetCurrentMapAreaID();
-    -- print(mapId, GetMapNameByID(mapId));
--- end
+    local timestamp, type, _, sourceGUID = ...;
+
+    if ( sourceGUID == A.playerGUID and type == "SPELL_CAST_SUCCESS" ) then
+        local spellID = select(12, ...);
+
+        if ( tContains(A.stealthSpellsIDs, spellID) ) then
+            A.stealthCasted = 1;
+            A:RevokePet();
+        end
+    end
+end
 
 -- ********************************************************************************
 -- Ace DB
@@ -959,8 +975,8 @@ A.aceDefaultDB =
         filterMultiple = 1, -- d
         noFilterCustom = 1, -- d
         autoPet = 1, -- d
-        mainTimer = 30, -- d
-        shiftTimer = 10, -- d
+        mainTimer = 45, -- d
+        shiftTimer = 20, -- d
         alreadyGotPet = 1, -- d
         notWhenStealthed = 1, -- d
         noHybridWhenGround = 1, -- d
@@ -987,7 +1003,7 @@ A.aceDefaultDB =
                 [5] = nil, -- with passengers
             },
         },
-        savedSets =
+        savedSets = -- d
         {
             pets = {},
             mounts = {},
@@ -1159,6 +1175,15 @@ function A:OnInitialize()
         end
     end);
     A.modelFrameConfig:Hide();
+
+    -- Hook summon pet method, set a var to current pet id
+    hooksecurefunc(C_PetJournal, "SummonPetByGUID", function(id)
+        A.currentPet = id;
+    end);
+
+    if ( C_PetJournal.GetSummonedPetGUID() ) then
+        A.currentPet = C_PetJournal.GetSummonedPetGUID();
+    end
 end
 
 --- AceAddon callback
@@ -1177,8 +1202,7 @@ function A:OnEnable()
             OnClick = function(self, button)
                 if (button == "LeftButton") then
                     if ( IsShiftKeyDown() ) then
-                        local current = C_PetJournal.GetSummonedPetID();
-                        if ( current ) then C_PetJournal.SummonPetByID(current); end
+                        A:RevokePet();
                     else
                         A:RandomPet();
                     end
@@ -1217,19 +1241,13 @@ function A:OnEnable()
     A:RegisterEvent("PLAYER_LOSES_VEHICLE_DATA", "AutoPetDelay"); -- Quitting a vehicule or a multi mount you control.
     A:RegisterEvent("UNIT_EXITED_VEHICLE", "AutoPetDelay"); -- Exiting a vehicule.
     A:RegisterEvent("UPDATE_STEALTH"); -- Gain or loose stealth.
-    A:RegisterEvent("UNIT_AURA"); -- Damn hunters and mages..
     A:RegisterEvent("LOOT_OPENED"); -- Looting. Summoning a pet close the panel.
     A:RegisterEvent("LOOT_CLOSED"); -- End looting.
-    --A:RegisterEvent("COMPANION_UPDATE"); -- Do not want to use this, too spammy, seriously too, wtf blizzard with that. And no args? derp (at least unit :/)
-    --A:RegisterEvent("UNIT_SPELLCAST_START"); -- Perhaps I will use it for preventing summon in rare case, if it happen when testing.
-    --A:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED"); -- Same.
-    --A:RegisterEvent("ZONE_CHANGED_NEW_AREA");
+    A:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED");
+    A:RegisterEvent("UPDATE_BINDINGS", "SetBindings");
 
     -- Main timer
     if ( A.db.profile.autoPet ) then A.mainTimer = A:ScheduleRepeatingTimer("AutoPet", A.db.profile.mainTimer); end
-
-    -- Build companions table (need a better way)
-    --A:ScheduleTimer("BuildBothTables", 5);
 
     -- Set player class
     local _, class = UnitClass("player");
