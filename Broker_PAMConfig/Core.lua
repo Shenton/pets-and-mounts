@@ -820,7 +820,7 @@ function A:AceConfig()
 
                                     for k,v in A:PairsByKeys(A.pamTable.pets) do
                                         for kk,vv in ipairs(v) do
-                                            out[vv.petID] = vv.name;
+                                            out[vv.petID] = tostring(vv.name);
                                         end
                                     end
 
@@ -830,7 +830,7 @@ function A:AceConfig()
                                 set = function(self, val)
                                     if ( val == 0 ) then
                                         A.db.profile.forceOne.pet = nil;
-                                    elseif ( type(val) == "number" ) then
+                                    else
                                         A.db.profile.forceOne.pet = val;
                                     end
                                 end,

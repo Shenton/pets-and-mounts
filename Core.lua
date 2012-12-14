@@ -681,7 +681,7 @@ local function PAMMenu(self, level)
                     self.info.icon = vv.icon;
                     self.info.disabled = isSummoned;
                     self.info.keepShownOnClick = 1;
-                    self.info.func = function() C_PetJournal.SummonPetByID(vv.petID); end;
+                    self.info.func = function() C_PetJournal.SummonPetByGUID(vv.petID); end;
                     UIDropDownMenu_AddButton(self.info, level);
 
                     _G["DropDownList3Button"..buttonIndex]:HookScript("OnEnter", function()

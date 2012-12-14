@@ -1,5 +1,19 @@
-﻿
-== Licence
+﻿# Broker Pets & Mounts
+
+WoW addon. Provide a Data Broker display and minimap icon for an easy access to mounts and companions. Now with some auto summon flavour.
+
+## Installation
+
+Go to the [download][1] section and grab the latest release.
+
+Unzip it using [7-zip][2] in your AddOns folder, located by default in:
+
+- Windows: `C:\Program Files\World of Warcraft\Interface\AddOns`
+- Mac: Main HD `/Applications/World of Warcraft/Interface/AddOns`
+
+Create `Interface` and `AddOns` folders if needed.
+
+## Licence
 
 Copyright (c) 2012, Shenton
 All rights reserved.
@@ -11,6 +25,5 @@ Redistribution and use in source and binary forms, with or without modification,
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-== Installation
-
-AddOn folder must have the same name as the .toc file. Broker_PAMConfig need to be is the AddOns folder.
+[1]: https://bitbucket.org/Shenton/broker-pets-mounts/downloads/                "Broker Pets & Mounts downloads"
+[2]: http://www.7-zip.org/                                                      "7-zip"

@@ -69,16 +69,16 @@ function A:RandomPet(auto)
             A.stealthCasted = nil;
             return;
         end
-        C_PetJournal.SummonPetByID(id);
+        C_PetJournal.SummonPetByGUID(id);
     end
 end
 
 --- Revoke current pet
 function A:RevokePet()
     if ( A.currentPet ) then
-        C_PetJournal.SummonPetByID(A.currentPet);
+        C_PetJournal.SummonPetByGUID(A.currentPet);
     elseif ( C_PetJournal.GetSummonedPetGUID() ) then
-        C_PetJournal.SummonPetByID(C_PetJournal.GetSummonedPetGUID());
+        C_PetJournal.SummonPetByGUID(C_PetJournal.GetSummonedPetGUID());
     end
 end
 
