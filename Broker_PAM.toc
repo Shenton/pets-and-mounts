@@ -3,7 +3,7 @@
 ## Notes: Data Broker display for easy acces to pets and mounts.
 ## Author: Shenton
 ## SavedVariables: pamDB
-## Version: 1.0.0
+## Version: 1.0.1
 ## OptionalDeps: Ace3
 
 Embeds.xml

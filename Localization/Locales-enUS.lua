@@ -33,6 +33,8 @@ L["Save"] = true;
 L["Name"] = true;
 L["Accept"] = true;
 L["Cancel"] = true;
+L["Delete"] = true;
+L["Choose"] = true;
 L["Show or hide minimap icon"] = true;
 L["Model rotation"] = true;
 L["Model frame size"] = true;
@@ -85,4 +87,8 @@ L["Set %s already exists."] = true;
 L["Minimap icon is hidden if you want to show it back use: /pam or /petsandmounts"] = true;
 L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random pet.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Revoke current pet.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open the configuration panel."] = true;
 L["You already got a set named %s.\n\nEnter a new name or leave it blank to overwrite."] = true;
+L["Database update to revision %d needed."] = true;
+L["A full database update is needed."] = true;
+L["Database updated to revision %d."] = true;
+L["Delete set %s?"] = true;
 end

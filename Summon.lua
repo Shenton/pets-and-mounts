@@ -49,14 +49,14 @@ function A:RandomPet(auto)
     -- If called by AutoPet() filter some nasty buggy pets
     -- For example winter helpers refuses to be summoned, and this %*µ£§ of Blizzard auto resummon
     -- will try to summon it when you cast stealth (because the addon revoke it) wich will unstealth you.
-    if ( auto and CheckBannedPet(id) ) then
+    if ( auto and A:CheckBannedPet(id) ) then
         A:DebugMessage("RandomPet() - Banned pet filter");
         return;
     end
 
     if ( C_PetJournal.PetIsSummonable(id) ) then
         if ( A.db.profile.debug ) then
-            local _, customName, _, _, _, _, creatureName = C_PetJournal.GetPetInfoByPetID(id);
+            local _, customName, _, _, _, _, _,creatureName = C_PetJournal.GetPetInfoByPetID(id);
 
             if ( customName ) then
                 A:DebugMessage("RandomPet() - Summon pet: "..customName);
@@ -116,7 +116,7 @@ function A:AutoPet()
 
     -- Got a pet, option is set to not summon when having a pet
     if ( tContains(A.db.profile.favoritePets, currentPet) or (currentPet and A.db.profile.alreadyGotPet) ) then
-        if ( CheckBannedPet(currentPet) ) then
+        if ( A:CheckBannedPet(currentPet) ) then
             A:DebugMessage("AutoPet() - Summoned pet is banned");
             A:RandomPet(1);
         else

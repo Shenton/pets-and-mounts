@@ -56,10 +56,10 @@ StaticPopupDialogs["BrokerPamOverwriteOrChangeNameSet"] =
 
         if ( not name or name == "" ) then
             if ( A.newPetSetName ) then
-                A.db.profile.savedSets.pets[A.newPetSetName] = A:CopyTable(A.db.profile.favoritePets);
+                A.db.global.savedSets.pets[A.newPetSetName] = A:CopyTable(A.db.profile.favoritePets);
                 A.newPetSetName = nil;
             elseif ( A.newMountSetName ) then
-                A.db.profile.savedSets.mounts[A.newMountSetName] = A:CopyTable(A.db.profile.favoriteMounts);
+                A.db.global.savedSets.mounts[A.newMountSetName] = A:CopyTable(A.db.profile.favoriteMounts);
                 A.newMountSetName = nil;
             end
 
@@ -68,18 +68,18 @@ StaticPopupDialogs["BrokerPamOverwriteOrChangeNameSet"] =
         end
 
         if ( A.newPetSetName ) then
-            if ( A.db.profile.savedSets.pets[name] ) then
+            if ( A.db.global.savedSets.pets[name] ) then
                 A:Message(L["Set %s already exists."]:format(name), 1);
             else
-                A.db.profile.savedSets.pets[name] = A:CopyTable(A.db.profile.favoritePets);
+                A.db.global.savedSets.pets[name] = A:CopyTable(A.db.profile.favoritePets);
                 A.newPetSetName = nil;
                 self:GetParent():Hide();
             end
         elseif ( A.newMountSetName ) then
-            if ( A.db.profile.savedSets.mounts[name] ) then
+            if ( A.db.global.savedSets.mounts[name] ) then
                 A:Message(L["Set %s already exists."]:format(name), 1);
             else
-                A.db.profile.savedSets.mounts[name] = A:CopyTable(A.db.profile.favoriteMounts);
+                A.db.global.savedSets.mounts[name] = A:CopyTable(A.db.profile.favoriteMounts);
                 A.newPetSetName = nil;
                 self:GetParent():Hide();
             end
@@ -93,10 +93,10 @@ StaticPopupDialogs["BrokerPamOverwriteOrChangeNameSet"] =
 
         if ( not name or name == "" ) then
             if ( A.newPetSetName ) then
-                A.db.profile.savedSets.pets[A.newPetSetName] = A:CopyTable(A.db.profile.favoritePets);
+                A.db.global.savedSets.pets[A.newPetSetName] = A:CopyTable(A.db.profile.favoritePets);
                 A.newPetSetName = nil;
             elseif ( A.newMountSetName ) then
-                A.db.profile.savedSets.mounts[A.newMountSetName] = A:CopyTable(A.db.profile.favoriteMounts);
+                A.db.global.savedSets.mounts[A.newMountSetName] = A:CopyTable(A.db.profile.favoriteMounts);
                 A.newMountSetName = nil;
             end
 
@@ -105,22 +105,52 @@ StaticPopupDialogs["BrokerPamOverwriteOrChangeNameSet"] =
         end
 
         if ( A.newPetSetName ) then
-            if ( A.db.profile.savedSets.pets[name] ) then
+            if ( A.db.global.savedSets.pets[name] ) then
                 A:Message(L["Set %s already exists."]:format(name), 1);
             else
-                A.db.profile.savedSets.pets[name] = A:CopyTable(A.db.profile.favoritePets);
+                A.db.global.savedSets.pets[name] = A:CopyTable(A.db.profile.favoritePets);
                 A.newPetSetName = nil;
             end
         elseif ( A.newMountSetName ) then
-            if ( A.db.profile.savedSets.mounts[name] ) then
+            if ( A.db.global.savedSets.mounts[name] ) then
                 A:Message(L["Set %s already exists."]:format(name), 1);
             else
-                A.db.profile.savedSets.mounts[name] = A:CopyTable(A.db.profile.favoriteMounts);
+                A.db.global.savedSets.mounts[name] = A:CopyTable(A.db.profile.favoriteMounts);
                 A.newPetSetName = nil;
             end
 
             A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
         end
+    end,
+    preferredIndex = 3,
+};
+
+-- Confirm delete set popup dialog
+StaticPopupDialogs["BrokerPamDeleteSet"] =
+{
+    text = L["Delete set %s?"],
+    button1 = L["Accept"],
+    button2 = L["Cancel"],
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+    enterClicksFirstButton = true,
+    OnHide = function()
+        A.deleteSetPets = nil;
+        A.deleteSetMounts = nil;
+        A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+    end,
+    -- EditBoxOnEnterPressed = function(self)
+    -- end,
+    EditBoxOnEscapePressed = function(self) self:GetParent():Hide(); end,
+    OnAccept = function(self)
+        if ( A.deleteSetPets ) then
+            A.db.global.savedSets.pets[A.deleteSetPets] = nil;
+        elseif ( A.deleteSetMounts ) then
+            A.db.global.savedSets.mounts[A.deleteSetMounts] = nil;
+        end
+
+        A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
     end,
     preferredIndex = 3,
 };
@@ -658,7 +688,7 @@ function A:AceConfig()
                                         values = function()
                                             local out = {};
 
-                                            for k in pairs(A.db.profile.savedSets.pets) do
+                                            for k in pairs(A.db.global.savedSets.pets) do
                                                 out[k] = k;
                                             end
 
@@ -666,9 +696,9 @@ function A:AceConfig()
                                         end;
                                         get = nil,
                                         set = function(info, val)
-                                            if ( A.db.profile.savedSets.pets[val] ) then
+                                            if ( A.db.global.savedSets.pets[val] ) then
                                                 A.db.profile.favoritePets = {};
-                                                A:CopyTable(A.db.profile.savedSets.pets[val], A.db.profile.favoritePets);
+                                                A:CopyTable(A.db.global.savedSets.pets[val], A.db.profile.favoritePets);
                                             end
                                         end,
                                     },
@@ -696,12 +726,52 @@ function A:AceConfig()
                                         type = "execute",
                                         disabled = not A.newPetSetName,
                                         func = function()
-                                            if ( A.db.profile.savedSets.pets[A.newPetSetName] ) then
+                                            if ( A.db.global.savedSets.pets[A.newPetSetName] ) then
                                                 StaticPopup_Show("BrokerPamOverwriteOrChangeNameSet", A.newPetSetName);
                                             else
-                                                A.db.profile.savedSets.pets[A.newPetSetName] = A:CopyTable(A.db.profile.favoritePets);
+                                                A.db.global.savedSets.pets[A.newPetSetName] = A:CopyTable(A.db.profile.favoritePets);
                                                 A.newPetSetName = nil;
                                             end
+                                        end;
+                                    },
+                                },
+                            },
+                            delete =
+                            {
+                                order = 30,
+                                name = L["Delete"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
+                                    select =
+                                    {
+                                        order = 0,
+                                        name = L["Choose"],
+                                        type = "select",
+                                        values = function()
+                                            local out = {};
+
+                                            for k in pairs(A.db.global.savedSets.pets) do
+                                                out[k] = k;
+                                            end
+
+                                            return out;
+                                        end;
+                                        get = nil,
+                                        set = function(info, val)
+                                            A.deleteSetMounts = nil;
+                                            A.deleteSetPets = val;
+                                        end,
+                                    },
+                                    exec =
+                                    {
+                                        order = 1,
+                                        name = L["Delete"],
+                                        type = "execute",
+                                        disabled = not A.deleteSetPets,
+                                        func = function()
+                                            StaticPopup_Show("BrokerPamDeleteSet", A.deleteSetPets);
                                         end;
                                     },
                                 },
@@ -742,7 +812,7 @@ function A:AceConfig()
                                         values = function()
                                             local out = {};
 
-                                            for k in pairs(A.db.profile.savedSets.mounts) do
+                                            for k in pairs(A.db.global.savedSets.mounts) do
                                                 out[k] = k;
                                             end
 
@@ -750,9 +820,9 @@ function A:AceConfig()
                                         end;
                                         get = nil,
                                         set = function(info, val)
-                                            if ( A.db.profile.savedSets.mounts[val] ) then
+                                            if ( A.db.global.savedSets.mounts[val] ) then
                                                 A.db.profile.favoriteMounts = {};
-                                                A:CopyTable(A.db.profile.savedSets.mounts[val], A.db.profile.favoriteMounts);
+                                                A:CopyTable(A.db.global.savedSets.mounts[val], A.db.profile.favoriteMounts);
                                             end
                                         end,
                                     },
@@ -780,12 +850,52 @@ function A:AceConfig()
                                         type = "execute",
                                         disabled = not A.newMountSetName,
                                         func = function()
-                                            if ( A.db.profile.savedSets.mounts[A.newMountSetName] ) then
+                                            if ( A.db.global.savedSets.mounts[A.newMountSetName] ) then
                                                 StaticPopup_Show("BrokerPamOverwriteOrChangeNameSet", A.newMountSetName);
                                             else
-                                                A.db.profile.savedSets.mounts[A.newMountSetName] = A:CopyTable(A.db.profile.favoriteMounts);
+                                                A.db.global.savedSets.mounts[A.newMountSetName] = A:CopyTable(A.db.profile.favoriteMounts);
                                                 A.newMountSetName = nil;
                                             end
+                                        end;
+                                    },
+                                },
+                            },
+                            delete =
+                            {
+                                order = 30,
+                                name = L["Delete"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
+                                    select =
+                                    {
+                                        order = 0,
+                                        name = L["Choose"],
+                                        type = "select",
+                                        values = function()
+                                            local out = {};
+
+                                            for k in pairs(A.db.global.savedSets.mounts) do
+                                                out[k] = k;
+                                            end
+
+                                            return out;
+                                        end;
+                                        get = nil,
+                                        set = function(info, val)
+                                            A.deleteSetPets = nil;
+                                            A.deleteSetMounts = val;
+                                        end,
+                                    },
+                                    exec =
+                                    {
+                                        order = 1,
+                                        name = L["Delete"],
+                                        type = "execute",
+                                        disabled = not A.deleteSetMounts,
+                                        func = function()
+                                            StaticPopup_Show("BrokerPamDeleteSet", A.deleteSetMounts);
                                         end;
                                     },
                                 },
@@ -815,12 +925,16 @@ function A:AceConfig()
                                 name = L["Companions"],
                                 desc = L["Select the companion to force summon."],
                                 type = "select",
+                                dialogControl = "Dropdown-SortByValue",
                                 values = function()
+                                -- Using a string instead of an integer for "None", since blizzard stoped using ID but use GUID for pets
+                                -- Why? Because Ace3 sort keys (btw sorting values would have been better or giving choices)
+                                -- Fu, rewriting SetList method from dropdown widget
                                     local out = { [0] = L["None"] };
 
                                     for k,v in A:PairsByKeys(A.pamTable.pets) do
                                         for kk,vv in ipairs(v) do
-                                            out[vv.petID] = tostring(vv.name);
+                                            out[vv.petID] = vv.name;
                                         end
                                     end
 
@@ -851,6 +965,7 @@ function A:AceConfig()
                                 name = L["Aquatic"],
                                 desc = L["Select the %s mount to force summon."]:format(L["Aquatic"]),
                                 type = "select",
+                                dialogControl = "Dropdown-SortByValue",
                                 values = function()
                                     local out = { [0] = L["None"] };
 
@@ -877,6 +992,7 @@ function A:AceConfig()
                                 name = L["Ground"],
                                 desc = L["Select the %s mount to force summon."]:format(L["Ground"]),
                                 type = "select",
+                                dialogControl = "Dropdown-SortByValue",
                                 values = function()
                                     local out = { [0] = L["None"] };
 
@@ -903,6 +1019,7 @@ function A:AceConfig()
                                 name = L["Fly"],
                                 desc = L["Select the %s mount to force summon."]:format(L["Fly"]),
                                 type = "select",
+                                dialogControl = "Dropdown-SortByValue",
                                 values = function()
                                     local out = { [0] = L["None"] };
 
@@ -929,6 +1046,7 @@ function A:AceConfig()
                                 name = L["Hybrid"],
                                 desc = L["Select the %s mount to force summon."]:format(L["Hybrid"]),
                                 type = "select",
+                                dialogControl = "Dropdown-SortByValue",
                                 values = function()
                                     local out = { [0] = L["None"] };
 
@@ -955,6 +1073,7 @@ function A:AceConfig()
                                 name = L["Passenger"],
                                 desc = L["Select the %s mount to force summon."]:format(L["Passenger"]),
                                 type = "select",
+                                dialogControl = "Dropdown-SortByValue",
                                 values = function()
                                     local out = { [0] = L["None"] };
 

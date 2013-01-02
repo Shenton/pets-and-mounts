@@ -81,6 +81,9 @@ BINDING_NAME_BROKERPAMMOUNTFLYING = L["Random flying mount"];
 BINDING_NAME_BROKERPAMMOUNTGROUND = L["Random ground mount"];
 BINDING_NAME_BROKERPAMMOUNTAQUATIC = L["Random aquatic mount"];
 
+-- Database revision
+A.databaseRevision = 2;
+
 -- ********************************************************************************
 -- Functions
 -- ********************************************************************************
@@ -446,10 +449,25 @@ function A:Initialize()
 end
 
 --- Check if a pet is banned
-function CheckBannedPet(id)
-    local _, _, _, _, _, _, _, _, _, creatureID = C_PetJournal.GetPetInfoByPetID(id);
+function A:CheckBannedPet(id)
+    local _, _, _, _, _, _, _, _, _, _, creatureID = C_PetJournal.GetPetInfoByPetID(id);
 
     if ( tContains(A.bannedPets, creatureID) ) then return 1; end
+
+    return nil;
+end
+
+--- Return creature ID from spell ID (mount)
+function A:GetCreatureIDFromSpellID(spellID)
+    for k,v in ipairs(A.pamTable.mounts) do
+        for kk,vv in pairs(v) do
+            for kkk,vvv in ipairs(vv) do
+                if ( spellID == vvv.spellId ) then
+                    return vvv.creatureID;
+                end
+            end
+        end
+    end
 
     return nil;
 end
@@ -963,6 +981,14 @@ end
 
 A.aceDefaultDB =
 {
+    global =
+    {
+        savedSets =
+        {
+            pets = {},
+            mounts = {},
+        },
+    },
     profile =
     {
         debug = nil, -- d
@@ -1010,6 +1036,58 @@ A.aceDefaultDB =
         },
     }
 };
+
+-- Database revision handling
+function A:DatabaseRevisionCheck()
+    if ( A.db.global.databaseRevision ) then
+        if ( A.db.global.databaseRevision < 2 ) then
+            A:Message(L["Database update to revision %d needed."]:format(2), 1, 1);
+            A:DatabaseRevision2();
+        end
+
+        A.db.global.databaseRevision = A.databaseRevision;
+    else -- Full update
+        A:Message(L["A full database update is needed."], 1, 1);
+        A:DatabaseRevision2();
+        A.db.global.databaseRevision = A.databaseRevision;
+    end
+end
+
+-- Rev 2, added global scope db
+-- need to move saved sets to global scope
+function A:DatabaseRevision2()
+    for k,v in ipairs(A.db:GetProfiles()) do
+        if ( A.db.profiles[v].savedSets and A.db.profiles[v].savedSets.pets ) then
+            for kk,vv in pairs(A.db.profiles[v].savedSets.pets) do
+                local setName = kk;
+                local index = 2;
+
+                while A.db.global.savedSets.pets[setName] do
+                    setName = kk.." - "..index;
+                    index = index + 1;
+                end
+
+                A.db.global.savedSets.pets[setName] = vv;
+            end
+        end
+
+        if ( A.db.profiles[v].savedSets and A.db.profiles[v].savedSets.mounts ) then
+            for kk,vv in pairs(A.db.profiles[v].savedSets.mounts) do
+                local setName = kk;
+                local index = 2;
+
+                while A.db.global.savedSets.mounts[setName] do
+                    setName = kk.." - "..index;
+                    index = index + 1;
+                end
+
+                A.db.global.savedSets.mounts[setName] = vv;
+            end
+        end
+    end
+
+    A:Message(L["Database updated to revision %d."]:format(2), 1, 1);
+end
 
 -- ********************************************************************************
 -- Config panel loader
@@ -1077,6 +1155,7 @@ end
 function A:OnInitialize()
     -- Database
     A.db = LibStub("AceDB-3.0"):New("pamDB", A.aceDefaultDB);
+    A:DatabaseRevisionCheck();
 
     -- Menu frame & table
     A.menuFrame = CreateFrame("Frame", "BrokerPAMMenuFrame");
