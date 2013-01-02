@@ -1064,6 +1064,7 @@ function A:DatabaseRevision2()
 
                 while A.db.global.savedSets.pets[setName] do
                     setName = kk.." - "..index;
+                    A:Message(L["A set named %s already exists, renaming it to %s."]:format(kk, setName), 1, 1);
                     index = index + 1;
                 end
 
@@ -1084,9 +1085,34 @@ function A:DatabaseRevision2()
                 A.db.global.savedSets.mounts[setName] = vv;
             end
         end
+
+        A.db.profiles[v].savedSets = nil;
     end
 
-    A:Message(L["Database updated to revision %d."]:format(2), 1, 1);
+    A:Message(L["Database updated to revision %d."]:format(2));
+end
+
+--- Remove old entries from database
+function A:RemoveDatabaseOldEntries()
+    -- Check for integer in fav pets, Blizzard used GUID instead of ID in 5.1
+    for k,v in ipairs(A.db:GetProfiles()) do
+        if ( A.db.profiles[v].favoritePets ) then
+            for kk,vv in pairs(A.db.profiles[v].favoritePets) do
+                if ( type(vv) == "number" ) then
+                    A.db.profiles[v].favoritePets[kk] = nil;
+                end
+            end
+        end
+    end
+
+    for k,v in pairs(A.db.global.savedSets) do
+        for kk,vv in pairs(v) do
+            if ( vv[1] and type(vv[1]) == "number" ) then
+                A.db.global.savedSets[k][kk] = nil;
+                A:Message(L["Deleted set %s, due to Blizzard modification to companions code."]:format(kk), 1, 1);
+            end
+        end
+    end
 end
 
 -- ********************************************************************************
@@ -1156,6 +1182,7 @@ function A:OnInitialize()
     -- Database
     A.db = LibStub("AceDB-3.0"):New("pamDB", A.aceDefaultDB);
     A:DatabaseRevisionCheck();
+    A:RemoveDatabaseOldEntries();
 
     -- Menu frame & table
     A.menuFrame = CreateFrame("Frame", "BrokerPAMMenuFrame");

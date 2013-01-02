@@ -91,4 +91,6 @@ L["Database update to revision %d needed."] = true;
 L["A full database update is needed."] = true;
 L["Database updated to revision %d."] = true;
 L["Delete set %s?"] = true;
+L["A set named %s already exists, renaming it to %s."] = true;
+L["Deleted set %s, due to Blizzard modification to companions code."] = true;
 end
