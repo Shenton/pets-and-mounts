@@ -66,6 +66,11 @@ A.passengerMounts =
     [93326] = 1, -- Sandstone Drake
 };
 
+A.aquaticMounts =
+{
+    [64731] = 1, -- Sea Turtle
+};
+
 -- Those companions will not be auto summoned
 A.bannedPets =
 {
@@ -396,12 +401,31 @@ function A:BuildMountsTable()
         creatureID, creatureName, spellId, icon, isSummoned, mountType = GetCompanionInfo("MOUNT", i);
         leadingLetter = string.sub(creatureName, 1, 1);
 
+        -- Forced passenger mounts
         if ( A.passengerMounts[spellId] ) then
             if ( not A.pamTable.mounts[5][leadingLetter] ) then A.pamTable.mounts[5][leadingLetter] = {}; end
 
             A.pamTable.mountsIds[5][#A.pamTable.mountsIds[5]+1] = spellId;
 
             A.pamTable.mounts[5][leadingLetter][#A.pamTable.mounts[5][leadingLetter]+1] =
+            {
+                id = i,
+                spellId = spellId,
+                creatureID = creatureID,
+                name = creatureName,
+                icon = icon,
+                isSummoned = isSummoned,
+                mountType = mountType,
+            };
+        end
+
+        -- Forced aquatic mounts
+        if ( A.aquaticMounts[spellId] ) then
+            if ( not A.pamTable.mounts[4][leadingLetter] ) then A.pamTable.mounts[4][leadingLetter] = {}; end
+
+            A.pamTable.mountsIds[4][#A.pamTable.mountsIds[4]+1] = spellId;
+
+            A.pamTable.mounts[4][leadingLetter][#A.pamTable.mounts[4][leadingLetter]+1] =
             {
                 id = i,
                 spellId = spellId,
