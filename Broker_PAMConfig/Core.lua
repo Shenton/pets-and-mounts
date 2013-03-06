@@ -1209,7 +1209,15 @@ function A:AceConfig()
                             A.modelFrameConfig:SetPoint("TOPLEFT", A.configFrame, "TOPRIGHT", 0, 0);
                             A.modelFrameConfig:Show();
 
-                            return L["Add %s to favorite."]:format(vvv.name);
+                            if ( A.db.profile.debug ) then
+                                return L["Add %s to favorite."]:format(vvv.name).."\n\n"
+                                .."ID: "..vvv.id.."\n"
+                                .."CreatureID: "..vvv.creatureID.."\n"
+                                .."SpellID: "..vvv.spellId.."\n"
+                                .."Type: "..vvv.mountType;
+                            else
+                                return L["Add %s to favorite."]:format(vvv.name);
+                            end
                         end,
                         image = vvv.icon,
                         type = "toggle",
