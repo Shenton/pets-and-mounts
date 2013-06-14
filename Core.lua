@@ -529,24 +529,17 @@ end
 
 --- Build companions and mounts tables
 function A:BuildBothTables(force)
+    A:DebugMessage("BuildBothTables()");
     A:BuildPetsTable(force);
     A:BuildMountsTable(force);
-    A:DebugMessage("BuildBothTables()");
 end
 
---- Initialize the addon
--- building databases if needed
--- setting DB auto update events
-function A:Initialize()
+--- Initialize the databases
+function A:InitializeDB()
     if ( A.initialized ) then return; end
 
-    A:DebugMessage("Initializing addon");
+    A:DebugMessage("Initializing databases");
     A:BuildBothTables();
-    A:RegisterEvent("CHAT_MSG_SYSTEM");
-    A:RegisterEvent("COMPANION_LEARNED", "BuildBothTables");
-    A:RegisterEvent("COMPANION_UNLEARNED", "BuildBothTables");
-    -- /!\ Need some work on updating DB when using an item to learn a pet or mount (COMPANION_UPDATE is the key, and it sucks, big time) /!\
-    -- /!\ also take a look in learning new pet or mount from achievements /!\
     A.initialized = 1;
 end
 
@@ -640,7 +633,7 @@ local rotation, rotationTime, isSummoned, buttonIndex;
 local function PAMMenu(self, level)
     if ( not level ) then return; end
 
-    A:Initialize();
+    A:InitializeDB();
 
     A.isBrokerPamMenu = 1;
 
@@ -1475,6 +1468,7 @@ function A:OnEnable()
     A:RegisterChatCommand("pam", "SlashCommand");
 
     -- Events
+    -- Auto summon pet events
     A:RegisterEvent("PLAYER_REGEN_DISABLED"); -- Combat.
     A:RegisterEvent("PLAYER_REGEN_ENABLED"); -- Out of combat.
     A:RegisterEvent("PLAYER_ENTERING_WORLD", "AutoPetDelay"); -- Every loading screen.
@@ -1488,7 +1482,21 @@ function A:OnEnable()
     A:RegisterEvent("LOOT_CLOSED"); -- End looting.
     A:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED");
     A:RegisterEvent("UPDATE_BINDINGS", "SetBindings");
-    -- DB update event are within initialize method
+    -- Db auto update events
+    A:RegisterEvent("CHAT_MSG_SYSTEM");
+    A:RegisterEvent("COMPANION_LEARNED", "BuildBothTables");
+    A:RegisterEvent("COMPANION_UNLEARNED", "BuildBothTables");
+
+    -- Hooks
+    -- DB auto update hooks
+    hooksecurefunc(C_PetJournal, "CagePetByID", function()
+        A:DebugMessage("Hook - C_PetJournal.CagePetByID() called");
+        A:BuildPetsTables();
+    end);
+    hooksecurefunc(C_PetJournal, "ReleasePetByID", function()
+        A:DebugMessage("Hook - C_PetJournal.ReleasePetByID() called");
+        A:BuildPetsTables();
+    end);
 
     -- Main timer
     if ( A.db.profile.autoPet ) then A.mainTimer = A:ScheduleRepeatingTimer("AutoPet", A.db.profile.mainTimer); end

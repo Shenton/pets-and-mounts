@@ -22,7 +22,7 @@ local tContains = tContains;
 --- Get a random pet from databases and summon it
 -- @param auto Bool called from AutoPet()
 function A:RandomPet(auto)
-    A:Initialize();
+    A:InitializeDB();
 
     local id;
 
@@ -184,7 +184,7 @@ end
 -- If not choose a random from databases
 -- @param cat Mount category set by A:SetMountCat()
 function A:RandomMount(cat)
-    A:Initialize();
+    A:InitializeDB();
 
     if ( IsMounted() and ((IsFlying() and A.db.profile.dismountFlying) or not IsFlying()) ) then
         A:DebugMessage("RandomMount() - Dismount");

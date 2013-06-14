@@ -20,7 +20,7 @@ A.AceConfigDialog = LibStub("AceConfigDialog-3.0");
 A.AceConfigRegistry = LibStub("AceConfigRegistry-3.0");
 
 -- Init addon databases
-A:Initialize();
+A:InitializeDB();
 
 local modelFrameSizeSelect =
 {
