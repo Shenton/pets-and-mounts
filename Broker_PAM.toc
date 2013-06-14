@@ -1,9 +1,9 @@
-﻿## Interface: 50200
+﻿## Interface: 50300
 ## Title: Broker Pets & Mounts
 ## Notes: Data Broker display for easy acces to pets and mounts.
 ## Author: Shenton
 ## SavedVariables: pamDB
-## Version: 1.0.3
+## Version: 1.0.4
 ## OptionalDeps: Ace3
 
 Embeds.xml
@@ -14,5 +14,4 @@ Localization\Locales-enUS.lua
 
 Core.lua
 
-Config.lua
 Summon.lua

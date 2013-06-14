@@ -131,7 +131,7 @@ function A:SlashCommand(input)
     elseif ( arg1 == "test" ) then
         -- Doh!
     elseif ( arg1 == "refresh" ) then
-        A:BuildBothTables();
+        A:BuildBothTables(1);
         A:Message(L["Companions and mounts informations updated."]);
     elseif ( arg1 == "show" )then
         A.db.profile.ldbi.hide = nil;
@@ -328,12 +328,68 @@ function A:GetMountCategory(cat)
     return cat;
 end
 
+-- Pets filters handling methods
+A.petsFilters = {};
+A.petsFilters.types = {};
+A.petsFilters.sources = {};
+function A:StoreAndResetPetsFilters()
+    -- Store filters
+    A.petsFilters["LE_PET_JOURNAL_FLAG_COLLECTED"] = C_PetJournal.IsFlagFiltered(LE_PET_JOURNAL_FLAG_COLLECTED);
+    A.petsFilters["LE_PET_JOURNAL_FLAG_FAVORITES"] = C_PetJournal.IsFlagFiltered(LE_PET_JOURNAL_FLAG_FAVORITES);
+    A.petsFilters["LE_PET_JOURNAL_FLAG_NOT_COLLECTED"] = C_PetJournal.IsFlagFiltered(LE_PET_JOURNAL_FLAG_NOT_COLLECTED);
+
+    for i=1,C_PetJournal.GetNumPetTypes() do
+        A.petsFilters.types[i] = C_PetJournal.IsPetTypeFiltered(i);
+    end
+
+    for i=1,C_PetJournal.GetNumPetSources() do
+        A.petsFilters.sources[i] = C_PetJournal.IsPetSourceFiltered(i);
+    end
+
+    A.petsFilters["SearchBoxValue"] = PetJournalSearchBox:GetText();
+
+    -- Set filters for DB update
+    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_COLLECTED, 1);
+    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_FAVORITES, nil);
+    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_NOT_COLLECTED, nil);
+    C_PetJournal.AddAllPetTypesFilter();
+    C_PetJournal.AddAllPetSourcesFilter();
+    C_PetJournal.ClearSearchFilter();
+end
+
+--- Restore pets filters
+function A:RestorePetsFilters()
+    PetJournalSearchBox:SetText(A.petsFilters["SearchBoxValue"]);
+
+    for i=1,C_PetJournal.GetNumPetTypes() do
+        C_PetJournal.SetPetTypeFilter(i, not A.petsFilters.types[i]);
+    end
+
+    for i=1,C_PetJournal.GetNumPetSources() do
+        C_PetJournal.SetPetSourceFilter(i, not A.petsFilters.sources[i]);
+    end
+
+    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_COLLECTED, not A.petsFilters["LE_PET_JOURNAL_FLAG_COLLECTED"]);
+    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_FAVORITES, not A.petsFilters["LE_PET_JOURNAL_FLAG_FAVORITES"]);
+    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_NOT_COLLECTED, not A.petsFilters["LE_PET_JOURNAL_FLAG_NOT_COLLECTED"]);
+end
+
 --- Build the companions table
-function A:BuildPetsTable()
+function A:BuildPetsTable(force)
+    A:StoreAndResetPetsFilters();
+
+    local numPets = C_PetJournal.GetNumPets();
+
+    if ( not force and A.lastPetsCount == numPets ) then
+        A:RestorePetsFilters();
+        A:DebugMessage(("BuildPetsTable() - No update needed %d %d"):format(A.lastPetsCount, numPets));
+        return;
+    end
+
+    A.lastPetsCount = numPets;
+
     A.pamTable.pets = {};
     A.pamTable.petsIds = {};
-
-    local numPets, numOwned = C_PetJournal.GetNumPets(false);
 
     for i=1,numPets do
         local petID, _, isOwned, customName, _, _, _, creatureName, icon, _, creatureID = C_PetJournal.GetPetInfoByIndex(i, false);
@@ -375,11 +431,24 @@ function A:BuildPetsTable()
             end
         end
     end
+
+    A:RestorePetsFilters();
+    A:DebugMessage("BuildPetsTable() - Update successful");
 end
 
 --- Build the mounts table
-function A:BuildMountsTable()
+function A:BuildMountsTable(force)
+    local mountsCount = GetNumCompanions("MOUNT");
+
+    if ( not force and A.lastMountsCount == mountsCount ) then
+        A:DebugMessage(("BuildMountsTable() - No update needed %d %d"):format(A.lastMountsCount, mountsCount));
+        return;
+    end
+
+    A.lastMountsCount = mountsCount;
+
     local creatureID, creatureName, spellId, icon, isSummoned, mountType, leadingLetter, cat;
+
     A.pamTable.mounts =
     {
         [1] = {}, -- Ground
@@ -397,7 +466,7 @@ function A:BuildMountsTable()
         [5] = {}, -- with passengers
     };
 
-    for i=1,GetNumCompanions("MOUNT") do
+    for i=1,mountsCount do
         creatureID, creatureName, spellId, icon, isSummoned, mountType = GetCompanionInfo("MOUNT", i);
         leadingLetter = string.sub(creatureName, 1, 1);
 
@@ -454,21 +523,30 @@ function A:BuildMountsTable()
             mountType = mountType,
         };
     end
+
+    A:DebugMessage("BuildMountsTable() - Update successful");
 end
 
 --- Build companions and mounts tables
-function A:BuildBothTables()
-    A:BuildPetsTable();
-    A:BuildMountsTable();
-    A:DebugMessage("Databases available");
+function A:BuildBothTables(force)
+    A:BuildPetsTable(force);
+    A:BuildMountsTable(force);
+    A:DebugMessage("BuildBothTables()");
 end
 
---- Initialize the addon (building databases if needed)
+--- Initialize the addon
+-- building databases if needed
+-- setting DB auto update events
 function A:Initialize()
     if ( A.initialized ) then return; end
 
     A:DebugMessage("Initializing addon");
     A:BuildBothTables();
+    A:RegisterEvent("CHAT_MSG_SYSTEM");
+    A:RegisterEvent("COMPANION_LEARNED", "BuildBothTables");
+    A:RegisterEvent("COMPANION_UNLEARNED", "BuildBothTables");
+    -- /!\ Need some work on updating DB when using an item to learn a pet or mount (COMPANION_UPDATE is the key, and it sucks, big time) /!\
+    -- /!\ also take a look in learning new pet or mount from achievements /!\
     A.initialized = 1;
 end
 
@@ -572,6 +650,7 @@ local function PAMMenu(self, level)
         self.info.text = L["Pets & Mounts"];
         self.info.notCheckable = 1;
         self.info.icon = nil;
+        self.info.hasArrow = nil;
         UIDropDownMenu_AddButton(self.info, level);
 
         -- Set options
@@ -723,6 +802,7 @@ local function PAMMenu(self, level)
                     self.info.icon = vv.icon;
                     self.info.disabled = isSummoned;
                     self.info.keepShownOnClick = 1;
+                    self.info.hasArrow = nil;
                     self.info.func = function() C_PetJournal.SummonPetByGUID(vv.petID); end;
                     UIDropDownMenu_AddButton(self.info, level);
 
@@ -884,6 +964,7 @@ local function PAMMenu(self, level)
                             self.info.text = vvv.name;
                             self.info.icon = vvv.icon;
                             self.info.keepShownOnClick = 1;
+                            self.info.hasArrow = nil;
                             self.info.func = function() CallCompanion("MOUNT", vvv.id); end;
                             UIDropDownMenu_AddButton(self.info, level);
 
@@ -954,20 +1035,20 @@ function A:UPDATE_STEALTH()
 end
 
 -- Other stealth buffs, no timed summon here too spammy
-function A:UNIT_AURA(self, unit)
-    if ( unit == "player" and (A.playerClass == "MAGE" or A.playerClass == "hunter") ) then
-        if ( not A.db.profile.notWhenStealthed ) then return; end
+-- function A:UNIT_AURA(self, unit)
+    -- if ( unit == "player" and (A.playerClass == "MAGE" or A.playerClass == "hunter") ) then
+        -- if ( not A.db.profile.notWhenStealthed ) then return; end
 
-        A:AutoPet();
-    end
-end
+        -- A:AutoPet();
+    -- end
+-- end
 
 function A:LOOT_OPENED()
-    A.noAutoPet = 1;
+    A.isLooting = 1;
 end
 
 function A:LOOT_CLOSED()
-    A.noAutoPet = nil;
+    A.isLooting = nil;
 end
 
 -- Using this because it is a little faster than event UPDATE_STEALTH
@@ -993,9 +1074,43 @@ function A:COMBAT_LOG_EVENT_UNFILTERED(event, ...)
         local spellID = select(12, ...);
 
         if ( tContains(A.stealthSpellsIDs, spellID) ) then
+            A:DebugMessage("COMBAT_LOG_EVENT_UNFILTERED() - Stealth/invis spell cast, revoking pet.");
             A.stealthCasted = 1;
             A:RevokePet();
         end
+    end
+end
+
+-- Imo the best way to know if a new pet or mount was learned
+--BATTLE_PET_NEW_PET = "%s has been added to your pet journal!";
+A.battlePetNewPet = string.gsub(BATTLE_PET_NEW_PET, "%.", "%%.");
+A.battlePetNewPet = string.gsub(A.battlePetNewPet, "%%s", "(.+)");
+
+--ERR_LEARN_COMPANION_S = "You have added the pet %s to your collection.";
+A.errLearnCompanion = string.gsub(ERR_LEARN_COMPANION_S, "%.", "%%.");
+A.errLearnCompanion = string.gsub(A.errLearnCompanion, "%%s", "(.+)");
+
+--ERR_LEARN_MOUNT_S = "You have added the mount %s to your collection.";
+A.errLearnMount = string.gsub(ERR_LEARN_MOUNT_S, "%.", "%%.");
+A.errLearnMount = string.gsub(A.errLearnMount, "%%s", "(.+)");
+
+function A:CHAT_MSG_SYSTEM(event, msg)
+    -- Pets messages
+    local pet = string.match(msg, A.battlePetNewPet);
+
+    if ( not pet ) then pet = string.match(msg, A.errLearnCompanion); end
+
+    if ( pet ) then
+        A:DebugMessage(("CHAT_MSG_SYSTEM() - New pet %s."):format(pet));
+        A:BuildPetsTable();
+    end
+
+    -- Mounts messages
+    local mount = string.match(msg, A.errLearnMount);
+
+    if ( mount ) then
+        A:DebugMessage(("CHAT_MSG_SYSTEM() - New mount %s."):format(mount));
+        A:BuildMountsTable();
     end
 end
 
@@ -1360,8 +1475,6 @@ function A:OnEnable()
     A:RegisterChatCommand("pam", "SlashCommand");
 
     -- Events
-    A:RegisterEvent("COMPANION_LEARNED", "BuildBothTables");
-    A:RegisterEvent("COMPANION_UNLEARNED", "BuildBothTables");
     A:RegisterEvent("PLAYER_REGEN_DISABLED"); -- Combat.
     A:RegisterEvent("PLAYER_REGEN_ENABLED"); -- Out of combat.
     A:RegisterEvent("PLAYER_ENTERING_WORLD", "AutoPetDelay"); -- Every loading screen.
@@ -1375,6 +1488,7 @@ function A:OnEnable()
     A:RegisterEvent("LOOT_CLOSED"); -- End looting.
     A:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED");
     A:RegisterEvent("UPDATE_BINDINGS", "SetBindings");
+    -- DB update event are within initialize method
 
     -- Main timer
     if ( A.db.profile.autoPet ) then A.mainTimer = A:ScheduleRepeatingTimer("AutoPet", A.db.profile.mainTimer); end

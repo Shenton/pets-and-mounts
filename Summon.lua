@@ -80,6 +80,8 @@ function A:RevokePet()
     elseif ( C_PetJournal.GetSummonedPetGUID() ) then
         C_PetJournal.SummonPetByGUID(C_PetJournal.GetSummonedPetGUID());
     end
+
+    A:DebugMessage("RevokePet()");
 end
 
 --- Check if a pet can be summoned
@@ -101,13 +103,15 @@ function A:AutoPet()
     or UnitIsDeadOrGhost("player") -- Not when dead (thanks captain).
     or InCombatLockdown() -- Not when in combat.
     or A.noAutoPet -- Combat, reviving, fly path end, etc, delay.
+    or A.isLooting -- Player is looting.
     or IsMounted() -- Not when mounted.
     or IsFlying() -- Not when flying, dunno if this is usefull, perhaps when using a flying "mount" from a dungeon event.
     or IsFalling() -- Not when falling.
     or UnitHasVehicleUI("player") -- Not when in a vehicule.
     or UnitOnTaxi("player") -- Not on a fly path.
     or A:HasRegenBuff() -- Not when eating/drinking.
-    or A.stealthCasted -- A stealth/invis spell was casted, this will prevent some rare case of unsteatlth by summoning pet.
+    or A.stealthCasted -- A stealth/invis spell was casted, this will (should...) prevent some rare case of unsteatlth by summoning pet.
+    -- Note: it is wow that summon the pet when going stealth, seriously blizzard this is lame
     or not HasFullControl() ) then -- Not when not having full control.
         A:DebugMessage("AutoPet() - No summon filter");
         A.stealthCasted = nil;
