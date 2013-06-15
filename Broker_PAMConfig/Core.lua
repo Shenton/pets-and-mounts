@@ -9,11 +9,15 @@
 local A = _G["BrokerPAMGlobal"];
 local L = A.L;
 
--- Lua globals to locals
-local ipairs, pairs, type = ipairs, pairs, type;
+-- Globals to locals
+local ipairs = ipairs;
+local pairs = pairs;
+local type = type;
+local tContains = tContains;
+local strtrim = strtrim;
 
--- WoW globals to locals
-local tContains, strtrim = tContains, strtrim;
+-- GLOBALS: GetCurrentBindingSet, SetBinding, SaveBindings
+-- GLOBALS: GetBindingKey, StaticPopup_Show, LibStub
 
 -- Ace3 libs <3
 A.AceConfigDialog = LibStub("AceConfigDialog-3.0");

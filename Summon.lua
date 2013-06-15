@@ -9,15 +9,55 @@
 local A = _G["BrokerPAMGlobal"];
 local L = A.L;
 
--- Lua globals to locals
+-- Globals to locals
 local math = math;
-
--- WoW globals to locals
 local tContains = tContains;
+
+-- GLOBALS: tContains, C_PetJournal, UnitIsFeignDeath, UnitCastingInfo, UnitChannelInfo
+-- GLOBALS: UnitIsDeadOrGhost, InCombatLockdown, IsMounted, IsFlying, IsFalling
+-- GLOBALS: UnitHasVehicleUI, UnitOnTaxi, HasFullControl, IsSwimming, IsSubmerged
+-- GLOBALS: IsFlyableArea, GetNumCompanions, GetCompanionInfo
+-- GLOBALS: CallCompanion, Dismount, IsIndoors, LibStub
 
 -- ********************************************************************************
 -- Functions
 -- ********************************************************************************
+
+--- Summon a pet by GUID
+function A:SummonPet(id)
+    A:DebugMessage("SummonPet()");
+
+    if ( C_PetJournal.PetIsSummonable(id) ) then
+        if ( A.db.profile.debug ) then
+            local _, customName, _, _, _, _, _,creatureName = C_PetJournal.GetPetInfoByPetID(id);
+
+            if ( customName ) then
+                A:DebugMessage("RandomPet() - Summon pet: "..customName);
+            else
+                A:DebugMessage("RandomPet() - Summon pet: "..creatureName);
+            end
+        end
+
+        if ( A.stealthCasted ) then
+            A:DebugMessage("SummonPet() - stealthCasted");
+            A.stealthCasted = nil;
+            return;
+        end
+
+        C_PetJournal.SummonPetByGUID(id);
+    end
+end
+
+--- Revoke current pet
+function A:RevokePet()
+    A:DebugMessage("RevokePet()");
+
+    if ( A.currentPet ) then
+        C_PetJournal.SummonPetByGUID(A.currentPet);
+    elseif ( C_PetJournal.GetSummonedPetGUID() ) then
+        C_PetJournal.SummonPetByGUID(C_PetJournal.GetSummonedPetGUID());
+    end
+end
 
 --- Get a random pet from databases and summon it
 -- @param auto Bool called from AutoPet()
@@ -54,34 +94,7 @@ function A:RandomPet(auto)
         return;
     end
 
-    if ( C_PetJournal.PetIsSummonable(id) ) then
-        if ( A.db.profile.debug ) then
-            local _, customName, _, _, _, _, _,creatureName = C_PetJournal.GetPetInfoByPetID(id);
-
-            if ( customName ) then
-                A:DebugMessage("RandomPet() - Summon pet: "..customName);
-            else
-                A:DebugMessage("RandomPet() - Summon pet: "..creatureName);
-            end
-        end
-
-        if ( A.stealthCasted ) then
-            A.stealthCasted = nil;
-            return;
-        end
-        C_PetJournal.SummonPetByGUID(id);
-    end
-end
-
---- Revoke current pet
-function A:RevokePet()
-    if ( A.currentPet ) then
-        C_PetJournal.SummonPetByGUID(A.currentPet);
-    elseif ( C_PetJournal.GetSummonedPetGUID() ) then
-        C_PetJournal.SummonPetByGUID(C_PetJournal.GetSummonedPetGUID());
-    end
-
-    A:DebugMessage("RevokePet()");
+    A:SummonPet(id);
 end
 
 --- Check if a pet can be summoned
@@ -130,8 +143,14 @@ function A:AutoPet()
         return;
     end
 
-    -- Summon a random pet 
-    A:RandomPet(1);
+    -- Summon pet
+    if ( A.db.profile.forceOne.pet ) then -- Got forced
+        A:DebugMessage("AutoPet() - Forced pet");
+        A:SummonPet(id);
+    else -- Summon a random pet
+        A:DebugMessage("AutoPet() - Random pet");
+        A:RandomPet(1);
+    end
 end
 
 --- Set wich mount category should be used

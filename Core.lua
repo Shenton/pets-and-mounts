@@ -17,13 +17,35 @@ _G["BrokerPAMGlobal"] = A;
 -- Variables
 -- ********************************************************************************
 
--- LUA globals to locals
-local pairs, ipairs, string = pairs, ipairs, string;
-local table, tostring, type = table, tostring, type;
+-- Globals to locals
+local pairs = pairs;
+local ipairs = ipairs;
+local string = string;
+local table = table;
+local tostring = tostring;
+local type = type;
 local time = time;
+local _G = _G;
+local select = select;
+local strsplit = strsplit;
+local tContains = tContains;
 
--- WoW globals to locals
-local strsplit, tContains = strsplit, tContains;
+-- GLOBALS: PlaySound, DEFAULT_CHAT_FRAME, GetScreenWidth, GetNumCompanions
+-- GLOBALS: GetCursorPosition, UIParent, IsStealthed, UnitBuff, GetSpellInfo
+-- GLOBALS: C_PetJournal, LE_PET_JOURNAL_FLAG_COLLECTED, LE_PET_JOURNAL_FLAG_FAVORITES
+-- GLOBALS: LE_PET_JOURNAL_FLAG_NOT_COLLECTED, PetJournalSearchBox
+-- GLOBALS: GetCompanionInfo, InCombatLockdown, GetBindingKey, SetOverrideBindingClick
+-- GLOBALS: UIDropDownMenu_AddButton, UIDROPDOWNMENU_MENU_VALUE, CloseDropDownMenus
+-- GLOBALS: DropDownList2Button1, DropDownList3, CallCompanion, DropDownList4
+-- GLOBALS: LoadAddOn, INTERFACEOPTIONS_ADDONCATEGORIES, CreateFrame
+-- GLOBALS: InterfaceOptions_AddCategory, InterfaceAddOnsList_Update
+-- GLOBALS: InterfaceOptionsFrame_OpenToCategory, DropDownList1, LibStub
+-- GLOBALS: TOOLTIP_DEFAULT_COLOR, TOOLTIP_DEFAULT_BACKGROUND_COLOR
+-- GLOBALS: hooksecurefunc, GetTime, MODELFRAME_DRAG_ROTATION_CONSTANT
+-- GLOBALS: PI, UnitClass, IsShiftKeyDown, ToggleDropDownMenu, GameTooltip
+-- GLOBALS: BINDING_HEADER_BROKERPAM, BINDING_NAME_BROKERPAMMOUNT
+-- GLOBALS: BINDING_NAME_BROKERPAMMOUNTPASSENGERS, BINDING_NAME_BROKERPAMMOUNTFLYING
+-- GLOBALS: BINDING_NAME_BROKERPAMMOUNTGROUND, BINDING_NAME_BROKERPAMMOUNTAQUATIC
 
 -- AddOn version
 A.version = GetAddOnMetadata("Broker_PAM", "Version");
@@ -1256,11 +1278,16 @@ function A:LoadAddonConfig()
     local loaded, reason = LoadAddOn("Broker_PAMConfig");
 
     if ( loaded ) then
-        for k,v in ipairs(INTERFACEOPTIONS_ADDONCATEGORIES) do
-            if ( v.name == L["Pets & Mounts config loader"] ) then
-                INTERFACEOPTIONS_ADDONCATEGORIES[k] = nil;
+        local categories = INTERFACEOPTIONS_ADDONCATEGORIES;
+        local cat;
+
+        for i=1,#categories do
+            if ( categories[i].name == L["Pets & Mounts config loader"] ) then
+                cat = i;
             end
         end
+
+        table.remove(categories, cat);
     elseif ( reason ) then
         reason = _G["ADDON_"..reason];
         A:Message(L["Failed to load configuration, reason: %s."]:format(reason), 1, 1);
@@ -1283,7 +1310,8 @@ function A:AddToBlizzTemp()
 
         if ( loaded ) then
             InterfaceAddOnsList_Update();
-            InterfaceOptionsFrame_OpenToCategory(A.configFrame);
+            --InterfaceOptionsFrame_OpenToCategory(A.configFrame);
+            InterfaceOptionsFrame_OpenToCategory(L["Pets & Mounts"]);
         end
     end);
 
@@ -1294,12 +1322,14 @@ end
 -- Load it if needed
 function A:OpenConfigPanel()
     if ( A.AceConfigDialog ) then
-        InterfaceOptionsFrame_OpenToCategory(A.configFrame);
+        --InterfaceOptionsFrame_OpenToCategory(A.configFrame);
+        InterfaceOptionsFrame_OpenToCategory(L["Pets & Mounts"]);
     else
         local loaded = A:LoadAddonConfig();
 
         if ( loaded ) then
-            InterfaceOptionsFrame_OpenToCategory(A.configFrame);
+            --InterfaceOptionsFrame_OpenToCategory(A.configFrame);
+            InterfaceOptionsFrame_OpenToCategory(L["Pets & Mounts"]);
         end
     end
 end
