@@ -1310,8 +1310,7 @@ function A:AddToBlizzTemp()
 
         if ( loaded ) then
             InterfaceAddOnsList_Update();
-            --InterfaceOptionsFrame_OpenToCategory(A.configFrame);
-            InterfaceOptionsFrame_OpenToCategory(L["Pets & Mounts"]);
+            InterfaceOptionsFrame_OpenToCategory(A.configFrame);
         end
     end);
 
@@ -1322,14 +1321,12 @@ end
 -- Load it if needed
 function A:OpenConfigPanel()
     if ( A.AceConfigDialog ) then
-        --InterfaceOptionsFrame_OpenToCategory(A.configFrame);
-        InterfaceOptionsFrame_OpenToCategory(L["Pets & Mounts"]);
+        InterfaceOptionsFrame_OpenToCategory(A.configFrame);
     else
         local loaded = A:LoadAddonConfig();
 
         if ( loaded ) then
-            --InterfaceOptionsFrame_OpenToCategory(A.configFrame);
-            InterfaceOptionsFrame_OpenToCategory(L["Pets & Mounts"]);
+            InterfaceOptionsFrame_OpenToCategory(A.configFrame);
         end
     end
 end
