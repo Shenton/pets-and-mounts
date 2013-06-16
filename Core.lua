@@ -11,11 +11,8 @@ local A = LibStub("AceAddon-3.0"):NewAddon("BrokerPAM", "AceConsole-3.0", "AceHo
 local L = LibStub("AceLocale-3.0"):GetLocale("BrokerPAM");
 A.L = L;
 
+-- Addon's global
 _G["BrokerPAMGlobal"] = A;
-
--- ********************************************************************************
--- Variables
--- ********************************************************************************
 
 -- Globals to locals
 local pairs = pairs;
@@ -47,16 +44,22 @@ local tContains = tContains;
 -- GLOBALS: BINDING_NAME_BROKERPAMMOUNTPASSENGERS, BINDING_NAME_BROKERPAMMOUNTFLYING
 -- GLOBALS: BINDING_NAME_BROKERPAMMOUNTGROUND, BINDING_NAME_BROKERPAMMOUNTAQUATIC
 
+-- ********************************************************************************
+-- Variables
+-- ********************************************************************************
+
 -- AddOn version
 A.version = GetAddOnMetadata("Broker_PAM", "Version");
 
 -- Text colors
-A.color = {};
-A.color["RED"] = "|cFFFF3333";
-A.color["GREEN"] = "|cFF33FF99";
-A.color["BLUE"] = "|cFF3399FF";
-A.color["WHITE"] = "|cFFFFFFFF";
-A.color["RESET"] = "|r";
+A.color =
+{
+    RED = "|cffff3333",
+    GREEN = "|cff33ff99",
+    BLUE = "|cff3399ff",
+    WHITE = "|cffffffff",
+    RESET = "|r",
+};
 
 -- Player pets and mounts table
 A.pamTable =
@@ -88,6 +91,8 @@ A.passengerMounts =
     [93326] = 1, -- Sandstone Drake
 };
 
+-- Mounts with another bitfield than the aquatic one
+-- this will force them to aquatics
 A.aquaticMounts =
 {
     [64731] = 1, -- Sea Turtle
@@ -98,6 +103,16 @@ A.bannedPets =
 {
     15705, -- Winter's Little Helper
     15698, -- Father Winter's Helper
+};
+
+-- Mounts listed here will be forced to summon in a specific area
+A.areaMounts =
+{
+    -- Abyssal Seahorse in Vashj'ir
+    [614] = 75207, -- Abyssal Depths
+    [610] = 75207, -- Kelp'thar Forest
+    [615] = 75207, -- Shimmering Expanse
+    [613] = 75207, -- Vashj'ir
 };
 
 -- Binding UI localization
@@ -301,7 +316,31 @@ function A:CopyTable(src, dest)
     return dest;
 end
 
---- Return the mount type depending on the bitfield
+--- Compare two tables
+function A:CompareTables(t1, t2)
+    if ( type(t1) ~= "table" or type(t2) ~= "table" ) then return nil; end
+
+    if ( #t1 ~= #t2 ) then return nil; end
+
+    --table.sort(t1);
+    --table.sort(t2);
+
+    for k,v in pairs(t1) do
+        if ( type(v) == "table" ) then
+            if ( type(t2[k]) == "table" ) then
+                A:CompareTables(t2[k], v);
+            else
+                return nil;
+            end
+        elseif ( t2[k] ~= v ) then
+            return nil;
+        end
+    end
+
+    return 1;
+end
+
+--- Return the mount type according to the bitfield
 local bitField = {16,8,4,2,1};
 local bitFieldCat =
 {
@@ -398,17 +437,22 @@ end
 
 --- Build the companions table
 function A:BuildPetsTable(force)
-    A:StoreAndResetPetsFilters();
+    -- First, check if an update is needed
+    local _, numOwned = C_PetJournal.GetNumPets();
 
-    local numPets = C_PetJournal.GetNumPets();
-
-    if ( not force and A.lastPetsCount == numPets ) then
-        A:RestorePetsFilters();
-        A:DebugMessage(("BuildPetsTable() - No update needed %d %d"):format(A.lastPetsCount, numPets));
+    if ( not force and A.lastPetsCount == numOwned ) then
+        A:DebugMessage("BuildPetsTable() - No update needed");
         return;
     end
 
-    A.lastPetsCount = numPets;
+    A:DebugMessage(("BuildPetsTable() - Update needed %d %d"):format(A.lastPetsCount, numOwned));
+
+    A.lastPetsCount = numOwned;
+
+    -- Update needed, store filters and set them for update
+    A:StoreAndResetPetsFilters();
+
+    local numPets = C_PetJournal.GetNumPets();
 
     A.pamTable.pets = {};
     A.pamTable.petsIds = {};
@@ -463,9 +507,11 @@ function A:BuildMountsTable(force)
     local mountsCount = GetNumCompanions("MOUNT");
 
     if ( not force and A.lastMountsCount == mountsCount ) then
-        A:DebugMessage(("BuildMountsTable() - No update needed %d %d"):format(A.lastMountsCount, mountsCount));
+        A:DebugMessage("BuildMountsTable() - No update needed");
         return;
     end
+
+    A:DebugMessage(("BuildMountsTable() - Update needed %d %d"):format(A.lastMountsCount, mountsCount));
 
     A.lastMountsCount = mountsCount;
 
@@ -575,6 +621,7 @@ function A:CheckBannedPet(id)
 end
 
 --- Return creature ID from spell ID (mount)
+-- Used by modified AceGUI widget dropdown
 function A:GetCreatureIDFromSpellID(spellID)
     for k,v in ipairs(A.pamTable.mounts) do
         for kk,vv in pairs(v) do
@@ -589,8 +636,81 @@ function A:GetCreatureIDFromSpellID(spellID)
     return nil;
 end
 
+--- Return mount ID from spell ID
+function A:GetMountIDFromSpellID(spellID)
+    -- Init addon databases
+    A:InitializeDB();
+
+    for k,v in ipairs(A.pamTable.mounts) do
+        for kk,vv in pairs(v) do
+            for kkk,vvv in ipairs(vv) do
+                if ( spellID == vvv.spellId ) then
+                    return vvv.id;
+                end
+            end
+        end
+    end
+
+    return nil;
+end
+
+--- Return pet name
+function A:GetPetNameByID(id)
+    if ( not id ) then return nil; end
+
+    local _, customName, _, _, _, _, _,creatureName = C_PetJournal.GetPetInfoByPetID(id);
+
+    if ( customName ) then
+        return customName;
+    end
+
+    return creatureName;
+end
+
+--- Return mount name
+function A:GetMountNameBySpellID(id)
+    if ( not id ) then return nil; end
+
+    return select(2, GetCompanionInfo("MOUNT", A:GetMountIDFromSpellID(id)));
+end
+
+--- Set main timer
+function A:SetMainTimer()
+    if ( not A.db.profile.autoPet and A.mainTimer ) then
+        A:CancelTimer(A.mainTimer, 1);
+    elseif ( A.db.profile.autoPet and A.mainTimer ) then
+        A:CancelTimer(A.mainTimer, 1);
+        A.mainTimer = A:ScheduleRepeatingTimer("AutoPet", A.db.profile.mainTimer);
+    elseif ( A.db.profile.autoPet and not A.mainTimer ) then
+        A.mainTimer = A:ScheduleRepeatingTimer("AutoPet", A.db.profile.mainTimer);
+    end
+end
+
+--- Return the current set
+function A:GetCurrentSet(type)
+    local setsTable, favTable;
+
+    if ( type == "PET" ) then
+        setsTable = A.db.global.savedSets.pets;
+        favTable = A.db.profile.favoritePets
+    elseif ( type == "MOUNT" ) then
+        setsTable = A.db.global.savedSets.mounts;
+        favTable = A.db.profile.favoriteMounts;
+    else
+        return L["None"];
+    end
+
+    for k,v in pairs(setsTable) do
+        if ( A:CompareTables(favTable, v) ) then
+            return k;
+        end
+    end
+
+    return L["None"];
+end
+
 -- ********************************************************************************
--- Bindings & SecureBurrons handling
+-- Bindings & SecureButtons handling
 -- ********************************************************************************
 
 --- Set bindings
@@ -760,6 +880,19 @@ local function PAMMenu(self, level)
 
         -- Options
         if ( UIDROPDOWNMENU_MENU_VALUE == "OPTIONS" ) then
+            -- Pet auto summon
+            self.info.text = L["Auto summon"];
+            self.info.icon = nil;
+            self.info.hasArrow = nil;
+            self.info.notCheckable = nil;
+            self.info.checked = A.db.profile.autoPet;
+            self.info.func = function()
+                A.db.profile.autoPet = not A.db.profile.autoPet;
+                A:SetMainTimer();
+                LibStub("AceConfigRegistry-3.0"):NotifyChange("BrokerPAMConfig");
+            end;
+            UIDropDownMenu_AddButton(self.info, level);
+
             -- Show/hide minimap icon
             self.info.text = L["Show or hide minimap icon"];
             self.info.icon = nil;
@@ -1072,18 +1205,20 @@ A.playerGUID = UnitGUID("player");
 A.stealthSpellsIDs =
 {
     5215, -- Druid's Prowl
-    102280, -- Druid's Displacer Beast
+    --102280, -- Druid's Displacer Beast -- No longer cast prowl
     1784, -- Rogue's Stealth
     1856, -- Rogue's Vanish
     51753, -- Hunter's Camouflage
     66, -- Mage's Invisibility
     110960, -- Mage's Greater Invisibility
     58984, -- Night Elf's Shadowmeld
+    112833, -- Priest's Spectral Guise
 };
 function A:COMBAT_LOG_EVENT_UNFILTERED(event, ...)
     if ( not A.db.profile.notWhenStealthed ) then return; end
 
-    local timestamp, type, _, sourceGUID = ...;
+    --local timestamp, type, _, sourceGUID = ...;
+    local _, type, _, sourceGUID = ...;
 
     if ( sourceGUID == A.playerGUID and type == "SPELL_CAST_SUCCESS" ) then
         local spellID = select(12, ...);
@@ -1161,6 +1296,7 @@ A.aceDefaultDB =
         notWhenStealthed = 1, -- d
         noHybridWhenGround = 1, -- d
         dismountFlying = 1, -- d
+        areaMounts = 1,
         ldbi = {}, -- d
         favoritePets = {}, -- d
         favoriteMounts = -- d
@@ -1275,6 +1411,8 @@ end
 
 --- Load config addon and remove config loader from Blizzard options frame
 function A:LoadAddonConfig()
+    A:DebugMessage("LoadAddonConfig() - Loading configuration addon");
+
     local loaded, reason = LoadAddOn("Broker_PAMConfig");
 
     if ( loaded ) then
@@ -1288,6 +1426,8 @@ function A:LoadAddonConfig()
         end
 
         table.remove(categories, cat);
+
+        A:DebugMessage("LoadAddonConfig() - Successfully loaded configuration addon");
     elseif ( reason ) then
         reason = _G["ADDON_"..reason];
         A:Message(L["Failed to load configuration, reason: %s."]:format(reason), 1, 1);
@@ -1446,9 +1586,15 @@ function A:OnInitialize()
         A.currentPet = id;
     end);
 
-    if ( C_PetJournal.GetSummonedPetGUID() ) then
-        A.currentPet = C_PetJournal.GetSummonedPetGUID();
-    end
+    -- DB auto update hooks
+    hooksecurefunc(C_PetJournal, "CagePetByID", function()
+        A:DebugMessage("Hook - C_PetJournal.CagePetByID() called");
+        A:BuildPetsTables();
+    end);
+    hooksecurefunc(C_PetJournal, "ReleasePetByID", function()
+        A:DebugMessage("Hook - C_PetJournal.ReleasePetByID() called");
+        A:BuildPetsTables();
+    end);
 end
 
 --- AceAddon callback
@@ -1480,9 +1626,39 @@ function A:OnEnable()
                 end
             end,
             OnTooltipShow = function(tooltip)
+                local currentSet;
+
                 tooltip:AddDoubleLine(A.color["WHITE"]..L["Pets & Mounts"], A.color["GREEN"].."v"..A.version);
                 tooltip:AddLine(" ");
-                tooltip:AddLine(L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random pet.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Revoke current pet.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open the configuration panel."]);
+
+                currentSet = A:GetCurrentSet("PET");
+                if ( currentSet == L["None"] ) then
+                    currentSet = A.color["RED"]..currentSet;
+                else
+                    currentSet = A.color["GREEN"]..currentSet;
+                end
+
+                tooltip:AddLine(L["Companions set in use: %s."]:format(currentSet));
+                tooltip:AddLine(L["Auto companion summon is %s."]:format(A.db.profile.autoPet and A.color["GREEN"]..L["On"] or A.color["RED"]..L["Off"]));
+                tooltip:AddLine(L["Forced companion: %s"]:format(A.db.profile.forceOne.pet and A.color["GREEN"]..A:GetPetNameByID(A.db.profile.forceOne.pet) or A.color["RED"]..L["None"]));
+                tooltip:AddLine(" ");
+
+                currentSet = A:GetCurrentSet("MOUNT");
+                if ( currentSet == L["None"] ) then
+                    currentSet = A.color["RED"]..currentSet;
+                else
+                    currentSet = A.color["GREEN"]..currentSet;
+                end
+
+                tooltip:AddLine(L["Mounts set in use: %s."]:format(currentSet));
+                tooltip:AddLine(L["Forced aquatic mount: %s"]:format(A.db.profile.forceOne.mount[4] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[4]) or A.color["RED"]..L["None"]));
+                tooltip:AddLine(L["Forced ground mount: %s"]:format(A.db.profile.forceOne.mount[1] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[1]) or A.color["RED"]..L["None"]));
+                tooltip:AddLine(L["Forced fly mount: %s"]:format(A.db.profile.forceOne.mount[2] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[2]) or A.color["RED"]..L["None"]));
+                tooltip:AddLine(L["Forced hybrid mount: %s"]:format(A.db.profile.forceOne.mount[3] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[3]) or A.color["RED"]..L["None"]));
+                tooltip:AddLine(L["Forced passenger mount: %s"]:format(A.db.profile.forceOne.mount[5] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[5]) or A.color["RED"]..L["None"]));
+
+                tooltip:AddLine(" ");
+                tooltip:AddLine(L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random companion.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Revoke current companion.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open the configuration panel."]);
             end
         });
     end
@@ -1514,19 +1690,8 @@ function A:OnEnable()
     A:RegisterEvent("COMPANION_LEARNED", "BuildBothTables");
     A:RegisterEvent("COMPANION_UNLEARNED", "BuildBothTables");
 
-    -- Hooks
-    -- DB auto update hooks
-    hooksecurefunc(C_PetJournal, "CagePetByID", function()
-        A:DebugMessage("Hook - C_PetJournal.CagePetByID() called");
-        A:BuildPetsTables();
-    end);
-    hooksecurefunc(C_PetJournal, "ReleasePetByID", function()
-        A:DebugMessage("Hook - C_PetJournal.ReleasePetByID() called");
-        A:BuildPetsTables();
-    end);
-
     -- Main timer
-    if ( A.db.profile.autoPet ) then A.mainTimer = A:ScheduleRepeatingTimer("AutoPet", A.db.profile.mainTimer); end
+    A:SetMainTimer();
 
     -- Set player class
     local _, class = UnitClass("player");
@@ -1537,4 +1702,8 @@ function A:OnEnable()
 
     -- Add the config loader to blizzard addon configuration panel
     A:AddToBlizzTemp();
+
+    if ( C_PetJournal.GetSummonedPetGUID() ) then
+        A.currentPet = C_PetJournal.GetSummonedPetGUID();
+    end
 end

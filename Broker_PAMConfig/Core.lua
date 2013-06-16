@@ -197,13 +197,7 @@ function A:AceConfig()
                                 type = "toggle",
                                 set = function(info, val)
                                     A.db.profile.autoPet = not A.db.profile.autoPet;
-
-                                    if ( not A.db.profile.autoPet ) then
-                                        A:CancelTimer(A.mainTimer, 1);
-                                    else
-                                        A:CancelTimer(A.mainTimer, 1);
-                                        A.mainTimer = A:ScheduleRepeatingTimer("AutoPet", A.db.profile.mainTimer);
-                                    end
+                                    A:SetMainTimer();
                                 end,
                                 get = function(info) return A.db.profile.autoPet; end,
                             },
@@ -273,8 +267,7 @@ function A:AceConfig()
                                 width = "full",
                                 set = function(info, val)
                                     A.db.profile.mainTimer = val;
-                                    A:CancelTimer(A.mainTimer, 1);
-                                    A.mainTimer = A:ScheduleRepeatingTimer("AutoPet", A.db.profile.mainTimer);
+                                    A:SetMainTimer();
                                 end,
                                 get = function(info) return A.db.profile.mainTimer; end,
                             },
@@ -288,11 +281,7 @@ function A:AceConfig()
                                 max = 60,
                                 step = 1,
                                 width = "full",
-                                set = function(info, val)
-                                    A.db.profile.shiftTimer = val;
-                                    A:CancelTimer(A.shiftTimer, 1);
-                                    A.shiftTimer = A:ScheduleRepeatingTimer("AutoPet", A.db.profile.shiftTimer);
-                                end,
+                                set = function(info, val) A.db.profile.shiftTimer = val; end,
                                 get = function(info) return A.db.profile.shiftTimer; end,
                             },
                         },
@@ -670,8 +659,8 @@ function A:AceConfig()
                             {
                                 order = 0,
                                 name = function()
-                                    -- retrieve current set
-                                    local current = "Not implemented yet";
+                                    local current = A:GetCurrentSet("PET");
+
                                     return L["Currently using set: %s"]:format(current);
                                 end,
                                 type = "description",
@@ -794,8 +783,8 @@ function A:AceConfig()
                             {
                                 order = 0,
                                 name = function()
-                                    -- retrieve current set
-                                    local current = "Not implemented yet";
+                                    local current = A:GetCurrentSet("MOUNT");
+
                                     return L["Currently using set: %s"]:format(current);
                                 end,
                                 type = "description",

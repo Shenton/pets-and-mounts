@@ -28,15 +28,7 @@ function A:SummonPet(id)
     A:DebugMessage("SummonPet()");
 
     if ( C_PetJournal.PetIsSummonable(id) ) then
-        if ( A.db.profile.debug ) then
-            local _, customName, _, _, _, _, _,creatureName = C_PetJournal.GetPetInfoByPetID(id);
-
-            if ( customName ) then
-                A:DebugMessage("RandomPet() - Summon pet: "..customName);
-            else
-                A:DebugMessage("RandomPet() - Summon pet: "..creatureName);
-            end
-        end
+        A:DebugMessage("RandomPet() - Summon pet: "..A:GetPetNameByID(id));
 
         if ( A.stealthCasted ) then
             A:DebugMessage("SummonPet() - stealthCasted");
@@ -146,7 +138,7 @@ function A:AutoPet()
     -- Summon pet
     if ( A.db.profile.forceOne.pet ) then -- Got forced
         A:DebugMessage("AutoPet() - Forced pet");
-        A:SummonPet(id);
+        A:SummonPet(A.db.profile.forceOne.pet);
     else -- Summon a random pet
         A:DebugMessage("AutoPet() - Random pet");
         A:RandomPet(1);
@@ -199,6 +191,25 @@ function A:SummonMountBySpellId(id)
     end
 end
 
+--- Summon a mount according to the current area ID
+function A:SummonMountByAreaID()
+    if ( not A.db.profile.areaMounts ) then
+        return nil;
+    end
+
+    local currentArea;
+
+    SetMapToCurrentZone();
+    currentArea = GetCurrentMapAreaID();
+
+    if ( A.areaMounts[currentArea] ) then
+        A:SummonMountBySpellId(A.areaMounts[currentArea]);
+        return 1;
+    end
+
+    return nil;
+end
+
 --- If mounted dismount
 -- If not choose a random from databases
 -- @param cat Mount category set by A:SetMountCat()
@@ -216,6 +227,11 @@ function A:RandomMount(cat)
     or IsIndoors() -- Not indoor, "should" work in indoor place when you can mount, but will see, theramore scenario is flyable and you cant use fly mount, meh blizzard
     or UnitOnTaxi("player") ) then -- Not on a fly path.
         A:DebugMessage("RandomMount() - No summon filter");
+        return;
+    end
+
+    -- If enabled and defined will sumonn a mount according to areaID
+    if ( A:SummonMountByAreaID() ) then
         return;
     end
 
