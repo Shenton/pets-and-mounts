@@ -1,10 +1,10 @@
-﻿-- ********************************************************************************
--- Broker Pets & Mounts
--- Data Broker display for easy acces to pets and mounts.
--- By: Shenton
---
--- Localization-enUS.lua
--- ********************************************************************************
+﻿--[[-------------------------------------------------------------------------------
+    Broker Pets & Mounts
+    Data Broker display for easy acces to pets and mounts.
+    By: Shenton
+
+    Localization-enUS.lua
+-------------------------------------------------------------------------------]]--
 
 local L = LibStub("AceLocale-3.0"):NewLocale("BrokerPAM", "enUS", true);
 
@@ -35,6 +35,8 @@ L["Accept"] = true;
 L["Cancel"] = true;
 L["Delete"] = true;
 L["Choose"] = true;
+L["New"] = true;
+L["Reset"] = true;
 L["Show or hide minimap icon"] = true;
 L["Model rotation"] = true;
 L["Model frame size"] = true;
@@ -43,7 +45,7 @@ L["Auto pet options"] = true;
 L["Auto summon a random companion."] = true;
 L["Not with a companion"] = true;
 L["Auto summon will not work if you already have a companion, or it will summon a random favorite companion."] = true;
-L["Not when stealthed"] = true;
+L["Revoke when stealthed"] = true;
 L["If you got a companion it will dismiss it when going stealthed."] = true;
 L["Add %s to favorite."] = true;
 L["Auto summon timer"] = true;
@@ -93,7 +95,6 @@ L["Database updated to revision %d."] = true;
 L["Delete set %s?"] = true;
 L["A set named %s already exists, renaming it to %s."] = true;
 L["Deleted set %s, due to Blizzard modification to companions code."] = true;
-L["Auto companion summon is %s."] = true;
 L["On"] = true;
 L["Off"] = true;
 L["Forced companion: %s"] = true;
@@ -104,4 +105,20 @@ L["Forced hybrid mount: %s"] = true;
 L["Forced passenger mount: %s"] = true;
 L["Companions set in use: %s."] = true;
 L["Mounts set in use: %s."] = true;
+L["Enable"] = true;
+L["Zone mounts"] = true;
+L["With this enabled it will summon a specific mount according to your current zone. Exemple: the Abyssal Seahorse in Vashj'ir"] = true;
+L["Arena instance"] = true;
+L["Open world"] = true;
+L["Party instance"] = true;
+L["Battleground instance"] = true;
+L["Raid instance"] = true;
+L["Scenario instance"] = true;
+L["Auto pet options override"] = true;
+L["Zone type"] = true;
+L["Select witch type of zone to work with."] = true;
+L["Enable auto pet options override."] = true;
+L["Override options for %s"] = true;
+L["Auto summon companion is %s."] = true;
+L["Not when stealthed is %s."] = true;
 end

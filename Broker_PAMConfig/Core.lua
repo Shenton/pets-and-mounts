@@ -1,10 +1,10 @@
-﻿-- ********************************************************************************
--- Broker Pets & Mounts
--- Data Broker display for easy acces to pets and mounts.
--- By: Shenton
---
--- Config.lua
--- ********************************************************************************
+﻿--[[-------------------------------------------------------------------------------
+    Broker Pets & Mounts
+    Data Broker display for easy acces to pets and mounts.
+    By: Shenton
+
+    Config.lua
+-------------------------------------------------------------------------------]]--
 
 local A = _G["BrokerPAMGlobal"];
 local L = A.L;
@@ -159,7 +159,8 @@ StaticPopupDialogs["BrokerPamDeleteSet"] =
     preferredIndex = 3,
 };
 
-local options, orderGroup, orderItem, petName;
+local options, orderGroup, orderItem, petName, petAutoSummonOverrideSelected;
+local optionsOverrideHeaderText = L["None"];
 function A:AceConfig()
     options =
     {
@@ -213,10 +214,13 @@ function A:AceConfig()
                             notWhenStealthed =
                             {
                                 order = 3,
-                                name = L["Not when stealthed"],
+                                name = L["Revoke when stealthed"],
                                 desc = L["If you got a companion it will dismiss it when going stealthed."],
                                 type = "toggle",
-                                set = function(info, val) A.db.profile.notWhenStealthed = not A.db.profile.notWhenStealthed; end,
+                                set = function(info, val)
+                                    A.db.profile.notWhenStealthed = not A.db.profile.notWhenStealthed;
+                                    A:SetStealthEvents();
+                                end,
                                 get = function(info) return A.db.profile.notWhenStealthed; end,
                             },
                             filters =
@@ -286,6 +290,138 @@ function A:AceConfig()
                             },
                         },
                     },
+                    petAutoSummonOverride =
+                    {
+                        order = 1,
+                        name = L["Auto pet options override"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            enableHeader =
+                            {
+                                order = 0,
+                                name = L["Enable"],
+                                type = "header",
+                            },
+                            enableToggle =
+                            {
+                                order = 1,
+                                name = L["Enable"],
+                                desc = L["Enable auto pet options override."],
+                                type = "toggle",
+                                set = function(info, val)
+                                    A.db.profile.enableAutoSummonOverride = not A.db.profile.enableAutoSummonOverride;
+                                end,
+                                get = function(info) return A.db.profile.enableAutoSummonOverride; end,
+                            },
+                            areaSelectHeader =
+                            {
+                                order = 10,
+                                name = L["Zone type"],
+                                type = "header",
+                            },
+                            areaSelect =
+                            {
+                                order = 11,
+                                name = L["Zone type"],
+                                desc = L["Select witch type of zone to work with."],
+                                type = "select",
+                                disabled = not A.db.profile.enableAutoSummonOverride,
+                                values = function()
+                                    local out = {};
+
+                                    for k,v in ipairs(A.areaTypes) do
+                                        out[v] = A.areaTypesLocales[v];
+                                    end
+
+                                    return out;
+                                end,
+                                set = function(info, val)
+                                    petAutoSummonOverrideSelected = val;
+
+                                    optionsOverrideHeaderText = A.areaTypesLocales[val];
+                                end,
+                                get = function()
+                                    return petAutoSummonOverrideSelected;
+                                end,
+                            },
+                            optionsHeader =
+                            {
+                                order = 20,
+                                name = L["Override options for %s"]:format(optionsOverrideHeaderText),
+                                type = "header",
+                            },
+                            autoSummon =
+                            {
+                                order = 21,
+                                name = L["Auto summon"],
+                                desc = L["Auto summon a random companion."],
+                                type = "toggle",
+                                disabled = function()
+                                    if ( not A.db.profile.enableAutoSummonOverride ) then
+                                        return 1;
+                                    end
+
+                                    if ( not petAutoSummonOverrideSelected ) then
+                                        return 1;
+                                    end
+
+                                    return nil;
+                                end,
+                                set = function(info, val)
+                                    if ( not petAutoSummonOverrideSelected ) then return; end
+
+                                    if ( not A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] ) then
+                                        A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] = {};
+                                    end
+
+                                    A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].autoPet = not A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].autoPet;
+                                end,
+                                get = function(info)
+                                    if ( A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] ) then
+                                        return A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].autoPet;
+                                    else
+                                        return nil;
+                                    end
+                                end,
+                            },
+                            notWhenStealthed =
+                            {
+                                order = 22,
+                                name = L["Revoke when stealthed"],
+                                desc = L["If you got a companion it will dismiss it when going stealthed."],
+                                type = "toggle",
+                                disabled = function()
+                                    if ( not A.db.profile.enableAutoSummonOverride ) then
+                                        return 1;
+                                    end
+
+                                    if ( not petAutoSummonOverrideSelected ) then
+                                        return 1;
+                                    end
+
+                                    return nil;
+                                end,
+                                set = function(info, val)
+                                    if ( not petAutoSummonOverrideSelected ) then return; end
+
+                                    if ( not A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] ) then
+                                        A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] = {};
+                                    end
+
+                                    A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].notWhenStealthed = not A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].notWhenStealthed;
+                                end,
+                                get = function(info)
+                                    if ( A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] ) then
+                                        return A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].notWhenStealthed;
+                                    else
+                                        return nil;
+                                    end
+                                end,
+                            },
+                        },
+                    },
                     mountOptions =
                     {
                         order = 10,
@@ -311,6 +447,15 @@ function A:AceConfig()
                                 type = "toggle",
                                 set = function(info, val) A.db.profile.dismountFlying = not A.db.profile.dismountFlying; end,
                                 get = function(info) return A.db.profile.dismountFlying; end,
+                            },
+                            areaMounts =
+                            {
+                                order = 1,
+                                name = L["Zone mounts"],
+                                desc = L["With this enabled it will summon a specific mount according to your current zone. Exemple: the Abyssal Seahorse in Vashj'ir"],
+                                type = "toggle",
+                                set = function(info, val) A.db.profile.areaMounts = not A.db.profile.areaMounts; end,
+                                get = function(info) return A.db.profile.areaMounts; end,
                             },
                         },
                     },
@@ -821,9 +966,42 @@ function A:AceConfig()
                                     },
                                 },
                             },
+                            -- new =
+                            -- {
+                                -- order = 20,
+                                -- name = L["New"],
+                                -- type = "group",
+                                -- inline = true,
+                                -- args =
+                                -- {
+                                    -- input =
+                                    -- {
+                                        -- order = 0,
+                                        -- name = L["Name"],
+                                        -- type = "input",
+                                        -- set = function(info, val) A.newMountSetName = val; end,
+                                        -- get = function() return A.newMountSetName; end,
+                                    -- },
+                                    -- exec =
+                                    -- {
+                                        -- order = 1,
+                                        -- name = L["Save"],
+                                        -- type = "execute",
+                                        -- disabled = not A.newMountSetName,
+                                        -- func = function()
+                                            -- if ( A.db.global.savedSets.mounts[A.newMountSetName] ) then
+                                                -- StaticPopup_Show("BrokerPamOverwriteOrChangeNameSet", A.newMountSetName);
+                                            -- else
+                                                -- A.db.global.savedSets.mounts[A.newMountSetName] = {};
+                                                -- A.newMountSetName = nil;
+                                            -- end
+                                        -- end;
+                                    -- },
+                                -- },
+                            -- },
                             save =
                             {
-                                order = 20,
+                                order = 30,
                                 name = L["Save"],
                                 type = "group",
                                 inline = true,
@@ -855,7 +1033,7 @@ function A:AceConfig()
                             },
                             delete =
                             {
-                                order = 30,
+                                order = 40,
                                 name = L["Delete"],
                                 type = "group",
                                 inline = true,
@@ -1129,7 +1307,13 @@ function A:AceConfig()
                     A.modelFrameConfig:SetPoint("TOPLEFT", A.configFrame, "TOPRIGHT", 0, 0);
                     A.modelFrameConfig:Show();
 
-                    return L["Add %s to favorite."]:format(vv.name);
+                    if ( A.db.profile.debug ) then
+                        return L["Add %s to favorite."]:format(vv.name).."\n\n"
+                        .."ID: "..vv.petID.."\n"
+                        .."CreatureID: "..vv.creatureID
+                    else
+                        return L["Add %s to favorite."]:format(vv.name);
+                    end
                 end,
                 --icon = string.gsub(vv.icon, "\\", "\\\\"),
                 image = vv.icon,
@@ -1235,6 +1419,44 @@ function A:AceConfig()
             end
         end
     end
+
+    options.args.mounts.args.reset =
+    {
+        order = 1000,
+        name = L["Reset"],
+        type = "group",
+        --inline = true,
+        args =
+        {
+            toggle =
+            {
+                order = 0,
+                name = L["Enable"],
+                type = "toggle",
+                get = A.enableMountResetButton,
+                set = function() A.enableMountResetButton = not A.enableMountResetButton; end,
+            },
+            exec =
+            {
+                order = 1,
+                name = L["Reset"],
+                type = "execute",
+                disabled = not A.enableMountResetButton,
+                func = function()
+                    A.db.profile.favoriteMounts =
+                    {
+                        [1] = {}, -- Ground
+                        [2] = {}, -- Fly
+                        [3] = {}, -- Hybrid (ground & fly)
+                        [4] = {}, -- Aquatic
+                        [5] = {}, -- with passengers
+                    };
+
+                    A.enableMountResetButton = nil;
+                end,
+            },
+        },
+    };
 
     -- Profiles
     options.args.profile = LibStub("AceDBOptions-3.0"):GetOptionsTable(A.db);

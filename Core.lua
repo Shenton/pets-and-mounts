@@ -1,13 +1,13 @@
-﻿-- ********************************************************************************
--- Broker Pets & Mounts
--- Data Broker display for easy acces to pets and mounts.
--- By: Shenton
---
--- Core.lua
--- ********************************************************************************
+﻿--[[-------------------------------------------------------------------------------
+    Broker Pets & Mounts
+    Data Broker display for easy acces to pets and mounts.
+    By: Shenton
+
+    Core.lua
+-------------------------------------------------------------------------------]]--
 
 -- Ace libs (<3)
-local A = LibStub("AceAddon-3.0"):NewAddon("BrokerPAM", "AceConsole-3.0", "AceHook-3.0", "AceTimer-3.0", "AceEvent-3.0");
+local A = LibStub("AceAddon-3.0"):NewAddon("BrokerPAM", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0");
 local L = LibStub("AceLocale-3.0"):GetLocale("BrokerPAM");
 A.L = L;
 
@@ -28,7 +28,7 @@ local strsplit = strsplit;
 local tContains = tContains;
 
 -- GLOBALS: PlaySound, DEFAULT_CHAT_FRAME, GetScreenWidth, GetNumCompanions
--- GLOBALS: GetCursorPosition, UIParent, IsStealthed, UnitBuff, GetSpellInfo
+-- GLOBALS: GetCursorPosition, UIParent, GetInstanceInfo
 -- GLOBALS: C_PetJournal, LE_PET_JOURNAL_FLAG_COLLECTED, LE_PET_JOURNAL_FLAG_FAVORITES
 -- GLOBALS: LE_PET_JOURNAL_FLAG_NOT_COLLECTED, PetJournalSearchBox
 -- GLOBALS: GetCompanionInfo, InCombatLockdown, GetBindingKey, SetOverrideBindingClick
@@ -44,9 +44,9 @@ local tContains = tContains;
 -- GLOBALS: BINDING_NAME_BROKERPAMMOUNTPASSENGERS, BINDING_NAME_BROKERPAMMOUNTFLYING
 -- GLOBALS: BINDING_NAME_BROKERPAMMOUNTGROUND, BINDING_NAME_BROKERPAMMOUNTAQUATIC
 
--- ********************************************************************************
--- Variables
--- ********************************************************************************
+--[[-------------------------------------------------------------------------------
+    Variables
+-------------------------------------------------------------------------------]]--
 
 -- AddOn version
 A.version = GetAddOnMetadata("Broker_PAM", "Version");
@@ -73,7 +73,6 @@ A.pamTable =
 A.mountCat = {L["Ground"],L["Fly"],L["Hybrid"],L["Aquatic"],L["Passenger"]};
 
 -- Mounts spellID with passengers
--- Thanks http://mounts.wowlogy.com/special/mounts-with-passengers/
 A.passengerMounts =
 {
     [60424] = 1, -- Mekgineer's Chopper
@@ -88,7 +87,6 @@ A.passengerMounts =
     [61447] = 1, -- Traveler's Tundra Mammoth (Horde)
     [55531] = 1, -- Mechano-Hog
     [75973] = 1, -- X-53 Touring Rocket
-    [93326] = 1, -- Sandstone Drake
 };
 
 -- Mounts with another bitfield than the aquatic one
@@ -126,9 +124,30 @@ BINDING_NAME_BROKERPAMMOUNTAQUATIC = L["Random aquatic mount"];
 -- Database revision
 A.databaseRevision = 2;
 
--- ********************************************************************************
--- Functions
--- ********************************************************************************
+-- Area types handled by the addon, for auto summon behavior according to area type
+A.areaTypes =
+{
+    "arena", -- A PvP Arena instance
+    "none", -- Normal world area (e.g. Northrend, Kalimdor, Deeprun Tram)
+    "party", -- An instance for 5-man groups
+    "pvp", -- A PvP battleground instance
+    "raid", -- An instance for raid groups
+    "scenario", -- A scenario instance
+};
+
+A.areaTypesLocales =
+{
+    arena = L["Arena instance"], -- A PvP Arena instance
+    none = L["Open world"], -- Normal world area (e.g. Northrend, Kalimdor, Deeprun Tram)
+    party = L["Party instance"], -- An instance for 5-man groups
+    pvp = L["Battleground instance"], -- A PvP battleground instance
+    raid = L["Raid instance"], -- An instance for raid groups
+    scenario = L["Scenario instance"], -- A scenario instance
+};
+
+--[[-------------------------------------------------------------------------------
+    Common methods
+-------------------------------------------------------------------------------]]--
 
 --- Send a message to the chat frame with the addon name colored
 -- @param text The message to display
@@ -167,6 +186,9 @@ function A:SlashCommand(input)
         A:OpenConfigPanel();
     elseif ( arg1 == "test" ) then
         -- Doh!
+        for k,v in ipairs(A.db.profile.favoritePets) do
+            print(C_PetJournal.GetPetInfoByPetID(v))
+        end
     elseif ( arg1 == "refresh" ) then
         A:BuildBothTables(1);
         A:Message(L["Companions and mounts informations updated."]);
@@ -215,7 +237,7 @@ function A:Exists(tbl, name)
     while tbl[index] do
         if ( name == tbl[index]["name"] ) then return 1; end
 
-        index = index+1;
+        index = index + 1;
    end
 
    return nil;
@@ -254,49 +276,6 @@ function A:GetAnchor()
     return "TOPLEFT", "TOPRIGHT";
 end
 
---- Check if the player is stealthed/invis
--- 51755 Camouflage (hunter)
--- 32612 Invis (mage)
-local stealthAuras =
-{
-    [1] = GetSpellInfo(51755),
-    [2] = GetSpellInfo(32612),
-};
-local _, class = UnitClass("player");
-function A:IsStealthed()
-    if ( IsStealthed() ) then
-        A:DebugMessage("IsStealthed() - Stealthed");
-        return 1;
-    elseif ( class == "HUNTER" or class == "MAGE" ) then
-        for k,v in ipairs(stealthAuras) do
-            if ( UnitBuff("player", v) ) then
-                A:DebugMessage("IsStealthed() - Stealth/Invis buff found");
-                return 1;
-            end
-        end
-    end
-
-    return nil;
-end
-
---- Check if the player is eating or drinking
-function A:InitHasRegenBuff()
-    A.foodBuffLocalized = GetSpellInfo(104935); -- Food
-    A.drinkBuffLocalized = GetSpellInfo(104270); -- Drink
-end
-function A:HasRegenBuff()
-    if ( not A.foodBuffLocalized or not A.drinkBuffLocalized ) then A:InitHasRegenBuff(); end
-    if ( UnitBuff("player", A.foodBuffLocalized) ) then
-        A:DebugMessage("HasRegenBuff() - Has food buff");
-        return 1;
-    end
-    if ( UnitBuff("player", A.drinkBuffLocalized) ) then
-        A:DebugMessage("HasRegenBuff() - Has drink buff");
-        return 1;
-    end
-    return nil;
-end
-
 --- Simple shallow copy for copying specialization profiles
 -- Shamelessly ripped off from Ace3 AceDB-3.0
 -- Did I say I love you guys? :p
@@ -328,7 +307,9 @@ function A:CompareTables(t1, t2)
     for k,v in pairs(t1) do
         if ( type(v) == "table" ) then
             if ( type(t2[k]) == "table" ) then
-                A:CompareTables(t2[k], v);
+                if ( not A:CompareTables(t2[k], v) ) then
+                    return nil;
+                end
             else
                 return nil;
             end
@@ -340,54 +321,86 @@ function A:CompareTables(t1, t2)
     return 1;
 end
 
---- Return the mount type according to the bitfield
-local bitField = {16,8,4,2,1};
-local bitFieldCat =
-{
-    [16] = "jump",
-    [8] = "aquatic",
-    [4] = "floats",
-    [2] = "fly",
-    [1] = "ground",
-};
-local mountCat;
-function A:GetMountCategory(cat)
-    local index = 1;
-    mountCat = {};
-
-    while cat > 0 do
-        if ( cat - bitField[index] > 0 ) then
-            mountCat[#mountCat+1] = bitFieldCat[bitField[index]];
-            cat = cat - bitField[index];
-            index = index + 1;
-        elseif ( cat - bitField[index] == 0 ) then
-            mountCat[#mountCat+1] = bitFieldCat[bitField[index]];
-            cat = 0;
-        else
-            index = index + 1;
+--- Return creature ID from spell ID (mount)
+-- Used by modified AceGUI widget dropdown
+function A:GetCreatureIDFromSpellID(spellID)
+    for k,v in ipairs(A.pamTable.mounts) do
+        for kk,vv in pairs(v) do
+            for kkk,vvv in ipairs(vv) do
+                if ( spellID == vvv.spellId ) then
+                    return vvv.creatureID;
+                end
+            end
         end
     end
 
-    if ( #mountCat == 5 ) then -- 31
-        cat = 3;
-    elseif ( #mountCat == 4 and not tContains(mountCat, "fly") ) then -- 29
-        cat = 1;
-    elseif ( #mountCat == 3 and not tContains(mountCat, "jump") and not tContains(mountCat, "aquatic") ) then -- 7
-        cat = 2;
-    elseif ( #mountCat == 2 and not tContains(mountCat, "jump") and not tContains(mountCat, "fly") and not tContains(mountCat, "jump") ) then -- 12
-        cat = 4
-    elseif ( tContains(mountCat, "ground") and tContains(mountCat, "fly") ) then
-        cat = 3;
-    elseif ( tContains(mountCat, "fly") ) then
-        cat = 2;
-    elseif ( tContains(mountCat, "ground") ) then
-        cat = 1;
-    elseif ( tContains(mountCat, "aquatic") ) then
-        cat = 4;
+    return nil;
+end
+
+--- Return mount ID from spell ID
+function A:GetMountIDFromSpellID(spellID)
+    -- Init addon databases
+    A:InitializeDB();
+
+    for k,v in ipairs(A.pamTable.mounts) do
+        for kk,vv in pairs(v) do
+            for kkk,vvv in ipairs(vv) do
+                if ( spellID == vvv.spellId ) then
+                    return vvv.id;
+                end
+            end
+        end
     end
 
-    return cat;
+    return nil;
 end
+
+--- Return pet name
+function A:GetPetNameByID(id)
+    if ( not id ) then return nil; end
+
+    local _, customName, _, _, _, _, _,creatureName = C_PetJournal.GetPetInfoByPetID(id);
+
+    if ( customName ) then
+        return customName;
+    end
+
+    return creatureName;
+end
+
+--- Return mount name
+function A:GetMountNameBySpellID(id)
+    if ( not id ) then return nil; end
+
+    return select(2, GetCompanionInfo("MOUNT", A:GetMountIDFromSpellID(id)));
+end
+
+--- Return the current set
+function A:GetCurrentSet(type)
+    local setsTable, favTable;
+
+    if ( type == "PET" ) then
+        setsTable = A.db.global.savedSets.pets;
+        favTable = A.db.profile.favoritePets
+    elseif ( type == "MOUNT" ) then
+        setsTable = A.db.global.savedSets.mounts;
+        favTable = A.db.profile.favoriteMounts;
+    else
+        return L["None"];
+    end
+
+    for k,v in pairs(setsTable) do
+        if ( A:CompareTables(favTable, v) ) then
+            return k;
+        end
+    end
+
+    return L["None"];
+end
+
+--[[-------------------------------------------------------------------------------
+    Database methods
+-------------------------------------------------------------------------------]]--
 
 -- Pets filters handling methods
 A.petsFilters = {};
@@ -600,6 +613,7 @@ function A:BuildBothTables(force)
     A:DebugMessage("BuildBothTables()");
     A:BuildPetsTable(force);
     A:BuildMountsTable(force);
+    --A:CleanPetsFavorites();
 end
 
 --- Initialize the databases
@@ -611,107 +625,127 @@ function A:InitializeDB()
     A.initialized = 1;
 end
 
---- Check if a pet is banned
-function A:CheckBannedPet(id)
-    local _, _, _, _, _, _, _, _, _, _, creatureID = C_PetJournal.GetPetInfoByPetID(id);
-
-    if ( tContains(A.bannedPets, creatureID) ) then return 1; end
-
-    return nil;
-end
-
---- Return creature ID from spell ID (mount)
--- Used by modified AceGUI widget dropdown
-function A:GetCreatureIDFromSpellID(spellID)
-    for k,v in ipairs(A.pamTable.mounts) do
-        for kk,vv in pairs(v) do
-            for kkk,vvv in ipairs(vv) do
-                if ( spellID == vvv.spellId ) then
-                    return vvv.creatureID;
-                end
-            end
+--- Remove unknown pets from favorites
+function A:CleanPetsFavorites()
+    for k,v in ipairs(A.db.profile.favoritePets) do
+        if ( not C_PetJournal.GetPetInfoByPetID(v) ) then
+            table.remove(A.db.profile.favoritePets, k);
+            A:DebugMessage(("CleanPetsFavorites() - Removed petID: %s"):format(v));
         end
     end
-
-    return nil;
 end
 
---- Return mount ID from spell ID
-function A:GetMountIDFromSpellID(spellID)
-    -- Init addon databases
-    A:InitializeDB();
-
-    for k,v in ipairs(A.pamTable.mounts) do
-        for kk,vv in pairs(v) do
-            for kkk,vvv in ipairs(vv) do
-                if ( spellID == vvv.spellId ) then
-                    return vvv.id;
-                end
-            end
-        end
-    end
-
-    return nil;
-end
-
---- Return pet name
-function A:GetPetNameByID(id)
-    if ( not id ) then return nil; end
-
-    local _, customName, _, _, _, _, _,creatureName = C_PetJournal.GetPetInfoByPetID(id);
-
-    if ( customName ) then
-        return customName;
-    end
-
-    return creatureName;
-end
-
---- Return mount name
-function A:GetMountNameBySpellID(id)
-    if ( not id ) then return nil; end
-
-    return select(2, GetCompanionInfo("MOUNT", A:GetMountIDFromSpellID(id)));
-end
+--[[-------------------------------------------------------------------------------
+    Config methods
+-------------------------------------------------------------------------------]]--
 
 --- Set main timer
 function A:SetMainTimer()
-    if ( not A.db.profile.autoPet and A.mainTimer ) then
+    if ( A:IsAutoPetEnabled() and A.mainTimer ) then
         A:CancelTimer(A.mainTimer, 1);
-    elseif ( A.db.profile.autoPet and A.mainTimer ) then
+    elseif ( A:IsAutoPetEnabled() and A.mainTimer ) then
         A:CancelTimer(A.mainTimer, 1);
         A.mainTimer = A:ScheduleRepeatingTimer("AutoPet", A.db.profile.mainTimer);
-    elseif ( A.db.profile.autoPet and not A.mainTimer ) then
+    elseif ( A:IsAutoPetEnabled() and not A.mainTimer ) then
         A.mainTimer = A:ScheduleRepeatingTimer("AutoPet", A.db.profile.mainTimer);
     end
 end
 
---- Return the current set
-function A:GetCurrentSet(type)
-    local setsTable, favTable;
-
-    if ( type == "PET" ) then
-        setsTable = A.db.global.savedSets.pets;
-        favTable = A.db.profile.favoritePets
-    elseif ( type == "MOUNT" ) then
-        setsTable = A.db.global.savedSets.mounts;
-        favTable = A.db.profile.favoriteMounts;
+--- Set combat log event
+function A:SetStealthEvents()
+    if ( A:IsNotWhenStealthedEnabled() ) then
+        A:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED");
+        A:RegisterEvent("UPDATE_STEALTH", "AutoPetDelay");
     else
-        return L["None"];
+        A:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED");
+        A:UnregisterEvent("UPDATE_STEALTH");
+    end
+end
+
+--- Set options according to current zone type
+-- Should always set the var if config table is found
+-- Set it to nil if no config table
+-- @param noSet - bool - Used when launched by SetEverything
+function A:SetAutoSummonOverride(noSet)
+    if ( not A.db.profile.enableAutoSummonOverride ) then
+        A.autoPetOverride = nil;
+        A.notWhenStealthedOverride = nil;
+        return;
     end
 
-    for k,v in pairs(setsTable) do
-        if ( A:CompareTables(favTable, v) ) then
-            return k;
+    local name, type = GetInstanceInfo();
+
+    if ( not tContains(A.areaTypes, type) ) then
+        A.autoPetOverride = nil;
+        A.notWhenStealthedOverride = nil;
+        A:DebugMessage(("SetAutoSummonOverride() - Area type %s not supported."):format(tostring(type)));
+        return;
+    end
+
+    if ( A.db.profile.autoSummonOverride[type] ) then
+        if ( A.db.profile.autoSummonOverride[type].autoPet ) then
+            A.autoPetOverride = "1";
+        else
+            A.autoPetOverride = "0";
+            A:RevokePet();
+        end
+
+        if ( A.db.profile.autoSummonOverride[type].notWhenStealthed ) then
+            A.notWhenStealthedOverride = "1";
+        else
+            A.notWhenStealthedOverride = "0";
+        end
+
+        if ( not noSet ) then
+            A:SetStealthEvents();
+            A:SetMainTimer();
+        end
+
+        A:DebugMessage(("SetAutoSummonOverride() - Setting options for %s - auto %s - stealth %s"):format(name, tostring(A.autoPetOverride), tostring(A.notWhenStealthedOverride)));
+    else
+        A.autoPetOverride = nil;
+        A.notWhenStealthedOverride = nil;
+    end
+end
+
+--- Get auto pet summon option status according to global option or override
+function A:IsAutoPetEnabled()
+    if ( A.autoPetOverride ) then
+        if ( A.autoPetOverride == "1" ) then
+            return 1;
+        else
+            return nil;
         end
     end
 
-    return L["None"];
+    return A.db.profile.autoPet;
 end
 
--- ********************************************************************************
--- Bindings & SecureButtons handling
--- ********************************************************************************
+--- Get not when stealthed option status according to global option or override
+function A:IsNotWhenStealthedEnabled()
+    if ( A.notWhenStealthedOverride ) then
+        if ( A.notWhenStealthedOverride == "1" ) then
+            return 1;
+        else
+            return nil;
+        end
+    end
+
+    return A.db.profile.notWhenStealthed;
+end
+
+--- Set everything
+function A:SetEverything()
+    A:ShowHideMinimap();
+    A:SetStealthEvents();
+    A:SetBindings();
+    A:SetAutoSummonOverride(1);
+    A:SetMainTimer();
+end
+
+--[[-------------------------------------------------------------------------------
+    Bindings & SecureButtons handling
+-------------------------------------------------------------------------------]]--
 
 --- Set bindings
 local bindings =
@@ -767,9 +801,9 @@ function A:PreClick(button)
     end
 end
 
--- ********************************************************************************
--- Dropdown menu
--- ********************************************************************************
+--[[-------------------------------------------------------------------------------
+    Dropdown menu
+-------------------------------------------------------------------------------]]--
 
 local rotation, rotationTime, isSummoned, buttonIndex;
 local function PAMMenu(self, level)
@@ -893,11 +927,18 @@ local function PAMMenu(self, level)
             end;
             UIDropDownMenu_AddButton(self.info, level);
 
+            -- Not when stealthed
+            self.info.text = L["Revoke when stealthed"];
+            self.info.checked = A.db.profile.notWhenStealthed;
+            self.info.func = function()
+                A.db.profile.notWhenStealthed = not A.db.profile.notWhenStealthed;
+                A:SetStealthEvents();
+                LibStub("AceConfigRegistry-3.0"):NotifyChange("BrokerPAMConfig");
+            end;
+            UIDropDownMenu_AddButton(self.info, level);
+
             -- Show/hide minimap icon
             self.info.text = L["Show or hide minimap icon"];
-            self.info.icon = nil;
-            self.info.hasArrow = nil;
-            self.info.notCheckable = nil;
             self.info.checked = not A.db.profile.ldbi.hide;
             self.info.func = function()
                 A.db.profile.ldbi.hide = not A.db.profile.ldbi.hide;
@@ -1142,9 +1183,9 @@ local function PAMMenu(self, level)
     end
 end
 
--- ********************************************************************************
--- Callbacks
--- ********************************************************************************
+--[[-------------------------------------------------------------------------------
+    Callbacks
+-------------------------------------------------------------------------------]]--
 
 function A:PLAYER_REGEN_DISABLED()
     A:DebugMessage("PLAYER_REGEN_DISABLED() - +Combat");
@@ -1176,21 +1217,6 @@ function A:AutoPetDelayCallback()
     A:AutoPet();
 end
 
-function A:UPDATE_STEALTH()
-    if ( not A.db.profile.notWhenStealthed ) then return; end
-
-    A:AutoPetDelay();
-end
-
--- Other stealth buffs, no timed summon here too spammy
--- function A:UNIT_AURA(self, unit)
-    -- if ( unit == "player" and (A.playerClass == "MAGE" or A.playerClass == "hunter") ) then
-        -- if ( not A.db.profile.notWhenStealthed ) then return; end
-
-        -- A:AutoPet();
-    -- end
--- end
-
 function A:LOOT_OPENED()
     A.isLooting = 1;
 end
@@ -1200,7 +1226,7 @@ function A:LOOT_CLOSED()
 end
 
 -- Using this because it is a little faster than event UPDATE_STEALTH
--- And it prevent using UNIT_AURA for hunters and mages
+-- And it prevent using UNIT_AURA
 A.playerGUID = UnitGUID("player");
 A.stealthSpellsIDs =
 {
@@ -1215,8 +1241,6 @@ A.stealthSpellsIDs =
     112833, -- Priest's Spectral Guise
 };
 function A:COMBAT_LOG_EVENT_UNFILTERED(event, ...)
-    if ( not A.db.profile.notWhenStealthed ) then return; end
-
     --local timestamp, type, _, sourceGUID = ...;
     local _, type, _, sourceGUID = ...;
 
@@ -1253,6 +1277,7 @@ function A:CHAT_MSG_SYSTEM(event, msg)
     if ( pet ) then
         A:DebugMessage(("CHAT_MSG_SYSTEM() - New pet %s."):format(pet));
         A:BuildPetsTable();
+        A:CleanPetsFavorites();
     end
 
     -- Mounts messages
@@ -1264,9 +1289,20 @@ function A:CHAT_MSG_SYSTEM(event, msg)
     end
 end
 
--- ********************************************************************************
--- Ace DB
--- ********************************************************************************
+function A:PLAYER_ENTERING_WORLD()
+    -- Too soon
+    -- if ( not A.favoritesCleaned ) then
+        -- A:CleanPetsFavorites();
+        -- A.favoritesCleaned = 1;
+    -- end
+
+    A:AutoPetDelay();
+    A:SetAutoSummonOverride();
+end
+
+--[[-------------------------------------------------------------------------------
+    Ace DB and database revision methods
+-------------------------------------------------------------------------------]]--
 
 A.aceDefaultDB =
 {
@@ -1296,7 +1332,7 @@ A.aceDefaultDB =
         notWhenStealthed = 1, -- d
         noHybridWhenGround = 1, -- d
         dismountFlying = 1, -- d
-        areaMounts = 1,
+        areaMounts = 1, -- d
         ldbi = {}, -- d
         favoritePets = {}, -- d
         favoriteMounts = -- d
@@ -1323,6 +1359,10 @@ A.aceDefaultDB =
         {
             pets = {},
             mounts = {},
+        },
+        enableAutoSummonOverride = nil, -- d
+        autoSummonOverride = -- d
+        {
         },
     }
 };
@@ -1405,9 +1445,9 @@ function A:RemoveDatabaseOldEntries()
     end
 end
 
--- ********************************************************************************
--- Config panel loader
--- ********************************************************************************
+--[[-------------------------------------------------------------------------------
+    Config panel loader
+-------------------------------------------------------------------------------]]--
 
 --- Load config addon and remove config loader from Blizzard options frame
 function A:LoadAddonConfig()
@@ -1471,9 +1511,9 @@ function A:OpenConfigPanel()
     end
 end
 
--- ********************************************************************************
--- Main
--- ********************************************************************************
+--[[-------------------------------------------------------------------------------
+    Main
+-------------------------------------------------------------------------------]]--
 
 --- AceAddon callback
 -- Called after the addon is fully loaded
@@ -1582,24 +1622,28 @@ function A:OnInitialize()
     A.modelFrameConfig:Hide();
 
     -- Hook summon pet method, set a var to current pet id
-    hooksecurefunc(C_PetJournal, "SummonPetByGUID", function(id)
-        A.currentPet = id;
-    end);
+    -- hooksecurefunc(C_PetJournal, "SummonPetByGUID", function(id)
+        -- if ( A.currentPet == id ) then -- Revoke
+            -- A.currentPet = nil;
+        -- else -- Summon
+            -- A.currentPet = id;
+        -- end
+    -- end);
 
     -- DB auto update hooks
     hooksecurefunc(C_PetJournal, "CagePetByID", function()
         A:DebugMessage("Hook - C_PetJournal.CagePetByID() called");
-        A:BuildPetsTables();
+        A:BuildPetsTable();
     end);
     hooksecurefunc(C_PetJournal, "ReleasePetByID", function()
         A:DebugMessage("Hook - C_PetJournal.ReleasePetByID() called");
-        A:BuildPetsTables();
+        A:BuildPetsTable();
     end);
-end
 
---- AceAddon callback
--- Called during the PLAYER_LOGIN event
-function A:OnEnable()
+    -- Set player class
+    local _, class = UnitClass("player");
+    A.playerClass = class;
+
     -- LDB
     if ( LibStub("LibDataBroker-1.1"):GetDataObjectByName("BrokerPAMLDB") ) then
         A.ldbObject = LibStub("LibDataBroker-1.1"):GetDataObjectByName("BrokerPAMLDB");
@@ -1639,7 +1683,8 @@ function A:OnEnable()
                 end
 
                 tooltip:AddLine(L["Companions set in use: %s."]:format(currentSet));
-                tooltip:AddLine(L["Auto companion summon is %s."]:format(A.db.profile.autoPet and A.color["GREEN"]..L["On"] or A.color["RED"]..L["Off"]));
+                tooltip:AddLine(L["Auto summon companion is %s."]:format(A:IsAutoPetEnabled() and A.color["GREEN"]..L["On"] or A.color["RED"]..L["Off"]));
+                tooltip:AddLine(L["Not when stealthed is %s."]:format(A:IsNotWhenStealthedEnabled() and A.color["GREEN"]..L["On"] or A.color["RED"]..L["Off"]));
                 tooltip:AddLine(L["Forced companion: %s"]:format(A.db.profile.forceOne.pet and A.color["GREEN"]..A:GetPetNameByID(A.db.profile.forceOne.pet) or A.color["RED"]..L["None"]));
                 tooltip:AddLine(" ");
 
@@ -1666,6 +1711,13 @@ function A:OnEnable()
     -- LDBIcon
     if ( not LibStub("LibDBIcon-1.0"):IsRegistered("BrokerPAMLDBI") ) then LibStub("LibDBIcon-1.0"):Register("BrokerPAMLDBI", A.ldbObject, A.db.profile.ldbi); end
 
+    -- Add the config loader to blizzard addon configuration panel
+    A:AddToBlizzTemp();
+end
+
+--- AceAddon callback
+-- Called during the PLAYER_LOGIN event
+function A:OnEnable()
     -- Slash command
     A:RegisterChatCommand("petsandmounts", "SlashCommand");
     A:RegisterChatCommand("pam", "SlashCommand");
@@ -1674,34 +1726,25 @@ function A:OnEnable()
     -- Auto summon pet events
     A:RegisterEvent("PLAYER_REGEN_DISABLED"); -- Combat.
     A:RegisterEvent("PLAYER_REGEN_ENABLED"); -- Out of combat.
-    A:RegisterEvent("PLAYER_ENTERING_WORLD", "AutoPetDelay"); -- Every loading screen.
+    A:RegisterEvent("PLAYER_ENTERING_WORLD"); -- Every loading screen.
     A:RegisterEvent("PLAYER_CONTROL_GAINED", "AutoPetDelay"); -- After a cc or fly path.
     A:RegisterEvent("PLAYER_UNGHOST", "AutoPetDelay"); -- It's alive!! (Corpse run, zoning)
     A:RegisterEvent("PLAYER_ALIVE", "AutoPetDelay"); -- It's alive!! (Res, also fire when releasing)
     A:RegisterEvent("PLAYER_LOSES_VEHICLE_DATA", "AutoPetDelay"); -- Quitting a vehicule or a multi mount you control.
     A:RegisterEvent("UNIT_EXITED_VEHICLE", "AutoPetDelay"); -- Exiting a vehicule.
-    A:RegisterEvent("UPDATE_STEALTH"); -- Gain or loose stealth.
     A:RegisterEvent("LOOT_OPENED"); -- Looting. Summoning a pet close the panel.
     A:RegisterEvent("LOOT_CLOSED"); -- End looting.
-    A:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED");
     A:RegisterEvent("UPDATE_BINDINGS", "SetBindings");
     -- Db auto update events
     A:RegisterEvent("CHAT_MSG_SYSTEM");
     A:RegisterEvent("COMPANION_LEARNED", "BuildBothTables");
     A:RegisterEvent("COMPANION_UNLEARNED", "BuildBothTables");
 
-    -- Main timer
-    A:SetMainTimer();
+    -- Set everything
+    A:SetEverything();
 
-    -- Set player class
-    local _, class = UnitClass("player");
-    A.playerClass = class;
-
-    -- Set bindings
-    A:SetBindings();
-
-    -- Add the config loader to blizzard addon configuration panel
-    A:AddToBlizzTemp();
+    -- Remove unknown pets from favorites
+    --A:CleanPetsFavorites(); -- too soon
 
     if ( C_PetJournal.GetSummonedPetGUID() ) then
         A.currentPet = C_PetJournal.GetSummonedPetGUID();
