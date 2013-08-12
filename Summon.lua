@@ -241,6 +241,17 @@ function A:IsFlyable()
     return nil;
 end
 
+--- Check if the player can ride a (ground) mount
+-- Apprentice Riding 33388
+-- Journeyman Riding 33391
+function A:CanRide()
+    if ( IsSpellKnown(33388) and IsSpellKnown(33391) ) then
+        return 1;
+    end
+
+    return nil;
+end
+
 --- Return the mount type according to the bitfield
 local bitField = {16,8,4,2,1};
 local bitFieldCat =

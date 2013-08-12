@@ -450,18 +450,222 @@ function A:AceConfig()
                             },
                             areaMounts =
                             {
-                                order = 1,
+                                order = 2,
                                 name = L["Zone mounts"],
-                                desc = L["With this enabled it will summon a specific mount according to your current zone. Exemple: the Abyssal Seahorse in Vashj'ir"],
+                                desc = L["With this enabled it will summon a specific mount according to your current zone. Exemple: the Abyssal Seahorse in Vashj'ir."],
                                 type = "toggle",
                                 set = function(info, val) A.db.profile.areaMounts = not A.db.profile.areaMounts; end,
                                 get = function(info) return A.db.profile.areaMounts; end,
+                            },
+                            classesMacrosEnabled =
+                            {
+                                order = 3,
+                                name = L["Class specific"],
+                                desc = L["With this enabled it will use flying forms for druids (Only class with specific \"mount\" atm)."],
+                                type = "toggle",
+                                set = function(info, val) A.db.profile.classesMacrosEnabled = not A.db.profile.classesMacrosEnabled; end,
+                                get = function(info) return A.db.profile.classesMacrosEnabled; end,
+                            },
+                        },
+                    },
+                    buttonOptions =
+                    {
+                        order = 20,
+                        name = L["Buttons options"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            petHeader =
+                            {
+                                order = 0,
+                                name = L["Companions button"],
+                                type = "header",
+                            },
+                            petHide =
+                            {
+                                order = 10,
+                                name = L["Hide"],
+                                desc = L["Hide the companions button."],
+                                type = "toggle",
+                                set = function(info, val)
+                                    A.db.profile.BrokerPAMSecureButtonPets.hide = not A.db.profile.BrokerPAMSecureButtonPets.hide;
+                                    A:SetButtons();
+                                end,
+                                get = function(info) return A.db.profile.BrokerPAMSecureButtonPets.hide; end,
+                            },
+                            petLock =
+                            {
+                                order = 11,
+                                name = L["Lock"],
+                                desc = L["Lock the companions button."],
+                                type = "toggle",
+                                set = function(info, val)
+                                    A.db.profile.BrokerPAMSecureButtonPets.lock = not A.db.profile.BrokerPAMSecureButtonPets.lock;
+                                    A:SetButtons();
+                                end,
+                                get = function(info) return A.db.profile.BrokerPAMSecureButtonPets.lock; end,
+                            },
+                            petTooltip =
+                            {
+                                order = 12,
+                                name = L["Tooltip"],
+                                desc = L["Enable the tooltip of the companions button."],
+                                type = "toggle",
+                                set = function(info, val) A.db.profile.BrokerPAMSecureButtonPets.tooltip = not A.db.profile.BrokerPAMSecureButtonPets.tooltip; end,
+                                get = function(info) return A.db.profile.BrokerPAMSecureButtonPets.tooltip; end,
+                            },
+                            petScale =
+                            {
+                                order = 13,
+                                name = L["Scale"],
+                                desc = L["Set the scale of the companions button."],
+                                type = "range",
+                                width = "full",
+                                min = 0.1,
+                                max = 5,
+                                step = 0.1,
+                                set = function(info, val)
+                                    A.db.profile.BrokerPAMSecureButtonPets.scale = val;
+                                    A:SetButtons();
+                                end,
+                                get = function(info) return A.db.profile.BrokerPAMSecureButtonPets.scale; end,
+                            },
+                            petReset =
+                            {
+                                order = 14,
+                                name = L["Reset"],
+                                desc = L["Reset the companions button configuration."],
+                                type = "execute",
+                                func = function()
+                                    A.db.profile.BrokerPAMSecureButtonPets =
+                                    {
+                                        hide = nil,
+                                        lock = nil,
+                                        tooltip = 1,
+                                        scale = 1,
+                                        anchor =
+                                        {
+                                            point = "CENTER",
+                                            relativeTo = UIParent,
+                                            relativePoint = "CENTER",
+                                            offX = 0,
+                                            offY = 0,
+                                        },
+                                    };
+
+                                    A:SetButtons();
+                                end,
+                            },
+                            mountHeader =
+                            {
+                                order = 100,
+                                name = L["Mounts button"],
+                                type = "header",
+                            },
+                            mountHide =
+                            {
+                                order = 110,
+                                name = L["Hide"],
+                                desc = L["Hide the mounts button."],
+                                type = "toggle",
+                                set = function(info, val)
+                                    A.db.profile.BrokerPAMSecureButtonMounts.hide = not A.db.profile.BrokerPAMSecureButtonMounts.hide;
+                                    A:SetButtons();
+                                end,
+                                get = function(info) return A.db.profile.BrokerPAMSecureButtonMounts.hide; end,
+                            },
+                            mountLock =
+                            {
+                                order = 111,
+                                name = L["Lock"],
+                                desc = L["Lock the mounts button."],
+                                type = "toggle",
+                                set = function(info, val)
+                                    A.db.profile.BrokerPAMSecureButtonMounts.lock = not A.db.profile.BrokerPAMSecureButtonMounts.lock;
+                                    A:SetButtons();
+                                end,
+                                get = function(info) return A.db.profile.BrokerPAMSecureButtonMounts.lock; end,
+                            },
+                            mountTooltip =
+                            {
+                                order = 112,
+                                name = L["Tooltip"],
+                                desc = L["Enable the tooltip of the mounts button."],
+                                type = "toggle",
+                                set = function(info, val) A.db.profile.BrokerPAMSecureButtonMounts.tooltip = not A.db.profile.BrokerPAMSecureButtonMounts.tooltip; end,
+                                get = function(info) return A.db.profile.BrokerPAMSecureButtonMounts.tooltip; end,
+                            },
+                            mountScale =
+                            {
+                                order = 113,
+                                name = L["Scale"],
+                                desc = L["Set the scale of the mounts button."],
+                                type = "range",
+                                width = "full",
+                                min = 0.1,
+                                max = 5,
+                                step = 0.1,
+                                set = function(info, val)
+                                    A.db.profile.BrokerPAMSecureButtonMounts.scale = val;
+                                    A:SetButtons();
+                                end,
+                                get = function(info) return A.db.profile.BrokerPAMSecureButtonMounts.scale; end,
+                            },
+                            mountReset =
+                            {
+                                order = 114,
+                                name = L["Reset"],
+                                desc = L["Reset the mounts button configuration."],
+                                type = "execute",
+                                func = function()
+                                    A.db.profile.BrokerPAMSecureButtonMounts =
+                                    {
+                                        hide = nil,
+                                        lock = nil,
+                                        tooltip = 1,
+                                        scale = 1,
+                                        anchor =
+                                        {
+                                            point = "CENTER",
+                                            relativeTo = UIParent,
+                                            relativePoint = "CENTER",
+                                            offX = 0,
+                                            offY = 0,
+                                        },
+                                    };
+
+                                    A:SetButtons();
+                                end,
+                            },
+                            common =
+                            {
+                                order = 200,
+                                name = L["Common options"],
+                                type = "header",
+                            },
+                            dock =
+                            {
+                                order = 210,
+                                name = L["Dock"],
+                                desc = L["Dock companion button to the mount button."],
+                                type = "toggle",
+                                set = function(info, val)
+                                    A.db.profile.dockButton = not A.db.profile.dockButton;
+
+                                    if ( A.db.profile.dockButton ) then
+                                        A:DockButton("pets");
+                                    else
+                                        A:UnDockButton();
+                                    end
+                                end,
+                                get = function(info) return A.db.profile.dockButton; end,
                             },
                         },
                     },
                     model =
                     {
-                        order = 100,
+                        order = 50,
                         name = L["Model frames"],
                         type = "group",
                         inline = true,
@@ -542,15 +746,52 @@ function A:AceConfig()
                         inline = true,
                         args =
                         {
-                            randomMount =
+                            randomPet =
                             {
                                 order = 0,
+                                name = L["Random companion"],
+                                type = "header",
+                            },
+                            randomPetKey1 =
+                            {
+                                order = 1,
+                                name = L["Key one"],
+                                desc = L["Bind a key to summon a random companion."],
+                                type = "keybinding",
+                                set = function(info, val)
+                                    local set = GetCurrentBindingSet();
+
+                                    SetBinding(val, "BROKERPAMPET", set);
+                                    SaveBindings(set);
+                                end,
+                                get = function(info) return GetBindingKey("BROKERPAMPET"); end,
+                            },
+                            randomPetKey2 =
+                            {
+                                order = 2,
+                                name = L["Key two"],
+                                desc = L["Bind a key to summon a random companion."],
+                                type = "keybinding",
+                                set = function(info, val)
+                                    local set = GetCurrentBindingSet();
+
+                                    SetBinding(val, "BROKERPAMPET", set);
+                                    SaveBindings(set);
+                                end,
+                                get = function(info)
+                                    local _, key = GetBindingKey("BROKERPAMPET");
+                                    return key;
+                                end,
+                            },
+                            randomMount =
+                            {
+                                order = 5,
                                 name = L["Random mount"],
                                 type = "header",
                             },
                             randomMountKey1 =
                             {
-                                order = 1,
+                                order = 6,
                                 name = L["Key one"],
                                 desc = L["Bind a key to summon a random mount."],
                                 type = "keybinding",
@@ -564,7 +805,7 @@ function A:AceConfig()
                             },
                             randomMountKey2 =
                             {
-                                order = 2,
+                                order = 7,
                                 name = L["Key two"],
                                 desc = L["Bind a key to summon a random mount."],
                                 type = "keybinding",

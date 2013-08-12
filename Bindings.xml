@@ -1,4 +1,5 @@
 ﻿<Bindings>
+    <Binding name="BROKERPAMPET" header="BROKERPAM"></Binding>
     <Binding name="BROKERPAMMOUNT" header="BROKERPAM"></Binding>
     <Binding name="BROKERPAMMOUNTPASSENGERS" header="BROKERPAM"></Binding>
     <Binding name="BROKERPAMMOUNTFLYING" header="BROKERPAM"></Binding>

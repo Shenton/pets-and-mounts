@@ -4,6 +4,7 @@
 ## Author: Shenton
 ## SavedVariables: pamDB
 ## Version: 1.0.4
+## Dependencies: Blizzard_PetJournal
 ## OptionalDeps: Ace3
 
 #@no-lib-strip@
@@ -23,7 +24,6 @@ Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 #@end-no-lib-strip@
 
-BindingsButtons.xml
 Buttons.xml
 
 Localization\Locales-enUS.lua

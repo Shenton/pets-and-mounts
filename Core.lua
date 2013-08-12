@@ -113,14 +113,6 @@ A.areaMounts =
     [613] = 75207, -- Vashj'ir
 };
 
--- Binding UI localization
-BINDING_HEADER_BROKERPAM = L["Pets & Mounts"];
-BINDING_NAME_BROKERPAMMOUNT = L["Random mount"];
-BINDING_NAME_BROKERPAMMOUNTPASSENGERS = L["Random passengers mount"];
-BINDING_NAME_BROKERPAMMOUNTFLYING = L["Random flying mount"];
-BINDING_NAME_BROKERPAMMOUNTGROUND = L["Random ground mount"];
-BINDING_NAME_BROKERPAMMOUNTAQUATIC = L["Random aquatic mount"];
-
 -- Database revision
 A.databaseRevision = 2;
 
@@ -185,10 +177,7 @@ function A:SlashCommand(input)
     if ( arg1 == "" ) then
         A:OpenConfigPanel();
     elseif ( arg1 == "test" ) then
-        -- Doh!
-        for k,v in ipairs(A.db.profile.favoritePets) do
-            print(C_PetJournal.GetPetInfoByPetID(v))
-        end
+        A:DockButton("pets");
     elseif ( arg1 == "refresh" ) then
         A:BuildBothTables(1);
         A:Message(L["Companions and mounts informations updated."]);
@@ -420,7 +409,9 @@ function A:StoreAndResetPetsFilters()
         A.petsFilters.sources[i] = C_PetJournal.IsPetSourceFiltered(i);
     end
 
-    A.petsFilters["SearchBoxValue"] = PetJournalSearchBox:GetText();
+    --if ( PetJournalSearchBox ) then
+        A.petsFilters["SearchBoxValue"] = PetJournalSearchBox:GetText();
+    --end
 
     -- Set filters for DB update
     C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_COLLECTED, 1);
@@ -433,7 +424,9 @@ end
 
 --- Restore pets filters
 function A:RestorePetsFilters()
-    PetJournalSearchBox:SetText(A.petsFilters["SearchBoxValue"]);
+    --if ( PetJournalSearchBox ) then
+        PetJournalSearchBox:SetText(A.petsFilters["SearchBoxValue"]);
+    --end
 
     for i=1,C_PetJournal.GetNumPetTypes() do
         C_PetJournal.SetPetTypeFilter(i, not A.petsFilters.types[i]);
@@ -739,66 +732,11 @@ function A:SetEverything()
     A:ShowHideMinimap();
     A:SetStealthEvents();
     A:SetBindings();
+    A:SetButtonsMacro();
     A:SetAutoSummonOverride(1);
     A:SetMainTimer();
-end
-
---[[-------------------------------------------------------------------------------
-    Bindings & SecureButtons handling
--------------------------------------------------------------------------------]]--
-
---- Set bindings
-local bindings =
-{
-    ["BROKERPAMMOUNT"] = "BrokerPAMSecureButton",
-    ["BROKERPAMMOUNTPASSENGERS"] = "BrokerPAMSecureButtonPassengers",
-    ["BROKERPAMMOUNTFLYING"] = "BrokerPAMSecureButtonFlying",
-    ["BROKERPAMMOUNTGROUND"] = "BrokerPAMSecureButtonGround",
-    ["BROKERPAMMOUNTAQUATIC"] = "BrokerPAMSecureButtonAquatic",
-};
-function A:SetBindings()
-    if ( InCombatLockdown() ) then
-        A.delayedBindings = 1;
-    else
-        for k,v in pairs(bindings) do
-            local key1, key2 = GetBindingKey(k);
-            if ( key1 ) then SetOverrideBindingClick(_G[v], 1, key1, v); end
-
-            if ( key2 ) then SetOverrideBindingClick(_G[v], 1, key2, v); end
-        end
-    end
-end
-
---- Buttons preclik handler
-local buttonsMacro =
-{
-    [1] = -- With form
-    {
-        ["BrokerPAMSecureButton"] = "/cancelform\n/run BrokerPAMGlobal:RandomMount()",
-        ["BrokerPAMSecureButtonPassengers"] = "/cancelform\n/run BrokerPAMGlobal:RandomMount(5)",
-        ["BrokerPAMSecureButtonFlying"] = "/cancelform\n/run BrokerPAMGlobal:RandomMount(2)",
-        ["BrokerPAMSecureButtonGround"] = "/cancelform\n/run BrokerPAMGlobal:RandomMount(1)",
-        ["BrokerPAMSecureButtonAquatic"] = "/cancelform\n/run BrokerPAMGlobal:RandomMount(4)",
-    },
-    [2] = -- Without
-    {
-        ["BrokerPAMSecureButton"] = "/run BrokerPAMGlobal:RandomMount()",
-        ["BrokerPAMSecureButtonPassengers"] = "/run BrokerPAMGlobal:RandomMount(5)",
-        ["BrokerPAMSecureButtonFlying"] = "/run BrokerPAMGlobal:RandomMount(2)",
-        ["BrokerPAMSecureButtonGround"] = "/run BrokerPAMGlobal:RandomMount(1)",
-        ["BrokerPAMSecureButtonAquatic"] = "/run BrokerPAMGlobal:RandomMount(4)",
-    },
-};
-function A:PreClick(button)
-    if ( InCombatLockdown() ) then return; end
-
-    if ( A.playerClass == "DRUID" or A.playerClass == "SHAMAN" ) then
-        button:SetAttribute("type", "macro");
-        button:SetAttribute("macrotext", buttonsMacro[1][button:GetName()]);
-    else
-        button:SetAttribute("type", "macro");
-        button:SetAttribute("macrotext", buttonsMacro[2][button:GetName()]);
-    end
+    A:SetButtons();
+    A:SetPostClickMacro();
 end
 
 --[[-------------------------------------------------------------------------------
@@ -1201,6 +1139,11 @@ function A:PLAYER_REGEN_ENABLED()
         A.delayedBindings = nil;
     end
 
+    if ( A.delayedButtonsMacro ) then
+        A:SetButtonsMacro();
+        A.delayedButtonsMacro = nil;
+    end
+
     A:AutoPetDelay();
 end
 
@@ -1227,7 +1170,6 @@ end
 
 -- Using this because it is a little faster than event UPDATE_STEALTH
 -- And it prevent using UNIT_AURA
-A.playerGUID = UnitGUID("player");
 A.stealthSpellsIDs =
 {
     5215, -- Druid's Prowl
@@ -1298,6 +1240,8 @@ function A:PLAYER_ENTERING_WORLD()
 
     A:AutoPetDelay();
     A:SetAutoSummonOverride();
+
+    A:SetPostClickMacro();
 end
 
 --[[-------------------------------------------------------------------------------
@@ -1363,6 +1307,38 @@ A.aceDefaultDB =
         enableAutoSummonOverride = nil, -- d
         autoSummonOverride = -- d
         {
+        },
+        classesMacrosEnabled = 1, -- d
+        dockButton = nil, -- d
+        BrokerPAMSecureButtonPets = -- d
+        {
+            hide = nil,
+            lock = nil,
+            tooltip = 1,
+            scale = 1,
+            anchor =
+            {
+                point = "CENTER",
+                relativeTo = UIParent,
+                relativePoint = "CENTER",
+                offX = 20,
+                offY = 0,
+            },
+        },
+        BrokerPAMSecureButtonMounts = -- d
+        {
+            hide = nil,
+            lock = nil,
+            tooltip = 1,
+            scale = 1,
+            anchor =
+            {
+                point = "CENTER",
+                relativeTo = UIParent,
+                relativePoint = "CENTER",
+                offX = -20,
+                offY = 0,
+            },
         },
     }
 };
@@ -1640,9 +1616,10 @@ function A:OnInitialize()
         A:BuildPetsTable();
     end);
 
-    -- Set player class
-    local _, class = UnitClass("player");
-    A.playerClass = class;
+    -- Set player vars
+    A.playerClass = select(2, UnitClass("player"));
+    A.playerGUID = UnitGUID("player");
+    A.playerLevel = UnitLevel("player");
 
     -- LDB
     if ( LibStub("LibDataBroker-1.1"):GetDataObjectByName("BrokerPAMLDB") ) then
@@ -1713,6 +1690,11 @@ function A:OnInitialize()
 
     -- Add the config loader to blizzard addon configuration panel
     A:AddToBlizzTemp();
+
+    -- Force pet journal load
+    -- if ( not IsAddOnLoaded("Blizzard_PetJournal") ) then
+        -- LoadAddOn("Blizzard_PetJournal");
+    -- end
 end
 
 --- AceAddon callback
@@ -1739,6 +1721,8 @@ function A:OnEnable()
     A:RegisterEvent("CHAT_MSG_SYSTEM");
     A:RegisterEvent("COMPANION_LEARNED", "BuildBothTables");
     A:RegisterEvent("COMPANION_UNLEARNED", "BuildBothTables");
+    -- Update post click macros
+    A:RegisterEvent("PLAYER_LEVEL_UP", "SetPostClickMacro");
 
     -- Set everything
     A:SetEverything();
