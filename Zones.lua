@@ -9,6 +9,12 @@
 local A = _G["BrokerPAMGlobal"];
 local L = A.L;
 
+-- Globals to locals
+local pairs = pairs;
+local tostring = tostring;
+
+-- GLOBALS: GetMapNameByID, WorldMapFrame, SetMapToCurrentZone, GetCurrentMapAreaID
+
 -- Gathered on http://wowpedia.org/MapID
 A.zonesIDs = {13, 772, 894, 43, 181, 464, 476, 890, 42, 381, 101, 4, 141, 891, 182, 121, 795, 241, 606, 9, 11, 321, 888, 261, 607, 81, 161, 41, 471, 61, 362, 720, 201, 889, 281, 14, 614, 16, 17, 19, 29, 866, 32,
 892, 27, 34, 23, 30, 462, 463, 545, 611, 24, 341, 499, 610, 35, 895, 37, 864, 36, 684, 685, 28, 615, 480, 21, 301, 689, 893, 38, 673, 26, 502, 20, 708, 709, 700, 382, 613, 22, 39, 40, 466, 475, 465, 477, 479,

@@ -15,9 +15,11 @@ local pairs = pairs;
 local type = type;
 local tContains = tContains;
 local strtrim = strtrim;
+local tostring = tostring;
+local tonumber = tonumber;
 
 -- GLOBALS: GetCurrentBindingSet, SetBinding, SaveBindings
--- GLOBALS: GetBindingKey, StaticPopup_Show, LibStub
+-- GLOBALS: GetBindingKey, StaticPopup_Show, LibStub, GetMapNameByID
 
 -- Ace3 libs <3
 A.AceConfigDialog = LibStub("AceConfigDialog-3.0");

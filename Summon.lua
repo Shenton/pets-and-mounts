@@ -12,8 +12,9 @@ local L = A.L;
 -- Globals to locals
 local math = math;
 local tContains = tContains;
+local tostring = tostring;
 
--- GLOBALS: tContains, C_PetJournal, UnitIsFeignDeath, UnitCastingInfo, UnitChannelInfo
+-- GLOBALS: C_PetJournal, UnitIsFeignDeath, UnitCastingInfo, UnitChannelInfo
 -- GLOBALS: UnitIsDeadOrGhost, InCombatLockdown, IsMounted, IsFlying, IsFalling
 -- GLOBALS: UnitHasVehicleUI, UnitOnTaxi, HasFullControl, IsSwimming, IsSubmerged
 -- GLOBALS: IsFlyableArea, GetNumCompanions, GetCompanionInfo, UnitBuff
