@@ -1281,6 +1281,10 @@ end
 function A:ZONE_CHANGED_NEW_AREA()
     A:GetCurrentMapID();
     A:AutoPetDelay();
+
+    if ( A.AceConfigRegistry ) then
+        A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+    end
 end
 
 -- function A:MINIMAP_UPDATE_TRACKING()
@@ -1561,6 +1565,11 @@ function A:OnInitialize()
     A.db = LibStub("AceDB-3.0"):New("pamDB", A.aceDefaultDB);
     A:DatabaseRevisionCheck();
     A:RemoveDatabaseOldEntries();
+
+    -- Profile modification callbacks
+    A.db.RegisterCallback(self, "OnProfileChanged", "SetEverything");
+    A.db.RegisterCallback(self, "OnProfileCopied", "SetEverything");
+    A.db.RegisterCallback(self, "OnProfileReset", "SetEverything");
 
     -- Menu frame & table
     A.menuFrame = CreateFrame("Frame", "BrokerPAMMenuFrame");
