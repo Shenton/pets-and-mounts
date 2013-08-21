@@ -3,7 +3,7 @@
 ## Notes: Data Broker display for easy acces to pets and mounts.
 ## Author: Shenton
 ## SavedVariables: pamDB
-## Version: 1.0.4
+## Version: 1.1.0
 ## Dependencies: Blizzard_PetJournal
 ## OptionalDeps: Ace3
 
@@ -32,3 +32,4 @@ Core.lua
 
 Buttons.lua
 Summon.lua
+Zones.lua

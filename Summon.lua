@@ -98,12 +98,6 @@ end
 function A:RevokePet()
     A:DebugMessage("RevokePet()");
 
-    -- if ( A.currentPet ) then
-        -- C_PetJournal.SummonPetByGUID(A.currentPet);
-    -- elseif ( C_PetJournal.GetSummonedPetGUID() ) then
-        -- C_PetJournal.SummonPetByGUID(C_PetJournal.GetSummonedPetGUID());
-    -- end
-
     local currentPet = C_PetJournal.GetSummonedPetGUID();
 
     if ( not currentPet ) then return; end
@@ -188,6 +182,13 @@ function A:AutoPet()
         return;
     end
 
+    -- Area override
+    if ( A.db.profile.petByMapID[tostring(A.currentMapID)] ) then
+        A:DebugMessage("AutoPet() - Area override pet");
+        A:SummonPet(A.db.profile.petByMapID[tostring(A.currentMapID)]);
+        return;
+    end
+
     -- Got a pet
     if ( currentPet ) then
         -- Option is set to not summon when having a pet
@@ -225,6 +226,20 @@ end
 --[[-------------------------------------------------------------------------------
     Mounts methods
 -------------------------------------------------------------------------------]]--
+
+--- Return a bool value with a random based on the two args
+function A:RandHybrid(ground, hybrid)
+    ground = ground * 1000;
+    hybrid = hybrid * 1000;
+
+    local total = ground + hybrid;
+
+    if ( math.random(total) > hybrid ) then
+        return 1;
+    end
+
+    return nil;
+end
 
 --- Check if the player can fly
 -- This is for handling a rare case, summoning a mount in outland and not having at least Expert Riding
@@ -363,8 +378,7 @@ end
 -- If mounted dismount
 -- If not choose a random from databases
 -- @param cat Mount category set by A:SetMountCat()
--- @param noFav force ignoring fav mounts
-function A:RandomMount(cat, noFav)
+function A:RandomMount(cat)
     A:InitializeDB();
 
     if ( IsMounted() and ((IsFlying() and A.db.profile.dismountFlying) or not IsFlying()) ) then
@@ -382,23 +396,29 @@ function A:RandomMount(cat, noFav)
     end
 
     -- If enabled and defined will sumonn a mount according to areaID
-    if ( A:SummonMountByAreaID() ) then
-        return;
-    end
+    if ( A:SummonMountByAreaID() ) then return; end
 
-    local id, isHybrid;
+    local id;
 
     if ( not cat ) then cat = A:SetMountCat(); end
 
-    if ( (cat == 1 and A.db.profile.noHybridWhenGround) or cat == 4 or cat == 5 ) then -- ground, do not want hybrid when ground - aqua - passenger
-        if ( A.db.profile.forceOne.mount[cat] ) then -- Got forced
+    -- ground, do not want hybrid when ground - aqua - passenger
+    if ( (cat == 1 and A.db.profile.noHybridWhenGround) or cat == 4 or cat == 5 ) then
+        -- Got area
+        if ( A.db.profile.mountByMapID[cat][tostring(A.currentMapID)] ) then
+            A:DebugMessage(("RandomMount() - No hybrid - Got area - %i"):format(cat));
+            id = A.db.profile.mountByMapID[cat][tostring(A.currentMapID)];
+        -- Got forced
+        elseif ( A.db.profile.forceOne.mount[cat] ) then
             A:DebugMessage(("RandomMount() - No hybrid - Got forced - %i"):format(cat));
             id = A.db.profile.forceOne.mount[cat];
-        elseif ( #A.db.profile.favoriteMounts[cat] > 0 ) then -- got fav
+        -- got fav
+        elseif ( #A.db.profile.favoriteMounts[cat] > 0 ) then
             A:DebugMessage(("RandomMount() - No hybrid - Got fav - %i"):format(cat));
             id = math.random(#A.db.profile.favoriteMounts[cat]);
             id = A.db.profile.favoriteMounts[cat][id];
-        elseif ( #A.pamTable.mountsIds[cat] > 0 ) then -- got global
+        -- got global
+        elseif ( #A.pamTable.mountsIds[cat] > 0 ) then
             A:DebugMessage(("RandomMount() - No hybrid - Got global - %i"):format(cat));
             id = math.random(#A.pamTable.mountsIds[cat]);
             id = A.pamTable.mountsIds[cat][id];
@@ -406,90 +426,104 @@ function A:RandomMount(cat, noFav)
             A.isSummoningMount = nil;
             return;
         end
-    elseif ( (cat == 1 and not A.db.profile.noHybridWhenGround) or cat == 2 ) then -- ground, want hybrid when ground - fly
-        if ( A.db.profile.forceOne.mount[cat] and A.db.profile.forceOne.mount[3] ) then -- Got forced ground/fly and hybrid
-            if ( math.random(100) > 50 ) then -- hybrid
+    -- ground, want hybrid when ground - fly
+    elseif ( (cat == 1 and not A.db.profile.noHybridWhenGround) or cat == 2 ) then
+        -- Got area ground/fly and hybrid
+        if ( A.db.profile.mountByMapID[cat][tostring(A.currentMapID)] and A.db.profile.mountByMapID[3][tostring(A.currentMapID)] ) then
+            -- hybrid
+            if ( A:RandHybrid(1, 1) ) then
+                A:DebugMessage(("RandomMount() - With hybrid - Got area - Got hybrid - Rand hybrid - %i"):format(cat));
+                id = A.db.profile.mountByMapID[3][tostring(A.currentMapID)];
+            -- ground/fly
+            else
+                A:DebugMessage(("RandomMount() - With hybrid - Got area - Got hybrid - Rand no hybrid - %i"):format(cat));
+                id = A.db.profile.mountByMapID[cat][tostring(A.currentMapID)];
+            end
+        -- Got area ground/fly
+        elseif ( A.db.profile.mountByMapID[cat][tostring(A.currentMapID)] ) then
+            A:DebugMessage(("RandomMount() - With hybrid - Got area ground/fly - %i"):format(cat));
+            id = A.db.profile.mountByMapID[cat][tostring(A.currentMapID)];
+        -- Got area hybrid
+        elseif ( A.db.profile.mountByMapID[3][tostring(A.currentMapID)] ) then
+            A:DebugMessage(("RandomMount() - With hybrid - Got area hybrid - %i"):format(cat));
+            id = A.db.profile.mountByMapID[3][tostring(A.currentMapID)];
+        -- No area going for forced
+        -- Got forced ground/fly and hybrid
+        elseif ( A.db.profile.forceOne.mount[cat] and A.db.profile.forceOne.mount[3] ) then
+            -- hybrid
+            if ( A:RandHybrid(1, 1) ) then
                 A:DebugMessage(("RandomMount() - With hybrid - Got forced - Got hybrid - Rand hybrid - %i"):format(cat));
                 id = A.db.profile.forceOne.mount[3];
-                isHybrid = 1;
-            else -- ground/fly
+            -- ground/fly
+            else
                 A:DebugMessage(("RandomMount() - With hybrid - Got forced - Got hybrid - Rand no hybrid - %i"):format(cat));
                 id = A.db.profile.forceOne.mount[cat];
             end
-        elseif ( A.db.profile.forceOne.mount[cat] ) then -- Got forced ground/fly
+        -- Got forced ground/fly
+        elseif ( A.db.profile.forceOne.mount[cat] ) then
             A:DebugMessage(("RandomMount() - With hybrid - Got forced ground/fly - %i"):format(cat));
             id = A.db.profile.forceOne.mount[cat];
-        elseif ( A.db.profile.forceOne.mount[3] ) then -- Got forced ground/fly
+        -- Got forced hybrid
+        elseif ( A.db.profile.forceOne.mount[3] ) then
             A:DebugMessage(("RandomMount() - With hybrid - Got forced hybrid - %i"):format(cat));
             id = A.db.profile.forceOne.mount[3];
-            isHybrid = 1;
-        elseif ( #A.db.profile.favoriteMounts[cat] > 0 and #A.db.profile.favoriteMounts[3] > 0 ) then -- got ground/fly and hybrid fav
-            if ( math.random(100) > 50 ) then -- hybrid
+        -- No forced going for fav
+        -- got ground/fly and hybrid fav
+        elseif ( #A.db.profile.favoriteMounts[cat] > 0 and #A.db.profile.favoriteMounts[3] > 0 ) then
+            -- hybrid
+            if ( A:RandHybrid(#A.db.profile.favoriteMounts[cat], #A.db.profile.favoriteMounts[3]) ) then
                 A:DebugMessage(("RandomMount() - With hybrid - Got fav - Got hybrid - Rand hybrid - %i"):format(cat));
                 id = math.random(#A.db.profile.favoriteMounts[3]);
                 id = A.db.profile.favoriteMounts[3][id];
-                isHybrid = 1;
-            else -- ground/fly
+            -- ground/fly
+            else
                 A:DebugMessage(("RandomMount() - With hybrid - Got fav - Got hybrid - Rand no hybrid - %i"):format(cat));
                 id = math.random(#A.db.profile.favoriteMounts[cat]);
                 id = A.db.profile.favoriteMounts[cat][id];
             end
-        elseif ( #A.db.profile.favoriteMounts[cat] > 0 ) then -- got fav
+        -- got fav
+        elseif ( #A.db.profile.favoriteMounts[cat] > 0 ) then
             A:DebugMessage(("RandomMount() - With hybrid - Got fav ground/fly - %i"):format(cat));
             id = math.random(#A.db.profile.favoriteMounts[cat]);
             id = A.db.profile.favoriteMounts[cat][id];
-        elseif ( #A.db.profile.favoriteMounts[3] > 0 ) then -- got hybrid fav
-            A:DebugMessage(("RandomMount() - With hybrid - Got hybrid - %i"):format(cat));
+        -- got hybrid fav
+        elseif ( #A.db.profile.favoriteMounts[3] > 0 ) then
+            A:DebugMessage(("RandomMount() - With hybrid - Got fav hybrid - %i"):format(cat));
             id = math.random(#A.db.profile.favoriteMounts[3]);
             id = A.db.profile.favoriteMounts[3][id];
-            isHybrid = 1;
-        -- No fav checking global
-        elseif ( #A.pamTable.mountsIds[cat] > 0 and #A.pamTable.mountsIds[3] > 0 ) then -- got ground/fly & hybrid
-            if ( math.random(100) > 50 ) then -- hybrid
+        -- No fav going for global
+        -- got ground/fly & hybrid
+        elseif ( #A.pamTable.mountsIds[cat] > 0 and #A.pamTable.mountsIds[3] > 0 ) then
+            -- hybrid
+            if ( A:RandHybrid(#A.db.profile.favoriteMounts[cat], #A.db.profile.favoriteMounts[3]) ) then
                 A:DebugMessage(("RandomMount() - With hybrid - Got global - Got hybrid - Rand hybrid - %i"):format(cat));
                 id = math.random(#A.pamTable.mountsIds[3]);
                 id = A.pamTable.mountsIds[3][id];
-                isHybrid = 1;
-            else -- ground/fly
+            -- ground/fly
+            else
                 A:DebugMessage(("RandomMount() - With hybrid - Got global - Got hybrid - Rand no hybrid - %i"):format(cat));
                 id = math.random(#A.pamTable.mountsIds[cat]);
                 id = A.pamTable.mountsIds[cat][id];
             end
-        elseif ( #A.pamTable.mountsIds[cat] > 0 ) then -- got ground/fly
+        -- got ground/fly
+        elseif ( #A.pamTable.mountsIds[cat] > 0 ) then
             A:DebugMessage(("RandomMount() - With hybrid - Got global - %i"):format(cat));
             id = math.random(#A.pamTable.mountsIds[cat]);
             id = A.pamTable.mountsIds[cat][id];
-        elseif ( #A.pamTable.mountsIds[3] > 0 ) then -- got hybrid
+        -- got hybrid
+        elseif ( #A.pamTable.mountsIds[3] > 0 ) then
             A:DebugMessage(("RandomMount() - With hybrid - Got hybrid - %i"):format(cat));
             id = math.random(#A.pamTable.mountsIds[3]);
             id = A.pamTable.mountsIds[3][id];
-            isHybrid = 1;
         else
             A.isSummoningMount = nil;
             return;
         end
     end
 
-    if ( A:SummonMountBySpellId(id) ) then
-        return;
-    end
+    if ( A:SummonMountBySpellId(id) ) then return; end
 
     -- If we are here the player cannot use the mount (horde/alliance specific, achievement, level, etc)
-    A:DebugMessage("Tryed to summon mount: "..select(1,GetSpellInfo(id)));
-
-    -- Too hazardous
-    -- if ( isHybrid ) then
-        -- if ( #A.pamTable.mountsIds[3] > 10 and #A.db.profile.favoriteMounts[3] > 10 ) then
-            -- A:RandomMount(cat, 1);
-            -- return;
-        -- end
-    -- else
-        -- if ( #A.pamTable.mountsIds[cat] > 10 and #A.db.profile.favoriteMounts[cat] > 10 ) then
-            -- A:RandomMount(cat, 1);
-            -- return;
-        -- end
-    -- end
-
-    -- If we are here we also failed to resummon a random mount
-    -- /!\ MESSAGE TO PLAYER /!\
+    A:DebugMessage("Tried to summon mount: "..select(1,GetSpellInfo(id)));
+    A:Message(L["Tried to summon %s. It is a mount this toon cannot use (Horde/Alliance specific, achievement, level, etc)."]:format(select(1,GetSpellInfo(id))));
 end

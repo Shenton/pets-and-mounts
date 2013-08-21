@@ -1,5 +1,5 @@
 --[[ $Id: AceGUIWidget-DropDown.lua 1029 2011-06-10 23:10:58Z nevcairiel $ ]]--
--- Very light modification to SetList method, sort by value, by Shenton, so if it's broken it's my fault :)
+-- Very light modification to SetList and AddListItem methods/functions, sort by value and model display, for Broker Pets & Mounts, by Shenton, so if it's broken it's my fault :)
 local AceGUI = LibStub("AceGUI-3.0")
 
 -- Lua APIs
@@ -261,7 +261,7 @@ do
         item:SetCallback("OnEnter", function()
             local creatureID;
 
-            if ( type(value) == "string" ) then
+            if ( brokerPAMGlobal:IsGUID(value) ) then
                 creatureID = select(11, C_PetJournal.GetPetInfoByPetID(value));
             else
                 creatureID = brokerPAMGlobal:GetCreatureIDFromSpellID(value);
@@ -315,7 +315,9 @@ do
 
         tsort(sortlist);
 
-        AddListItem(self, 0, list[0], itemType);
+        if ( list[0] ) then
+            AddListItem(self, 0, list[0], itemType);
+        end
 
         for k,v in ipairs(sortlist) do
             AddListItem(self, GetKey(list, v), v, itemType);

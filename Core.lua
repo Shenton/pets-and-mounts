@@ -28,7 +28,7 @@ local strsplit = strsplit;
 local tContains = tContains;
 
 -- GLOBALS: PlaySound, DEFAULT_CHAT_FRAME, GetScreenWidth, GetNumCompanions
--- GLOBALS: GetCursorPosition, UIParent, GetInstanceInfo
+-- GLOBALS: GetCursorPosition, UIParent, GetInstanceInfo, UnitGUID, UnitLevel
 -- GLOBALS: C_PetJournal, LE_PET_JOURNAL_FLAG_COLLECTED, LE_PET_JOURNAL_FLAG_FAVORITES
 -- GLOBALS: LE_PET_JOURNAL_FLAG_NOT_COLLECTED, PetJournalSearchBox
 -- GLOBALS: GetCompanionInfo, InCombatLockdown, GetBindingKey, SetOverrideBindingClick
@@ -177,13 +177,15 @@ function A:SlashCommand(input)
     if ( arg1 == "" ) then
         A:OpenConfigPanel();
     elseif ( arg1 == "test" ) then
-        A:DockButton("pets");
+        --
     elseif ( arg1 == "refresh" ) then
         A:BuildBothTables(1);
         A:Message(L["Companions and mounts informations updated."]);
     elseif ( arg1 == "show" )then
         A.db.profile.ldbi.hide = nil;
         A:ShowHideMinimap();
+    elseif ( arg1 == "resetzones" ) then
+        A.db.global.zonesIDsToName = {};
     end
 end
 
@@ -216,11 +218,11 @@ function A:PairsByKeys(t, f)
     return iter;
 end
 
---- Return the position of an item in a table
--- @param table The table
--- @param item The item
--- @return the item pos or false
-function A:Exists(tbl, name)
+--- Return if the pet or mount name exists in the table
+-- @param tbl The table
+-- @param name The name
+-- @return true or false
+function A:NameExists(tbl, name)
     local index = 1;
 
     while tbl[index] do
@@ -251,18 +253,6 @@ function A:TableNotEmpty(tbl)
     end
 
     return nil;
-end
-
---- Return anchor points depending on cursor position
-function A:GetAnchor()
-    local w = GetScreenWidth();
-    local x = GetCursorPosition();
-
-    w = (w * UIParent:GetEffectiveScale()) / 2;
-
-    if ( x > w ) then return "TOPRIGHT", "TOPLEFT"; end
-
-    return "TOPLEFT", "TOPRIGHT";
 end
 
 --- Simple shallow copy for copying specialization profiles
@@ -308,6 +298,40 @@ function A:CompareTables(t1, t2)
     end
 
     return 1;
+end
+
+--- Count table entries
+function A:TableCount(t)
+    if ( type(t) ~= "table" ) then return nil; end
+
+    local count = 0;
+
+    for _ in pairs(t) do
+        count = count + 1;
+    end
+
+    return count;
+end
+
+--- Check if a table contains a value an return the key
+function A:TableValueToKey(tbl, val)
+    for k,v in pairs(tbl) do
+        if ( v == val ) then return k; end
+    end
+
+    return nil;
+end
+
+--- Return anchor points depending on cursor position
+function A:GetAnchor()
+    local w = GetScreenWidth();
+    local x = GetCursorPosition();
+
+    w = (w * UIParent:GetEffectiveScale()) / 2;
+
+    if ( x > w ) then return "TOPRIGHT", "TOPLEFT"; end
+
+    return "TOPLEFT", "TOPRIGHT";
 end
 
 --- Return creature ID from spell ID (mount)
@@ -385,6 +409,15 @@ function A:GetCurrentSet(type)
     end
 
     return L["None"];
+end
+
+--- Check if it is a GUID
+function A:IsGUID(GUID)
+    if ( type(GUID) ~= "string" ) then return nil; end
+    if ( string.len(GUID) < 18 ) then return nil; end
+    if ( not string.match(GUID, "^0x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x$") ) then return nil; end
+
+    return 1;
 end
 
 --[[-------------------------------------------------------------------------------
@@ -487,8 +520,8 @@ function A:BuildPetsTable(force)
 
                 if ( not A.pamTable.pets[leadingLetter] ) then A.pamTable.pets[leadingLetter] = {}; end
 
-                if ( not A:Exists(A.pamTable.pets[leadingLetter], creatureName)
-                --or (A:Exists(A.pamTable.pets[leadingLetter], creatureName) and not A.db.profile.filterMultiple)
+                if ( not A:NameExists(A.pamTable.pets[leadingLetter], creatureName)
+                --or (A:NameExists(A.pamTable.pets[leadingLetter], creatureName) and not A.db.profile.filterMultiple)
                 or not A.db.profile.filterMultiple ) then
                     A.pamTable.petsIds[#A.pamTable.petsIds+1] = petID;
 
@@ -634,7 +667,7 @@ end
 
 --- Set main timer
 function A:SetMainTimer()
-    if ( A:IsAutoPetEnabled() and A.mainTimer ) then
+    if ( not A:IsAutoPetEnabled() and A.mainTimer ) then
         A:CancelTimer(A.mainTimer, 1);
     elseif ( A:IsAutoPetEnabled() and A.mainTimer ) then
         A:CancelTimer(A.mainTimer, 1);
@@ -647,15 +680,17 @@ end
 --- Set combat log event
 function A:SetStealthEvents()
     if ( A:IsNotWhenStealthedEnabled() ) then
+        A:DebugMessage("SetStealthEvents() - Registering stealth events.");
         A:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED");
         A:RegisterEvent("UPDATE_STEALTH", "AutoPetDelay");
     else
+        A:DebugMessage("SetStealthEvents() - UNRegistering stealth events.");
         A:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED");
         A:UnregisterEvent("UPDATE_STEALTH");
     end
 end
 
---- Set options according to current zone type
+--- Set options according to current area type
 -- Should always set the var if config table is found
 -- Set it to nil if no config table
 -- @param noSet - bool - Used when launched by SetEverything
@@ -729,6 +764,11 @@ end
 
 --- Set everything
 function A:SetEverything()
+    -- Set player vars
+    A.playerClass = select(2, UnitClass("player"));
+    A.playerGUID = UnitGUID("player");
+    A.playerLevel = UnitLevel("player");
+
     A:ShowHideMinimap();
     A:SetStealthEvents();
     A:SetBindings();
@@ -1232,15 +1272,24 @@ function A:CHAT_MSG_SYSTEM(event, msg)
 end
 
 function A:PLAYER_ENTERING_WORLD()
-    -- Too soon
-    -- if ( not A.favoritesCleaned ) then
-        -- A:CleanPetsFavorites();
-        -- A.favoritesCleaned = 1;
-    -- end
-
     A:AutoPetDelay();
     A:SetAutoSummonOverride();
+    --A:SetPostClickMacro();
+    A:GetCurrentMapID();
+end
 
+function A:ZONE_CHANGED_NEW_AREA()
+    A:GetCurrentMapID();
+    A:AutoPetDelay();
+end
+
+-- function A:MINIMAP_UPDATE_TRACKING()
+    -- A:GetCurrentMapID();
+    -- A:UnregisterEvent("MINIMAP_UPDATE_TRACKING");
+-- end
+
+function A:PLAYER_LEVEL_UP(event, level, ...)
+    A.playerLevel = level;
     A:SetPostClickMacro();
 end
 
@@ -1256,6 +1305,9 @@ A.aceDefaultDB =
         {
             pets = {},
             mounts = {},
+        },
+        zonesIDsToName =
+        {
         },
     },
     profile =
@@ -1340,7 +1392,18 @@ A.aceDefaultDB =
                 offY = 0,
             },
         },
-    }
+        petByMapID = -- d
+        {
+        },
+        mountByMapID = -- d
+        {
+            [1] = {}, -- Ground
+            [2] = {}, -- Fly
+            [3] = {}, -- Hybrid (ground & fly)
+            [4] = {}, -- Aquatic
+            [5] = {}, -- with passengers
+        },
+    },
 };
 
 -- Database revision handling
@@ -1597,15 +1660,6 @@ function A:OnInitialize()
     end);
     A.modelFrameConfig:Hide();
 
-    -- Hook summon pet method, set a var to current pet id
-    -- hooksecurefunc(C_PetJournal, "SummonPetByGUID", function(id)
-        -- if ( A.currentPet == id ) then -- Revoke
-            -- A.currentPet = nil;
-        -- else -- Summon
-            -- A.currentPet = id;
-        -- end
-    -- end);
-
     -- DB auto update hooks
     hooksecurefunc(C_PetJournal, "CagePetByID", function()
         A:DebugMessage("Hook - C_PetJournal.CagePetByID() called");
@@ -1615,11 +1669,6 @@ function A:OnInitialize()
         A:DebugMessage("Hook - C_PetJournal.ReleasePetByID() called");
         A:BuildPetsTable();
     end);
-
-    -- Set player vars
-    A.playerClass = select(2, UnitClass("player"));
-    A.playerGUID = UnitGUID("player");
-    A.playerLevel = UnitLevel("player");
 
     -- LDB
     if ( LibStub("LibDataBroker-1.1"):GetDataObjectByName("BrokerPAMLDB") ) then
@@ -1690,11 +1739,6 @@ function A:OnInitialize()
 
     -- Add the config loader to blizzard addon configuration panel
     A:AddToBlizzTemp();
-
-    -- Force pet journal load
-    -- if ( not IsAddOnLoaded("Blizzard_PetJournal") ) then
-        -- LoadAddOn("Blizzard_PetJournal");
-    -- end
 end
 
 --- AceAddon callback
@@ -1722,15 +1766,11 @@ function A:OnEnable()
     A:RegisterEvent("COMPANION_LEARNED", "BuildBothTables");
     A:RegisterEvent("COMPANION_UNLEARNED", "BuildBothTables");
     -- Update post click macros
-    A:RegisterEvent("PLAYER_LEVEL_UP", "SetPostClickMacro");
+    A:RegisterEvent("PLAYER_LEVEL_UP");
+    -- Update current mapID
+    A:RegisterEvent("ZONE_CHANGED_NEW_AREA");
+    --A:RegisterEvent("MINIMAP_UPDATE_TRACKING"); -- Using this for the first current mapID update
 
     -- Set everything
     A:SetEverything();
-
-    -- Remove unknown pets from favorites
-    --A:CleanPetsFavorites(); -- too soon
-
-    if ( C_PetJournal.GetSummonedPetGUID() ) then
-        A.currentPet = C_PetJournal.GetSummonedPetGUID();
-    end
 end

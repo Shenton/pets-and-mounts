@@ -9,6 +9,18 @@
 local A = _G["BrokerPAMGlobal"];
 local L = A.L;
 
+-- Globals to locals
+local pairs = pairs;
+local _G = _G;
+
+-- GLOBALS: BINDING_HEADER_BROKERPAM, BINDING_NAME_BROKERPAMPET, BINDING_NAME_BROKERPAMMOUNT
+-- GLOBALS: BINDING_NAME_BROKERPAMMOUNTPASSENGERS, BINDING_NAME_BROKERPAMMOUNTFLYING
+-- GLOBALS: BINDING_NAME_BROKERPAMMOUNTGROUND, BINDING_NAME_BROKERPAMMOUNTAQUATIC
+-- GLOBALS: InCombatLockdown, GetBindingKey, SetOverrideBindingClick, GetSpellInfo
+-- GLOBALS: IsFlyableArea, IsSpellKnown, GetSpellInfo, IsShiftKeyDown, IsControlKeyDown
+-- GLOBALS: BrokerPAMSecureButtonMounts, BrokerPAMSecureButtonPets, GetScreenWidth
+-- GLOBALS: GameTooltip
+
 --[[-------------------------------------------------------------------------------
     Bindings
 -------------------------------------------------------------------------------]]--
@@ -392,6 +404,8 @@ end
 function A:SetTooltip(frame)
     if ( not A.db.profile.BrokerPAMSecureButtonPets.tooltip and frame:GetName() == "BrokerPAMSecureButtonPets" ) then return; end
     if ( not A.db.profile.BrokerPAMSecureButtonMounts.tooltip and frame:GetName() == "BrokerPAMSecureButtonMounts" ) then return; end
+
+    local currentSet;
 
     if ( frame:GetRight() >= ( GetScreenWidth() / 2 ) ) then
         GameTooltip:SetOwner(frame, "ANCHOR_LEFT");

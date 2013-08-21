@@ -23,9 +23,6 @@ local strtrim = strtrim;
 A.AceConfigDialog = LibStub("AceConfigDialog-3.0");
 A.AceConfigRegistry = LibStub("AceConfigRegistry-3.0");
 
--- Init addon databases
-A:InitializeDB();
-
 local modelFrameSizeSelect =
 {
     [100] = "100x100",
@@ -36,6 +33,13 @@ local modelFrameSizeSelect =
     [350] = "350x350",
     [400] = "400x400",
 };
+
+-- Init addon databases
+A:InitializeDB();
+
+--[[-------------------------------------------------------------------------------
+    Staticpopups
+-------------------------------------------------------------------------------]]--
 
 -- Set overwrite or dif name popup dialog
 StaticPopupDialogs["BrokerPamOverwriteOrChangeNameSet"] =
@@ -158,6 +162,14 @@ StaticPopupDialogs["BrokerPamDeleteSet"] =
     end,
     preferredIndex = 3,
 };
+
+--[[-------------------------------------------------------------------------------
+    Methods
+-------------------------------------------------------------------------------]]--
+
+--[[-------------------------------------------------------------------------------
+    Config table
+-------------------------------------------------------------------------------]]--
 
 local options, orderGroup, orderItem, petName, petAutoSummonOverrideSelected;
 local optionsOverrideHeaderText = L["None"];
@@ -318,14 +330,14 @@ function A:AceConfig()
                             areaSelectHeader =
                             {
                                 order = 10,
-                                name = L["Zone type"],
+                                name = L["Area type"],
                                 type = "header",
                             },
                             areaSelect =
                             {
                                 order = 11,
-                                name = L["Zone type"],
-                                desc = L["Select witch type of zone to work with."],
+                                name = L["Area type"],
+                                desc = L["Select witch type of area to work with."],
                                 type = "select",
                                 disabled = not A.db.profile.enableAutoSummonOverride,
                                 values = function()
@@ -451,8 +463,8 @@ function A:AceConfig()
                             areaMounts =
                             {
                                 order = 2,
-                                name = L["Zone mounts"],
-                                desc = L["With this enabled it will summon a specific mount according to your current zone. Exemple: the Abyssal Seahorse in Vashj'ir."],
+                                name = L["Area mounts"],
+                                desc = L["With this enabled it will summon a specific mount according to your current area. Exemple: the Abyssal Seahorse in Vashj'ir."],
                                 type = "toggle",
                                 set = function(info, val) A.db.profile.areaMounts = not A.db.profile.areaMounts; end,
                                 get = function(info) return A.db.profile.areaMounts; end,
@@ -547,7 +559,7 @@ function A:AceConfig()
                                         anchor =
                                         {
                                             point = "CENTER",
-                                            relativeTo = UIParent,
+                                            relativeTo = "UIParent",
                                             relativePoint = "CENTER",
                                             offX = 0,
                                             offY = 0,
@@ -628,7 +640,7 @@ function A:AceConfig()
                                         anchor =
                                         {
                                             point = "CENTER",
-                                            relativeTo = UIParent,
+                                            relativeTo = "UIParent",
                                             relativePoint = "CENTER",
                                             offX = 0,
                                             offY = 0,
@@ -1047,7 +1059,7 @@ function A:AceConfig()
                                 name = function()
                                     local current = A:GetCurrentSet("PET");
 
-                                    return L["Currently using set: %s"]:format(current);
+                                    return L["Currently using set: %s\n\n"]:format(current);
                                 end,
                                 type = "description",
                             },
@@ -1171,7 +1183,7 @@ function A:AceConfig()
                                 name = function()
                                     local current = A:GetCurrentSet("MOUNT");
 
-                                    return L["Currently using set: %s"]:format(current);
+                                    return L["Currently using set: %s\n\n"]:format(current);
                                 end,
                                 type = "description",
                             },
@@ -1505,6 +1517,479 @@ function A:AceConfig()
                                         A.db.profile.forceOne.mount[5] = val;
                                     end
                                 end,
+                            },
+                        },
+                    },
+                },
+            },
+            zoneOverride =
+            {
+                order = 50,
+                name = L["Area override"],
+                type = "group",
+                args =
+                {
+                    pets =
+                    {
+                        order = 0,
+                        name = L["Companions"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            zoneSelectHeader =
+                            {
+                                order = 0,
+                                name = L["Area selection"],
+                                type = "header",
+                            },
+                            currentZone =
+                            {
+                                order = 1,
+                                name = function()
+                                    local mapID;
+
+                                    if ( A.currentMapIDForPets ) then
+                                        mapID = A.currentMapIDForPets;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)));
+                                end,
+                                type = "description",
+                            },
+                            zoneSelect =
+                            {
+                                order = 10,
+                                name = L["Area selection"],
+                                desc = L["Select the area you want to work with."],
+                                type = "select",
+                                dialogControl = "Dropdown-SortByValue",
+                                values = function()
+                                    if ( A:TableCount(A.db.global.zonesIDsToName) > 0 ) then
+                                        return A.db.global.zonesIDsToName;
+                                    else
+                                        return {};
+                                    end
+                                end,
+                                get = function() return A.currentMapIDForPets; end,
+                                set = function(self, val) A.currentMapIDForPets = val; end,
+                            },
+                            zoneSelectPet =
+                            {
+                                order = 100,
+                                name = L["Companions"],
+                                type = "header",
+                            },
+                            pet =
+                            {
+                                order = 110,
+                                name = L["Companions"],
+                                desc = L["Select the companion to force summon."],
+                                type = "select",
+                                dialogControl = "Dropdown-SortByValue",
+                                values = function()
+                                    local out = { [0] = L["None"] };
+
+                                    for k,v in A:PairsByKeys(A.pamTable.pets) do
+                                        for kk,vv in ipairs(v) do
+                                            out[vv.petID] = vv.name;
+                                        end
+                                    end
+
+                                    return out;
+                                end,
+                                get = function()
+                                    local mapID;
+
+                                    if ( A.currentMapIDForPets ) then
+                                        mapID = A.currentMapIDForPets;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( A.db.profile.petByMapID[tostring(mapID)] ) then
+                                        return A.db.profile.petByMapID[tostring(mapID)];
+                                    else
+                                        return 0;
+                                    end
+                                end,
+                                set = function(self, val)
+                                    local mapID;
+
+                                    if ( A.currentMapIDForPets ) then
+                                        mapID = A.currentMapIDForPets;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( val == 0 ) then
+                                        A.db.profile.petByMapID[tostring(mapID)] = nil;
+                                    else
+                                        A.db.profile.petByMapID[tostring(mapID)] = val;
+                                    end
+                                end,
+                            },
+                            zoneSelectReset =
+                            {
+                                order = 200,
+                                name = L["Reset"],
+                                type = "header",
+                            },
+                            zoneReset =
+                            {
+                                order = 201,
+                                name = L["Reset"],
+                                desc = L["Use this to reset the current area."],
+                                type = "execute",
+                                func = function() A.currentMapIDForPets = nil; end,
+                            },
+                        },
+                    },
+                    mounts =
+                    {
+                        order = 100,
+                        name = L["Mounts"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            zoneSelectHeader =
+                            {
+                                order = 0,
+                                name = L["Area selection"],
+                                type = "header",
+                            },
+                            currentZone =
+                            {
+                                order = 1,
+                                name = function()
+                                    local mapID;
+
+                                    if ( A.currentMapIDForMounts ) then
+                                        mapID = A.currentMapIDForMounts;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    return L["Currently working with: %s\n\n"]:format(GetMapNameByID(mapID));
+                                end,
+                                type = "description",
+                            },
+                            zoneSelect =
+                            {
+                                order = 10,
+                                name = L["Area selection"],
+                                desc = L["Select the area you want to work with."],
+                                type = "select",
+                                dialogControl = "Dropdown-SortByValue",
+                                values = function()
+                                    if ( A:TableCount(A.db.global.zonesIDsToName) > 0 ) then
+                                        return A.db.global.zonesIDsToName;
+                                    else
+                                        return {};
+                                    end
+                                end,
+                                get = function() return A.currentMapIDForMounts; end,
+                                set = function(self, val) A.currentMapIDForMounts = val; end,
+                            },
+                            zoneSelectMounts =
+                            {
+                                order = 100,
+                                name = L["Mounts"],
+                                type = "header",
+                            },
+                            aquatic =
+                            {
+                                order = 101,
+                                name = L["Aquatic"],
+                                desc = L["Select the %s mount to force summon."]:format(L["Aquatic"]),
+                                type = "select",
+                                dialogControl = "Dropdown-SortByValue",
+                                values = function()
+                                    local out = { [0] = L["None"] };
+
+                                    for k,v in A:PairsByKeys(A.pamTable.mounts[4]) do
+                                        for kk,vv in ipairs(v) do
+                                            out[vv.spellId] = vv.name;
+                                        end
+                                    end
+
+                                    return out;
+                                end,
+                                get = function()
+                                    local mapID;
+
+                                    if ( A.currentMapIDForMounts ) then
+                                        mapID = A.currentMapIDForMounts;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( A.db.profile.mountByMapID[4][tostring(mapID)] ) then
+                                        return A.db.profile.mountByMapID[4][tostring(mapID)];
+                                    else
+                                        return 0;
+                                    end
+                                end,
+                                set = function(self, val)
+                                    local mapID;
+
+                                    if ( A.currentMapIDForMounts ) then
+                                        mapID = A.currentMapIDForMounts;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( val == 0 ) then
+                                        A.db.profile.mountByMapID[4][tostring(mapID)] = nil;
+                                    else
+                                        A.db.profile.mountByMapID[4][tostring(mapID)] = val;
+                                    end
+                                end,
+                            },
+                            ground =
+                            {
+                                order = 110,
+                                name = L["Ground"],
+                                desc = L["Select the %s mount to force summon."]:format(L["Ground"]),
+                                type = "select",
+                                dialogControl = "Dropdown-SortByValue",
+                                values = function()
+                                    local out = { [0] = L["None"] };
+
+                                    for k,v in A:PairsByKeys(A.pamTable.mounts[1]) do
+                                        for kk,vv in ipairs(v) do
+                                            out[vv.spellId] = vv.name;
+                                        end
+                                    end
+
+                                    return out;
+                                end,
+                                get = function()
+                                    local mapID;
+
+                                    if ( A.currentMapIDForMounts ) then
+                                        mapID = A.currentMapIDForMounts;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( A.db.profile.mountByMapID[1][tostring(mapID)] ) then
+                                        return A.db.profile.mountByMapID[1][tostring(mapID)];
+                                    else
+                                        return 0;
+                                    end
+                                end,
+                                set = function(self, val)
+                                    local mapID;
+
+                                    if ( A.currentMapIDForMounts ) then
+                                        mapID = A.currentMapIDForMounts;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( val == 0 ) then
+                                        A.db.profile.mountByMapID[1][tostring(mapID)] = nil;
+                                    else
+                                        A.db.profile.mountByMapID[1][tostring(mapID)] = val;
+                                    end
+                                end,
+                            },
+                            fly =
+                            {
+                                order = 120,
+                                name = L["Fly"],
+                                desc = L["Select the %s mount to force summon."]:format(L["Fly"]),
+                                type = "select",
+                                dialogControl = "Dropdown-SortByValue",
+                                values = function()
+                                    local out = { [0] = L["None"] };
+
+                                    for k,v in A:PairsByKeys(A.pamTable.mounts[2]) do
+                                        for kk,vv in ipairs(v) do
+                                            out[vv.spellId] = vv.name;
+                                        end
+                                    end
+
+                                    return out;
+                                end,
+                                get = function()
+                                    local mapID;
+
+                                    if ( A.currentMapIDForMounts ) then
+                                        mapID = A.currentMapIDForMounts;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( A.db.profile.mountByMapID[2][tostring(mapID)] ) then
+                                        return A.db.profile.mountByMapID[2][tostring(mapID)];
+                                    else
+                                        return 0;
+                                    end
+                                end,
+                                set = function(self, val)
+                                    local mapID;
+
+                                    if ( A.currentMapIDForMounts ) then
+                                        mapID = A.currentMapIDForMounts;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( val == 0 ) then
+                                        A.db.profile.mountByMapID[2][tostring(mapID)] = nil;
+                                    else
+                                        A.db.profile.mountByMapID[2][tostring(mapID)] = val;
+                                    end
+                                end,
+                            },
+                            hybrid =
+                            {
+                                order = 130,
+                                name = L["Hybrid"],
+                                desc = L["Select the %s mount to force summon."]:format(L["Hybrid"]),
+                                type = "select",
+                                dialogControl = "Dropdown-SortByValue",
+                                values = function()
+                                    local out = { [0] = L["None"] };
+
+                                    for k,v in A:PairsByKeys(A.pamTable.mounts[3]) do
+                                        for kk,vv in ipairs(v) do
+                                            out[vv.spellId] = vv.name;
+                                        end
+                                    end
+
+                                    return out;
+                                end,
+                                get = function()
+                                    local mapID;
+
+                                    if ( A.currentMapIDForMounts ) then
+                                        mapID = A.currentMapIDForMounts;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( A.db.profile.mountByMapID[3][tostring(mapID)] ) then
+                                        return A.db.profile.mountByMapID[3][tostring(mapID)];
+                                    else
+                                        return 0;
+                                    end
+                                end,
+                                set = function(self, val)
+                                    local mapID;
+
+                                    if ( A.currentMapIDForMounts ) then
+                                        mapID = A.currentMapIDForMounts;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( val == 0 ) then
+                                        A.db.profile.mountByMapID[3][tostring(mapID)] = nil;
+                                    else
+                                        A.db.profile.mountByMapID[3][tostring(mapID)] = val;
+                                    end
+                                end,
+                            },
+                            passenger =
+                            {
+                                order = 140,
+                                name = L["Passenger"],
+                                desc = L["Select the %s mount to force summon."]:format(L["Passenger"]),
+                                type = "select",
+                                dialogControl = "Dropdown-SortByValue",
+                                values = function()
+                                    local out = { [0] = L["None"] };
+
+                                    for k,v in A:PairsByKeys(A.pamTable.mounts[5]) do
+                                        for kk,vv in ipairs(v) do
+                                            out[vv.spellId] = vv.name;
+                                        end
+                                    end
+
+                                    return out;
+                                end,
+                                get = function()
+                                    local mapID;
+
+                                    if ( A.currentMapIDForMounts ) then
+                                        mapID = A.currentMapIDForMounts;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( A.db.profile.mountByMapID[5][tostring(mapID)] ) then
+                                        return A.db.profile.mountByMapID[5][tostring(mapID)];
+                                    else
+                                        return 0;
+                                    end
+                                end,
+                                set = function(self, val)
+                                    local mapID;
+
+                                    if ( A.currentMapIDForMounts ) then
+                                        mapID = A.currentMapIDForMounts;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( val == 0 ) then
+                                        A.db.profile.mountByMapID[5][tostring(mapID)] = nil;
+                                    else
+                                        A.db.profile.mountByMapID[5][tostring(mapID)] = val;
+                                    end
+                                end,
+                            },
+                            zoneSelectReset =
+                            {
+                                order = 200,
+                                name = L["Reset"],
+                                type = "header",
+                            },
+                            zoneReset =
+                            {
+                                order = 201,
+                                name = L["Reset"],
+                                desc = L["Use this to reset the current area."],
+                                type = "execute",
+                                func = function() A.currentMapIDForMounts = nil; end,
+                            },
+                        },
+                    },
+                    common =
+                    {
+                        order = 200,
+                        name = L["Common options"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            knownZonesCount =
+                            {
+                                order = 0,
+                                name = function()
+                                    local count = A:TableCount(A.db.global.zonesIDsToName);
+
+                                    if ( count > 1 ) then
+                                        return L["The addon currently know %d zones\n\n"]:format(count);
+                                    else
+                                        return L["The addon currently know %d area\n\n"]:format(count);
+                                    end
+                                end,
+                                type = "description",
+                            },
+                            buildDB =
+                            {
+                                order = 10,
+                                name = L["Build zones database"],
+                                desc = L["Build the zones database, this is not needed for the addon to work, but it will know the zones without discovering them first."],
+                                type = "execute",
+                                func = function() A:BuildMapIDsDB(); end,
                             },
                         },
                     },
