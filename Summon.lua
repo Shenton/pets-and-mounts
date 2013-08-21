@@ -132,7 +132,7 @@ function A:RandomPet(auto)
     end
 
     -- Recall this method if we already got the same pet, will work if the player got at least 10 pets (global an fav)
-    if ( #A.pamTable.petsIds > 10 and #A.db.profile.favoritePets > 10 ) then
+    if ( #A.pamTable.petsIds >= 10 and #A.db.profile.favoritePets >= 10 ) then
         if ( C_PetJournal.GetSummonedPetGUID() and C_PetJournal.GetSummonedPetGUID() == id ) then
             A:RandomPet();
             A:DebugMessage("RandomPet() - Already got that pet, resummon");
@@ -185,9 +185,14 @@ function A:AutoPet()
 
     -- Area override
     if ( A.db.profile.petByMapID[tostring(A.currentMapID)] ) then
-        A:DebugMessage("AutoPet() - Area override pet");
-        A:SummonPet(A.db.profile.petByMapID[tostring(A.currentMapID)]);
-        return;
+        if ( A.db.profile.petByMapID[tostring(A.currentMapID)] == currentPet ) then
+            A:DebugMessage("AutoPet() - Area override pet - Already got that pet");
+            return;
+        else
+            A:DebugMessage("AutoPet() - Area override pet - summon");
+            A:SummonPet(A.db.profile.petByMapID[tostring(A.currentMapID)]);
+            return;
+        end
     end
 
     -- Got a pet
