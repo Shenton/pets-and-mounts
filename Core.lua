@@ -6,6 +6,8 @@
     Core.lua
 -------------------------------------------------------------------------------]]--
 
+-- ###### TODO - fix les boutons: si dock et bouton monture caché on ne peut pas bouger celui des pets 
+
 -- Ace libs (<3)
 local A = LibStub("AceAddon-3.0"):NewAddon("BrokerPAM", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0");
 local L = LibStub("AceLocale-3.0"):GetLocale("BrokerPAM");
@@ -145,7 +147,9 @@ A.areaTypesLocales =
 -- @param text The message to display
 -- @param color Bool, if true will color in red
 function A:Message(text, color, silent)
-    if ( color ) then
+    if ( color == "debug" ) then
+        color = A.color["BLUE"];
+    elseif ( color ) then
         color = A.color["RED"];
     else
         color = A.color["GREEN"]
@@ -158,16 +162,15 @@ function A:Message(text, color, silent)
     DEFAULT_CHAT_FRAME:AddMessage(color..L["Pets & Mounts"]..": "..A.color["RESET"]..text);
 end
 
---- Send a debug message
-function A:DebugMessage(...)
-    if ( A.db.profile.debug ) then
-        if ( ... ) then
-            DEFAULT_CHAT_FRAME:AddMessage(A.color["BLUE"]..L["Pets & Mounts"]..": "..A.color["RESET"]..(...));
-        else
-            DEFAULT_CHAT_FRAME:AddMessage(A.color["BLUE"]..L["Pets & Mounts"]..": "..A.color["RESET"].."Arg == nil");
-        end
-    end
+--- Debug message methods
+function A:DebugMessageDummy()
 end
+
+function A:DebugMessageActiv(text)
+    A:Message(text, "debug", 1);
+end
+
+A.DebugMessage = A.DebugMessageDummy;
 
 --- Handle the slash command
 -- @param input The string returned after the command
@@ -279,9 +282,6 @@ function A:CompareTables(t1, t2)
     if ( type(t1) ~= "table" or type(t2) ~= "table" ) then return nil; end
 
     if ( #t1 ~= #t2 ) then return nil; end
-
-    --table.sort(t1);
-    --table.sort(t2);
 
     for k,v in pairs(t1) do
         if ( type(v) == "table" ) then
@@ -418,6 +418,52 @@ function A:IsGUID(GUID)
     if ( not string.match(GUID, "^0x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x$") ) then return nil; end
 
     return 1;
+end
+
+--[[-------------------------------------------------------------------------------
+    Frames methods
+-------------------------------------------------------------------------------]]--
+
+function A:ModelFrameOnUpdate(frame)
+    if ( A.db.profile.modelRotation ) then
+        local t = GetTime();
+
+        if ( frame.rotationTime and frame.rotationTime + 0.01 < t ) then
+            frame:SetRotation(frame.rotation);
+            frame.rotation = frame.rotation + 0.01;
+            frame.rotationTime = t;
+        end
+    end
+end
+
+function A:ConfigModelFrameOnUpdate(frame)
+    if ( frame.manualRotation ) then
+        if ( frame.isRotating ) then
+            local x = GetCursorPosition();
+            local diff = (x - frame.xOrigin) * MODELFRAME_DRAG_ROTATION_CONSTANT;
+
+            frame.xOrigin = GetCursorPosition();
+            frame.rotation = frame.rotation + diff;
+
+            if ( frame.rotation < 0 ) then
+                frame.rotation = frame.rotation + (2 * PI);
+            end
+
+            if ( frame.rotation > (2 * PI) ) then
+                frame.rotation = frame.rotation - (2 * PI);
+            end
+
+            frame:SetRotation(frame.rotation, false);
+        end
+    elseif ( A.db.profile.configModelRotation and not frame.mouseOver ) then
+        local t = GetTime();
+
+        if ( frame.rotationTime and frame.rotationTime + 0.03 < t ) then
+            frame:SetRotation(frame.rotation);
+            frame.rotation = frame.rotation + 0.03;
+            frame.rotationTime = t;
+        end
+    end
 end
 
 --[[-------------------------------------------------------------------------------
@@ -762,6 +808,15 @@ function A:IsNotWhenStealthedEnabled()
     return A.db.profile.notWhenStealthed;
 end
 
+--- Set debug message method
+function A:SetDebugMessage()
+    if ( A.db.profile.debug ) then
+        A.DebugMessage = A.DebugMessageActiv;
+    else
+        A.DebugMessage = A.DebugMessageDummy;
+    end
+end
+
 --- Set everything
 function A:SetEverything()
     -- Set player vars
@@ -769,6 +824,7 @@ function A:SetEverything()
     A.playerGUID = UnitGUID("player");
     A.playerLevel = UnitLevel("player");
 
+    A:SetDebugMessage();
     A:ShowHideMinimap();
     A:SetStealthEvents();
     A:SetBindings();
@@ -970,26 +1026,26 @@ local function PAMMenu(self, level)
                     self.info.disabled = isSummoned;
                     self.info.keepShownOnClick = 1;
                     self.info.hasArrow = nil;
-                    self.info.func = function() C_PetJournal.SummonPetByGUID(vv.petID); end;
+                    self.info.func = function() A:SummonPet(vv.petID); end;
                     UIDropDownMenu_AddButton(self.info, level);
 
                     _G["DropDownList3Button"..buttonIndex]:HookScript("OnEnter", function()
                         if ( not A.isBrokerPamMenu or DropDownList2Button1:GetText() == L["Mounts"] ) then
-                            A.modelFrame:Hide();
+                            A.menuModelFrame:Hide();
 
                             return;
                         end
 
                         -- Model
-                        A.modelFrame:SetCreature(vv.creatureID);
+                        A.menuModelFrame:SetCreature(vv.creatureID);
 
                         -- Frame pos
                         local point, relativePoint = A:GetAnchor();
-                        A.modelFrame:ClearAllPoints()
-                        A.modelFrame:SetPoint(point, DropDownList3, relativePoint, 0, 0);
-                        A.modelFrame:Show();
+                        A.menuModelFrame:ClearAllPoints()
+                        A.menuModelFrame:SetPoint(point, DropDownList3, relativePoint, 0, 0);
+                        A.menuModelFrame:Show();
                     end);
-                    _G["DropDownList3Button"..buttonIndex]:HookScript("OnLeave", function() A.modelFrame:Hide(); end);
+                    _G["DropDownList3Button"..buttonIndex]:HookScript("OnLeave", function() A.menuModelFrame:Hide(); end);
                     buttonIndex = buttonIndex + 1;
                 end
             end
@@ -1025,7 +1081,7 @@ local function PAMMenu(self, level)
             self.info.func = function()
                 A.db.profile.modelFrameWidth = 100;
                 A.db.profile.modelFrameHeight = 100;
-                A.modelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
+                A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                 LibStub("AceConfigRegistry-3.0"):NotifyChange("BrokerPAMConfig");
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1040,7 +1096,7 @@ local function PAMMenu(self, level)
             self.info.func = function()
                 A.db.profile.modelFrameWidth = 150;
                 A.db.profile.modelFrameHeight = 150;
-                A.modelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
+                A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                 LibStub("AceConfigRegistry-3.0"):NotifyChange("BrokerPAMConfig");
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1055,7 +1111,7 @@ local function PAMMenu(self, level)
             self.info.func = function()
                 A.db.profile.modelFrameWidth = 200;
                 A.db.profile.modelFrameHeight = 200;
-                A.modelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
+                A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                 LibStub("AceConfigRegistry-3.0"):NotifyChange("BrokerPAMConfig");
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1070,7 +1126,7 @@ local function PAMMenu(self, level)
             self.info.func = function()
                 A.db.profile.modelFrameWidth = 250;
                 A.db.profile.modelFrameHeight = 250;
-                A.modelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
+                A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                 LibStub("AceConfigRegistry-3.0"):NotifyChange("BrokerPAMConfig");
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1085,7 +1141,7 @@ local function PAMMenu(self, level)
             self.info.func = function()
                 A.db.profile.modelFrameWidth = 300;
                 A.db.profile.modelFrameHeight = 300;
-                A.modelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
+                A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                 LibStub("AceConfigRegistry-3.0"):NotifyChange("BrokerPAMConfig");
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1100,7 +1156,7 @@ local function PAMMenu(self, level)
             self.info.func = function()
                 A.db.profile.modelFrameWidth = 350;
                 A.db.profile.modelFrameHeight = 350;
-                A.modelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
+                A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                 LibStub("AceConfigRegistry-3.0"):NotifyChange("BrokerPAMConfig");
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1115,7 +1171,7 @@ local function PAMMenu(self, level)
             self.info.func = function()
                 A.db.profile.modelFrameWidth = 400;
                 A.db.profile.modelFrameHeight = 400;
-                A.modelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
+                A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                 LibStub("AceConfigRegistry-3.0"):NotifyChange("BrokerPAMConfig");
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1137,21 +1193,21 @@ local function PAMMenu(self, level)
 
                             _G["DropDownList4Button"..buttonIndex]:HookScript("OnEnter", function()
                                 if ( not A.isBrokerPamMenu ) then
-                                    A.modelFrame:Hide();
+                                    A.menuModelFrame:Hide();
 
                                     return;
                                 end
 
                                 -- Model
-                                A.modelFrame:SetCreature(vvv.creatureID);
+                                A.menuModelFrame:SetCreature(vvv.creatureID);
 
                                 -- Frame pos
                                 local point, relativePoint = A:GetAnchor();
-                                A.modelFrame:ClearAllPoints()
-                                A.modelFrame:SetPoint(point, DropDownList4, relativePoint, 0, 0);
-                                A.modelFrame:Show();
+                                A.menuModelFrame:ClearAllPoints()
+                                A.menuModelFrame:SetPoint(point, DropDownList4, relativePoint, 0, 0);
+                                A.menuModelFrame:Show();
                             end);
-                            _G["DropDownList4Button"..buttonIndex]:HookScript("OnLeave", function() A.modelFrame:Hide(); end);
+                            _G["DropDownList4Button"..buttonIndex]:HookScript("OnLeave", function() A.menuModelFrame:Hide(); end);
                             buttonIndex = buttonIndex + 1;
                         end
                     end
@@ -1469,7 +1525,7 @@ end
 function A:RemoveDatabaseOldEntries()
     -- Check for integer in fav pets, Blizzard used GUID instead of ID in 5.1
     for k,v in ipairs(A.db:GetProfiles()) do
-        if ( A.db.profiles[v].favoritePets ) then
+        if ( A.db.profiles[v] and A.db.profiles[v].favoritePets ) then
             for kk,vv in pairs(A.db.profiles[v].favoritePets) do
                 if ( type(vv) == "number" ) then
                     A.db.profiles[v].favoritePets[kk] = nil;
@@ -1562,7 +1618,7 @@ end
 -- Called after the addon is fully loaded
 function A:OnInitialize()
     -- Database
-    A.db = LibStub("AceDB-3.0"):New("pamDB", A.aceDefaultDB);
+    A.db = LibStub("AceDB-3.0"):New("pamDB", A.aceDefaultDB, true);
     A:DatabaseRevisionCheck();
     A:RemoveDatabaseOldEntries();
 
@@ -1579,95 +1635,13 @@ function A:OnInitialize()
         A.isBrokerPamMenu = nil;
     end);
 
-    -- Model frame menu
-    A.modelFrame = CreateFrame("PlayerModel", "BrokerPamModelFrame", UIParent);
-    A.modelFrame:SetFrameStrata("TOOLTIP");
-    A.modelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
-    A.modelFrame:SetBackdrop({bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        tile = true, tileSize = 16, edgeSize = 16,
-        insets = { left = 4, right = 4, top = 4, bottom = 4 }});
-    A.modelFrame:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b);
-    A.modelFrame:SetBackdropColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b);
-    A.modelFrame:SetScript("OnShow", function(self) self.rotation, self.rotationTime = 0, GetTime(); end);
-    A.modelFrame:SetScript("OnHide", function(self) self:ClearModel(); end);
-    A.modelFrame:SetScript("OnUpdate", function(self)
-        if ( A.db.profile.modelRotation ) then
-            local t = GetTime();
+    -- Menu model frame
+    A.menuModelFrame = BrokerPamMenuModelFrame;
+    A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
 
-            if ( self.rotationTime and self.rotationTime + 0.01 < t ) then
-                self:SetRotation(self.rotation);
-                self.rotation = self.rotation + 0.01;
-                self.rotationTime = t;
-            end
-        end
-    end);
-    A.modelFrame:Hide();
-
-    -- Model frame config
-    A.modelFrameConfig = CreateFrame("PlayerModel", "BrokerPamModelFrameConfig", UIParent);
-    A.modelFrameConfig:SetFrameStrata("TOOLTIP");
-    A.modelFrameConfig:SetSize(A.db.profile.configModelFrameWidth, A.db.profile.configModelFrameHeight);
-    A.modelFrameConfig:SetBackdrop({bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        tile = true, tileSize = 16, edgeSize = 16,
-        insets = { left = 4, right = 4, top = 4, bottom = 4 }});
-    A.modelFrameConfig:SetBackdropBorderColor(.6, .6, .6, .9);
-    A.modelFrameConfig:SetBackdropColor(.9, .9, .9, .9);
-    A.modelFrameConfig:EnableMouse(1);
-    A.modelFrameConfig:SetScript("OnShow", function(self) self.rotation, self.rotationTime = 0, GetTime(); end);
-    A.modelFrameConfig:SetScript("OnHide", function(self)
-        self.manualRotation = nil;
-        self.isRotating = nil;
-        self.rotation = nil;
-        self.rotationTime = nil;
-        self:ClearModel();
-    end);
-    A.modelFrameConfig:SetScript("OnEnter", function(self)
-        self.mouseOver = 1;
-    end);
-    A.modelFrameConfig:SetScript("OnLeave", function(self)
-        self.mouseOver = nil;
-        self.manualRotation = nil;
-        self.isRotating = nil;
-    end);
-    A.modelFrameConfig:SetScript("OnMouseDown", function(self)
-        self.manualRotation = 1;
-        self.isRotating = 1;
-        self.rotation = self.rotation or 0;
-        self.xOrigin = GetCursorPosition();
-    end);
-    A.modelFrameConfig:SetScript("OnMouseUp", function(self) self.isRotating = nil; end);
-    A.modelFrameConfig:SetScript("OnUpdate", function(self)
-        if ( self.manualRotation ) then
-            if ( self.isRotating ) then
-                local x = GetCursorPosition();
-                local diff = (x - self.xOrigin) * MODELFRAME_DRAG_ROTATION_CONSTANT;
-
-                self.xOrigin = GetCursorPosition();
-                self.rotation = self.rotation + diff;
-
-                if ( self.rotation < 0 ) then
-                    self.rotation = self.rotation + (2 * PI);
-                end
-
-                if ( self.rotation > (2 * PI) ) then
-                    self.rotation = self.rotation - (2 * PI);
-                end
-
-                self:SetRotation(self.rotation, false);
-            end
-        elseif ( A.db.profile.configModelRotation and not self.mouseOver ) then
-            local t = GetTime();
-
-            if ( self.rotationTime and self.rotationTime + 0.03 < t ) then
-                self:SetRotation(self.rotation);
-                self.rotation = self.rotation + 0.03;
-                self.rotationTime = t;
-            end
-        end
-    end);
-    A.modelFrameConfig:Hide();
+    -- Config model frame
+    A.configModelFrame = BrokerPamConfigModelFrame;
+    A.configModelFrame:SetSize(A.db.profile.configModelFrameWidth, A.db.profile.configModelFrameHeight);
 
     -- DB auto update hooks
     hooksecurefunc(C_PetJournal, "CagePetByID", function()
@@ -1680,71 +1654,67 @@ function A:OnInitialize()
     end);
 
     -- LDB
-    if ( LibStub("LibDataBroker-1.1"):GetDataObjectByName("BrokerPAMLDB") ) then
-        A.ldbObject = LibStub("LibDataBroker-1.1"):GetDataObjectByName("BrokerPAMLDB");
-    else
-        A.ldbObject = LibStub("LibDataBroker-1.1"):NewDataObject("BrokerPAMLDB", {
-            type = "data source",
-            text = L["Pets & Mounts"],
-            label = L["Pets & Mounts"],
-            icon = "Interface\\ICONS\\Achievement_WorldEvent_Brewmaster",
-            tocname = "Broker_PAM",
-            OnClick = function(self, button)
-                if (button == "LeftButton") then
-                    if ( IsShiftKeyDown() ) then
-                        A:RevokePet();
-                    else
-                        A:RandomPet();
-                    end
-                elseif ( button == "RightButton" ) then
-                    A.menuFrame.initialize = PAMMenu;
-                    ToggleDropDownMenu(1, nil, A.menuFrame, self, 0, 0);
-                    GameTooltip:Hide();
-                elseif ( button == "MiddleButton" ) then
-                    A:OpenConfigPanel();
-                end
-            end,
-            OnTooltipShow = function(tooltip)
-                local currentSet;
-
-                tooltip:AddDoubleLine(A.color["WHITE"]..L["Pets & Mounts"], A.color["GREEN"].."v"..A.version);
-                tooltip:AddLine(" ");
-
-                currentSet = A:GetCurrentSet("PET");
-                if ( currentSet == L["None"] ) then
-                    currentSet = A.color["RED"]..currentSet;
+    A.ldbObject = LibStub("LibDataBroker-1.1"):NewDataObject("BrokerPAMLDB", {
+        type = "data source",
+        text = L["Pets & Mounts"],
+        label = L["Pets & Mounts"],
+        icon = "Interface\\ICONS\\Achievement_WorldEvent_Brewmaster",
+        tocname = "Broker_PAM",
+        OnClick = function(self, button)
+            if (button == "LeftButton") then
+                if ( IsShiftKeyDown() ) then
+                    A:RevokePet();
                 else
-                    currentSet = A.color["GREEN"]..currentSet;
+                    A:RandomPet();
                 end
-
-                tooltip:AddLine(L["Companions set in use: %s."]:format(currentSet));
-                tooltip:AddLine(L["Auto summon companion is %s."]:format(A:IsAutoPetEnabled() and A.color["GREEN"]..L["On"] or A.color["RED"]..L["Off"]));
-                tooltip:AddLine(L["Not when stealthed is %s."]:format(A:IsNotWhenStealthedEnabled() and A.color["GREEN"]..L["On"] or A.color["RED"]..L["Off"]));
-                tooltip:AddLine(L["Forced companion: %s"]:format(A.db.profile.forceOne.pet and A.color["GREEN"]..A:GetPetNameByID(A.db.profile.forceOne.pet) or A.color["RED"]..L["None"]));
-                tooltip:AddLine(" ");
-
-                currentSet = A:GetCurrentSet("MOUNT");
-                if ( currentSet == L["None"] ) then
-                    currentSet = A.color["RED"]..currentSet;
-                else
-                    currentSet = A.color["GREEN"]..currentSet;
-                end
-
-                tooltip:AddLine(L["Mounts set in use: %s."]:format(currentSet));
-                tooltip:AddLine(L["Forced aquatic mount: %s"]:format(A.db.profile.forceOne.mount[4] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[4]) or A.color["RED"]..L["None"]));
-                tooltip:AddLine(L["Forced ground mount: %s"]:format(A.db.profile.forceOne.mount[1] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[1]) or A.color["RED"]..L["None"]));
-                tooltip:AddLine(L["Forced fly mount: %s"]:format(A.db.profile.forceOne.mount[2] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[2]) or A.color["RED"]..L["None"]));
-                tooltip:AddLine(L["Forced hybrid mount: %s"]:format(A.db.profile.forceOne.mount[3] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[3]) or A.color["RED"]..L["None"]));
-                tooltip:AddLine(L["Forced passenger mount: %s"]:format(A.db.profile.forceOne.mount[5] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[5]) or A.color["RED"]..L["None"]));
-
-                tooltip:AddLine(" ");
-                tooltip:AddLine(L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random companion.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Revoke current companion.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open the configuration panel."]);
+            elseif ( button == "RightButton" ) then
+                A.menuFrame.initialize = PAMMenu;
+                ToggleDropDownMenu(1, nil, A.menuFrame, self, 0, 0);
+                GameTooltip:Hide();
+            elseif ( button == "MiddleButton" ) then
+                A:OpenConfigPanel();
             end
-        });
-    end
+        end,
+        OnTooltipShow = function(tooltip)
+            local currentSet;
+
+            tooltip:AddDoubleLine(A.color["WHITE"]..L["Pets & Mounts"], A.color["GREEN"].."v"..A.version);
+            tooltip:AddLine(" ");
+
+            currentSet = A:GetCurrentSet("PET");
+            if ( currentSet == L["None"] ) then
+                currentSet = A.color["RED"]..currentSet;
+            else
+                currentSet = A.color["GREEN"]..currentSet;
+            end
+
+            tooltip:AddLine(L["Companions set in use: %s."]:format(currentSet));
+            tooltip:AddLine(L["Auto summon companion is %s."]:format(A:IsAutoPetEnabled() and A.color["GREEN"]..L["On"] or A.color["RED"]..L["Off"]));
+            tooltip:AddLine(L["Not when stealthed is %s."]:format(A:IsNotWhenStealthedEnabled() and A.color["GREEN"]..L["On"] or A.color["RED"]..L["Off"]));
+            tooltip:AddLine(L["Forced companion: %s"]:format(A.db.profile.forceOne.pet and A.color["GREEN"]..A:GetPetNameByID(A.db.profile.forceOne.pet) or A.color["RED"]..L["None"]));
+            tooltip:AddLine(" ");
+
+            currentSet = A:GetCurrentSet("MOUNT");
+            if ( currentSet == L["None"] ) then
+                currentSet = A.color["RED"]..currentSet;
+            else
+                currentSet = A.color["GREEN"]..currentSet;
+            end
+
+            tooltip:AddLine(L["Mounts set in use: %s."]:format(currentSet));
+            tooltip:AddLine(L["Forced aquatic mount: %s"]:format(A.db.profile.forceOne.mount[4] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[4]) or A.color["RED"]..L["None"]));
+            tooltip:AddLine(L["Forced ground mount: %s"]:format(A.db.profile.forceOne.mount[1] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[1]) or A.color["RED"]..L["None"]));
+            tooltip:AddLine(L["Forced fly mount: %s"]:format(A.db.profile.forceOne.mount[2] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[2]) or A.color["RED"]..L["None"]));
+            tooltip:AddLine(L["Forced hybrid mount: %s"]:format(A.db.profile.forceOne.mount[3] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[3]) or A.color["RED"]..L["None"]));
+            tooltip:AddLine(L["Forced passenger mount: %s"]:format(A.db.profile.forceOne.mount[5] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[5]) or A.color["RED"]..L["None"]));
+
+            tooltip:AddLine(" ");
+            tooltip:AddLine(L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random companion.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Revoke current companion.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open the configuration panel."]);
+        end
+    });
 
     -- LDBIcon
-    if ( not LibStub("LibDBIcon-1.0"):IsRegistered("BrokerPAMLDBI") ) then LibStub("LibDBIcon-1.0"):Register("BrokerPAMLDBI", A.ldbObject, A.db.profile.ldbi); end
+    LibStub("LibDBIcon-1.0"):Register("BrokerPAMLDBI", A.ldbObject, A.db.profile.ldbi);
 
     -- Add the config loader to blizzard addon configuration panel
     A:AddToBlizzTemp();

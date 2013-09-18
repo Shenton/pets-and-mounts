@@ -701,8 +701,8 @@ function A:AceConfig()
                                     A.db.profile.configModelRotation = not A.db.profile.configModelRotation;
 
                                     if ( not A.db.profile.configModelRotation ) then
-                                        A.modelFrameConfig.rotation = 0;
-                                        A.modelFrameConfig:SetRotation(A.modelFrameConfig.rotation);
+                                        A.configModelFrame.rotation = 0;
+                                        A.configModelFrame:SetRotation(A.configModelFrame.rotation);
                                     end
                                 end,
                                 get = function(info) return A.db.profile.configModelRotation; end,
@@ -718,7 +718,7 @@ function A:AceConfig()
                                 set = function(self, val)
                                     A.db.profile.configModelFrameWidth = val;
                                     A.db.profile.configModelFrameHeight = val;
-                                    A.modelFrameConfig:SetSize(A.db.profile.configModelFrameWidth, A.db.profile.configModelFrameHeight);
+                                    A.configModelFrame:SetSize(A.db.profile.configModelFrameWidth, A.db.profile.configModelFrameHeight);
                                 end
                             },
                             menuHeader =
@@ -747,7 +747,7 @@ function A:AceConfig()
                                 set = function(self, val)
                                     A.db.profile.modelFrameWidth = val;
                                     A.db.profile.modelFrameHeight = val;
-                                    A.modelFrameConfig:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
+                                    A.configModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                                 end
                             },
                         },
@@ -1019,7 +1019,10 @@ function A:AceConfig()
                                 order = 0,
                                 name = L["Debug"],
                                 type = "toggle",
-                                set = function(info, val) A.db.profile.debug = not A.db.profile.debug; end,
+                                set = function(info, val)
+                                    A.db.profile.debug = not A.db.profile.debug;
+                                    A:SetDebugMessage();
+                                end,
                                 get = function(info) return A.db.profile.debug; end,
                             },
                         },
@@ -2027,13 +2030,13 @@ function A:AceConfig()
                 name = petName,
                 desc = function(self)
                     -- Model
-                    A.modelFrameConfig.rotation = 0;
-                    A.modelFrameConfig:SetCreature(vv.creatureID);
+                    A.configModelFrame.rotation = 0;
+                    A.configModelFrame:SetCreature(vv.creatureID);
 
                     -- Frame pos
-                    A.modelFrameConfig:ClearAllPoints()
-                    A.modelFrameConfig:SetPoint("TOPLEFT", A.configFrame, "TOPRIGHT", 0, 0);
-                    A.modelFrameConfig:Show();
+                    A.configModelFrame:ClearAllPoints()
+                    A.configModelFrame:SetPoint("TOPLEFT", A.configFrame, "TOPRIGHT", 0, 0);
+                    A.configModelFrame:Show();
 
                     if ( A.db.profile.debug ) then
                         return L["Add %s to favorite."]:format(vv.name).."\n\n"
@@ -2106,13 +2109,13 @@ function A:AceConfig()
                         name = vvv.name,
                         desc = function(self)
                             -- Model
-                            A.modelFrameConfig.rotation = 0;
-                            A.modelFrameConfig:SetCreature(vvv.creatureID);
+                            A.configModelFrame.rotation = 0;
+                            A.configModelFrame:SetCreature(vvv.creatureID);
 
                             -- Frame pos
-                            A.modelFrameConfig:ClearAllPoints()
-                            A.modelFrameConfig:SetPoint("TOPLEFT", A.configFrame, "TOPRIGHT", 0, 0);
-                            A.modelFrameConfig:Show();
+                            A.configModelFrame:ClearAllPoints()
+                            A.configModelFrame:SetPoint("TOPLEFT", A.configFrame, "TOPRIGHT", 0, 0);
+                            A.configModelFrame:Show();
 
                             if ( A.db.profile.debug ) then
                                 return L["Add %s to favorite."]:format(vvv.name).."\n\n"
@@ -2196,4 +2199,4 @@ end
 LibStub("AceConfig-3.0"):RegisterOptionsTable("BrokerPAMConfig", A.AceConfig);
 --A.AceConfigDialog:SetDefaultSize("BrokerPAMConfig", 800, 500);
 A.configFrame = A.AceConfigDialog:AddToBlizOptions("BrokerPAMConfig", L["Pets & Mounts"]);
-A.configFrame:HookScript("OnHide", function() A.modelFrameConfig:Hide(); end);
+A.configFrame:HookScript("OnHide", function() A.configModelFrame:Hide(); end);

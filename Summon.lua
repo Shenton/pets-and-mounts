@@ -80,6 +80,11 @@ end
 
 --- Summon a pet by GUID
 function A:SummonPet(id)
+    if ( InCombatLockdown() ) then
+        A:DebugMessage("SummonPet() - In combat");
+        return;
+    end
+
     A:DebugMessage("SummonPet()");
 
     if ( C_PetJournal.PetIsSummonable(id) ) then
@@ -97,6 +102,11 @@ end
 
 --- Revoke current pet
 function A:RevokePet()
+    if ( InCombatLockdown() ) then
+        A:DebugMessage("RevokePet() - In combat");
+        return;
+    end
+
     A:DebugMessage("RevokePet()");
 
     local currentPet = C_PetJournal.GetSummonedPetGUID();
@@ -501,7 +511,7 @@ function A:RandomMount(cat)
         -- got ground/fly & hybrid
         elseif ( #A.pamTable.mountsIds[cat] > 0 and #A.pamTable.mountsIds[3] > 0 ) then
             -- hybrid
-            if ( A:RandHybrid(#A.db.profile.favoriteMounts[cat], #A.db.profile.favoriteMounts[3]) ) then
+            if ( A:RandHybrid(#A.pamTable.mountsIds[cat], #A.pamTable.mountsIds[3]) ) then
                 A:DebugMessage(("RandomMount() - With hybrid - Got global - Got hybrid - Rand hybrid - %i"):format(cat));
                 id = math.random(#A.pamTable.mountsIds[3]);
                 id = A.pamTable.mountsIds[3][id];

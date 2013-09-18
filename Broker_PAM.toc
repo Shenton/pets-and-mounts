@@ -1,9 +1,9 @@
-﻿## Interface: 50300
+﻿## Interface: 50400
 ## Title: Broker Pets & Mounts
 ## Notes: Data Broker display for easy acces to pets and mounts.
 ## Author: Shenton
 ## SavedVariables: pamDB
-## Version: 1.1.0
+## Version: 1.1.1
 ## Dependencies: Blizzard_PetJournal
 ## OptionalDeps: Ace3
 
@@ -25,6 +25,7 @@ Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 #@end-no-lib-strip@
 
 Buttons.xml
+ModelFrames.xml
 
 Localization\Locales-enUS.lua
 

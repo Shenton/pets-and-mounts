@@ -40,7 +40,9 @@ A.zonesIDsOverride =
 
 -- Build the mapIDs DB
 function A:BuildMapIDsDB()
-    --A.db.global.zonesIDsToName = {};
+    if ( A.db.profile.debug ) then
+        A.db.global.zonesIDsToName = {};
+    end
 
     for k,v in pairs(A.zonesIDs) do
         if ( A.zonesIDsOverride[v] ) then
@@ -72,8 +74,8 @@ end
 -- switching it while the player got his map open
 WorldMapFrame:HookScript("OnHide", function()
     if ( A.getCurrentMapIDDelayed ) then
-        A:GetCurrentMapID();
         A.getCurrentMapIDDelayed = nil;
+        A:GetCurrentMapID();
     end
 end);
 
