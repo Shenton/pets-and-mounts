@@ -165,4 +165,7 @@ L["Theramore's Fall (A)"] = true;
 L["Theramore's Fall (H)"] = true;
 L["Use this to reset the current area."] = true;
 L["Tried to summon %s. It is a mount this toon cannot use (Horde/Alliance specific, achievement, level, etc)."] = true;
+L["Haunted Memento"] = true;
+L["Do not automatically summon a pet when the Haunted Memento is in your bags."] = true;
+L["Database options"] = true;
 end

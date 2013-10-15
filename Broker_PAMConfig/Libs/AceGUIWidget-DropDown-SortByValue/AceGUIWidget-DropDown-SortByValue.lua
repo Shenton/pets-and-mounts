@@ -270,16 +270,16 @@ do
             if ( not creatureID ) then return; end
 
             -- Model
-            brokerPAMGlobal.modelFrameConfig.rotation = 0;
-            brokerPAMGlobal.modelFrameConfig:SetCreature(creatureID);
+            brokerPAMGlobal.configModelFrame.rotation = 0;
+            brokerPAMGlobal.configModelFrame:SetCreature(creatureID);
 
             -- Frame pos
-            brokerPAMGlobal.modelFrameConfig:ClearAllPoints()
-            brokerPAMGlobal.modelFrameConfig:SetPoint("TOPLEFT", brokerPAMGlobal.configFrame, "TOPRIGHT", 0, 0);
-            brokerPAMGlobal.modelFrameConfig:Show();
+            brokerPAMGlobal.configModelFrame:ClearAllPoints()
+            brokerPAMGlobal.configModelFrame:SetPoint("TOPLEFT", brokerPAMGlobal.configFrame, "TOPRIGHT", 0, 0);
+            brokerPAMGlobal.configModelFrame:Show();
         end)
         item:SetCallback("OnLeave", function()
-            brokerPAMGlobal.modelFrameConfig:Hide();
+            brokerPAMGlobal.configModelFrame:Hide();
         end)
     end
 

@@ -78,6 +78,19 @@ function A:CheckBannedPet(id)
     return nil;
 end
 
+--- Check if the Hanted Memento is in the player bags
+-- If it is and the Haunted Memento option is set, return true
+function A:CheckHauntedMemento()
+    if ( not A.db.profile.hauntedMemento ) then return nil; end
+
+    if ( GetItemCount(40110, nil, nil) == 1 ) then
+        A:DebugMessage("CheckHauntedMemento() - Haunted Memento in bags");
+        return 1;
+    end
+
+    return nil;
+end
+
 --- Summon a pet by GUID
 function A:SummonPet(id)
     if ( InCombatLockdown() ) then
@@ -179,7 +192,7 @@ function A:AutoPet()
     or UnitIsDeadOrGhost("player") -- Not when dead (thanks captain).
     or InCombatLockdown() -- Not when in combat.
     or A.noAutoPet -- Combat, reviving, fly path end, etc, delay.
-    or A.isLooting -- Player is looting.
+    or GetNumLootItems() > 0 -- Player is looting.
     or IsMounted() -- Not when mounted.
     or IsFlying() -- Not when flying, dunno if this is usefull, perhaps when using a flying "mount" from a dungeon event.
     or IsFalling() -- Not when falling. Can seem useless, but summoning a pet trigger a GCD and, falling + GCD + trying to cast a slowfall spell = dead.
@@ -187,7 +200,9 @@ function A:AutoPet()
     or UnitOnTaxi("player") -- Not on a fly path.
     or A:HasRegenBuff() -- Not when eating/drinking.
     or A.stealthCasted -- A stealth/invis spell was casted, this will (should...) prevent some rare case of unsteatlth by summoning pet.
-    or not HasFullControl() ) then -- Not when not having full control.
+    or not HasFullControl() -- Not when not having full control.
+    or GetBarberShopStyleInfo(1) -- Not at barber shop
+    or A:CheckHauntedMemento() ) then -- Haunted Memento in bags
         A:DebugMessage("AutoPet() - No summon filter");
         A.stealthCasted = nil;
         return;

@@ -1256,14 +1256,6 @@ function A:AutoPetDelayCallback()
     A:AutoPet();
 end
 
-function A:LOOT_OPENED()
-    A.isLooting = 1;
-end
-
-function A:LOOT_CLOSED()
-    A.isLooting = nil;
-end
-
 -- Using this because it is a little faster than event UPDATE_STEALTH
 -- And it prevent using UNIT_AURA
 A.stealthSpellsIDs =
@@ -1389,6 +1381,7 @@ A.aceDefaultDB =
         noHybridWhenGround = 1, -- d
         dismountFlying = 1, -- d
         areaMounts = 1, -- d
+        hauntedMemento = 1, -- d
         ldbi = {}, -- d
         favoritePets = {}, -- d
         favoriteMounts = -- d
@@ -1737,8 +1730,6 @@ function A:OnEnable()
     A:RegisterEvent("PLAYER_ALIVE", "AutoPetDelay"); -- It's alive!! (Res, also fire when releasing)
     A:RegisterEvent("PLAYER_LOSES_VEHICLE_DATA", "AutoPetDelay"); -- Quitting a vehicule or a multi mount you control.
     A:RegisterEvent("UNIT_EXITED_VEHICLE", "AutoPetDelay"); -- Exiting a vehicule.
-    A:RegisterEvent("LOOT_OPENED"); -- Looting. Summoning a pet close the panel.
-    A:RegisterEvent("LOOT_CLOSED"); -- End looting.
     A:RegisterEvent("UPDATE_BINDINGS", "SetBindings");
     -- Db auto update events
     A:RegisterEvent("CHAT_MSG_SYSTEM");

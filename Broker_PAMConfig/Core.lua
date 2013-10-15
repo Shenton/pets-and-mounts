@@ -190,9 +190,43 @@ function A:AceConfig()
                 type = "group",
                 args =
                 {
-                    petOptions =
+                    databaseOptions =
                     {
                         order = 0,
+                        name = L["Database options"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            filterMultiple =
+                            {
+                                order = 11,
+                                name = L["Filter multiple"],
+                                desc = L["This will prevent adding to the list all the companions with same names."],
+                                type = "toggle",
+                                set = function(info, val)
+                                    A.db.profile.filterMultiple = not A.db.profile.filterMultiple;
+                                    A:BuildPetsTable();
+                                end,
+                                get = function(info) return A.db.profile.filterMultiple; end,
+                            },
+                            noFilterCustom =
+                            {
+                                order = 12,
+                                name = L["Do not filter named companions"],
+                                desc = L["If the companion got a custom name it will not be filtered."],
+                                type = "toggle",
+                                set = function(info, val)
+                                    A.db.profile.noFilterCustom = not A.db.profile.noFilterCustom;
+                                    A:BuildPetsTable();
+                                end,
+                                get = function(info) return A.db.profile.noFilterCustom; end,
+                            },
+                        },
+                    },
+                    petOptions =
+                    {
+                        order = 100,
                         name = L["Auto pet options"],
                         type = "group",
                         inline = true,
@@ -237,35 +271,14 @@ function A:AceConfig()
                                 end,
                                 get = function(info) return A.db.profile.notWhenStealthed; end,
                             },
-                            filters =
+                            hauntedMemento =
                             {
-                                order = 10,
-                                name = L["Filters"],
-                                type = "header",
-                            },
-                            filterMultiple =
-                            {
-                                order = 11,
-                                name = L["Filter multiple"],
-                                desc = L["This will prevent adding to the list all the companions with same names."],
+                                order = 4,
+                                name = L["Haunted Memento"],
+                                desc = L["Do not automatically summon a pet when the Haunted Memento is in your bags."],
                                 type = "toggle",
-                                set = function(info, val)
-                                    A.db.profile.filterMultiple = not A.db.profile.filterMultiple;
-                                    A:BuildPetsTable();
-                                end,
-                                get = function(info) return A.db.profile.filterMultiple; end,
-                            },
-                            noFilterCustom =
-                            {
-                                order = 12,
-                                name = L["Do not filter named companions"],
-                                desc = L["If the companion got a custom name it will not be filtered."],
-                                type = "toggle",
-                                set = function(info, val)
-                                    A.db.profile.noFilterCustom = not A.db.profile.noFilterCustom;
-                                    A:BuildPetsTable();
-                                end,
-                                get = function(info) return A.db.profile.noFilterCustom; end,
+                                set = function(info, val) A.db.profile.hauntedMemento = not A.db.profile.hauntedMemento; end,
+                                get = function(info) return A.db.profile.hauntedMemento; end,
                             },
                             timers =
                             {
@@ -306,7 +319,7 @@ function A:AceConfig()
                     },
                     petAutoSummonOverride =
                     {
-                        order = 1,
+                        order = 200,
                         name = L["Auto pet options override"],
                         type = "group",
                         inline = true,
@@ -438,7 +451,7 @@ function A:AceConfig()
                     },
                     mountOptions =
                     {
-                        order = 10,
+                        order = 300,
                         name = L["Random mount options"],
                         type = "group",
                         inline = true,
@@ -484,7 +497,7 @@ function A:AceConfig()
                     },
                     buttonOptions =
                     {
-                        order = 20,
+                        order = 400,
                         name = L["Buttons options"],
                         type = "group",
                         inline = true,
@@ -679,7 +692,7 @@ function A:AceConfig()
                     },
                     model =
                     {
-                        order = 50,
+                        order = 500,
                         name = L["Model frames"],
                         type = "group",
                         inline = true,
@@ -754,7 +767,7 @@ function A:AceConfig()
                     },
                     binding =
                     {
-                        order = 100,
+                        order = 600,
                         name = L["Binding"],
                         type = "group",
                         inline = true,
@@ -986,7 +999,7 @@ function A:AceConfig()
                     },
                     minimap =
                     {
-                        order = 110,
+                        order = 700,
                         name = L["Minimap"],
                         type = "group",
                         inline = true,
@@ -1008,7 +1021,7 @@ function A:AceConfig()
                     },
                     debug =
                     {
-                        order = 200,
+                        order = 800,
                         name = L["Debug"],
                         type = "group",
                         inline = true,
@@ -1442,33 +1455,33 @@ function A:AceConfig()
                                     end
                                 end,
                             },
-                            fly =
-                            {
-                                order = 2,
-                                name = L["Fly"],
-                                desc = L["Select the %s mount to force summon."]:format(L["Fly"]),
-                                type = "select",
-                                dialogControl = "Dropdown-SortByValue",
-                                values = function()
-                                    local out = { [0] = L["None"] };
+                            -- fly = -- No more flying mounts type as of 5.4
+                            -- {
+                                -- order = 2,
+                                -- name = L["Fly"],
+                                -- desc = L["Select the %s mount to force summon."]:format(L["Fly"]),
+                                -- type = "select",
+                                -- dialogControl = "Dropdown-SortByValue",
+                                -- values = function()
+                                    -- local out = { [0] = L["None"] };
 
-                                    for k,v in A:PairsByKeys(A.pamTable.mounts[2]) do
-                                        for kk,vv in ipairs(v) do
-                                            out[vv.spellId] = vv.name;
-                                        end
-                                    end
+                                    -- for k,v in A:PairsByKeys(A.pamTable.mounts[2]) do
+                                        -- for kk,vv in ipairs(v) do
+                                            -- out[vv.spellId] = vv.name;
+                                        -- end
+                                    -- end
 
-                                    return out;
-                                end,
-                                get = function() return A.db.profile.forceOne.mount[2]; end,
-                                set = function(self, val)
-                                    if ( val == 0 ) then
-                                        A.db.profile.forceOne.mount[2] = nil;
-                                    else
-                                        A.db.profile.forceOne.mount[2] = val;
-                                    end
-                                end,
-                            },
+                                    -- return out;
+                                -- end,
+                                -- get = function() return A.db.profile.forceOne.mount[2]; end,
+                                -- set = function(self, val)
+                                    -- if ( val == 0 ) then
+                                        -- A.db.profile.forceOne.mount[2] = nil;
+                                    -- else
+                                        -- A.db.profile.forceOne.mount[2] = val;
+                                    -- end
+                                -- end,
+                            -- },
                             hybrid =
                             {
                                 order = 3,
@@ -1803,55 +1816,55 @@ function A:AceConfig()
                                     end
                                 end,
                             },
-                            fly =
-                            {
-                                order = 120,
-                                name = L["Fly"],
-                                desc = L["Select the %s mount to force summon."]:format(L["Fly"]),
-                                type = "select",
-                                dialogControl = "Dropdown-SortByValue",
-                                values = function()
-                                    local out = { [0] = L["None"] };
+                            -- fly = -- No more flying mounts type as of 5.4
+                            -- {
+                                -- order = 120,
+                                -- name = L["Fly"],
+                                -- desc = L["Select the %s mount to force summon."]:format(L["Fly"]),
+                                -- type = "select",
+                                -- dialogControl = "Dropdown-SortByValue",
+                                -- values = function()
+                                    -- local out = { [0] = L["None"] };
 
-                                    for k,v in A:PairsByKeys(A.pamTable.mounts[2]) do
-                                        for kk,vv in ipairs(v) do
-                                            out[vv.spellId] = vv.name;
-                                        end
-                                    end
+                                    -- for k,v in A:PairsByKeys(A.pamTable.mounts[2]) do
+                                        -- for kk,vv in ipairs(v) do
+                                            -- out[vv.spellId] = vv.name;
+                                        -- end
+                                    -- end
 
-                                    return out;
-                                end,
-                                get = function()
-                                    local mapID;
+                                    -- return out;
+                                -- end,
+                                -- get = function()
+                                    -- local mapID;
 
-                                    if ( A.currentMapIDForMounts ) then
-                                        mapID = A.currentMapIDForMounts;
-                                    else
-                                        mapID = A.currentMapID;
-                                    end
+                                    -- if ( A.currentMapIDForMounts ) then
+                                        -- mapID = A.currentMapIDForMounts;
+                                    -- else
+                                        -- mapID = A.currentMapID;
+                                    -- end
 
-                                    if ( A.db.profile.mountByMapID[2][tostring(mapID)] ) then
-                                        return A.db.profile.mountByMapID[2][tostring(mapID)];
-                                    else
-                                        return 0;
-                                    end
-                                end,
-                                set = function(self, val)
-                                    local mapID;
+                                    -- if ( A.db.profile.mountByMapID[2][tostring(mapID)] ) then
+                                        -- return A.db.profile.mountByMapID[2][tostring(mapID)];
+                                    -- else
+                                        -- return 0;
+                                    -- end
+                                -- end,
+                                -- set = function(self, val)
+                                    -- local mapID;
 
-                                    if ( A.currentMapIDForMounts ) then
-                                        mapID = A.currentMapIDForMounts;
-                                    else
-                                        mapID = A.currentMapID;
-                                    end
+                                    -- if ( A.currentMapIDForMounts ) then
+                                        -- mapID = A.currentMapIDForMounts;
+                                    -- else
+                                        -- mapID = A.currentMapID;
+                                    -- end
 
-                                    if ( val == 0 ) then
-                                        A.db.profile.mountByMapID[2][tostring(mapID)] = nil;
-                                    else
-                                        A.db.profile.mountByMapID[2][tostring(mapID)] = val;
-                                    end
-                                end,
-                            },
+                                    -- if ( val == 0 ) then
+                                        -- A.db.profile.mountByMapID[2][tostring(mapID)] = nil;
+                                    -- else
+                                        -- A.db.profile.mountByMapID[2][tostring(mapID)] = val;
+                                    -- end
+                                -- end,
+                            -- },
                             hybrid =
                             {
                                 order = 130,
