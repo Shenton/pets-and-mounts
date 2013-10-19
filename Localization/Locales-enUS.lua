@@ -168,4 +168,6 @@ L["Tried to summon %s. It is a mount this toon cannot use (Horde/Alliance specif
 L["Haunted Memento"] = true;
 L["Do not automatically summon a pet when the Haunted Memento is in your bags."] = true;
 L["Database options"] = true;
+L["Magic Broom"] = true;
+L["Summon the Magic Broom when it is in your bags."] = true;
 end

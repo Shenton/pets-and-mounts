@@ -19,7 +19,7 @@ local _G = _G;
 -- GLOBALS: InCombatLockdown, GetBindingKey, SetOverrideBindingClick, GetSpellInfo
 -- GLOBALS: IsFlyableArea, IsSpellKnown, GetSpellInfo, IsShiftKeyDown, IsControlKeyDown
 -- GLOBALS: BrokerPAMSecureButtonMounts, BrokerPAMSecureButtonPets, GetScreenWidth
--- GLOBALS: GameTooltip
+-- GLOBALS: GameTooltip, GetItemCount, GetItemInfo
 
 --[[-------------------------------------------------------------------------------
     Bindings
@@ -183,7 +183,12 @@ function A:PreClickMount(button, clickedBy)
         else
             if ( InCombatLockdown() ) then return; end
 
-            if ( A.db.profile.classesMacrosEnabled and A.playerClass == "DRUID" ) then
+            if ( A.db.profile.magicBroom and not A:IsSwimming() and GetItemCount(37011, nil, nil) == 1 ) then -- 37011 - Magic Broom from Hallow's End
+                if ( not A.magicBroomName ) then A.magicBroomName = GetItemInfo(37011); end
+
+                button:SetAttribute("type", "macro");
+                button:SetAttribute("macrotext", "/use "..A.magicBroomName or "Magic Broom");
+            elseif ( A.db.profile.classesMacrosEnabled and A.playerClass == "DRUID" ) then
                 A:SetDruidPreClickMacro();
                 button:SetAttribute("type", "macro");
                 button:SetAttribute("macrotext", A.preClickDruidMacro);

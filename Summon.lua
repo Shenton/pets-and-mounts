@@ -13,14 +13,16 @@ local L = A.L;
 local math = math;
 local tContains = tContains;
 local tostring = tostring;
+local ipairs = ipairs;
 
 -- GLOBALS: C_PetJournal, UnitIsFeignDeath, UnitCastingInfo, UnitChannelInfo
 -- GLOBALS: UnitIsDeadOrGhost, InCombatLockdown, IsMounted, IsFlying, IsFalling
 -- GLOBALS: UnitHasVehicleUI, UnitOnTaxi, HasFullControl, IsSwimming, IsSubmerged
 -- GLOBALS: IsFlyableArea, GetNumCompanions, GetCompanionInfo, UnitBuff
--- GLOBALS: CallCompanion, Dismount, IsIndoors, LibStub, IsStealthed, ipairs
--- GLOBALS: GetSpellInfo, IsSpellKnown, SetMapToCurrentZone
--- GLOBALS: GetCurrentMapAreaID, select, GetSpellInfo
+-- GLOBALS: CallCompanion, Dismount, IsIndoors, LibStub, IsStealthed
+-- GLOBALS: GetSpellInfo, IsSpellKnown, SetMapToCurrentZone, GetItemCount
+-- GLOBALS: GetCurrentMapAreaID, select, GetSpellInfo, GetNumLootItems
+-- GLOBALS: GetBarberShopStyleInfo, IsUsableSpell
 
 --[[-------------------------------------------------------------------------------
     Pets methods
@@ -78,7 +80,7 @@ function A:CheckBannedPet(id)
     return nil;
 end
 
---- Check if the Hanted Memento is in the player bags
+--- Check if the Haunted Memento is in the player bags
 -- If it is and the Haunted Memento option is set, return true
 function A:CheckHauntedMemento()
     if ( not A.db.profile.hauntedMemento ) then return nil; end
@@ -201,10 +203,15 @@ function A:AutoPet()
     or A:HasRegenBuff() -- Not when eating/drinking.
     or A.stealthCasted -- A stealth/invis spell was casted, this will (should...) prevent some rare case of unsteatlth by summoning pet.
     or not HasFullControl() -- Not when not having full control.
-    or GetBarberShopStyleInfo(1) -- Not at barber shop
-    or A:CheckHauntedMemento() ) then -- Haunted Memento in bags
+    or GetBarberShopStyleInfo(1) ) then -- Not at barber shop
         A:DebugMessage("AutoPet() - No summon filter");
         A.stealthCasted = nil;
+        return;
+    end
+
+    -- Haunted Memento
+    if ( A:CheckHauntedMemento() ) then
+        A:RevokePet();
         return;
     end
 
@@ -287,6 +294,25 @@ function A:IsFlyable()
     return nil;
 end
 
+--- Check if the layer is swimming and not at the surface
+function A:IsSwimming()
+    if ( IsSwimming() or IsSubmerged() ) then -- Swimming
+        if ( A.swimmingCheckSpellID and IsUsableSpell(A.swimmingCheckSpellID) ) then -- At the surface
+            A:DebugMessage("IsSwimming() - Spell is usable");
+            return nil;
+        elseif ( IsSubmerged() ) then -- Bottom of the water - Have to do this here since 5.4 it is tainted and work as IsSwimming
+            A:DebugMessage("IsSwimming() - IsSubmerged");
+            return 1;
+        else -- Really swimming
+            A:DebugMessage("IsSwimming() - Spell is not usable");
+            return 1;
+        end
+    else
+        A:DebugMessage("IsSwimming() - Not swimming");
+        return nil;
+    end
+end
+
 --- Check if the player can ride a (ground) mount
 -- Apprentice Riding 33388
 -- Journeyman Riding 33391
@@ -298,55 +324,6 @@ function A:CanRide()
     return nil;
 end
 
---- Return the mount type according to the bitfield
-local bitField = {16,8,4,2,1};
-local bitFieldCat =
-{
-    [16] = "jump",
-    [8] = "aquatic",
-    [4] = "floats",
-    [2] = "fly",
-    [1] = "ground",
-};
-local mountCat;
-function A:GetMountCategory(cat)
-    local index = 1;
-    mountCat = {};
-
-    while cat > 0 do
-        if ( cat - bitField[index] > 0 ) then
-            mountCat[#mountCat+1] = bitFieldCat[bitField[index]];
-            cat = cat - bitField[index];
-            index = index + 1;
-        elseif ( cat - bitField[index] == 0 ) then
-            mountCat[#mountCat+1] = bitFieldCat[bitField[index]];
-            cat = 0;
-        else
-            index = index + 1;
-        end
-    end
-
-    if ( #mountCat == 5 ) then -- 31
-        cat = 3;
-    elseif ( #mountCat == 4 and not tContains(mountCat, "fly") ) then -- 29
-        cat = 1;
-    elseif ( #mountCat == 3 and not tContains(mountCat, "jump") and not tContains(mountCat, "aquatic") ) then -- 7
-        cat = 2;
-    elseif ( #mountCat == 2 and not tContains(mountCat, "jump") and not tContains(mountCat, "fly") and not tContains(mountCat, "jump") ) then -- 12
-        cat = 4
-    elseif ( tContains(mountCat, "ground") and tContains(mountCat, "fly") ) then
-        cat = 3;
-    elseif ( tContains(mountCat, "fly") ) then
-        cat = 2;
-    elseif ( tContains(mountCat, "ground") ) then
-        cat = 1;
-    elseif ( tContains(mountCat, "aquatic") ) then
-        cat = 4;
-    end
-
-    return cat;
-end
-
 --- Set wich mount category should be used
 function A:SetMountCat()
     -- [1] = {}, -- Ground
@@ -354,7 +331,7 @@ function A:SetMountCat()
     -- [3] = {}, -- Hybrid (ground & fly)
     -- [4] = {}, -- Aquatic
     -- [5] = {}, -- with passengers
-    if ( IsSubmerged() or IsSwimming() ) then -- Aquatic mount
+    if ( A:IsSwimming() ) then -- Aquatic mount
         A:DebugMessage("SetMountCat() - Aquatic");
         return 4;
     elseif ( A:IsFlyable() ) then -- Flyable mount

@@ -1,12 +1,12 @@
 ﻿--[[-------------------------------------------------------------------------------
     Broker Pets & Mounts
-    Data Broker display for easy acces to pets and mounts.
+    Data Broker display for easy access to pets and mounts.
     By: Shenton
 
     Core.lua
 -------------------------------------------------------------------------------]]--
 
--- ###### TODO - fix les boutons: si dock et bouton monture caché on ne peut pas bouger celui des pets 
+-- ###### TODO - fix les boutons: si dock et bouton monture caché on ne peut pas bouger celui des pets
 
 -- Ace libs (<3)
 local A = LibStub("AceAddon-3.0"):NewAddon("BrokerPAM", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0");
@@ -28,6 +28,7 @@ local _G = _G;
 local select = select;
 local strsplit = strsplit;
 local tContains = tContains;
+local bit = bit;
 
 -- GLOBALS: PlaySound, DEFAULT_CHAT_FRAME, GetScreenWidth, GetNumCompanions
 -- GLOBALS: GetCursorPosition, UIParent, GetInstanceInfo, UnitGUID, UnitLevel
@@ -45,6 +46,7 @@ local tContains = tContains;
 -- GLOBALS: BINDING_HEADER_BROKERPAM, BINDING_NAME_BROKERPAMMOUNT
 -- GLOBALS: BINDING_NAME_BROKERPAMMOUNTPASSENGERS, BINDING_NAME_BROKERPAMMOUNTFLYING
 -- GLOBALS: BINDING_NAME_BROKERPAMMOUNTGROUND, BINDING_NAME_BROKERPAMMOUNTAQUATIC
+-- GLOBALS; BrokerPamMenuModelFrame, BrokerPamConfigModelFrame
 
 --[[-------------------------------------------------------------------------------
     Variables
@@ -587,6 +589,57 @@ function A:BuildPetsTable(force)
     A:DebugMessage("BuildPetsTable() - Update successful");
 end
 
+--- Return the mount type according to the bit field
+-- 0x01 - Ground mount
+-- 0x02 - Flying mount
+-- 0x04 - Usable at the water's surface
+-- 0x08 - Usable underwater
+-- 0x10 - Can jump (the turtle mount cannot, for example)
+function A:GetMountCategory(bf)
+    local ground = bit.band(bf, 0x1) ~= 0 and 1 or nil;
+    local fly = bit.band(bf, 0x2) ~= 0 and 1 or nil;
+    local surface = bit.band(bf, 0x4) ~= 0 and 1 or nil;
+    local water = bit.band(bf, 0x8) ~= 0 and 1 or nil;
+    local jump = bit.band(bf, 0x10) ~= 0 and 1 or nil;
+
+    -- 5 Entries x 1
+    if ( ground and fly and surface and water and jump ) then -- hybrid - 31
+        return 3;
+    -- 4 Entries x 5
+    elseif ( (ground and fly and surface and water) or (ground and fly and surface and jump) or (ground and fly and water and jump) -- fly - 15 23 27
+    or (fly and surface and water and jump) ) then -- fly - 30
+        return 2;
+    elseif ( (ground and surface and water and jump) ) then -- ground - 29
+        return 1;
+    -- 3 Entries x 10
+    elseif ( (ground and fly and surface) or (ground and fly and water) or (ground and fly and jump) -- fly - 7 11 19
+    or (fly and surface and water) or (fly and surface and jump) or (fly and jump and water) ) then-- fly - 14 22 26
+        return 2;
+    elseif ( (ground and surface and water) or (ground and surface and jump) or (ground and water and jump) ) then -- ground - 13 21 25
+        return 1;
+    elseif ( water and surface and jump ) then -- aquatic - 28
+        return 4;
+    -- 2 Entries x 10
+    elseif ( (ground and fly) or (fly and surface) or (fly and water) or (fly and jump) ) then -- fly - 3 6 10 18
+        return 2;
+    elseif ( (ground and surface) or (ground and water) or (ground and jump) or (surface and jump) ) then -- ground - 5 9 17 20
+        return 1;
+    elseif ( (water and surface) or (water and jump) ) then -- aquatic - 12 24
+        return 4;
+    -- 1 Entry x 5
+    elseif ( ground ) then -- ground - 1
+        return 1;
+    elseif ( fly ) then -- fly - 2
+        return 2;
+    elseif ( surface ) then -- fly (going default to fly) - 4
+        return 2;
+    elseif ( water ) then -- aquatic - 8
+        return 4;
+    elseif ( jump ) then -- mount (flying mount cannot jump) - 16
+        return 1;
+    end
+end
+
 --- Build the mounts table
 function A:BuildMountsTable(force)
     local mountsCount = GetNumCompanions("MOUNT");
@@ -660,6 +713,12 @@ function A:BuildMountsTable(force)
         end
 
         cat = A:GetMountCategory(mountType);
+
+        -- Using the first flying mount found to test swimming area
+        if ( (mountType == 23 or mountType == 7 or mountType == 22 or mountType == 21
+        or mountType == 6 or mountType == 5 or mountType == 20 or mountType == 4) and not A.swimmingCheckSpellID ) then
+            A.swimmingCheckSpellID = spellId;
+        end
 
         if ( not A.pamTable.mounts[cat][leadingLetter] ) then A.pamTable.mounts[cat][leadingLetter] = {}; end
 
@@ -1382,6 +1441,7 @@ A.aceDefaultDB =
         dismountFlying = 1, -- d
         areaMounts = 1, -- d
         hauntedMemento = 1, -- d
+        magicBroom = 1, -- d
         ldbi = {}, -- d
         favoritePets = {}, -- d
         favoriteMounts = -- d
@@ -1643,6 +1703,10 @@ function A:OnInitialize()
     end);
     hooksecurefunc(C_PetJournal, "ReleasePetByID", function()
         A:DebugMessage("Hook - C_PetJournal.ReleasePetByID() called");
+        A:BuildPetsTable();
+    end);
+    hooksecurefunc(C_PetJournal, "SetCustomName", function()
+        A:DebugMessage("Hook - C_PetJournal.SetCustomName() called");
         A:BuildPetsTable();
     end);
 

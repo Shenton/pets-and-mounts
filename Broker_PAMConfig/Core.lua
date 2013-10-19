@@ -493,6 +493,15 @@ function A:AceConfig()
                                 set = function(info, val) A.db.profile.classesMacrosEnabled = not A.db.profile.classesMacrosEnabled; end,
                                 get = function(info) return A.db.profile.classesMacrosEnabled; end,
                             },
+                            magicBroom =
+                            {
+                                order = 4,
+                                name = L["Magic Broom"],
+                                desc = L["Summon the Magic Broom when it is in your bags."],
+                                type = "toggle",
+                                set = function(info, val) A.db.profile.magicBroom = not A.db.profile.magicBroom; end,
+                                get = function(info) return A.db.profile.magicBroom; end,
+                            },
                         },
                     },
                     buttonOptions =
@@ -1455,33 +1464,33 @@ function A:AceConfig()
                                     end
                                 end,
                             },
-                            -- fly = -- No more flying mounts type as of 5.4
-                            -- {
-                                -- order = 2,
-                                -- name = L["Fly"],
-                                -- desc = L["Select the %s mount to force summon."]:format(L["Fly"]),
-                                -- type = "select",
-                                -- dialogControl = "Dropdown-SortByValue",
-                                -- values = function()
-                                    -- local out = { [0] = L["None"] };
+                            fly =
+                            {
+                                order = 2,
+                                name = L["Fly"],
+                                desc = L["Select the %s mount to force summon."]:format(L["Fly"]),
+                                type = "select",
+                                dialogControl = "Dropdown-SortByValue",
+                                values = function()
+                                    local out = { [0] = L["None"] };
 
-                                    -- for k,v in A:PairsByKeys(A.pamTable.mounts[2]) do
-                                        -- for kk,vv in ipairs(v) do
-                                            -- out[vv.spellId] = vv.name;
-                                        -- end
-                                    -- end
+                                    for k,v in A:PairsByKeys(A.pamTable.mounts[2]) do
+                                        for kk,vv in ipairs(v) do
+                                            out[vv.spellId] = vv.name;
+                                        end
+                                    end
 
-                                    -- return out;
-                                -- end,
-                                -- get = function() return A.db.profile.forceOne.mount[2]; end,
-                                -- set = function(self, val)
-                                    -- if ( val == 0 ) then
-                                        -- A.db.profile.forceOne.mount[2] = nil;
-                                    -- else
-                                        -- A.db.profile.forceOne.mount[2] = val;
-                                    -- end
-                                -- end,
-                            -- },
+                                    return out;
+                                end,
+                                get = function() return A.db.profile.forceOne.mount[2]; end,
+                                set = function(self, val)
+                                    if ( val == 0 ) then
+                                        A.db.profile.forceOne.mount[2] = nil;
+                                    else
+                                        A.db.profile.forceOne.mount[2] = val;
+                                    end
+                                end,
+                            },
                             hybrid =
                             {
                                 order = 3,
@@ -1816,55 +1825,55 @@ function A:AceConfig()
                                     end
                                 end,
                             },
-                            -- fly = -- No more flying mounts type as of 5.4
-                            -- {
-                                -- order = 120,
-                                -- name = L["Fly"],
-                                -- desc = L["Select the %s mount to force summon."]:format(L["Fly"]),
-                                -- type = "select",
-                                -- dialogControl = "Dropdown-SortByValue",
-                                -- values = function()
-                                    -- local out = { [0] = L["None"] };
+                            fly =
+                            {
+                                order = 120,
+                                name = L["Fly"],
+                                desc = L["Select the %s mount to force summon."]:format(L["Fly"]),
+                                type = "select",
+                                dialogControl = "Dropdown-SortByValue",
+                                values = function()
+                                    local out = { [0] = L["None"] };
 
-                                    -- for k,v in A:PairsByKeys(A.pamTable.mounts[2]) do
-                                        -- for kk,vv in ipairs(v) do
-                                            -- out[vv.spellId] = vv.name;
-                                        -- end
-                                    -- end
+                                    for k,v in A:PairsByKeys(A.pamTable.mounts[2]) do
+                                        for kk,vv in ipairs(v) do
+                                            out[vv.spellId] = vv.name;
+                                        end
+                                    end
 
-                                    -- return out;
-                                -- end,
-                                -- get = function()
-                                    -- local mapID;
+                                    return out;
+                                end,
+                                get = function()
+                                    local mapID;
 
-                                    -- if ( A.currentMapIDForMounts ) then
-                                        -- mapID = A.currentMapIDForMounts;
-                                    -- else
-                                        -- mapID = A.currentMapID;
-                                    -- end
+                                    if ( A.currentMapIDForMounts ) then
+                                        mapID = A.currentMapIDForMounts;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
 
-                                    -- if ( A.db.profile.mountByMapID[2][tostring(mapID)] ) then
-                                        -- return A.db.profile.mountByMapID[2][tostring(mapID)];
-                                    -- else
-                                        -- return 0;
-                                    -- end
-                                -- end,
-                                -- set = function(self, val)
-                                    -- local mapID;
+                                    if ( A.db.profile.mountByMapID[2][tostring(mapID)] ) then
+                                        return A.db.profile.mountByMapID[2][tostring(mapID)];
+                                    else
+                                        return 0;
+                                    end
+                                end,
+                                set = function(self, val)
+                                    local mapID;
 
-                                    -- if ( A.currentMapIDForMounts ) then
-                                        -- mapID = A.currentMapIDForMounts;
-                                    -- else
-                                        -- mapID = A.currentMapID;
-                                    -- end
+                                    if ( A.currentMapIDForMounts ) then
+                                        mapID = A.currentMapIDForMounts;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
 
-                                    -- if ( val == 0 ) then
-                                        -- A.db.profile.mountByMapID[2][tostring(mapID)] = nil;
-                                    -- else
-                                        -- A.db.profile.mountByMapID[2][tostring(mapID)] = val;
-                                    -- end
-                                -- end,
-                            -- },
+                                    if ( val == 0 ) then
+                                        A.db.profile.mountByMapID[2][tostring(mapID)] = nil;
+                                    else
+                                        A.db.profile.mountByMapID[2][tostring(mapID)] = val;
+                                    end
+                                end,
+                            },
                             hybrid =
                             {
                                 order = 130,
