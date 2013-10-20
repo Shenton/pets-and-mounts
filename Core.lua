@@ -6,7 +6,7 @@
     Core.lua
 -------------------------------------------------------------------------------]]--
 
--- ###### TODO - fix les boutons: si dock et bouton monture caché on ne peut pas bouger celui des pets
+-- TODO: 
 
 -- Ace libs (<3)
 local A = LibStub("AceAddon-3.0"):NewAddon("BrokerPAM", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0");
@@ -324,16 +324,38 @@ function A:TableValueToKey(tbl, val)
     return nil;
 end
 
---- Return anchor points depending on cursor position
+--- Return anchor points according to cursor position
+-- function A:GetAnchor()
+    -- local w = GetScreenWidth();
+    -- local x = GetCursorPosition();
+
+    -- w = (w * UIParent:GetEffectiveScale()) / 2;
+
+    -- if ( x > w ) then return "TOPRIGHT", "TOPLEFT"; end
+
+    -- return "TOPLEFT", "TOPRIGHT";
+-- end
+
 function A:GetAnchor()
-    local w = GetScreenWidth();
-    local x = GetCursorPosition();
+    local ps = UIParent:GetEffectiveScale();
+    local px, py = UIParent:GetCenter();
+    local x, y = GetCursorPosition();
 
-    w = (w * UIParent:GetEffectiveScale()) / 2;
+    px, py = px * ps, py * ps;
 
-    if ( x > w ) then return "TOPRIGHT", "TOPLEFT"; end
-
-    return "TOPLEFT", "TOPRIGHT";
+    if ( x > px ) then
+        if ( y > py ) then
+            return "TOPRIGHT", "BOTTOMLEFT";
+        else
+            return "BOTTOMRIGHT", "TOPLEFT";
+        end
+    else
+        if ( y > py ) then
+            return "TOPLEFT", "BOTTOMRIGHT";
+        else
+            return "BOTTOMLEFT", "TOPRIGHT";
+        end
+    end
 end
 
 --- Return creature ID from spell ID (mount)
@@ -1100,7 +1122,7 @@ local function PAMMenu(self, level)
 
                         -- Frame pos
                         local point, relativePoint = A:GetAnchor();
-                        A.menuModelFrame:ClearAllPoints()
+                        A.menuModelFrame:ClearAllPoints();
                         A.menuModelFrame:SetPoint(point, DropDownList3, relativePoint, 0, 0);
                         A.menuModelFrame:Show();
                     end);
@@ -1262,7 +1284,7 @@ local function PAMMenu(self, level)
 
                                 -- Frame pos
                                 local point, relativePoint = A:GetAnchor();
-                                A.menuModelFrame:ClearAllPoints()
+                                A.menuModelFrame:ClearAllPoints();
                                 A.menuModelFrame:SetPoint(point, DropDownList4, relativePoint, 0, 0);
                                 A.menuModelFrame:Show();
                             end);
@@ -1684,6 +1706,7 @@ function A:OnInitialize()
     A.menuFrame = CreateFrame("Frame", "BrokerPAMMenuFrame");
     A.menuFrame.displayMode = "MENU";
     A.menuFrame.info = {};
+    A.menuFrame.initialize = PAMMenu;
     DropDownList1:HookScript("OnHide", function(self)
         A.isBrokerPamMenu = nil;
     end);
@@ -1725,7 +1748,7 @@ function A:OnInitialize()
                     A:RandomPet();
                 end
             elseif ( button == "RightButton" ) then
-                A.menuFrame.initialize = PAMMenu;
+                UIDropDownMenu_SetAnchor(A.menuFrame, nil, nil, nil, nil, nil);
                 ToggleDropDownMenu(1, nil, A.menuFrame, self, 0, 0);
                 GameTooltip:Hide();
             elseif ( button == "MiddleButton" ) then

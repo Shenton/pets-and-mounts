@@ -479,7 +479,7 @@ function A:AceConfig()
                             {
                                 order = 2,
                                 name = L["Area mounts"],
-                                desc = L["With this enabled it will summon a specific mount according to your current area. Exemple: the Abyssal Seahorse in Vashj'ir."],
+                                desc = L["With this enabled it will summon a specific mount according to your current area. Example: the Abyssal Seahorse in Vashj'ir."],
                                 type = "toggle",
                                 set = function(info, val) A.db.profile.areaMounts = not A.db.profile.areaMounts; end,
                                 get = function(info) return A.db.profile.areaMounts; end,
@@ -526,6 +526,12 @@ function A:AceConfig()
                                 type = "toggle",
                                 set = function(info, val)
                                     A.db.profile.BrokerPAMSecureButtonPets.hide = not A.db.profile.BrokerPAMSecureButtonPets.hide;
+
+                                    if ( A.db.profile.BrokerPAMSecureButtonPets.hide and A.db.profile.dockButton ) then
+                                        A.db.profile.dockButton = nil;
+                                        A:UnDockButton();
+                                    end
+
                                     A:SetButtons();
                                 end,
                                 get = function(info) return A.db.profile.BrokerPAMSecureButtonPets.hide; end,
@@ -607,6 +613,17 @@ function A:AceConfig()
                                 type = "toggle",
                                 set = function(info, val)
                                     A.db.profile.BrokerPAMSecureButtonMounts.hide = not A.db.profile.BrokerPAMSecureButtonMounts.hide;
+
+                                    if ( A.db.profile.BrokerPAMSecureButtonMounts.hide and A.db.profile.dockButton ) then
+                                        A.db.profile.dockButton = nil;
+                                        A:UnDockButton();
+
+                                        if ( not A.db.profile.BrokerPAMSecureButtonMounts.lock and A.db.profile.BrokerPAMSecureButtonPets.lock ) then
+                                            A.db.profile.BrokerPAMSecureButtonPets.lock = nil;
+                                            A:SetButtons();
+                                        end
+                                    end
+
                                     A:SetButtons();
                                 end,
                                 get = function(info) return A.db.profile.BrokerPAMSecureButtonMounts.hide; end,
@@ -687,6 +704,11 @@ function A:AceConfig()
                                 desc = L["Dock companion button to the mount button."],
                                 type = "toggle",
                                 set = function(info, val)
+                                    if ( A.db.profile.BrokerPAMSecureButtonMounts.hide or A.db.profile.BrokerPAMSecureButtonPets.hide ) then
+                                        A:Message(L["Cannot dock buttons together when at least one of them is hidden."], 1);
+                                        return;
+                                    end
+
                                     A.db.profile.dockButton = not A.db.profile.dockButton;
 
                                     if ( A.db.profile.dockButton ) then

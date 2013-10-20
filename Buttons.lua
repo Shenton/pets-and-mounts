@@ -200,6 +200,16 @@ function A:PreClickMount(button, clickedBy)
                 button:SetAttribute("macrotext", "/run BrokerPAMGlobal:RandomMount()");
             end
         end
+    elseif ( clickedBy == "RightButton" ) then
+        button:SetAttribute("type", "macro");
+        button:SetAttribute("macrotext", nil);
+
+        local point, relativePoint = A:GetAnchor();
+
+        UIDropDownMenu_SetAnchor(A.menuFrame, 0, 0, point, button, relativePoint);
+        ToggleDropDownMenu(1, nil, A.menuFrame, button);
+
+        GameTooltip:Hide();
     elseif ( clickedBy == "MiddleButton" ) then
         button:SetAttribute("type", "macro");
         button:SetAttribute("macrotext", nil);
@@ -234,6 +244,16 @@ function A:PreClickPet(button, clickedBy)
             button:SetAttribute("type", "macro");
             button:SetAttribute("macrotext", "/run BrokerPAMGlobal:RandomPet()");
         end
+    elseif ( clickedBy == "RightButton" ) then
+        button:SetAttribute("type", "macro");
+        button:SetAttribute("macrotext", nil);
+
+        local point, relativePoint = A:GetAnchor();
+
+        UIDropDownMenu_SetAnchor(A.menuFrame, 0, 0, point, button, relativePoint);
+        ToggleDropDownMenu(1, nil, A.menuFrame, button);
+
+        GameTooltip:Hide();
     elseif ( clickedBy == "MiddleButton" ) then
         button:SetAttribute("type", "macro");
         button:SetAttribute("macrotext", nil);
@@ -435,7 +455,7 @@ function A:SetTooltip(frame)
         GameTooltip:AddLine(L["Not when stealthed is %s."]:format(A:IsNotWhenStealthedEnabled() and A.color["GREEN"]..L["On"] or A.color["RED"]..L["Off"]));
         GameTooltip:AddLine(L["Forced companion: %s"]:format(A.db.profile.forceOne.pet and A.color["GREEN"]..A:GetPetNameByID(A.db.profile.forceOne.pet) or A.color["RED"]..L["None"]));
         GameTooltip:AddLine(" ");
-        GameTooltip:AddLine(L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random pet.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Hide button.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."]);
+        GameTooltip:AddLine(L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random pet.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Hide button.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."]);
     elseif ( frame:GetName() == "BrokerPAMSecureButtonMounts" ) then
         currentSet = A:GetCurrentSet("MOUNT");
 
@@ -452,7 +472,13 @@ function A:SetTooltip(frame)
         GameTooltip:AddLine(L["Forced hybrid mount: %s"]:format(A.db.profile.forceOne.mount[3] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[3]) or A.color["RED"]..L["None"]));
         GameTooltip:AddLine(L["Forced passenger mount: %s"]:format(A.db.profile.forceOne.mount[5] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[5]) or A.color["RED"]..L["None"]));
         GameTooltip:AddLine(" ");
-        GameTooltip:AddLine(L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random mount.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Hide button.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."]);
+
+        if ( A.db.profile.dockButton ) then
+            GameTooltip:AddLine(L["Use me to move both buttons."]);
+            GameTooltip:AddLine(" ");
+        end
+
+        GameTooltip:AddLine(L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random mount.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Hide button.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."]);
     end
 
     GameTooltip:Show();

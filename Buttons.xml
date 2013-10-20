@@ -57,12 +57,6 @@
             <OnLeave>
                 GameTooltip:Hide();
             </OnLeave>
-            <!--<OnShow>
-                BrokerPAMGlobal:OnShow(self);
-            </OnShow>
-            <OnHide>
-                BrokerPAMGlobal:OnHide(self);
-            </OnHide>-->
             <OnUpdate>
                 if ( GameTooltip:GetOwner() == self ) then
                     BrokerPAMGlobal:SetTooltip(self);
@@ -132,12 +126,6 @@
             <OnLeave>
                 GameTooltip:Hide();
             </OnLeave>
-            <!--<OnShow>
-                BrokerPAMGlobal:OnShow(self);
-            </OnShow>
-            <OnHide>
-                BrokerPAMGlobal:OnHide(self);
-            </OnHide>-->
             <OnUpdate>
                 if ( GameTooltip:GetOwner() == self ) then
                     BrokerPAMGlobal:SetTooltip(self);
@@ -147,34 +135,14 @@
     </Button>
 
     <Button name="BrokerPAMSecureButtonPassengers" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
-        <Scripts>
-            <!--<PreClick>
-                BrokerPAMGlobal:PreClick(self);
-            </PreClick>-->
-        </Scripts>
     </Button>
 
     <Button name="BrokerPAMSecureButtonFlying" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
-        <Scripts>
-            <!--<PreClick>
-                BrokerPAMGlobal:PreClick(self);
-            </PreClick>-->
-        </Scripts>
     </Button>
 
     <Button name="BrokerPAMSecureButtonGround" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
-        <Scripts>
-            <!--<PreClick>
-                BrokerPAMGlobal:PreClick(self);
-            </PreClick>-->
-        </Scripts>
     </Button>
 
     <Button name="BrokerPAMSecureButtonAquatic" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
-        <Scripts>
-            <!--<PreClick>
-                BrokerPAMGlobal:PreClick(self);
-            </PreClick>-->
-        </Scripts>
     </Button>
 </Ui>

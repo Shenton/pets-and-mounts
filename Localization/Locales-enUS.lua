@@ -107,7 +107,7 @@ L["Companions set in use: %s."] = true;
 L["Mounts set in use: %s."] = true;
 L["Enable"] = true;
 L["Area mounts"] = true;
-L["With this enabled it will summon a specific mount according to your current area. Exemple: the Abyssal Seahorse in Vashj'ir."] = true;
+L["With this enabled it will summon a specific mount according to your current area. Example: the Abyssal Seahorse in Vashj'ir."] = true;
 L["Arena instance"] = true;
 L["Open world"] = true;
 L["Party instance"] = true;
@@ -123,8 +123,8 @@ L["Auto summon companion is %s."] = true;
 L["Not when stealthed is %s."] = true;
 L["Random companion"] = true;
 L["Bind a key to summon a random companion."] = true;
-L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random pet.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Hide button.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."] = true;
-L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random mount.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Hide button.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."] = true;
+L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random pet.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Hide button.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."] = true;
+L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random mount.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Hide button.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."] = true;
 L["Class specific"] = true;
 L["With this enabled it will use flying forms for druids (Only class with specific \"mount\" atm)."] = true;
 L["Buttons options"] = true;
@@ -170,4 +170,6 @@ L["Do not automatically summon a pet when the Haunted Memento is in your bags."]
 L["Database options"] = true;
 L["Magic Broom"] = true;
 L["Summon the Magic Broom when it is in your bags."] = true;
+L["Cannot dock buttons together when at least one of them is hidden."] = true;
+L["Use me to move both buttons."] = true;
 end
