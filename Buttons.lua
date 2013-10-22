@@ -125,7 +125,7 @@ function A:SetDruidSpells()
 end
 
 function A:SetDruidPreClickMacro()
-    if ( IsFlyableArea() and IsSpellKnown(40120) ) then -- this is needed as Swift flight form require artisan riding to be bought
+    if ( IsFlyableArea() and IsSpellKnown(40120) ) then
         A.preClickDruidMacro = ("/cast %s\n/dismount [mounted]"):format(A.druidSwiftFlightForm);
     elseif ( A.playerLevel >= 58 and A:IsFlyable() ) then
         A.preClickDruidMacro = ("/cast %s\n/dismount [mounted]"):format(A.druidFlightForm);
@@ -175,11 +175,12 @@ function A:PreClickMount(button, clickedBy)
         if ( IsShiftKeyDown() ) then
             button:SetAttribute("type", "macro");
             button:SetAttribute("macrotext", nil);
-            A:ToggleButtonLock("mounts");
+            A:ToggleButtonLock(button);
         elseif ( IsControlKeyDown() ) then
             button:SetAttribute("type", "macro");
             button:SetAttribute("macrotext", nil);
-            button:Hide();
+            A.db.profile[button:GetName()].hide = 1;
+            A:SetButtons();
         else
             if ( InCombatLockdown() ) then return; end
 
@@ -235,11 +236,12 @@ function A:PreClickPet(button, clickedBy)
         if ( IsShiftKeyDown() ) then
             button:SetAttribute("type", "macro");
             button:SetAttribute("macrotext", nil);
-            A:ToggleButtonLock("pets");
+            A:ToggleButtonLock(button);
         elseif ( IsControlKeyDown() ) then
             button:SetAttribute("type", "macro");
             button:SetAttribute("macrotext", nil);
-            button:Hide();
+            A.db.profile[button:GetName()].hide = 1;
+            A:SetButtons();
         else
             button:SetAttribute("type", "macro");
             button:SetAttribute("macrotext", "/run BrokerPAMGlobal:RandomPet()");
@@ -267,20 +269,36 @@ end
 
 --- Set button position
 function A:SetButtonPos(button)
+    if ( type(button) ~= "string" ) then
+        button = button:GetName();
+    end
+
     _G[button]:ClearAllPoints();
     _G[button]:SetPoint(A.db.profile[button].anchor.point, A.db.profile[button].anchor.relativeTo, A.db.profile[button].anchor.relativePoint, A.db.profile[button].anchor.offX, A.db.profile[button].anchor.offY);
 end
 
 --- Lock button
 function A:LockButton(button)
+    if ( type(button) ~= "string" ) then
+        button = button:GetName();
+    end
+
     _G[button]:SetMovable(nil);
     _G[button]:SetScript("OnDragStart", nil);
     _G[button]:SetScript("OnDragStop", nil);
     A.db.profile[button].lock = 1;
+
+    if ( A.AceConfigRegistry ) then
+        A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+    end
 end
 
 --- Unlock button, saving position
 function A:UnlockButton(button)
+    if ( type(button) ~= "string" ) then
+        button = button:GetName();
+    end
+
     if ( A.db.profile.dockButton and button == "BrokerPAMSecureButtonPets" ) then return; end
 
     _G[button]:SetMovable(1);
@@ -298,10 +316,18 @@ function A:UnlockButton(button)
         A.db.profile[button].anchor.offY = offY;
     end);
     A.db.profile[button].lock = nil;
+
+    if ( A.AceConfigRegistry ) then
+        A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+    end
 end
 
 --- Toggle lock button
 function A:ToggleButtonLock(button)
+    if ( type(button) ~= "string" ) then
+        button = button:GetName();
+    end
+
     if ( _G[button]:IsMovable() ) then
         A:LockButton(button);
     else
@@ -311,12 +337,20 @@ end
 
 --- Button hide/show toggle
 function A:ToggleButtonHideShow(button)
-    if ( button:IsShown() ) then
-        _G["button"]:Hide();
+    if ( type(button) ~= "string" ) then
+        button = button:GetName();
+    end
+
+    if ( _G[button]:IsShown() ) then
+        _G[button]:Hide();
         A.db.profile[button].hide = 1;
     else
-        _G["button"]:Show();
+        _G[button]:Show();
         A.db.profile[button].hide = nil;
+    end
+
+    if ( A.AceConfigRegistry ) then
+        A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
     end
 end
 
@@ -355,6 +389,10 @@ end
 
 --- Reset button
 function A:ResetButton(button)
+    if ( type(button) ~= "string" ) then
+        button = button:GetName();
+    end
+
     local offX;
 
     if ( button == "BrokerPAMSecureButtonPets" ) then
@@ -386,28 +424,48 @@ end
 
 --- Set buttons on login
 function A:SetButtons()
-    -- Pets button
+    -- Position
+    A:SetButtonPos("BrokerPAMSecureButtonPets");
+    A:SetButtonPos("BrokerPAMSecureButtonMounts");
+
+    -- Scale
+    BrokerPAMSecureButtonPets:SetScale(A.db.profile.BrokerPAMSecureButtonPets.scale);
+    BrokerPAMSecureButtonMounts:SetScale(A.db.profile.BrokerPAMSecureButtonMounts.scale);
+
+    -- Visibility
     if ( A.db.profile.BrokerPAMSecureButtonPets.hide ) then
         BrokerPAMSecureButtonPets:Hide();
+
+        if (  A.db.profile.dockButton ) then
+            A.db.profile.dockButton = nil;
+            A:UnDockButton();
+        end
     else
         BrokerPAMSecureButtonPets:Show();
     end
 
+    if ( A.db.profile.BrokerPAMSecureButtonMounts.hide ) then
+        BrokerPAMSecureButtonMounts:Hide();
+
+        if (  A.db.profile.dockButton ) then
+            A.db.profile.dockButton = nil;
+            A:UnDockButton();
+
+            if ( not A.db.profile.BrokerPAMSecureButtonMounts.lock and A.db.profile.BrokerPAMSecureButtonPets.lock ) then
+                A.db.profile.BrokerPAMSecureButtonPets.lock = nil;
+                A:SetButtons();
+                return;
+            end
+        end
+    else
+        BrokerPAMSecureButtonMounts:Show();
+    end
+
+    -- Movable
     if ( A.db.profile.BrokerPAMSecureButtonPets.lock ) then
         A:LockButton("BrokerPAMSecureButtonPets");
     else
         A:UnlockButton("BrokerPAMSecureButtonPets");
-    end
-
-    BrokerPAMSecureButtonPets:SetScale(A.db.profile.BrokerPAMSecureButtonPets.scale);
-
-    A:SetButtonPos("BrokerPAMSecureButtonPets");
-
-    -- Mounts button
-    if ( A.db.profile.BrokerPAMSecureButtonMounts.hide ) then
-        BrokerPAMSecureButtonMounts:Hide();
-    else
-        BrokerPAMSecureButtonMounts:Show();
     end
 
     if ( A.db.profile.BrokerPAMSecureButtonMounts.lock ) then
@@ -416,9 +474,10 @@ function A:SetButtons()
         A:UnlockButton("BrokerPAMSecureButtonMounts");
     end
 
-    BrokerPAMSecureButtonMounts:SetScale(A.db.profile.BrokerPAMSecureButtonMounts.scale);
-
-    A:SetButtonPos("BrokerPAMSecureButtonMounts");
+    -- Refresh config panel
+    if ( A.AceConfigRegistry ) then
+        A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+    end
 end
 
 --[[-------------------------------------------------------------------------------

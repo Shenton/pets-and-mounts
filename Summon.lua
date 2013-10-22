@@ -294,7 +294,7 @@ function A:IsFlyable()
     return nil;
 end
 
---- Check if the layer is swimming and not at the surface
+--- Check if the player is swimming and not at the surface
 function A:IsSwimming()
     if ( IsSwimming() or IsSubmerged() ) then -- Swimming
         if ( A.swimmingCheckSpellID and IsUsableSpell(A.swimmingCheckSpellID) ) then -- At the surface
@@ -317,7 +317,7 @@ end
 -- Apprentice Riding 33388
 -- Journeyman Riding 33391
 function A:CanRide()
-    if ( IsSpellKnown(33388) and IsSpellKnown(33391) ) then
+    if ( IsSpellKnown(33388) or IsSpellKnown(33391) ) then
         return 1;
     end
 
@@ -363,21 +363,144 @@ function A:SummonMountBySpellId(id)
     return nil;
 end
 
---- Summon a mount according to the current area ID
-function A:SummonMountByAreaID()
-    if ( not A.db.profile.areaMounts ) then
-        return nil;
+--- Return an unique area mount according to cat
+function A:GetUniqueAreaMount(cat)
+    if ( type(A.uniqueAreaMounts[cat][A.currentMapID]) == "table" ) then
+        local index = math.random(1, #A.uniqueAreaMounts[cat][A.currentMapID]);
+
+        return A.uniqueAreaMounts[cat][A.currentMapID][index];
+    else
+        return A.uniqueAreaMounts[cat][A.currentMapID];
+    end
+end
+
+--- Build a table with usable mounts
+-- @param tbl The original mounts table
+-- @return The table filtered
+function A:BuildUsableMountsTable(tbl)
+    local out = {};
+
+    for k,v in ipairs(tbl) do
+        if ( A.restrictedMounts[v] ) then -- Got a restricted mount
+            -- Location
+            if ( A.restrictedMounts[v].type == "location" ) then
+                if ( type(A.restrictedMounts[v].args) == "table" ) then
+                    if ( tContains(A.restrictedMounts[v].args, A.currentMapID) ) then
+                        out[#out+1] = v;
+                    else
+                        A:DebugMessage(("Restricted mount: %s - type: %s"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type));
+                    end
+                else
+                    if ( A.restrictedMounts[v].args == A.currentMapID ) then
+                        out[#out+1] = v;
+                    else
+                        A:DebugMessage(("Restricted mount: %s - type: %s"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type));
+                    end
+                end
+            -- Spell
+            elseif ( A.restrictedMounts[v].type == "spell" ) then
+                if ( type(A.restrictedMounts[v].args) == "table" ) then
+                    for kk,vv in ipairs(A.restrictedMounts[v].args) do
+                        if ( IsSpellKnown(vv) ) then
+                            out[#out+1] = v;
+                            break;
+                        end
+                    end
+
+                    A:DebugMessage(("Restricted mount: %s - type: %s"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type));
+                else
+                    if ( IsSpellKnown(A.restrictedMounts[v].args) ) then
+                        out[#out+1] = v
+                    else
+                        A:DebugMessage(("Restricted mount: %s - type: %s"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type));
+                    end
+                end
+            -- Class
+            elseif ( A.restrictedMounts[v].type == "class" ) then
+                if ( type(A.restrictedMounts[v].args) == "table" ) then
+                    if ( tContains(A.restrictedMounts[v].args, A.playerClass) ) then
+                        out[#out+1] = v;
+                    else
+                        A:DebugMessage(("Restricted mount: %s - type: %s"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type));
+                    end
+                else
+                    if ( A.restrictedMounts[v].args == A.playerClass ) then
+                        out[#out+1] = v;
+                    else
+                        A:DebugMessage(("Restricted mount: %s - type: %s"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type));
+                    end
+                end
+            -- Faction
+            elseif ( A.restrictedMounts[v].type == "faction" ) then
+                if ( type(A.restrictedMounts[v].args) == "table" ) then
+                    if ( tContains(A.restrictedMounts[v].args, A.playerFaction) ) then
+                        out[#out+1] = v;
+                    else
+                        A:DebugMessage(("Restricted mount: %s - type: %s"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type));
+                    end
+                else
+                    if ( A.restrictedMounts[v].args == A.playerFaction ) then
+                        out[#out+1] = v;
+                    else
+                        A:DebugMessage(("Restricted mount: %s - type: %s"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type));
+                    end
+                end
+            -- Race & class
+            elseif ( A.restrictedMounts[v].type == "race&class" ) then
+                if ( type(A.restrictedMounts[v].args) == "table" ) then
+                    if ( tContains(A.restrictedMounts[v].args, A.playerRace..A.playerClass) ) then
+                        out[#out+1] = v;
+                    else
+                        A:DebugMessage(("Restricted mount: %s - type: %s"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type));
+                    end
+                else
+                    if ( A.restrictedMounts[v].args == A.playerRace..A.playerClass ) then
+                        out[#out+1] = v;
+                    else
+                        A:DebugMessage(("Restricted mount: %s - type: %s"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type));
+                    end
+                end
+            end
+        else
+            out[#out+1] = v;
+        end
     end
 
-    local currentArea;
+    return out;
+end
 
-    SetMapToCurrentZone();
-    currentArea = GetCurrentMapAreaID();
-
-    if ( A.areaMounts[currentArea] ) then
-        A:SummonMountBySpellId(A.areaMounts[currentArea]);
-        return 1;
+--- Get a random mount from a mounts table
+-- @param tbl The original mounts table
+-- @return The mount spellID
+function A:GetRandomMount(tbl)
+    if ( not A.usableMountsCache ) then
+        A.usableMountsCache = {};
     end
+
+    if ( not A.usableMountsCache[tbl] ) then
+        A.usableMountsCache[tbl] = A:BuildUsableMountsTable(tbl);
+    end
+
+    local index = math.random(#A.usableMountsCache[tbl]);
+
+    return A.usableMountsCache[tbl][index];
+end
+
+--- Check if we got a least one mount available
+-- @param tbl The original mounts table
+-- @return The number of mounts available or nil
+function A:GotRandomMount(tbl)
+    if ( not A.usableMountsCache ) then
+        A.usableMountsCache = {};
+    end
+
+    if ( not A.usableMountsCache[tbl] ) then
+        A.usableMountsCache[tbl] = A:BuildUsableMountsTable(tbl);
+    end
+
+    local num = #A.usableMountsCache[tbl];
+
+    if ( num > 0 ) then return num; end
 
     return nil;
 end
@@ -403,61 +526,40 @@ function A:RandomMount(cat)
         return;
     end
 
-    -- If enabled and defined will sumonn a mount according to areaID
-    if ( A:SummonMountByAreaID() ) then return; end
-
     local id;
 
     if ( not cat ) then cat = A:SetMountCat(); end
 
     -- ground, do not want hybrid when ground - aqua - passenger
     if ( (cat == 1 and A.db.profile.noHybridWhenGround) or cat == 4 or cat == 5 ) then
-        -- Got area
-        if ( A.db.profile.mountByMapID[cat][tostring(A.currentMapID)] ) then
-            A:DebugMessage(("RandomMount() - No hybrid - Got area - %i"):format(cat));
-            id = A.db.profile.mountByMapID[cat][tostring(A.currentMapID)];
         -- Got forced
-        elseif ( A.db.profile.forceOne.mount[cat] ) then
+        if ( A.db.profile.forceOne.mount[cat] ) then
             A:DebugMessage(("RandomMount() - No hybrid - Got forced - %i"):format(cat));
             id = A.db.profile.forceOne.mount[cat];
+        -- Got area
+        elseif ( A.db.profile.mountByMapID[cat][tostring(A.currentMapID)] ) then
+            A:DebugMessage(("RandomMount() - No hybrid - Got area - %i"):format(cat));
+            id = A.db.profile.mountByMapID[cat][tostring(A.currentMapID)];
+        -- Got unique area
+        elseif ( A.db.profile.areaMounts and A.uniqueAreaMounts[cat][A.currentMapID] ) then
+            A:DebugMessage(("RandomMount() - No hybrid - Got unique area - %i"):format(cat));
+            id = A:GetUniqueAreaMount(cat);
         -- got fav
-        elseif ( #A.db.profile.favoriteMounts[cat] > 0 ) then
+        elseif ( A:GotRandomMount(A.db.profile.favoriteMounts[cat]) ) then
             A:DebugMessage(("RandomMount() - No hybrid - Got fav - %i"):format(cat));
-            id = math.random(#A.db.profile.favoriteMounts[cat]);
-            id = A.db.profile.favoriteMounts[cat][id];
+            id = A:GetRandomMount(A.db.profile.favoriteMounts[cat]);
         -- got global
-        elseif ( #A.pamTable.mountsIds[cat] > 0 ) then
+        elseif ( A:GotRandomMount(A.pamTable.mountsIds[cat]) ) then
             A:DebugMessage(("RandomMount() - No hybrid - Got global - %i"):format(cat));
-            id = math.random(#A.pamTable.mountsIds[cat]);
-            id = A.pamTable.mountsIds[cat][id];
+            id = A:GetRandomMount(A.pamTable.mountsIds[cat]);
         else
-            A.isSummoningMount = nil;
+            A:DebugMessage(("RandomMount() - No mount for that cat - %i"):format(cat));
             return;
         end
     -- ground, want hybrid when ground - fly
     elseif ( (cat == 1 and not A.db.profile.noHybridWhenGround) or cat == 2 ) then
-        -- Got area ground/fly and hybrid
-        if ( A.db.profile.mountByMapID[cat][tostring(A.currentMapID)] and A.db.profile.mountByMapID[3][tostring(A.currentMapID)] ) then
-            -- hybrid
-            if ( A:RandHybrid(1, 1) ) then
-                A:DebugMessage(("RandomMount() - With hybrid - Got area - Got hybrid - Rand hybrid - %i"):format(cat));
-                id = A.db.profile.mountByMapID[3][tostring(A.currentMapID)];
-            -- ground/fly
-            else
-                A:DebugMessage(("RandomMount() - With hybrid - Got area - Got hybrid - Rand no hybrid - %i"):format(cat));
-                id = A.db.profile.mountByMapID[cat][tostring(A.currentMapID)];
-            end
-        -- Got area ground/fly
-        elseif ( A.db.profile.mountByMapID[cat][tostring(A.currentMapID)] ) then
-            A:DebugMessage(("RandomMount() - With hybrid - Got area ground/fly - %i"):format(cat));
-            id = A.db.profile.mountByMapID[cat][tostring(A.currentMapID)];
-        -- Got area hybrid
-        elseif ( A.db.profile.mountByMapID[3][tostring(A.currentMapID)] ) then
-            A:DebugMessage(("RandomMount() - With hybrid - Got area hybrid - %i"):format(cat));
-            id = A.db.profile.mountByMapID[3][tostring(A.currentMapID)];
-        -- No area going for forced
         -- Got forced ground/fly and hybrid
-        elseif ( A.db.profile.forceOne.mount[cat] and A.db.profile.forceOne.mount[3] ) then
+        if ( A.db.profile.forceOne.mount[cat] and A.db.profile.forceOne.mount[3] ) then
             -- hybrid
             if ( A:RandHybrid(1, 1) ) then
                 A:DebugMessage(("RandomMount() - With hybrid - Got forced - Got hybrid - Rand hybrid - %i"):format(cat));
@@ -475,56 +577,86 @@ function A:RandomMount(cat)
         elseif ( A.db.profile.forceOne.mount[3] ) then
             A:DebugMessage(("RandomMount() - With hybrid - Got forced hybrid - %i"):format(cat));
             id = A.db.profile.forceOne.mount[3];
-        -- No forced going for fav
-        -- got ground/fly and hybrid fav
-        elseif ( #A.db.profile.favoriteMounts[cat] > 0 and #A.db.profile.favoriteMounts[3] > 0 ) then
+        -- No forced going for area
+        -- Got area ground/fly and hybrid
+        elseif ( A.db.profile.mountByMapID[cat][tostring(A.currentMapID)] and A.db.profile.mountByMapID[3][tostring(A.currentMapID)] ) then
             -- hybrid
-            if ( A:RandHybrid(#A.db.profile.favoriteMounts[cat], #A.db.profile.favoriteMounts[3]) ) then
+            if ( A:RandHybrid(1, 1) ) then
+                A:DebugMessage(("RandomMount() - With hybrid - Got area ground/fly - Got hybrid - Rand hybrid - %i"):format(cat));
+                id = A.db.profile.mountByMapID[3][tostring(A.currentMapID)];
+            -- ground/fly
+            else
+                A:DebugMessage(("RandomMount() - With hybrid - Got area ground/fly - Got hybrid - Rand no hybrid - %i"):format(cat));
+                id = A.db.profile.mountByMapID[cat][tostring(A.currentMapID)];
+            end
+        -- Got area ground/fly
+        elseif ( A.db.profile.mountByMapID[cat][tostring(A.currentMapID)] ) then
+            A:DebugMessage(("RandomMount() - With hybrid - Got area ground/fly - %i"):format(cat));
+            id = A.db.profile.mountByMapID[cat][tostring(A.currentMapID)];
+        -- Got area hybrid
+        elseif ( A.db.profile.mountByMapID[3][tostring(A.currentMapID)] ) then
+            A:DebugMessage(("RandomMount() - With hybrid - Got area hybrid - %i"):format(cat));
+            id = A.db.profile.mountByMapID[3][tostring(A.currentMapID)];
+        -- No area going for unique area
+        -- Got unique area ground/fly and hybrid
+        elseif ( A.db.profile.areaMounts and A.uniqueAreaMounts[cat][A.currentMapID] and A.uniqueAreaMounts[3][A.currentMapID] ) then
+            if ( A:RandHybrid(1, 1) ) then
+                A:DebugMessage(("RandomMount() - With hybrid - Got unique area ground/fly - Got hybrid - Rand hybrid - %i"):format(cat));
+                id = A:GetUniqueAreaMount(3);
+            else
+                A:DebugMessage(("RandomMount() - With hybrid - Got unique area ground/fly - Got hybrid - Rand no hybrid - %i"):format(cat));
+                id = A:GetUniqueAreaMount(cat);
+            end
+        -- Got unique area ground/fly
+        elseif ( A.db.profile.areaMounts and A.uniqueAreaMounts[cat][A.currentMapID] ) then
+            A:DebugMessage(("RandomMount() - With hybrid - Got unique area ground/fly - %i"):format(cat));
+            id = A:GetUniqueAreaMount(cat);
+        -- Got unique area hybrid
+        elseif ( A.db.profile.areaMounts and A.uniqueAreaMounts[3][A.currentMapID] ) then
+            A:DebugMessage(("RandomMount() - With hybrid - Got unique area hybrid - %i"):format(cat));
+            id = A:GetUniqueAreaMount(3);
+        -- No unique area going for fav
+        -- got ground/fly and hybrid fav
+        elseif ( A:GotRandomMount(A.db.profile.favoriteMounts[cat]) and A:GotRandomMount(A.db.profile.favoriteMounts[3]) ) then
+            -- hybrid
+            if ( A:RandHybrid(A:GotRandomMount(A.db.profile.favoriteMounts[cat]), A:GotRandomMount(A.db.profile.favoriteMounts[3])) ) then
                 A:DebugMessage(("RandomMount() - With hybrid - Got fav - Got hybrid - Rand hybrid - %i"):format(cat));
-                id = math.random(#A.db.profile.favoriteMounts[3]);
-                id = A.db.profile.favoriteMounts[3][id];
+                id = A:GetRandomMount(A.db.profile.favoriteMounts[3]);
             -- ground/fly
             else
                 A:DebugMessage(("RandomMount() - With hybrid - Got fav - Got hybrid - Rand no hybrid - %i"):format(cat));
-                id = math.random(#A.db.profile.favoriteMounts[cat]);
-                id = A.db.profile.favoriteMounts[cat][id];
+                id = A:GetRandomMount(A.db.profile.favoriteMounts[cat]);
             end
         -- got fav
-        elseif ( #A.db.profile.favoriteMounts[cat] > 0 ) then
+        elseif ( A:GotRandomMount(A.db.profile.favoriteMounts[cat]) ) then
             A:DebugMessage(("RandomMount() - With hybrid - Got fav ground/fly - %i"):format(cat));
-            id = math.random(#A.db.profile.favoriteMounts[cat]);
-            id = A.db.profile.favoriteMounts[cat][id];
+            id = A:GetRandomMount(A.db.profile.favoriteMounts[cat]);
         -- got hybrid fav
-        elseif ( #A.db.profile.favoriteMounts[3] > 0 ) then
+        elseif ( A:GotRandomMount(A.db.profile.favoriteMounts[3]) ) then
             A:DebugMessage(("RandomMount() - With hybrid - Got fav hybrid - %i"):format(cat));
-            id = math.random(#A.db.profile.favoriteMounts[3]);
-            id = A.db.profile.favoriteMounts[3][id];
+            id = A:GetRandomMount(A.db.profile.favoriteMounts[3]);
         -- No fav going for global
         -- got ground/fly & hybrid
-        elseif ( #A.pamTable.mountsIds[cat] > 0 and #A.pamTable.mountsIds[3] > 0 ) then
+        elseif ( A:GotRandomMount(A.pamTable.mountsIds[cat]) and A:GotRandomMount(A.pamTable.mountsIds[3]) ) then
             -- hybrid
-            if ( A:RandHybrid(#A.pamTable.mountsIds[cat], #A.pamTable.mountsIds[3]) ) then
+            if ( A:RandHybrid(A:GotRandomMount(A.pamTable.mountsIds[cat]), A:GotRandomMount(A.pamTable.mountsIds[3])) ) then
                 A:DebugMessage(("RandomMount() - With hybrid - Got global - Got hybrid - Rand hybrid - %i"):format(cat));
-                id = math.random(#A.pamTable.mountsIds[3]);
-                id = A.pamTable.mountsIds[3][id];
+                id = A:GetRandomMount(A.pamTable.mountsIds[3]);
             -- ground/fly
             else
                 A:DebugMessage(("RandomMount() - With hybrid - Got global - Got hybrid - Rand no hybrid - %i"):format(cat));
-                id = math.random(#A.pamTable.mountsIds[cat]);
-                id = A.pamTable.mountsIds[cat][id];
+                id = A:GetRandomMount(A.pamTable.mountsIds[cat]);
             end
         -- got ground/fly
-        elseif ( #A.pamTable.mountsIds[cat] > 0 ) then
+        elseif ( A:GotRandomMount(A.pamTable.mountsIds[cat]) ) then
             A:DebugMessage(("RandomMount() - With hybrid - Got global - %i"):format(cat));
-            id = math.random(#A.pamTable.mountsIds[cat]);
-            id = A.pamTable.mountsIds[cat][id];
+            id = A:GetRandomMount(A.pamTable.mountsIds[cat]);
         -- got hybrid
-        elseif ( #A.pamTable.mountsIds[3] > 0 ) then
+        elseif ( A:GotRandomMount(A.pamTable.mountsIds[3]) ) then
             A:DebugMessage(("RandomMount() - With hybrid - Got hybrid - %i"):format(cat));
-            id = math.random(#A.pamTable.mountsIds[3]);
-            id = A.pamTable.mountsIds[3][id];
+            id = A:GetRandomMount(A.pamTable.mountsIds[3]);
         else
-            A.isSummoningMount = nil;
+            A:DebugMessage(("RandomMount() - No mount for that cat - %i"):format(cat));
             return;
         end
     end
