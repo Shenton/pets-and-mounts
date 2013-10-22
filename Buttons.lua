@@ -19,7 +19,8 @@ local _G = _G;
 -- GLOBALS: InCombatLockdown, GetBindingKey, SetOverrideBindingClick, GetSpellInfo
 -- GLOBALS: IsFlyableArea, IsSpellKnown, GetSpellInfo, IsShiftKeyDown, IsControlKeyDown
 -- GLOBALS: BrokerPAMSecureButtonMounts, BrokerPAMSecureButtonPets, GetScreenWidth
--- GLOBALS: GameTooltip, GetItemCount, GetItemInfo
+-- GLOBALS: GameTooltip, GetItemCount, GetItemInfo, UIDropDownMenu_SetAnchor
+-- GLOBALS: ToggleDropDownMenu, type
 
 --[[-------------------------------------------------------------------------------
     Bindings

@@ -22,7 +22,7 @@ local ipairs = ipairs;
 -- GLOBALS: CallCompanion, Dismount, IsIndoors, LibStub, IsStealthed
 -- GLOBALS: GetSpellInfo, IsSpellKnown, SetMapToCurrentZone, GetItemCount
 -- GLOBALS: GetCurrentMapAreaID, select, GetSpellInfo, GetNumLootItems
--- GLOBALS: GetBarberShopStyleInfo, IsUsableSpell
+-- GLOBALS: GetBarberShopStyleInfo, IsUsableSpell, type
 
 --[[-------------------------------------------------------------------------------
     Pets methods
