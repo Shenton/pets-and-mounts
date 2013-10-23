@@ -6,6 +6,8 @@
     Core.lua
 -------------------------------------------------------------------------------]]--
 
+-- TODO: fix menu model frame position
+
 -- Ace libs (<3)
 local A = LibStub("AceAddon-3.0"):NewAddon("BrokerPAM", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0");
 local L = LibStub("AceLocale-3.0"):GetLocale("BrokerPAM");
@@ -1492,7 +1494,7 @@ end
 -- need to move saved sets to global scope
 function A:DatabaseRevision2()
     for k,v in ipairs(A.db:GetProfiles()) do
-        if ( A.db.profiles[v].savedSets and A.db.profiles[v].savedSets.pets ) then
+        if ( A.db.profiles[v] and A.db.profiles[v].savedSets and A.db.profiles[v].savedSets.pets ) then
             for kk,vv in pairs(A.db.profiles[v].savedSets.pets) do
                 local setName = kk;
                 local index = 2;
@@ -1507,7 +1509,7 @@ function A:DatabaseRevision2()
             end
         end
 
-        if ( A.db.profiles[v].savedSets and A.db.profiles[v].savedSets.mounts ) then
+        if ( A.db.profiles[v] and A.db.profiles[v].savedSets and A.db.profiles[v].savedSets.mounts ) then
             for kk,vv in pairs(A.db.profiles[v].savedSets.mounts) do
                 local setName = kk;
                 local index = 2;
@@ -1521,7 +1523,9 @@ function A:DatabaseRevision2()
             end
         end
 
-        A.db.profiles[v].savedSets = nil;
+        if ( A.db.profiles[v] and A.db.profiles[v].savedSets ) then
+            A.db.profiles[v].savedSets = nil;
+        end
     end
 
     A:Message(L["Database updated to revision %d."]:format(2));
