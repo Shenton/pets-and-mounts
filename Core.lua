@@ -10,6 +10,7 @@
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 -- TODO: Modify IsSwimming method to return the 3 states, swimming, surface and not swimming, then do something with that
 -- TODO: add all the localization files
+-- TODO: multi anchor docked icon
 
 -- Ace libs (<3)
 local A = LibStub("AceAddon-3.0"):NewAddon("PetsAndMounts", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0");

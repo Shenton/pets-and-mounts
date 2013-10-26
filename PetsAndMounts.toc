@@ -28,6 +28,16 @@ Buttons.xml
 ModelFrames.xml
 
 Localization\Locales-enUS.lua
+Localization\Locales-deDE.lua
+Localization\Locales-esES.lua
+Localization\Locales-esMX.lua
+Localization\Locales-frFR.lua
+Localization\Locales-itIT.lua
+Localization\Locales-koKR.lua
+Localization\Locales-ptBR.lua
+Localization\Locales-ruRU.lua
+Localization\Locales-zhCN.lua
+Localization\Locales-zhTW.lua
 
 Core.lua
 
