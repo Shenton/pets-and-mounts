@@ -1630,7 +1630,7 @@ end
 -- Called after the addon is fully loaded
 function A:OnInitialize()
     -- Database
-    A.db = LibStub("AceDB-3.0"):New("pamDB", A.aceDefaultDB, true);
+    A.db = LibStub("AceDB-3.0"):New("petsAndMountsDB", A.aceDefaultDB, true);
     A:DatabaseRevisionCheck();
     A:RemoveDatabaseOldEntries();
 
