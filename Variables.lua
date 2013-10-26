@@ -31,30 +31,38 @@ A.pamTable =
     mountsIds = {},
 };
 
-A.mountCat = {L["Ground"],L["Fly"],L["Hybrid"],L["Aquatic"],L["Passenger"]};
-
--- Mounts spellID with passengers
-A.passengerMounts =
+A.mountCat =
 {
-    [60424] = 1, -- Mekgineer's Chopper
-    [61465] = 1, -- Grand Black War Mammoth (Alliance)
-    [61467] = 1, -- Grand Black War Mammoth (Horde)
-    [122708] = 1, -- Grand Expedition Yak
-    [61469] = 1, -- Grand Ice Mammoth (Horde)
-    [61470] = 1, -- Grand Ice Mammoth (Alliance)
-    [121820] = 1, -- Obsidian Nightwing
-    [93326] = 1, -- Sandstone Drake
-    [61425] = 1, -- Traveler's Tundra Mammoth (Alliance)
-    [61447] = 1, -- Traveler's Tundra Mammoth (Horde)
-    [55531] = 1, -- Mechano-Hog
-    [75973] = 1, -- X-53 Touring Rocket
+    L["Ground"],
+    L["Fly"],
+    L["Hybrid"],
+    L["Aquatic"],
+    L["Passenger"],
+    L["Surface"]
 };
 
--- Mounts with another bitfield than the aquatic one
+-- Mounts with passengers spellID
+A.passengerMounts =
+{
+    60424, -- Mekgineer's Chopper
+    61465, -- Grand Black War Mammoth (Alliance)
+    61467, -- Grand Black War Mammoth (Horde)
+    122708, -- Grand Expedition Yak
+    61469, -- Grand Ice Mammoth (Horde)
+    61470, -- Grand Ice Mammoth (Alliance)
+    121820, -- Obsidian Nightwing
+    93326, -- Sandstone Drake
+    61425, -- Traveler's Tundra Mammoth (Alliance)
+    61447, -- Traveler's Tundra Mammoth (Horde)
+    55531, -- Mechano-Hog
+    75973, -- X-53 Touring Rocket
+};
+
+-- Mounts with another bitfield than the aquatic ones
 -- this will force them to aquatics
 A.aquaticMounts =
 {
-    [64731] = 1, -- Sea Turtle
+    64731, -- Sea Turtle
 };
 
 -- Those companions will not be auto summoned
@@ -88,6 +96,7 @@ A.uniqueAreaMounts =
         [613] = 75207, -- Vashj'ir
     },
     [5] = {}, -- with passengers
+    [6] = {}, -- Surface
 };
 
 -- Area types handled by the addon, for auto summon behavior according to area type
@@ -113,6 +122,12 @@ A.areaTypesLocales =
 
 -- Database revision
 A.databaseRevision = 2;
+
+-- Surface mounts
+A.surfaceMounts =
+{
+    118089, -- Azure Water Strider
+};
 
 -- Mount with restriction, location, spell, faction, etc
 A.restrictedMounts =
@@ -979,7 +994,7 @@ A.restrictedMounts =
         type = "faction",
         args = "Horde",
     },
-    [65642] = -- Silvermoon Hawkstrider
+    [63642] = -- Silvermoon Hawkstrider
     {
         type = "faction",
         args = "Horde",

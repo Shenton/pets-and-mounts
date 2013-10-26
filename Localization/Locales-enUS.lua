@@ -172,4 +172,10 @@ L["Magic Broom"] = true;
 L["Summon the Magic Broom when it is in your bags."] = true;
 L["Cannot dock buttons together when at least one of them is hidden."] = true;
 L["Use me to move both buttons."] = true;
+L["Surface mount"] = true;
+L["If you are in a non flyable area and at the water surface, it will summon a mount able to walk on water. Support Death Knights Path of Frost, Shamans Water Walking and Warlocks glyph."] = true;
+L["Prefer surface spell"] = true;
+L["If surface mount options is enabled, it will prefer using your water walking spell other the mount. This only works for Death Knights and Shamans."] = true;
+L["Surface"] = true;
+L["Random surface mount"] = true;
 end

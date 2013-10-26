@@ -7,8 +7,9 @@
 -------------------------------------------------------------------------------]]--
 
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
--- TODO: Modify IsSwimming method to return the 3 states, swimming, surface and not swimming, then do something with that
 -- TODO: multi anchor docked icon
+-- TODO: add flying carpets to restricted mounts, new cat profession needed
+-- TODO: add reset option for pets fav
 
 -- Ace libs (<3)
 local A = LibStub("AceAddon-3.0"):NewAddon("PetsAndMounts", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0");
@@ -274,7 +275,7 @@ function A:GetCreatureIDFromSpellID(spellID)
     for k,v in ipairs(A.pamTable.mounts) do
         for kk,vv in pairs(v) do
             for kkk,vvv in ipairs(vv) do
-                if ( spellID == vvv.spellId ) then
+                if ( spellID == vvv.spellID ) then
                     return vvv.creatureID;
                 end
             end
@@ -292,7 +293,7 @@ function A:GetMountIDFromSpellID(spellID)
     for k,v in ipairs(A.pamTable.mounts) do
         for kk,vv in pairs(v) do
             for kkk,vvv in ipairs(vv) do
-                if ( spellID == vvv.spellId ) then
+                if ( spellID == vvv.spellID ) then
                     return vvv.id;
                 end
             end
@@ -570,6 +571,26 @@ function A:GetMountCategory(bf)
     end
 end
 
+--- Check if the mount is walking on surface
+-- @param spellID The mount spell ID
+function A:IsWaterWalkingMount(spellID)
+    if ( tContains(A.surfaceMounts, spellID) ) then -- Generic mounts
+        return 1;
+    else -- Special cases
+        if ( spellID == 23161 or spellID == 5784 ) then -- Warlock's Dreadsteed and Felsteed, check for Glyph of Nightmares (spellID: 56232)
+            for i=1,NUM_GLYPH_SLOTS do
+                local enabled, _, _, glyphSpellID = GetGlyphSocketInfo(i);
+
+                if ( enabled and glyphSpellID == 56232 ) then
+                    return 1;
+                end
+            end
+        end
+    end
+
+    return nil;
+end
+
 --- Build the mounts table
 function A:BuildMountsTable(force)
     local mountsCount = GetNumCompanions("MOUNT");
@@ -583,9 +604,9 @@ function A:BuildMountsTable(force)
 
     A.lastMountsCount = mountsCount;
 
-    local creatureID, creatureName, spellId, icon, isSummoned, mountType, leadingLetter, cat;
+    local creatureID, creatureName, spellID, icon, isSummoned, mountType, leadingLetter, cat;
 
-    -- Rebuilding database, deleting cache
+    -- (Re)Building database, deleting cache
     A.usableMountsCache = nil;
 
     A.pamTable.mounts =
@@ -595,6 +616,7 @@ function A:BuildMountsTable(force)
         [3] = {}, -- Hybrid (ground & fly)
         [4] = {}, -- Aquatic
         [5] = {}, -- with passengers
+        [6] = {}, -- Water walking
     };
     A.pamTable.mountsIds =
     {
@@ -603,22 +625,23 @@ function A:BuildMountsTable(force)
         [3] = {}, -- Hybrid (ground & fly)
         [4] = {}, -- Aquatic
         [5] = {}, -- with passengers
+        [6] = {}, -- Water walking
     };
 
     for i=1,mountsCount do
-        creatureID, creatureName, spellId, icon, isSummoned, mountType = GetCompanionInfo("MOUNT", i);
+        creatureID, creatureName, spellID, icon, isSummoned, mountType = GetCompanionInfo("MOUNT", i);
         leadingLetter = string.sub(creatureName, 1, 1);
 
         -- Forced passenger mounts
-        if ( A.passengerMounts[spellId] ) then
+        if ( tContains(A.passengerMounts, spellID) ) then
             if ( not A.pamTable.mounts[5][leadingLetter] ) then A.pamTable.mounts[5][leadingLetter] = {}; end
 
-            A.pamTable.mountsIds[5][#A.pamTable.mountsIds[5]+1] = spellId;
+            A.pamTable.mountsIds[5][#A.pamTable.mountsIds[5]+1] = spellID;
 
             A.pamTable.mounts[5][leadingLetter][#A.pamTable.mounts[5][leadingLetter]+1] =
             {
                 id = i,
-                spellId = spellId,
+                spellID = spellID,
                 creatureID = creatureID,
                 name = creatureName,
                 icon = icon,
@@ -628,15 +651,33 @@ function A:BuildMountsTable(force)
         end
 
         -- Forced aquatic mounts
-        if ( A.aquaticMounts[spellId] ) then
+        if ( tContains(A.aquaticMounts, spellID) ) then
             if ( not A.pamTable.mounts[4][leadingLetter] ) then A.pamTable.mounts[4][leadingLetter] = {}; end
 
-            A.pamTable.mountsIds[4][#A.pamTable.mountsIds[4]+1] = spellId;
+            A.pamTable.mountsIds[4][#A.pamTable.mountsIds[4]+1] = spellID;
 
             A.pamTable.mounts[4][leadingLetter][#A.pamTable.mounts[4][leadingLetter]+1] =
             {
                 id = i,
-                spellId = spellId,
+                spellID = spellID,
+                creatureID = creatureID,
+                name = creatureName,
+                icon = icon,
+                isSummoned = isSummoned,
+                mountType = mountType,
+            };
+        end
+
+        -- Forced water walking mounts
+        if ( A:IsWaterWalkingMount(spellID) ) then
+            if ( not A.pamTable.mounts[6][leadingLetter] ) then A.pamTable.mounts[6][leadingLetter] = {}; end
+
+            A.pamTable.mountsIds[6][#A.pamTable.mountsIds[6]+1] = spellID;
+
+            A.pamTable.mounts[6][leadingLetter][#A.pamTable.mounts[6][leadingLetter]+1] =
+            {
+                id = i,
+                spellID = spellID,
                 creatureID = creatureID,
                 name = creatureName,
                 icon = icon,
@@ -647,20 +688,20 @@ function A:BuildMountsTable(force)
 
         cat = A:GetMountCategory(mountType);
 
-        -- Using the first flying mount found to test swimming area
-        if ( (mountType == 23 or mountType == 7 or mountType == 22 or mountType == 21
-        or mountType == 6 or mountType == 5 or mountType == 20 or mountType == 4) and not A.swimmingCheckSpellID ) then
-            A.swimmingCheckSpellID = spellId;
+        -- Using the first non water mount found for testing swimming area
+        if ( not A.swimmingCheckSpellID and (mountType == 23 or mountType == 7 or mountType == 22
+        or mountType == 21 or mountType == 6 or mountType == 5 or mountType == 20 or mountType == 4) ) then
+            A.swimmingCheckSpellID = spellID;
         end
 
         if ( not A.pamTable.mounts[cat][leadingLetter] ) then A.pamTable.mounts[cat][leadingLetter] = {}; end
 
-        A.pamTable.mountsIds[cat][#A.pamTable.mountsIds[cat]+1] = spellId;
+        A.pamTable.mountsIds[cat][#A.pamTable.mountsIds[cat]+1] = spellID;
 
         A.pamTable.mounts[cat][leadingLetter][#A.pamTable.mounts[cat][leadingLetter]+1] =
         {
             id = i,
-            spellId = spellId,
+            spellID = spellID,
             creatureID = creatureID,
             name = creatureName,
             icon = icon,
@@ -1361,6 +1402,23 @@ function A:PLAYER_LEVEL_UP(event, level, ...)
     A:SetPostClickMacro();
 end
 
+function A:GLYPH_UPDATED()
+    local isGlyphed;
+
+    for i=1,NUM_GLYPH_SLOTS do
+        local enabled, _, _, glyphSpellID = GetGlyphSocketInfo(i);
+
+        if ( enabled and glyphSpellID == 56232 ) then
+            isGlyphed = 1;
+        end
+    end
+
+    if ( A.lockLastGlyphState ~= isGlyphed ) then
+        A:BuildMountsTable(1);
+        A.lockLastGlyphState = isGlyphed;
+    end
+end
+
 --[[-------------------------------------------------------------------------------
     Ace DB and database revision methods
 -------------------------------------------------------------------------------]]--
@@ -1399,6 +1457,8 @@ A.aceDefaultDB =
         areaMounts = 1, -- d
         hauntedMemento = 1, -- d
         magicBroom = 1, -- d
+        surfaceMount = 1, -- d
+        preferSurfaceSpell = nil, -- d
         ldbi = {}, -- d
         favoritePets = {}, -- d
         favoriteMounts = -- d
@@ -1408,6 +1468,7 @@ A.aceDefaultDB =
             [3] = {}, -- Hybrid (ground & fly)
             [4] = {}, -- Aquatic
             [5] = {}, -- with passengers
+            [6] = {}, -- Water walking
         },
         forceOne = -- d
         {
@@ -1419,6 +1480,7 @@ A.aceDefaultDB =
                 [3] = nil, -- Hybrid (ground & fly)
                 [4] = nil, -- Aquatic
                 [5] = nil, -- with passengers
+                [6] = nil, -- Water walking
             },
         },
         savedSets = -- d
@@ -1472,6 +1534,7 @@ A.aceDefaultDB =
             [3] = {}, -- Hybrid (ground & fly)
             [4] = {}, -- Aquatic
             [5] = {}, -- with passengers
+            [6] = {}, -- Water walking
         },
     },
 };
@@ -1767,4 +1830,9 @@ function A:OnEnable()
 
     -- Set everything
     A:SetEverything();
+
+    if ( A.playerClass == "WARLOCK" ) then -- If it is a lock, building database on spec switch or glyph modification is needed
+        --A:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", "BuildMountsTable", 1);
+        A:RegisterEvent("GLYPH_UPDATED"); -- Will also fire when switching spec
+    end
 end

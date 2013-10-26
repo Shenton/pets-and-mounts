@@ -145,4 +145,7 @@
 
     <Button name="PetsAndMountsSecureButtonAquatic" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
     </Button>
+
+    <Button name="PetsAndMountsSecureButtonSurface" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
+    </Button>
 </Ui>

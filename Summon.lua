@@ -295,11 +295,12 @@ function A:IsFlyable()
 end
 
 --- Check if the player is swimming and not at the surface
+-- @return 1 if swimming, 2 if at the water surface, or nil
 function A:IsSwimming()
     if ( IsSwimming() or IsSubmerged() ) then -- Swimming
         if ( A.swimmingCheckSpellID and IsUsableSpell(A.swimmingCheckSpellID) ) then -- At the surface
             A:DebugMessage("IsSwimming() - Spell is usable");
-            return nil;
+            return 2;
         elseif ( IsSubmerged() ) then -- Bottom of the water - Have to do this here since 5.4 it is tainted and work as IsSwimming
             A:DebugMessage("IsSwimming() - IsSubmerged");
             return 1;
@@ -324,19 +325,22 @@ function A:CanRide()
     return nil;
 end
 
---- Set wich mount category should be used
+--- Set which mount category should be used
 function A:SetMountCat()
     -- [1] = {}, -- Ground
     -- [2] = {}, -- Fly
     -- [3] = {}, -- Hybrid (ground & fly)
     -- [4] = {}, -- Aquatic
     -- [5] = {}, -- with passengers
-    if ( A:IsSwimming() ) then -- Aquatic mount
+    if ( A:IsSwimming() == 1 ) then -- Aquatic mount
         A:DebugMessage("SetMountCat() - Aquatic");
         return 4;
     elseif ( A:IsFlyable() ) then -- Flyable mount
         A:DebugMessage("SetMountCat() - Flyable");
         return 2;
+    elseif ( A:IsSwimming() == 2 and not A:IsFlyable() ) then -- Water surface not flyable area
+        A:DebugMessage("SetMountCat() - Surface");
+        return 6;
     else -- Ground mount
         A:DebugMessage("SetMountCat() - Ground");
         return 1;
@@ -348,12 +352,12 @@ end
 --- Summon a mount with it spell ID
 function A:SummonMountBySpellId(id)
     local numMounts = GetNumCompanions("MOUNT");
-    local _, name, spellId;
+    local _, name, spellID;
 
     for i=1,numMounts do
-        _, name, spellId = GetCompanionInfo("MOUNT", i);
+        _, name, spellID = GetCompanionInfo("MOUNT", i);
 
-        if ( spellId == id ) then
+        if ( spellID == id ) then
             A:DebugMessage("Summon mount: "..name);
             CallCompanion("MOUNT", i);
             return 1;
@@ -388,13 +392,13 @@ function A:BuildUsableMountsTable(tbl)
                     if ( tContains(A.restrictedMounts[v].args, A.currentMapID) ) then
                         out[#out+1] = v;
                     else
-                        A:DebugMessage(("Restricted mount: %s - type: %s"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type));
+                        A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                     end
                 else
                     if ( A.restrictedMounts[v].args == A.currentMapID ) then
                         out[#out+1] = v;
                     else
-                        A:DebugMessage(("Restricted mount: %s - type: %s"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type));
+                        A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                     end
                 end
             -- Spell
@@ -407,12 +411,12 @@ function A:BuildUsableMountsTable(tbl)
                         end
                     end
 
-                    A:DebugMessage(("Restricted mount: %s - type: %s"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type));
+                    A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                 else
                     if ( IsSpellKnown(A.restrictedMounts[v].args) ) then
                         out[#out+1] = v
                     else
-                        A:DebugMessage(("Restricted mount: %s - type: %s"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type));
+                        A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                     end
                 end
             -- Class
@@ -421,13 +425,13 @@ function A:BuildUsableMountsTable(tbl)
                     if ( tContains(A.restrictedMounts[v].args, A.playerClass) ) then
                         out[#out+1] = v;
                     else
-                        A:DebugMessage(("Restricted mount: %s - type: %s"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type));
+                        A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                     end
                 else
                     if ( A.restrictedMounts[v].args == A.playerClass ) then
                         out[#out+1] = v;
                     else
-                        A:DebugMessage(("Restricted mount: %s - type: %s"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type));
+                        A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                     end
                 end
             -- Faction
@@ -436,13 +440,13 @@ function A:BuildUsableMountsTable(tbl)
                     if ( tContains(A.restrictedMounts[v].args, A.playerFaction) ) then
                         out[#out+1] = v;
                     else
-                        A:DebugMessage(("Restricted mount: %s - type: %s"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type));
+                        A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                     end
                 else
                     if ( A.restrictedMounts[v].args == A.playerFaction ) then
                         out[#out+1] = v;
                     else
-                        A:DebugMessage(("Restricted mount: %s - type: %s"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type));
+                        A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                     end
                 end
             -- Race & class
@@ -451,13 +455,13 @@ function A:BuildUsableMountsTable(tbl)
                     if ( tContains(A.restrictedMounts[v].args, A.playerRace..A.playerClass) ) then
                         out[#out+1] = v;
                     else
-                        A:DebugMessage(("Restricted mount: %s - type: %s"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type));
+                        A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                     end
                 else
                     if ( A.restrictedMounts[v].args == A.playerRace..A.playerClass ) then
                         out[#out+1] = v;
                     else
-                        A:DebugMessage(("Restricted mount: %s - type: %s"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type));
+                        A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                     end
                 end
             end
@@ -486,7 +490,7 @@ function A:GetRandomMount(tbl)
     return A.usableMountsCache[tbl][index];
 end
 
---- Check if we got a least one mount available
+--- Check if we got a least one mount available after restriction in the given table
 -- @param tbl The original mounts table
 -- @return The number of mounts available or nil
 function A:GotRandomMount(tbl)
@@ -531,7 +535,7 @@ function A:RandomMount(cat)
     if ( not cat ) then cat = A:SetMountCat(); end
 
     -- ground, do not want hybrid when ground - aqua - passenger
-    if ( (cat == 1 and A.db.profile.noHybridWhenGround) or cat == 4 or cat == 5 ) then
+    if ( (cat == 1 and A.db.profile.noHybridWhenGround) or cat == 4 or cat == 5 or cat == 6 ) then
         -- Got forced
         if ( A.db.profile.forceOne.mount[cat] ) then
             A:DebugMessage(("RandomMount() - No hybrid - Got forced - %i"):format(cat));

@@ -34,6 +34,7 @@ BINDING_NAME_PETSANDMOUNTSMOUNTPASSENGERS = L["Random passengers mount"];
 BINDING_NAME_PETSANDMOUNTSMOUNTFLYING = L["Random flying mount"];
 BINDING_NAME_PETSANDMOUNTSMOUNTGROUND = L["Random ground mount"];
 BINDING_NAME_PETSANDMOUNTSMOUNTAQUATIC = L["Random aquatic mount"];
+BINDING_NAME_PETSANDMOUNTSMOUNTSURFACE = L["Random surface mount"];
 
 --- Set bindings
 local bindings =
@@ -44,6 +45,7 @@ local bindings =
     ["PETSANDMOUNTSMOUNTFLYING"] = "PetsAndMountsSecureButtonFlying",
     ["PETSANDMOUNTSMOUNTGROUND"] = "PetsAndMountsSecureButtonGround",
     ["PETSANDMOUNTSMOUNTAQUATIC"] = "PetsAndMountsSecureButtonAquatic",
+    ["PETSANDMOUNTSMOUNTSURFACE"] = "PetsAndMountsSecureButtonSurface",
 };
 function A:SetBindings()
     if ( InCombatLockdown() ) then
@@ -72,6 +74,7 @@ local buttonsMacro =
         ["PetsAndMountsSecureButtonFlying"] = "/cancelform\n/run PetsAndMountsGlobal:RandomMount(2)",
         ["PetsAndMountsSecureButtonGround"] = "/cancelform\n/run PetsAndMountsGlobal:RandomMount(1)",
         ["PetsAndMountsSecureButtonAquatic"] = "/cancelform\n/run PetsAndMountsGlobal:RandomMount(4)",
+        ["PetsAndMountsSecureButtonSurface"] = "/cancelform\n/run PetsAndMountsGlobal:RandomMount(6)",
     },
     [2] = -- Without
     {
@@ -80,6 +83,7 @@ local buttonsMacro =
         ["PetsAndMountsSecureButtonFlying"] = "/run PetsAndMountsGlobal:RandomMount(2)",
         ["PetsAndMountsSecureButtonGround"] = "/run PetsAndMountsGlobal:RandomMount(1)",
         ["PetsAndMountsSecureButtonAquatic"] = "/run PetsAndMountsGlobal:RandomMount(4)",
+        ["PetsAndMountsSecureButtonSurface"] = "/run PetsAndMountsGlobal:RandomMount(6)",
     },
 };
 function A:SetButtonsMacro()
@@ -139,10 +143,18 @@ function A:SetDruidPreClickMacro()
     end
 end
 
--- Shaman macros and spellIDs
+-- Shaman spellIDs
 -- Ghost Wolf 2645
+-- Water Walking 546
 function A:SetShamanSpells()
     A.shamanGhostWolf = GetSpellInfo(2645);
+    A.shamanWaterWalking = GetSpellInfo(546);
+end
+
+-- Death Knight spellIDs
+-- Path of Frost 3714
+function A:SetdeathKnightSpell()
+    A.deathKnightPathOfFrost = GetSpellInfo(3714);
 end
 
 -- Other classes macros and post click macros
@@ -165,13 +177,31 @@ function A:SetPostClickMacro()
         else
             A.postClickMacro = "";
         end
+    elseif ( A.playerClass == "DEATHKNIGHT" ) then -- No specific post macro for DK, but this is a good place to set their spells
+        A:SetdeathKnightSpell();
+        A.postClickMacro = "/dismount [mounted]";
     else
         A.postClickMacro = "/dismount [mounted]";
     end
 end
 
+--- Check if we got at least one mount for the given cat, check all tables after restriction
+function A:GotMountAllTable(cat)
+    if ( A.db.profile.forceOne.mount[cat]
+    or A.db.profile.mountByMapID[cat][tostring(A.currentMapID)]
+    or A.db.profile.areaMounts and A.uniqueAreaMounts[cat][A.currentMapID]
+    or A:GotRandomMount(A.db.profile.favoriteMounts[cat])
+    or A:GotRandomMount(A.pamTable.mountsIds[cat]) ) then
+        return 1;
+    end
+
+    return nil;
+end
+
 --- PreClick
 function A:PreClickMount(button, clickedBy)
+    if ( InCombatLockdown() ) then return; end
+
     if ( clickedBy == "LeftButton" ) then
         if ( IsShiftKeyDown() ) then
             button:SetAttribute("type", "macro");
@@ -183,13 +213,32 @@ function A:PreClickMount(button, clickedBy)
             A.db.profile[button:GetName()].hide = 1;
             A:SetButtons();
         else
-            if ( InCombatLockdown() ) then return; end
-
-            if ( A.db.profile.magicBroom and not A:IsSwimming() and GetItemCount(37011, nil, nil) == 1 ) then -- 37011 - Magic Broom from Hallow's End
+            if ( A.db.profile.magicBroom and GetItemCount(37011, nil, nil) == 1 and not A:IsSwimming() ) then -- 37011 - Magic Broom from Hallow's End
                 if ( not A.magicBroomName ) then A.magicBroomName = GetItemInfo(37011); end
 
                 button:SetAttribute("type", "macro");
                 button:SetAttribute("macrotext", "/use "..A.magicBroomName or "Magic Broom");
+            elseif ( A.db.profile.surfaceMount and A:IsSwimming() == 2 and (A.playerClass == "DEATHKNIGHT" or A.playerClass == "SHAMAN") ) then -- DK and Sham water walking spells
+                if ( A.db.profile.preferSurfaceSpell or (not A.db.profile.preferSurfaceSpell and not A:GotMountAllTable(6)) ) then
+                    if ( A.playerClass == "DEATHKNIGHT" and not UnitBuff("player", A.deathKnightPathOfFrost) ) then
+                        button:SetAttribute("type", "macro");
+                        button:SetAttribute("macrotext", "/cast "..A.deathKnightPathOfFrost);
+                    elseif ( A.playerClass == "SHAMAN" ) then
+                        if ( UnitBuff("player", A.shamanWaterWalking) ) then
+                            button:SetAttribute("type", "macro");
+                            button:SetAttribute("macrotext", "/cancelform\n/run PetsAndMountsGlobal:RandomMount()");
+                        else
+                            button:SetAttribute("type", "macro");
+                            button:SetAttribute("macrotext", "/cast "..A.shamanWaterWalking);
+                        end
+                    else
+                        button:SetAttribute("type", "macro");
+                        button:SetAttribute("macrotext", "/run PetsAndMountsGlobal:RandomMount()");
+                    end
+                else
+                    button:SetAttribute("type", "macro");
+                    button:SetAttribute("macrotext", "/run PetsAndMountsGlobal:RandomMount()");
+                end
             elseif ( A.db.profile.classesMacrosEnabled and A.playerClass == "DRUID" ) then
                 A:SetDruidPreClickMacro();
                 button:SetAttribute("type", "macro");
@@ -233,6 +282,8 @@ end
 
 --- PreClick
 function A:PreClickPet(button, clickedBy)
+    if ( InCombatLockdown() ) then return; end
+
     if ( clickedBy == "LeftButton" ) then
         if ( IsShiftKeyDown() ) then
             button:SetAttribute("type", "macro");

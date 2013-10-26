@@ -5,4 +5,5 @@
     <Binding name="PETSANDMOUNTSMOUNTFLYING" header="PETSANDMOUNTS"></Binding>
     <Binding name="PETSANDMOUNTSMOUNTGROUND" header="PETSANDMOUNTS"></Binding>
     <Binding name="PETSANDMOUNTSMOUNTAQUATIC" header="PETSANDMOUNTS"></Binding>
+    <Binding name="PETSANDMOUNTSMOUNTSURFACE" header="PETSANDMOUNTS"></Binding>
 </Bindings>

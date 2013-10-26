@@ -502,6 +502,24 @@ function A:AceConfig()
                                 set = function(info, val) A.db.profile.magicBroom = not A.db.profile.magicBroom; end,
                                 get = function(info) return A.db.profile.magicBroom; end,
                             },
+                            surfaceMount =
+                            {
+                                order = 5,
+                                name = L["Surface mount"],
+                                desc = L["If you are in a non flyable area and at the water surface, it will summon a mount able to walk on water. Support Death Knights Path of Frost, Shamans Water Walking and Warlocks glyph."],
+                                type = "toggle",
+                                set = function(info, val) A.db.profile.surfaceMount = not A.db.profile.surfaceMount; end,
+                                get = function(info) return A.db.profile.surfaceMount; end,
+                            },
+                            preferSurfaceSpell =
+                            {
+                                order = 6,
+                                name = L["Prefer surface spell"],
+                                desc = L["If surface mount options is enabled, it will prefer using your water walking spell other the mount. This only works for Death Knights and Shamans."],
+                                type = "toggle",
+                                set = function(info, val) A.db.profile.preferSurfaceSpell = not A.db.profile.preferSurfaceSpell; end,
+                                get = function(info) return A.db.profile.preferSurfaceSpell; end,
+                            },
                         },
                     },
                     buttonOptions =
@@ -1030,6 +1048,43 @@ function A:AceConfig()
                                     return key;
                                 end,
                             },
+                            randomSurfaceMount =
+                            {
+                                order = 50,
+                                name = L["Random surface mount"],
+                                type = "header",
+                            },
+                            randomSurfaceMountKey1 =
+                            {
+                                order = 51,
+                                name = L["Key one"],
+                                desc = L["Bind a key to summon a random mount."],
+                                type = "keybinding",
+                                set = function(info, val)
+                                    local set = GetCurrentBindingSet();
+
+                                    SetBinding(val, "PETSANDMOUNTSMOUNTSURFACE", set);
+                                    SaveBindings(set);
+                                end,
+                                get = function(info) return GetBindingKey("PETSANDMOUNTSMOUNTSURFACE"); end,
+                            },
+                            randomSurfaceMountKey2 =
+                            {
+                                order = 52,
+                                name = L["Key two"],
+                                desc = L["Bind a key to summon a random mount."],
+                                type = "keybinding",
+                                set = function(info, val)
+                                    local set = GetCurrentBindingSet();
+
+                                    SetBinding(val, "PETSANDMOUNTSMOUNTSURFACE", set);
+                                    SaveBindings(set);
+                                end,
+                                get = function(info)
+                                    local _, key = GetBindingKey("PETSANDMOUNTSMOUNTSURFACE");
+                                    return key;
+                                end,
+                            },
                         },
                     },
                     minimap =
@@ -1448,7 +1503,7 @@ function A:AceConfig()
 
                                     for k,v in A:PairsByKeys(A.pamTable.mounts[4]) do
                                         for kk,vv in ipairs(v) do
-                                            out[vv.spellId] = vv.name;
+                                            out[vv.spellID] = vv.name;
                                         end
                                     end
 
@@ -1475,7 +1530,7 @@ function A:AceConfig()
 
                                     for k,v in A:PairsByKeys(A.pamTable.mounts[1]) do
                                         for kk,vv in ipairs(v) do
-                                            out[vv.spellId] = vv.name;
+                                            out[vv.spellID] = vv.name;
                                         end
                                     end
 
@@ -1502,7 +1557,7 @@ function A:AceConfig()
 
                                     for k,v in A:PairsByKeys(A.pamTable.mounts[2]) do
                                         for kk,vv in ipairs(v) do
-                                            out[vv.spellId] = vv.name;
+                                            out[vv.spellID] = vv.name;
                                         end
                                     end
 
@@ -1529,7 +1584,7 @@ function A:AceConfig()
 
                                     for k,v in A:PairsByKeys(A.pamTable.mounts[3]) do
                                         for kk,vv in ipairs(v) do
-                                            out[vv.spellId] = vv.name;
+                                            out[vv.spellID] = vv.name;
                                         end
                                     end
 
@@ -1556,7 +1611,7 @@ function A:AceConfig()
 
                                     for k,v in A:PairsByKeys(A.pamTable.mounts[5]) do
                                         for kk,vv in ipairs(v) do
-                                            out[vv.spellId] = vv.name;
+                                            out[vv.spellID] = vv.name;
                                         end
                                     end
 
@@ -1568,6 +1623,33 @@ function A:AceConfig()
                                         A.db.profile.forceOne.mount[5] = nil;
                                     else
                                         A.db.profile.forceOne.mount[5] = val;
+                                    end
+                                end,
+                            },
+                            surface =
+                            {
+                                order = 5,
+                                name = L["Surface"],
+                                desc = L["Select the %s mount to force summon."]:format(L["Surface"]),
+                                type = "select",
+                                dialogControl = "Dropdown-SortByValue",
+                                values = function()
+                                    local out = { [0] = L["None"] };
+
+                                    for k,v in A:PairsByKeys(A.pamTable.mounts[6]) do
+                                        for kk,vv in ipairs(v) do
+                                            out[vv.spellID] = vv.name;
+                                        end
+                                    end
+
+                                    return out;
+                                end,
+                                get = function() return A.db.profile.forceOne.mount[6]; end,
+                                set = function(self, val)
+                                    if ( val == 0 ) then
+                                        A.db.profile.forceOne.mount[6] = nil;
+                                    else
+                                        A.db.profile.forceOne.mount[6] = val;
                                     end
                                 end,
                             },
@@ -1765,7 +1847,7 @@ function A:AceConfig()
 
                                     for k,v in A:PairsByKeys(A.pamTable.mounts[4]) do
                                         for kk,vv in ipairs(v) do
-                                            out[vv.spellId] = vv.name;
+                                            out[vv.spellID] = vv.name;
                                         end
                                     end
 
@@ -1814,7 +1896,7 @@ function A:AceConfig()
 
                                     for k,v in A:PairsByKeys(A.pamTable.mounts[1]) do
                                         for kk,vv in ipairs(v) do
-                                            out[vv.spellId] = vv.name;
+                                            out[vv.spellID] = vv.name;
                                         end
                                     end
 
@@ -1863,7 +1945,7 @@ function A:AceConfig()
 
                                     for k,v in A:PairsByKeys(A.pamTable.mounts[2]) do
                                         for kk,vv in ipairs(v) do
-                                            out[vv.spellId] = vv.name;
+                                            out[vv.spellID] = vv.name;
                                         end
                                     end
 
@@ -1912,7 +1994,7 @@ function A:AceConfig()
 
                                     for k,v in A:PairsByKeys(A.pamTable.mounts[3]) do
                                         for kk,vv in ipairs(v) do
-                                            out[vv.spellId] = vv.name;
+                                            out[vv.spellID] = vv.name;
                                         end
                                     end
 
@@ -1961,7 +2043,7 @@ function A:AceConfig()
 
                                     for k,v in A:PairsByKeys(A.pamTable.mounts[5]) do
                                         for kk,vv in ipairs(v) do
-                                            out[vv.spellId] = vv.name;
+                                            out[vv.spellID] = vv.name;
                                         end
                                     end
 
@@ -1995,6 +2077,55 @@ function A:AceConfig()
                                         A.db.profile.mountByMapID[5][tostring(mapID)] = nil;
                                     else
                                         A.db.profile.mountByMapID[5][tostring(mapID)] = val;
+                                    end
+                                end,
+                            },
+                            surface =
+                            {
+                                order = 150,
+                                name = L["Surface"],
+                                desc = L["Select the %s mount to force summon."]:format(L["Surface"]),
+                                type = "select",
+                                dialogControl = "Dropdown-SortByValue",
+                                values = function()
+                                    local out = { [0] = L["None"] };
+
+                                    for k,v in A:PairsByKeys(A.pamTable.mounts[6]) do
+                                        for kk,vv in ipairs(v) do
+                                            out[vv.spellID] = vv.name;
+                                        end
+                                    end
+
+                                    return out;
+                                end,
+                                get = function()
+                                    local mapID;
+
+                                    if ( A.currentMapIDForMounts ) then
+                                        mapID = A.currentMapIDForMounts;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( A.db.profile.mountByMapID[6][tostring(mapID)] ) then
+                                        return A.db.profile.mountByMapID[6][tostring(mapID)];
+                                    else
+                                        return 0;
+                                    end
+                                end,
+                                set = function(self, val)
+                                    local mapID;
+
+                                    if ( A.currentMapIDForMounts ) then
+                                        mapID = A.currentMapIDForMounts;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( val == 0 ) then
+                                        A.db.profile.mountByMapID[6][tostring(mapID)] = nil;
+                                    else
+                                        A.db.profile.mountByMapID[6][tostring(mapID)] = val;
                                     end
                                 end,
                             },
@@ -2124,14 +2255,12 @@ function A:AceConfig()
     --[3] = {}, -- Hybrid (ground & fly)
     --[4] = {}, -- Aquatic
     --[5] = {}, -- with passengers
+    --[6] = {}, -- Water walking
     for k,v in ipairs(A.pamTable.mounts) do
-        --print(#v)
-        --if ( #v > 0 ) then
-        --if 1 then
         if ( A:TableNotEmpty(v) ) then
             options.args.mounts.args[A.mountCat[k]] =
             {
-                --order = k,
+                order = k,
                 name = A.mountCat[k],
                 type = "group",
                 childGroups = "tab",
@@ -2169,7 +2298,7 @@ function A:AceConfig()
                                 return L["Add %s to favorite."]:format(vvv.name).."\n\n"
                                 .."ID: "..vvv.id.."\n"
                                 .."CreatureID: "..vvv.creatureID.."\n"
-                                .."SpellID: "..vvv.spellId.."\n"
+                                .."SpellID: "..vvv.spellID.."\n"
                                 .."Type: "..vvv.mountType;
                             else
                                 return L["Add %s to favorite."]:format(vvv.name);
@@ -2178,14 +2307,14 @@ function A:AceConfig()
                         image = vvv.icon,
                         type = "toggle",
                         set = function(info, val)
-                            if ( tContains(A.db.profile.favoriteMounts[k], vvv.spellId) ) then
-                                A:TableRemove(A.db.profile.favoriteMounts[k], vvv.spellId);
+                            if ( tContains(A.db.profile.favoriteMounts[k], vvv.spellID) ) then
+                                A:TableRemove(A.db.profile.favoriteMounts[k], vvv.spellID);
                             else
-                                A.db.profile.favoriteMounts[k][#A.db.profile.favoriteMounts[k]+1] = vvv.spellId;
+                                A.db.profile.favoriteMounts[k][#A.db.profile.favoriteMounts[k]+1] = vvv.spellID;
                             end
                         end,
                         get = function(info)
-                            if ( tContains(A.db.profile.favoriteMounts[k], vvv.spellId) ) then
+                            if ( tContains(A.db.profile.favoriteMounts[k], vvv.spellID) ) then
                                 return 1;
                             else
                                 return nil;
@@ -2229,8 +2358,11 @@ function A:AceConfig()
                         [3] = {}, -- Hybrid (ground & fly)
                         [4] = {}, -- Aquatic
                         [5] = {}, -- with passengers
+                        [6] = {}, -- Water walking
                     };
 
+                    -- Fav mounts reset, deleting cache
+                    A.usableMountsCache = nil;
                     A.enableMountResetButton = nil;
                 end,
             },
