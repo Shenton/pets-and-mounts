@@ -464,6 +464,20 @@ function A:BuildUsableMountsTable(tbl)
                         A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                     end
                 end
+            -- Profession
+            elseif ( A.restrictedMounts[v].type == "profession" ) then
+                local professionOne, professionTwo = GetProfessions();
+                local professionOneSkill, professionTwoSkill, _;
+
+                _, _, _, professionOneSkill, _, _, _, _, professionOne = A:GetProfession(professionOne);
+                _, _, _, professionTwoSkill, _, _, _, _, professionTwo = A:GetProfession(professionTwo);
+
+                if ( (professionOne == A.restrictedMounts[v].args[1] and professionOneSkill >= A.restrictedMounts[v].args[2])
+                or (professionTwo == A.restrictedMounts[v].args[1] and professionTwoSkill >= A.restrictedMounts[v].args[2]) ) then
+                    out[#out+1] = v;
+                else
+                    A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
+                end
             end
         else
             out[#out+1] = v;

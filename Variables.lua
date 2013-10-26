@@ -314,6 +314,48 @@ A.restrictedMounts =
         type = "race&class",
         args = "BloodElfPALADIN",
     },
+    -- Professions
+    -- Archaeology (794)
+    -- Alchemy (171)
+    -- Blacksmith (164)
+    -- Cooking (184)
+    -- Enchanting (333)
+    -- Engineer (202)
+    -- First Aid (129)
+    -- Fishing (356)
+    -- Herbalism (182)
+    -- Inscription (773)
+    -- Jewelcrafting (755)
+    -- Leatherworking (165)
+    -- Mining (186)
+    -- Skinning (393)
+    -- Tailoring (197)
+    [44153] = -- Flying Machine - Engineer - 300
+    {
+        type = "profession",
+        args = {202, 300},
+    },
+    [44151] = -- Turbo-Charged Flying Machine - Engineer - 375
+    {
+        type = "profession",
+        args = {202, 375},
+    },
+    [61451] = -- Flying Carpet - Tailoring - 300
+    {
+        type = "profession",
+        args = {197, 300},
+    },
+    [75596] = -- Frosty Flying Carpet - Tailoring - 425
+    {
+        type = "profession",
+        args = {197, 425},
+    },
+    [61309] = -- Magnificent Flying Carpet - Tailoring - 425
+    {
+        type = "profession",
+        args = {197, 425},
+    },
+    --
     -- Faction mounts
     -- Alliance Horde
     --

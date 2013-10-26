@@ -8,8 +8,6 @@
 
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 -- TODO: multi anchor docked icon
--- TODO: add flying carpets to restricted mounts, new cat profession needed
--- TODO: add reset option for pets fav
 
 -- Ace libs (<3)
 local A = LibStub("AceAddon-3.0"):NewAddon("PetsAndMounts", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0");

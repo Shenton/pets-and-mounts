@@ -1459,7 +1459,7 @@ function A:AceConfig()
                                 type = "select",
                                 dialogControl = "Dropdown-SortByValue",
                                 values = function()
-                                -- Using a string instead of an integer for "None", since blizzard stoped using ID but use GUID for pets
+                                -- Using a string instead of an integer for "None", since blizzard stopped using ID but use GUID for pets
                                 -- Why? Because Ace3 sort keys (btw sorting values would have been better or giving choices)
                                 -- Fu, rewriting SetList method from dropdown widget
                                     local out = { [0] = L["None"] };
@@ -2327,6 +2327,36 @@ function A:AceConfig()
             end
         end
     end
+
+    options.args.pets.args.reset =
+    {
+        order = 1000,
+        name = L["Reset"],
+        type = "group",
+        inline = true,
+        args =
+        {
+            toggle =
+            {
+                order = 0,
+                name = L["Enable"],
+                type = "toggle",
+                get = A.enablePetResetButton,
+                set = function() A.enablePetResetButton = not A.enablePetResetButton; end,
+            },
+            exec =
+            {
+                order = 1,
+                name = L["Reset"],
+                type = "execute",
+                disabled = not A.enablePetResetButton,
+                func = function()
+                    A.db.profile.favoritePets = {};
+                    A.enablePetResetButton = nil;
+                end,
+            },
+        },
+    };
 
     options.args.mounts.args.reset =
     {
