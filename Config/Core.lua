@@ -1,12 +1,12 @@
 ﻿--[[-------------------------------------------------------------------------------
-    Broker Pets & Mounts
-    Data Broker display for easy acces to pets and mounts.
+    Pets & Mounts
+    Auto and random summon highly customizable for your pets and mounts, with Data Broker support.
     By: Shenton
 
     Config.lua
 -------------------------------------------------------------------------------]]--
 
-local A = _G["BrokerPAMGlobal"];
+local A = _G["PetsAndMountsGlobal"];
 local L = A.L;
 
 -- Globals to locals
@@ -44,7 +44,7 @@ A:InitializeDB();
 -------------------------------------------------------------------------------]]--
 
 -- Set overwrite or dif name popup dialog
-StaticPopupDialogs["BrokerPamOverwriteOrChangeNameSet"] =
+StaticPopupDialogs["PetsAndMountsOverwriteOrChangeNameSet"] =
 {
     text = L["You already got a set named %s.\n\nEnter a new name or leave it blank to overwrite."],
     button1 = L["Accept"],
@@ -58,7 +58,7 @@ StaticPopupDialogs["BrokerPamOverwriteOrChangeNameSet"] =
     OnHide = function()
         A.newPetSetName = nil;
         A.newMountSetName = nil;
-        A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+        A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
     end,
     EditBoxOnTextChanged = function (self) self:GetParent().button1:Enable(); end,
     EditBoxOnEnterPressed = function(self)
@@ -73,7 +73,7 @@ StaticPopupDialogs["BrokerPamOverwriteOrChangeNameSet"] =
                 A.newMountSetName = nil;
             end
 
-            A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+            A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
             return;
         end
 
@@ -94,7 +94,7 @@ StaticPopupDialogs["BrokerPamOverwriteOrChangeNameSet"] =
                 self:GetParent():Hide();
             end
 
-            A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+            A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
         end
     end,
     EditBoxOnEscapePressed = function(self) self:GetParent():Hide(); end,
@@ -110,7 +110,7 @@ StaticPopupDialogs["BrokerPamOverwriteOrChangeNameSet"] =
                 A.newMountSetName = nil;
             end
 
-            A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+            A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
             return;
         end
 
@@ -129,14 +129,14 @@ StaticPopupDialogs["BrokerPamOverwriteOrChangeNameSet"] =
                 A.newPetSetName = nil;
             end
 
-            A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+            A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
         end
     end,
     preferredIndex = 3,
 };
 
 -- Confirm delete set popup dialog
-StaticPopupDialogs["BrokerPamDeleteSet"] =
+StaticPopupDialogs["PetsAndMountsDeleteSet"] =
 {
     text = L["Delete set %s?"],
     button1 = L["Accept"],
@@ -148,7 +148,7 @@ StaticPopupDialogs["BrokerPamDeleteSet"] =
     OnHide = function()
         A.deleteSetPets = nil;
         A.deleteSetMounts = nil;
-        A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+        A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
     end,
     -- EditBoxOnEnterPressed = function(self)
     -- end,
@@ -160,7 +160,7 @@ StaticPopupDialogs["BrokerPamDeleteSet"] =
             A.db.global.savedSets.mounts[A.deleteSetMounts] = nil;
         end
 
-        A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+        A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
     end,
     preferredIndex = 3,
 };
@@ -525,16 +525,16 @@ function A:AceConfig()
                                 desc = L["Hide the companions button."],
                                 type = "toggle",
                                 set = function(info, val)
-                                    A.db.profile.BrokerPAMSecureButtonPets.hide = not A.db.profile.BrokerPAMSecureButtonPets.hide;
+                                    A.db.profile.PetsAndMountsSecureButtonPets.hide = not A.db.profile.PetsAndMountsSecureButtonPets.hide;
 
-                                    if ( A.db.profile.BrokerPAMSecureButtonPets.hide and A.db.profile.dockButton ) then
-                                        A.db.profile.dockButton = nil;
-                                        A:UnDockButton();
-                                    end
+                                    -- if ( A.db.profile.PetsAndMountsSecureButtonPets.hide and A.db.profile.dockButton ) then
+                                        -- A.db.profile.dockButton = nil;
+                                        -- A:UnDockButton();
+                                    -- end
 
                                     A:SetButtons();
                                 end,
-                                get = function(info) return A.db.profile.BrokerPAMSecureButtonPets.hide; end,
+                                get = function(info) return A.db.profile.PetsAndMountsSecureButtonPets.hide; end,
                             },
                             petLock =
                             {
@@ -543,10 +543,14 @@ function A:AceConfig()
                                 desc = L["Lock the companions button."],
                                 type = "toggle",
                                 set = function(info, val)
-                                    A.db.profile.BrokerPAMSecureButtonPets.lock = not A.db.profile.BrokerPAMSecureButtonPets.lock;
+                                    if ( A.db.profile.dockButton ) then
+                                        return;
+                                    end
+
+                                    A.db.profile.PetsAndMountsSecureButtonPets.lock = not A.db.profile.PetsAndMountsSecureButtonPets.lock;
                                     A:SetButtons();
                                 end,
-                                get = function(info) return A.db.profile.BrokerPAMSecureButtonPets.lock; end,
+                                get = function(info) return A.db.profile.PetsAndMountsSecureButtonPets.lock; end,
                             },
                             petTooltip =
                             {
@@ -554,8 +558,8 @@ function A:AceConfig()
                                 name = L["Tooltip"],
                                 desc = L["Enable the tooltip of the companions button."],
                                 type = "toggle",
-                                set = function(info, val) A.db.profile.BrokerPAMSecureButtonPets.tooltip = not A.db.profile.BrokerPAMSecureButtonPets.tooltip; end,
-                                get = function(info) return A.db.profile.BrokerPAMSecureButtonPets.tooltip; end,
+                                set = function(info, val) A.db.profile.PetsAndMountsSecureButtonPets.tooltip = not A.db.profile.PetsAndMountsSecureButtonPets.tooltip; end,
+                                get = function(info) return A.db.profile.PetsAndMountsSecureButtonPets.tooltip; end,
                             },
                             petScale =
                             {
@@ -568,10 +572,10 @@ function A:AceConfig()
                                 max = 5,
                                 step = 0.1,
                                 set = function(info, val)
-                                    A.db.profile.BrokerPAMSecureButtonPets.scale = val;
+                                    A.db.profile.PetsAndMountsSecureButtonPets.scale = val;
                                     A:SetButtons();
                                 end,
-                                get = function(info) return A.db.profile.BrokerPAMSecureButtonPets.scale; end,
+                                get = function(info) return A.db.profile.PetsAndMountsSecureButtonPets.scale; end,
                             },
                             petReset =
                             {
@@ -580,7 +584,7 @@ function A:AceConfig()
                                 desc = L["Reset the companions button configuration."],
                                 type = "execute",
                                 func = function()
-                                    A.db.profile.BrokerPAMSecureButtonPets =
+                                    A.db.profile.PetsAndMountsSecureButtonPets =
                                     {
                                         hide = nil,
                                         lock = nil,
@@ -612,21 +616,21 @@ function A:AceConfig()
                                 desc = L["Hide the mounts button."],
                                 type = "toggle",
                                 set = function(info, val)
-                                    A.db.profile.BrokerPAMSecureButtonMounts.hide = not A.db.profile.BrokerPAMSecureButtonMounts.hide;
+                                    A.db.profile.PetsAndMountsSecureButtonMounts.hide = not A.db.profile.PetsAndMountsSecureButtonMounts.hide;
 
-                                    if ( A.db.profile.BrokerPAMSecureButtonMounts.hide and A.db.profile.dockButton ) then
-                                        A.db.profile.dockButton = nil;
-                                        A:UnDockButton();
+                                    -- if ( A.db.profile.PetsAndMountsSecureButtonMounts.hide and A.db.profile.dockButton ) then
+                                        -- A.db.profile.dockButton = nil;
+                                        -- A:UnDockButton();
 
-                                        if ( not A.db.profile.BrokerPAMSecureButtonMounts.lock and A.db.profile.BrokerPAMSecureButtonPets.lock ) then
-                                            A.db.profile.BrokerPAMSecureButtonPets.lock = nil;
-                                            A:SetButtons();
-                                        end
-                                    end
+                                        -- if ( not A.db.profile.PetsAndMountsSecureButtonMounts.lock and A.db.profile.PetsAndMountsSecureButtonPets.lock ) then
+                                            -- A.db.profile.PetsAndMountsSecureButtonPets.lock = nil;
+                                            -- A:SetButtons();
+                                        -- end
+                                    -- end
 
                                     A:SetButtons();
                                 end,
-                                get = function(info) return A.db.profile.BrokerPAMSecureButtonMounts.hide; end,
+                                get = function(info) return A.db.profile.PetsAndMountsSecureButtonMounts.hide; end,
                             },
                             mountLock =
                             {
@@ -635,10 +639,10 @@ function A:AceConfig()
                                 desc = L["Lock the mounts button."],
                                 type = "toggle",
                                 set = function(info, val)
-                                    A.db.profile.BrokerPAMSecureButtonMounts.lock = not A.db.profile.BrokerPAMSecureButtonMounts.lock;
+                                    A.db.profile.PetsAndMountsSecureButtonMounts.lock = not A.db.profile.PetsAndMountsSecureButtonMounts.lock;
                                     A:SetButtons();
                                 end,
-                                get = function(info) return A.db.profile.BrokerPAMSecureButtonMounts.lock; end,
+                                get = function(info) return A.db.profile.PetsAndMountsSecureButtonMounts.lock; end,
                             },
                             mountTooltip =
                             {
@@ -646,8 +650,8 @@ function A:AceConfig()
                                 name = L["Tooltip"],
                                 desc = L["Enable the tooltip of the mounts button."],
                                 type = "toggle",
-                                set = function(info, val) A.db.profile.BrokerPAMSecureButtonMounts.tooltip = not A.db.profile.BrokerPAMSecureButtonMounts.tooltip; end,
-                                get = function(info) return A.db.profile.BrokerPAMSecureButtonMounts.tooltip; end,
+                                set = function(info, val) A.db.profile.PetsAndMountsSecureButtonMounts.tooltip = not A.db.profile.PetsAndMountsSecureButtonMounts.tooltip; end,
+                                get = function(info) return A.db.profile.PetsAndMountsSecureButtonMounts.tooltip; end,
                             },
                             mountScale =
                             {
@@ -660,10 +664,10 @@ function A:AceConfig()
                                 max = 5,
                                 step = 0.1,
                                 set = function(info, val)
-                                    A.db.profile.BrokerPAMSecureButtonMounts.scale = val;
+                                    A.db.profile.PetsAndMountsSecureButtonMounts.scale = val;
                                     A:SetButtons();
                                 end,
-                                get = function(info) return A.db.profile.BrokerPAMSecureButtonMounts.scale; end,
+                                get = function(info) return A.db.profile.PetsAndMountsSecureButtonMounts.scale; end,
                             },
                             mountReset =
                             {
@@ -672,7 +676,7 @@ function A:AceConfig()
                                 desc = L["Reset the mounts button configuration."],
                                 type = "execute",
                                 func = function()
-                                    A.db.profile.BrokerPAMSecureButtonMounts =
+                                    A.db.profile.PetsAndMountsSecureButtonMounts =
                                     {
                                         hide = nil,
                                         lock = nil,
@@ -704,7 +708,7 @@ function A:AceConfig()
                                 desc = L["Dock companion button to the mount button."],
                                 type = "toggle",
                                 set = function(info, val)
-                                    if ( A.db.profile.BrokerPAMSecureButtonMounts.hide or A.db.profile.BrokerPAMSecureButtonPets.hide ) then
+                                    if ( A.db.profile.PetsAndMountsSecureButtonMounts.hide or A.db.profile.PetsAndMountsSecureButtonPets.hide ) then
                                         A:Message(L["Cannot dock buttons together when at least one of them is hidden."], 1);
                                         return;
                                     end
@@ -819,10 +823,10 @@ function A:AceConfig()
                                 set = function(info, val)
                                     local set = GetCurrentBindingSet();
 
-                                    SetBinding(val, "BROKERPAMPET", set);
+                                    SetBinding(val, "PETSANDMOUNTSPET", set);
                                     SaveBindings(set);
                                 end,
-                                get = function(info) return GetBindingKey("BROKERPAMPET"); end,
+                                get = function(info) return GetBindingKey("PETSANDMOUNTSPET"); end,
                             },
                             randomPetKey2 =
                             {
@@ -833,11 +837,11 @@ function A:AceConfig()
                                 set = function(info, val)
                                     local set = GetCurrentBindingSet();
 
-                                    SetBinding(val, "BROKERPAMPET", set);
+                                    SetBinding(val, "PETSANDMOUNTSPET", set);
                                     SaveBindings(set);
                                 end,
                                 get = function(info)
-                                    local _, key = GetBindingKey("BROKERPAMPET");
+                                    local _, key = GetBindingKey("PETSANDMOUNTSPET");
                                     return key;
                                 end,
                             },
@@ -856,10 +860,10 @@ function A:AceConfig()
                                 set = function(info, val)
                                     local set = GetCurrentBindingSet();
 
-                                    SetBinding(val, "BROKERPAMMOUNT", set);
+                                    SetBinding(val, "PETSANDMOUNTSMOUNT", set);
                                     SaveBindings(set);
                                 end,
-                                get = function(info) return GetBindingKey("BROKERPAMMOUNT"); end,
+                                get = function(info) return GetBindingKey("PETSANDMOUNTSMOUNT"); end,
                             },
                             randomMountKey2 =
                             {
@@ -870,11 +874,11 @@ function A:AceConfig()
                                 set = function(info, val)
                                     local set = GetCurrentBindingSet();
 
-                                    SetBinding(val, "BROKERPAMMOUNT", set);
+                                    SetBinding(val, "PETSANDMOUNTSMOUNT", set);
                                     SaveBindings(set);
                                 end,
                                 get = function(info)
-                                    local _, key = GetBindingKey("BROKERPAMMOUNT");
+                                    local _, key = GetBindingKey("PETSANDMOUNTSMOUNT");
                                     return key;
                                 end,
                             },
@@ -893,10 +897,10 @@ function A:AceConfig()
                                 set = function(info, val)
                                     local set = GetCurrentBindingSet();
 
-                                    SetBinding(val, "BROKERPAMMOUNTPASSENGERS", set);
+                                    SetBinding(val, "PETSANDMOUNTSMOUNTPASSENGERS", set);
                                     SaveBindings(set);
                                 end,
-                                get = function(info) return GetBindingKey("BROKERPAMMOUNTPASSENGERS"); end,
+                                get = function(info) return GetBindingKey("PETSANDMOUNTSMOUNTPASSENGERS"); end,
                             },
                             randomPassengerMountKey2 =
                             {
@@ -907,11 +911,11 @@ function A:AceConfig()
                                 set = function(info, val)
                                     local set = GetCurrentBindingSet();
 
-                                    SetBinding(val, "BROKERPAMMOUNTPASSENGERS", set);
+                                    SetBinding(val, "PETSANDMOUNTSMOUNTPASSENGERS", set);
                                     SaveBindings(set);
                                 end,
                                 get = function(info)
-                                    local _, key = GetBindingKey("BROKERPAMMOUNTPASSENGERS");
+                                    local _, key = GetBindingKey("PETSANDMOUNTSMOUNTPASSENGERS");
                                     return key;
                                 end,
                             },
@@ -930,10 +934,10 @@ function A:AceConfig()
                                 set = function(info, val)
                                     local set = GetCurrentBindingSet();
 
-                                    SetBinding(val, "BROKERPAMMOUNTFLYING", set);
+                                    SetBinding(val, "PETSANDMOUNTSMOUNTFLYING", set);
                                     SaveBindings(set);
                                 end,
-                                get = function(info) return GetBindingKey("BROKERPAMMOUNTFLYING"); end,
+                                get = function(info) return GetBindingKey("PETSANDMOUNTSMOUNTFLYING"); end,
                             },
                             randomFlyMountKey2 =
                             {
@@ -944,11 +948,11 @@ function A:AceConfig()
                                 set = function(info, val)
                                     local set = GetCurrentBindingSet();
 
-                                    SetBinding(val, "BROKERPAMMOUNTFLYING", set);
+                                    SetBinding(val, "PETSANDMOUNTSMOUNTFLYING", set);
                                     SaveBindings(set);
                                 end,
                                 get = function(info)
-                                    local _, key = GetBindingKey("BROKERPAMMOUNTFLYING");
+                                    local _, key = GetBindingKey("PETSANDMOUNTSMOUNTFLYING");
                                     return key;
                                 end,
                             },
@@ -967,10 +971,10 @@ function A:AceConfig()
                                 set = function(info, val)
                                     local set = GetCurrentBindingSet();
 
-                                    SetBinding(val, "BROKERPAMMOUNTGROUND", set);
+                                    SetBinding(val, "PETSANDMOUNTSMOUNTGROUND", set);
                                     SaveBindings(set);
                                 end,
-                                get = function(info) return GetBindingKey("BROKERPAMMOUNTGROUND"); end,
+                                get = function(info) return GetBindingKey("PETSANDMOUNTSMOUNTGROUND"); end,
                             },
                             randomGroundMountKey2 =
                             {
@@ -981,11 +985,11 @@ function A:AceConfig()
                                 set = function(info, val)
                                     local set = GetCurrentBindingSet();
 
-                                    SetBinding(val, "BROKERPAMMOUNTGROUND", set);
+                                    SetBinding(val, "PETSANDMOUNTSMOUNTGROUND", set);
                                     SaveBindings(set);
                                 end,
                                 get = function(info)
-                                    local _, key = GetBindingKey("BROKERPAMMOUNTGROUND");
+                                    local _, key = GetBindingKey("PETSANDMOUNTSMOUNTGROUND");
                                     return key;
                                 end,
                             },
@@ -1004,10 +1008,10 @@ function A:AceConfig()
                                 set = function(info, val)
                                     local set = GetCurrentBindingSet();
 
-                                    SetBinding(val, "BROKERPAMMOUNTAQUATIC", set);
+                                    SetBinding(val, "PETSANDMOUNTSMOUNTAQUATIC", set);
                                     SaveBindings(set);
                                 end,
-                                get = function(info) return GetBindingKey("BROKERPAMMOUNTAQUATIC"); end,
+                                get = function(info) return GetBindingKey("PETSANDMOUNTSMOUNTAQUATIC"); end,
                             },
                             randomAquaticMountKey2 =
                             {
@@ -1018,11 +1022,11 @@ function A:AceConfig()
                                 set = function(info, val)
                                     local set = GetCurrentBindingSet();
 
-                                    SetBinding(val, "BROKERPAMMOUNTAQUATIC", set);
+                                    SetBinding(val, "PETSANDMOUNTSMOUNTAQUATIC", set);
                                     SaveBindings(set);
                                 end,
                                 get = function(info)
-                                    local _, key = GetBindingKey("BROKERPAMMOUNTAQUATIC");
+                                    local _, key = GetBindingKey("PETSANDMOUNTSMOUNTAQUATIC");
                                     return key;
                                 end,
                             },
@@ -1167,7 +1171,7 @@ function A:AceConfig()
                                         disabled = not A.newPetSetName,
                                         func = function()
                                             if ( A.db.global.savedSets.pets[A.newPetSetName] ) then
-                                                StaticPopup_Show("BrokerPamOverwriteOrChangeNameSet", A.newPetSetName);
+                                                StaticPopup_Show("PetsAndMountsOverwriteOrChangeNameSet", A.newPetSetName);
                                             else
                                                 A.db.global.savedSets.pets[A.newPetSetName] = A:CopyTable(A.db.profile.favoritePets);
                                                 A.newPetSetName = nil;
@@ -1211,7 +1215,7 @@ function A:AceConfig()
                                         type = "execute",
                                         disabled = not A.deleteSetPets,
                                         func = function()
-                                            StaticPopup_Show("BrokerPamDeleteSet", A.deleteSetPets);
+                                            StaticPopup_Show("PetsAndMountsDeleteSet", A.deleteSetPets);
                                         end;
                                     },
                                 },
@@ -1292,7 +1296,7 @@ function A:AceConfig()
                                         -- disabled = not A.newMountSetName,
                                         -- func = function()
                                             -- if ( A.db.global.savedSets.mounts[A.newMountSetName] ) then
-                                                -- StaticPopup_Show("BrokerPamOverwriteOrChangeNameSet", A.newMountSetName);
+                                                -- StaticPopup_Show("PetsAndMountsOverwriteOrChangeNameSet", A.newMountSetName);
                                             -- else
                                                 -- A.db.global.savedSets.mounts[A.newMountSetName] = {};
                                                 -- A.newMountSetName = nil;
@@ -1324,7 +1328,7 @@ function A:AceConfig()
                                         disabled = not A.newMountSetName,
                                         func = function()
                                             if ( A.db.global.savedSets.mounts[A.newMountSetName] ) then
-                                                StaticPopup_Show("BrokerPamOverwriteOrChangeNameSet", A.newMountSetName);
+                                                StaticPopup_Show("PetsAndMountsOverwriteOrChangeNameSet", A.newMountSetName);
                                             else
                                                 A.db.global.savedSets.mounts[A.newMountSetName] = A:CopyTable(A.db.profile.favoriteMounts);
                                                 A.newMountSetName = nil;
@@ -1368,7 +1372,7 @@ function A:AceConfig()
                                         type = "execute",
                                         disabled = not A.deleteSetMounts,
                                         func = function()
-                                            StaticPopup_Show("BrokerPamDeleteSet", A.deleteSetMounts);
+                                            StaticPopup_Show("PetsAndMountsDeleteSet", A.deleteSetMounts);
                                         end;
                                     },
                                 },
@@ -2240,7 +2244,7 @@ function A:AceConfig()
     return options;
 end
 
-LibStub("AceConfig-3.0"):RegisterOptionsTable("BrokerPAMConfig", A.AceConfig);
---A.AceConfigDialog:SetDefaultSize("BrokerPAMConfig", 800, 500);
-A.configFrame = A.AceConfigDialog:AddToBlizOptions("BrokerPAMConfig", L["Pets & Mounts"]);
+LibStub("AceConfig-3.0"):RegisterOptionsTable("PetsAndMountsConfig", A.AceConfig);
+--A.AceConfigDialog:SetDefaultSize("PetsAndMountsConfig", 800, 500);
+A.configFrame = A.AceConfigDialog:AddToBlizOptions("PetsAndMountsConfig", L["Pets & Mounts"]);
 A.configFrame:HookScript("OnHide", function() A.configModelFrame:Hide(); end);

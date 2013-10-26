@@ -1,9 +1,9 @@
 ﻿## Interface: 50400
-## Title: Broker Pets & Mounts Configuration
-## Notes: Configuration panel for Broker Broker Pets & Mounts.
+## Title: Pets & Mounts Configuration
+## Notes: Auto and random summon highly customizable for your pets and mounts, with Data Broker support.
 ## Author: Shenton
 ## LoadOnDemand: true
-## Dependencies: Broker_PAM
+## Dependencies: PetsAndMounts
 ## OptionalDeps: Ace3
 
 #@no-lib-strip@

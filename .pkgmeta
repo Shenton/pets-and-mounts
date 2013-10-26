@@ -1,0 +1,37 @@
+﻿package-as: PetsAndMounts
+
+ignore:
+ - .pkgmeta
+
+move-folders:
+  PetsAndMounts/Config: PetsAndMountsConfig
+
+externals:
+ Libs/LibStub:
+  url: svn://svn.wowace.com/wow/libstub/mainline/trunk
+ Libs/CallbackHandler-1.0:
+  url: svn://svn.wowace.com/wow/callbackhandler/mainline/trunk/CallbackHandler-1.0
+ Libs/AceAddon-3.0:
+  url: svn://svn.wowace.com/wow/ace3/mainline/trunk/AceAddon-3.0
+ Libs/AceEvent-3.0:
+  url: svn://svn.wowace.com/wow/ace3/mainline/trunk/AceEvent-3.0
+ Libs/AceTimer-3.0:
+  url: svn://svn.wowace.com/wow/ace3/mainline/trunk/AceTimer-3.0
+ Libs/AceDB-3.0:
+  url: svn://svn.wowace.com/wow/ace3/mainline/trunk/AceDB-3.0
+ Libs/AceLocale-3.0:
+  url: svn://svn.wowace.com/wow/ace3/mainline/trunk/AceLocale-3.0
+ Libs/AceConsole-3.0:
+  url: svn://svn.wowace.com/wow/ace3/mainline/trunk/AceConsole-3.0
+ Libs/LibDBIcon-1.0:
+  url: svn://svn.wowace.com/wow/libdbicon-1-0/mainline/trunk/LibDBIcon-1.0
+ Config/Libs/AceDBOptions-3.0:
+  url: svn://svn.wowace.com/wow/ace3/mainline/trunk/AceDBOptions-3.0
+ Config/Libs/AceGUI-3.0:
+  url: svn://svn.wowace.com/wow/ace3/mainline/trunk/AceGUI-3.0
+ Config/Libs/AceConfig-3.0:
+  url: svn://svn.wowace.com/wow/ace3/mainline/trunk/AceConfig-3.0
+
+tools-used:
+ - libdatabroker-1-1
+ - FindGlobals

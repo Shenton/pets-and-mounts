@@ -1,5 +1,5 @@
 --[[ $Id: AceGUIWidget-DropDown.lua 1029 2011-06-10 23:10:58Z nevcairiel $ ]]--
--- Very light modification to SetList and AddListItem methods/functions, sort by value and model display, for Broker Pets & Mounts, by Shenton, so if it's broken it's my fault :)
+-- Very light modification to SetList and AddListItem methods/functions, sort by value and model display, for Pets & Mounts, by Shenton, so if it's broken it's my fault :)
 local AceGUI = LibStub("AceGUI-3.0")
 
 -- Lua APIs
@@ -246,7 +246,7 @@ do
         end
     end
 
-    local brokerPAMGlobal = _G["BrokerPAMGlobal"];
+    local petsAndMountsGlobal = _G["PetsAndMountsGlobal"];
     local function AddListItem(self, value, text, itemType)
         if not itemType then itemType = "Dropdown-Item-Toggle" end
         local exists = AceGUI:GetWidgetVersion(itemType)
@@ -261,25 +261,25 @@ do
         item:SetCallback("OnEnter", function()
             local creatureID;
 
-            if ( brokerPAMGlobal:IsGUID(value) ) then
+            if ( petsAndMountsGlobal:IsGUID(value) ) then
                 creatureID = select(11, C_PetJournal.GetPetInfoByPetID(value));
             else
-                creatureID = brokerPAMGlobal:GetCreatureIDFromSpellID(value);
+                creatureID = petsAndMountsGlobal:GetCreatureIDFromSpellID(value);
             end
 
             if ( not creatureID ) then return; end
 
             -- Model
-            brokerPAMGlobal.configModelFrame.rotation = 0;
-            brokerPAMGlobal.configModelFrame:SetCreature(creatureID);
+            petsAndMountsGlobal.configModelFrame.rotation = 0;
+            petsAndMountsGlobal.configModelFrame:SetCreature(creatureID);
 
             -- Frame pos
-            brokerPAMGlobal.configModelFrame:ClearAllPoints()
-            brokerPAMGlobal.configModelFrame:SetPoint("TOPLEFT", brokerPAMGlobal.configFrame, "TOPRIGHT", 0, 0);
-            brokerPAMGlobal.configModelFrame:Show();
+            petsAndMountsGlobal.configModelFrame:ClearAllPoints()
+            petsAndMountsGlobal.configModelFrame:SetPoint("TOPLEFT", petsAndMountsGlobal.configFrame, "TOPRIGHT", 0, 0);
+            petsAndMountsGlobal.configModelFrame:Show();
         end)
         item:SetCallback("OnLeave", function()
-            brokerPAMGlobal.configModelFrame:Hide();
+            petsAndMountsGlobal.configModelFrame:Hide();
         end)
     end
 

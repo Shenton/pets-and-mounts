@@ -1,8 +1,8 @@
 ﻿## Interface: 50400
-## Title: Broker Pets & Mounts
-## Notes: Data Broker display for easy access to pets and mounts.
+## Title: Pets & Mounts
+## Notes: Auto and random summon highly customizable for your pets and mounts, with Data Broker support.
 ## Author: Shenton
-## SavedVariables: pamDB
+## SavedVariables: petsAndMountsDB
 ## Version: 1.1.4
 ## Dependencies: Blizzard_PetJournal
 ## OptionalDeps: Ace3

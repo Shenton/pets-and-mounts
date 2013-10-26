@@ -1,5 +1,5 @@
 <Ui xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
-    <Button name="BrokerPAMSecureButtonPets" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
+    <Button name="PetsAndMountsSecureButtonPets" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
         <Size>
             <Absdimension x="36" y="36"/>
         </Size>
@@ -49,23 +49,23 @@
                 self:RegisterForClicks("LeftButtonUp", "RightButtonUp", "MiddleButtonUp");
             </OnLoad>
             <PreClick>
-                BrokerPAMGlobal:PreClickPet(self, button);
+                PetsAndMountsGlobal:PreClickPet(self, button);
             </PreClick>
             <OnEnter>
-                BrokerPAMGlobal:SetTooltip(self);
+                PetsAndMountsGlobal:SetTooltip(self);
             </OnEnter>
             <OnLeave>
                 GameTooltip:Hide();
             </OnLeave>
             <OnUpdate>
                 if ( GameTooltip:GetOwner() == self ) then
-                    BrokerPAMGlobal:SetTooltip(self);
+                    PetsAndMountsGlobal:SetTooltip(self);
                 end
             </OnUpdate>
         </Scripts>
     </Button>
 
-    <Button name="BrokerPAMSecureButtonMounts" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
+    <Button name="PetsAndMountsSecureButtonMounts" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
         <Size>
             <Absdimension x="36" y="36"/>
         </Size>
@@ -115,34 +115,34 @@
                 self:RegisterForClicks("LeftButtonUp", "RightButtonUp", "MiddleButtonUp");
             </OnLoad>
             <PreClick>
-                BrokerPAMGlobal:PreClickMount(self, button);
+                PetsAndMountsGlobal:PreClickMount(self, button);
             </PreClick>
             <PostClick>
-                BrokerPAMGlobal:PostClickMount(self, button);
+                PetsAndMountsGlobal:PostClickMount(self, button);
             </PostClick>
             <OnEnter>
-                BrokerPAMGlobal:SetTooltip(self);
+                PetsAndMountsGlobal:SetTooltip(self);
             </OnEnter>
             <OnLeave>
                 GameTooltip:Hide();
             </OnLeave>
             <OnUpdate>
                 if ( GameTooltip:GetOwner() == self ) then
-                    BrokerPAMGlobal:SetTooltip(self);
+                    PetsAndMountsGlobal:SetTooltip(self);
                 end
             </OnUpdate>
         </Scripts>
     </Button>
 
-    <Button name="BrokerPAMSecureButtonPassengers" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
+    <Button name="PetsAndMountsSecureButtonPassengers" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
     </Button>
 
-    <Button name="BrokerPAMSecureButtonFlying" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
+    <Button name="PetsAndMountsSecureButtonFlying" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
     </Button>
 
-    <Button name="BrokerPAMSecureButtonGround" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
+    <Button name="PetsAndMountsSecureButtonGround" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
     </Button>
 
-    <Button name="BrokerPAMSecureButtonAquatic" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
+    <Button name="PetsAndMountsSecureButtonAquatic" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
     </Button>
 </Ui>

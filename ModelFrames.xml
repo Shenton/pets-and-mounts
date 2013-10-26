@@ -1,5 +1,5 @@
 <Ui xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
-    <PlayerModel name="BrokerPamMenuModelFrame" parent="UIParent" framestrata="TOOLTIP" hidden="true">
+    <PlayerModel name="PetsAndMountsMenuModelFrame" parent="UIParent" framestrata="TOOLTIP" hidden="true">
         <Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
 			<EdgeSize>
 				<AbsValue val="16"/>
@@ -24,12 +24,12 @@
                 self:ClearModel();
             </OnHide>
             <OnUpdate>
-                BrokerPAMGlobal:ConfigModelFrameOnUpdate(self);
+                PetsAndMountsGlobal:ConfigModelFrameOnUpdate(self);
             </OnUpdate>
         </Scripts>
     </PlayerModel>
 
-    <PlayerModel name="BrokerPamConfigModelFrame" parent="UIParent" framestrata="TOOLTIP" hidden="true">
+    <PlayerModel name="PetsAndMountsConfigModelFrame" parent="UIParent" framestrata="TOOLTIP" hidden="true">
         <Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
 			<EdgeSize>
 				<AbsValue val="16"/>
@@ -76,7 +76,7 @@
                 self.isRotating = nil;
             </OnMouseUp>
             <OnUpdate>
-                BrokerPAMGlobal:ConfigModelFrameOnUpdate(self);
+                PetsAndMountsGlobal:ConfigModelFrameOnUpdate(self);
             </OnUpdate>
         </Scripts>
     </PlayerModel>

@@ -1,24 +1,24 @@
 --[[-------------------------------------------------------------------------------
-    Broker Pets & Mounts
-    Data Broker display for easy acces to pets and mounts.
+    Pets & Mounts
+    Auto and random summon highly customizable for your pets and mounts, with Data Broker support.
     By: Shenton
 
     Buttons.lua
 -------------------------------------------------------------------------------]]--
 
-local A = _G["BrokerPAMGlobal"];
+local A = _G["PetsAndMountsGlobal"];
 local L = A.L;
 
 -- Globals to locals
 local pairs = pairs;
 local _G = _G;
 
--- GLOBALS: BINDING_HEADER_BROKERPAM, BINDING_NAME_BROKERPAMPET, BINDING_NAME_BROKERPAMMOUNT
--- GLOBALS: BINDING_NAME_BROKERPAMMOUNTPASSENGERS, BINDING_NAME_BROKERPAMMOUNTFLYING
--- GLOBALS: BINDING_NAME_BROKERPAMMOUNTGROUND, BINDING_NAME_BROKERPAMMOUNTAQUATIC
+-- GLOBALS: BINDING_HEADER_PETSANDMOUNTS, BINDING_NAME_PETSANDMOUNTSPET, BINDING_NAME_PETSANDMOUNTSMOUNT
+-- GLOBALS: BINDING_NAME_PETSANDMOUNTSMOUNTPASSENGERS, BINDING_NAME_PETSANDMOUNTSMOUNTFLYING
+-- GLOBALS: BINDING_NAME_PETSANDMOUNTSMOUNTGROUND, BINDING_NAME_PETSANDMOUNTSMOUNTAQUATIC
 -- GLOBALS: InCombatLockdown, GetBindingKey, SetOverrideBindingClick, GetSpellInfo
 -- GLOBALS: IsFlyableArea, IsSpellKnown, GetSpellInfo, IsShiftKeyDown, IsControlKeyDown
--- GLOBALS: BrokerPAMSecureButtonMounts, BrokerPAMSecureButtonPets, GetScreenWidth
+-- GLOBALS: PetsAndMountsSecureButtonMounts, PetsAndMountsSecureButtonPets, GetScreenWidth
 -- GLOBALS: GameTooltip, GetItemCount, GetItemInfo, UIDropDownMenu_SetAnchor
 -- GLOBALS: ToggleDropDownMenu, type
 
@@ -27,23 +27,23 @@ local _G = _G;
 -------------------------------------------------------------------------------]]--
 
 -- Binding UI localization
-BINDING_HEADER_BROKERPAM = L["Pets & Mounts"];
-BINDING_NAME_BROKERPAMPET = L["Random companion"];
-BINDING_NAME_BROKERPAMMOUNT = L["Random mount"];
-BINDING_NAME_BROKERPAMMOUNTPASSENGERS = L["Random passengers mount"];
-BINDING_NAME_BROKERPAMMOUNTFLYING = L["Random flying mount"];
-BINDING_NAME_BROKERPAMMOUNTGROUND = L["Random ground mount"];
-BINDING_NAME_BROKERPAMMOUNTAQUATIC = L["Random aquatic mount"];
+BINDING_HEADER_PETSANDMOUNTS = L["Pets & Mounts"];
+BINDING_NAME_PETSANDMOUNTSPET = L["Random companion"];
+BINDING_NAME_PETSANDMOUNTSMOUNT = L["Random mount"];
+BINDING_NAME_PETSANDMOUNTSMOUNTPASSENGERS = L["Random passengers mount"];
+BINDING_NAME_PETSANDMOUNTSMOUNTFLYING = L["Random flying mount"];
+BINDING_NAME_PETSANDMOUNTSMOUNTGROUND = L["Random ground mount"];
+BINDING_NAME_PETSANDMOUNTSMOUNTAQUATIC = L["Random aquatic mount"];
 
 --- Set bindings
 local bindings =
 {
-    ["BROKERPAMPET"] = "BrokerPAMSecureButtonPets",
-    ["BROKERPAMMOUNT"] = "BrokerPAMSecureButtonMounts",
-    ["BROKERPAMMOUNTPASSENGERS"] = "BrokerPAMSecureButtonPassengers",
-    ["BROKERPAMMOUNTFLYING"] = "BrokerPAMSecureButtonFlying",
-    ["BROKERPAMMOUNTGROUND"] = "BrokerPAMSecureButtonGround",
-    ["BROKERPAMMOUNTAQUATIC"] = "BrokerPAMSecureButtonAquatic",
+    ["PETSANDMOUNTSPET"] = "PetsAndMountsSecureButtonPets",
+    ["PETSANDMOUNTSMOUNT"] = "PetsAndMountsSecureButtonMounts",
+    ["PETSANDMOUNTSMOUNTPASSENGERS"] = "PetsAndMountsSecureButtonPassengers",
+    ["PETSANDMOUNTSMOUNTFLYING"] = "PetsAndMountsSecureButtonFlying",
+    ["PETSANDMOUNTSMOUNTGROUND"] = "PetsAndMountsSecureButtonGround",
+    ["PETSANDMOUNTSMOUNTAQUATIC"] = "PetsAndMountsSecureButtonAquatic",
 };
 function A:SetBindings()
     if ( InCombatLockdown() ) then
@@ -67,19 +67,19 @@ local buttonsMacro =
 {
     [1] = -- With form cancel
     {
-        ["BrokerPAMSecureButtonPets"] = "/run BrokerPAMGlobal:RandomPet()",
-        ["BrokerPAMSecureButtonPassengers"] = "/cancelform\n/run BrokerPAMGlobal:RandomMount(5)",
-        ["BrokerPAMSecureButtonFlying"] = "/cancelform\n/run BrokerPAMGlobal:RandomMount(2)",
-        ["BrokerPAMSecureButtonGround"] = "/cancelform\n/run BrokerPAMGlobal:RandomMount(1)",
-        ["BrokerPAMSecureButtonAquatic"] = "/cancelform\n/run BrokerPAMGlobal:RandomMount(4)",
+        ["PetsAndMountsSecureButtonPets"] = "/run PetsAndMountsGlobal:RandomPet()",
+        ["PetsAndMountsSecureButtonPassengers"] = "/cancelform\n/run PetsAndMountsGlobal:RandomMount(5)",
+        ["PetsAndMountsSecureButtonFlying"] = "/cancelform\n/run PetsAndMountsGlobal:RandomMount(2)",
+        ["PetsAndMountsSecureButtonGround"] = "/cancelform\n/run PetsAndMountsGlobal:RandomMount(1)",
+        ["PetsAndMountsSecureButtonAquatic"] = "/cancelform\n/run PetsAndMountsGlobal:RandomMount(4)",
     },
     [2] = -- Without
     {
-        ["BrokerPAMSecureButtonPets"] = "/run BrokerPAMGlobal:RandomPet()",
-        ["BrokerPAMSecureButtonPassengers"] = "/run BrokerPAMGlobal:RandomMount(5)",
-        ["BrokerPAMSecureButtonFlying"] = "/run BrokerPAMGlobal:RandomMount(2)",
-        ["BrokerPAMSecureButtonGround"] = "/run BrokerPAMGlobal:RandomMount(1)",
-        ["BrokerPAMSecureButtonAquatic"] = "/run BrokerPAMGlobal:RandomMount(4)",
+        ["PetsAndMountsSecureButtonPets"] = "/run PetsAndMountsGlobal:RandomPet()",
+        ["PetsAndMountsSecureButtonPassengers"] = "/run PetsAndMountsGlobal:RandomMount(5)",
+        ["PetsAndMountsSecureButtonFlying"] = "/run PetsAndMountsGlobal:RandomMount(2)",
+        ["PetsAndMountsSecureButtonGround"] = "/run PetsAndMountsGlobal:RandomMount(1)",
+        ["PetsAndMountsSecureButtonAquatic"] = "/run PetsAndMountsGlobal:RandomMount(4)",
     },
 };
 function A:SetButtonsMacro()
@@ -131,7 +131,7 @@ function A:SetDruidPreClickMacro()
     elseif ( A.playerLevel >= 58 and A:IsFlyable() ) then
         A.preClickDruidMacro = ("/cast %s\n/dismount [mounted]"):format(A.druidFlightForm);
     elseif ( A.playerLevel >= 20 and A:CanRide() ) then
-        A.preClickDruidMacro = "/cancelform\n/run BrokerPAMGlobal:RandomMount()";
+        A.preClickDruidMacro = "/cancelform\n/run PetsAndMountsGlobal:RandomMount()";
     elseif ( A.playerLevel >= 16 ) then
         A.preClickDruidMacro = ("/cast %s\n/dismount [mounted]"):format(A.druidTravelForm);
     else
@@ -196,10 +196,10 @@ function A:PreClickMount(button, clickedBy)
                 button:SetAttribute("macrotext", A.preClickDruidMacro);
             elseif ( A.db.profile.classesMacrosEnabled and A.playerClass == "SHAMAN" ) then
                 button:SetAttribute("type", "macro");
-                button:SetAttribute("macrotext", "/cancelform\n/run BrokerPAMGlobal:RandomMount()");
+                button:SetAttribute("macrotext", "/cancelform\n/run PetsAndMountsGlobal:RandomMount()");
             else
                 button:SetAttribute("type", "macro");
-                button:SetAttribute("macrotext", "/run BrokerPAMGlobal:RandomMount()");
+                button:SetAttribute("macrotext", "/run PetsAndMountsGlobal:RandomMount()");
             end
         end
     elseif ( clickedBy == "RightButton" ) then
@@ -245,7 +245,7 @@ function A:PreClickPet(button, clickedBy)
             A:SetButtons();
         else
             button:SetAttribute("type", "macro");
-            button:SetAttribute("macrotext", "/run BrokerPAMGlobal:RandomPet()");
+            button:SetAttribute("macrotext", "/run PetsAndMountsGlobal:RandomPet()");
         end
     elseif ( clickedBy == "RightButton" ) then
         button:SetAttribute("type", "macro");
@@ -290,7 +290,7 @@ function A:LockButton(button)
     A.db.profile[button].lock = 1;
 
     if ( A.AceConfigRegistry ) then
-        A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+        A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
     end
 end
 
@@ -300,7 +300,7 @@ function A:UnlockButton(button)
         button = button:GetName();
     end
 
-    if ( A.db.profile.dockButton and button == "BrokerPAMSecureButtonPets" ) then return; end
+    if ( A.db.profile.dockButton and button == "PetsAndMountsSecureButtonPets" ) then return; end
 
     _G[button]:SetMovable(1);
     _G[button]:RegisterForDrag("LeftButton");
@@ -319,7 +319,7 @@ function A:UnlockButton(button)
     A.db.profile[button].lock = nil;
 
     if ( A.AceConfigRegistry ) then
-        A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+        A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
     end
 end
 
@@ -351,32 +351,32 @@ function A:ToggleButtonHideShow(button)
     end
 
     if ( A.AceConfigRegistry ) then
-        A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+        A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
     end
 end
 
 --- Dock buttons together
 function A:DockButton()
-    A.db.profile.BrokerPAMSecureButtonPets.anchor =
+    A.db.profile.PetsAndMountsSecureButtonPets.anchor =
     {
         point = "LEFT",
-        relativeTo = "BrokerPAMSecureButtonMounts",
+        relativeTo = "PetsAndMountsSecureButtonMounts",
         relativePoint = "RIGHT",
         offX = 4,
         offY = 0,
     };
 
-    A:LockButton("BrokerPAMSecureButtonPets")
-    A:SetButtonPos("BrokerPAMSecureButtonPets");
+    A:LockButton("PetsAndMountsSecureButtonPets")
+    A:SetButtonPos("PetsAndMountsSecureButtonPets");
 end
 
 --- Dock buttons together
 function A:UnDockButton()
-    local point, relativeTo, relativePoint, offX, offY = BrokerPAMSecureButtonMounts:GetPoint(1);
+    local point, relativeTo, relativePoint, offX, offY = PetsAndMountsSecureButtonMounts:GetPoint(1);
 
     offX = offX + 40
 
-    A.db.profile.BrokerPAMSecureButtonPets.anchor =
+    A.db.profile.PetsAndMountsSecureButtonPets.anchor =
     {
         point = point,
         relativeTo = relativeTo,
@@ -385,7 +385,7 @@ function A:UnDockButton()
         offY = offY,
     };
 
-    A:SetButtonPos("BrokerPAMSecureButtonPets");
+    A:SetButtonPos("PetsAndMountsSecureButtonPets");
 end
 
 --- Reset button
@@ -396,9 +396,9 @@ function A:ResetButton(button)
 
     local offX;
 
-    if ( button == "BrokerPAMSecureButtonPets" ) then
+    if ( button == "PetsAndMountsSecureButtonPets" ) then
         offX = 20;
-    elseif ( button == "BrokerPAMSecureButtonMounts" ) then
+    elseif ( button == "PetsAndMountsSecureButtonMounts" ) then
         offX = -20
     else
         offX = 0;
@@ -426,58 +426,58 @@ end
 --- Set buttons on login
 function A:SetButtons()
     -- Position
-    A:SetButtonPos("BrokerPAMSecureButtonPets");
-    A:SetButtonPos("BrokerPAMSecureButtonMounts");
+    A:SetButtonPos("PetsAndMountsSecureButtonPets");
+    A:SetButtonPos("PetsAndMountsSecureButtonMounts");
 
     -- Scale
-    BrokerPAMSecureButtonPets:SetScale(A.db.profile.BrokerPAMSecureButtonPets.scale);
-    BrokerPAMSecureButtonMounts:SetScale(A.db.profile.BrokerPAMSecureButtonMounts.scale);
+    PetsAndMountsSecureButtonPets:SetScale(A.db.profile.PetsAndMountsSecureButtonPets.scale);
+    PetsAndMountsSecureButtonMounts:SetScale(A.db.profile.PetsAndMountsSecureButtonMounts.scale);
 
     -- Visibility
-    if ( A.db.profile.BrokerPAMSecureButtonPets.hide ) then
-        BrokerPAMSecureButtonPets:Hide();
+    if ( A.db.profile.PetsAndMountsSecureButtonPets.hide ) then
+        PetsAndMountsSecureButtonPets:Hide();
 
         if (  A.db.profile.dockButton ) then
             A.db.profile.dockButton = nil;
             A:UnDockButton();
         end
     else
-        BrokerPAMSecureButtonPets:Show();
+        PetsAndMountsSecureButtonPets:Show();
     end
 
-    if ( A.db.profile.BrokerPAMSecureButtonMounts.hide ) then
-        BrokerPAMSecureButtonMounts:Hide();
+    if ( A.db.profile.PetsAndMountsSecureButtonMounts.hide ) then
+        PetsAndMountsSecureButtonMounts:Hide();
 
         if (  A.db.profile.dockButton ) then
             A.db.profile.dockButton = nil;
             A:UnDockButton();
 
-            if ( not A.db.profile.BrokerPAMSecureButtonMounts.lock and A.db.profile.BrokerPAMSecureButtonPets.lock ) then
-                A.db.profile.BrokerPAMSecureButtonPets.lock = nil;
+            if ( not A.db.profile.PetsAndMountsSecureButtonMounts.lock and A.db.profile.PetsAndMountsSecureButtonPets.lock ) then
+                A.db.profile.PetsAndMountsSecureButtonPets.lock = nil;
                 A:SetButtons();
                 return;
             end
         end
     else
-        BrokerPAMSecureButtonMounts:Show();
+        PetsAndMountsSecureButtonMounts:Show();
     end
 
     -- Movable
-    if ( A.db.profile.BrokerPAMSecureButtonPets.lock ) then
-        A:LockButton("BrokerPAMSecureButtonPets");
+    if ( A.db.profile.PetsAndMountsSecureButtonPets.lock ) then
+        A:LockButton("PetsAndMountsSecureButtonPets");
     else
-        A:UnlockButton("BrokerPAMSecureButtonPets");
+        A:UnlockButton("PetsAndMountsSecureButtonPets");
     end
 
-    if ( A.db.profile.BrokerPAMSecureButtonMounts.lock ) then
-        A:LockButton("BrokerPAMSecureButtonMounts");
+    if ( A.db.profile.PetsAndMountsSecureButtonMounts.lock ) then
+        A:LockButton("PetsAndMountsSecureButtonMounts");
     else
-        A:UnlockButton("BrokerPAMSecureButtonMounts");
+        A:UnlockButton("PetsAndMountsSecureButtonMounts");
     end
 
     -- Refresh config panel
     if ( A.AceConfigRegistry ) then
-        A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+        A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
     end
 end
 
@@ -487,8 +487,8 @@ end
 
 --- Display button tooltip
 function A:SetTooltip(frame)
-    if ( not A.db.profile.BrokerPAMSecureButtonPets.tooltip and frame:GetName() == "BrokerPAMSecureButtonPets" ) then return; end
-    if ( not A.db.profile.BrokerPAMSecureButtonMounts.tooltip and frame:GetName() == "BrokerPAMSecureButtonMounts" ) then return; end
+    if ( not A.db.profile.PetsAndMountsSecureButtonPets.tooltip and frame:GetName() == "PetsAndMountsSecureButtonPets" ) then return; end
+    if ( not A.db.profile.PetsAndMountsSecureButtonMounts.tooltip and frame:GetName() == "PetsAndMountsSecureButtonMounts" ) then return; end
 
     local currentSet;
 
@@ -501,7 +501,7 @@ function A:SetTooltip(frame)
     GameTooltip:AddDoubleLine(A.color["WHITE"]..L["Pets & Mounts"], A.color["GREEN"].."v"..A.version);
     GameTooltip:AddLine(" ");
 
-    if ( frame:GetName() == "BrokerPAMSecureButtonPets" ) then
+    if ( frame:GetName() == "PetsAndMountsSecureButtonPets" ) then
         currentSet = A:GetCurrentSet("PET");
 
         if ( currentSet == L["None"] ) then
@@ -516,7 +516,7 @@ function A:SetTooltip(frame)
         GameTooltip:AddLine(L["Forced companion: %s"]:format(A.db.profile.forceOne.pet and A.color["GREEN"]..A:GetPetNameByID(A.db.profile.forceOne.pet) or A.color["RED"]..L["None"]));
         GameTooltip:AddLine(" ");
         GameTooltip:AddLine(L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random pet.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Hide button.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."]);
-    elseif ( frame:GetName() == "BrokerPAMSecureButtonMounts" ) then
+    elseif ( frame:GetName() == "PetsAndMountsSecureButtonMounts" ) then
         currentSet = A:GetCurrentSet("MOUNT");
 
         if ( currentSet == L["None"] ) then

@@ -1,20 +1,22 @@
 ﻿--[[-------------------------------------------------------------------------------
-    Broker Pets & Mounts
-    Data Broker display for easy access to pets and mounts.
+    Pets & Mounts
+    Auto and random summon highly customizable for your pets and mounts, with Data Broker support.
     By: Shenton
 
     Core.lua
 -------------------------------------------------------------------------------]]--
 
 -- TODO: fix menu model frame position
+-- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
+-- TODO: Modify IsSwimming method to return the 3 states, swimming, surface and not swimming, then do something with that
 
 -- Ace libs (<3)
-local A = LibStub("AceAddon-3.0"):NewAddon("BrokerPAM", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0");
-local L = LibStub("AceLocale-3.0"):GetLocale("BrokerPAM");
+local A = LibStub("AceAddon-3.0"):NewAddon("PetsAndMounts", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0");
+local L = LibStub("AceLocale-3.0"):GetLocale("PetsAndMounts");
 A.L = L;
 
 -- Addon's global
-_G["BrokerPAMGlobal"] = A;
+_G["PetsAndMountsGlobal"] = A;
 
 -- Globals to locals
 local pairs = pairs;
@@ -43,10 +45,10 @@ local bit = bit;
 -- GLOBALS: TOOLTIP_DEFAULT_COLOR, TOOLTIP_DEFAULT_BACKGROUND_COLOR
 -- GLOBALS: hooksecurefunc, GetTime, MODELFRAME_DRAG_ROTATION_CONSTANT
 -- GLOBALS: PI, UnitClass, IsShiftKeyDown, ToggleDropDownMenu, GameTooltip
--- GLOBALS: BINDING_HEADER_BROKERPAM, BINDING_NAME_BROKERPAMMOUNT
--- GLOBALS: BINDING_NAME_BROKERPAMMOUNTPASSENGERS, BINDING_NAME_BROKERPAMMOUNTFLYING
--- GLOBALS: BINDING_NAME_BROKERPAMMOUNTGROUND, BINDING_NAME_BROKERPAMMOUNTAQUATIC
--- GLOBALS: BrokerPamMenuModelFrame, BrokerPamConfigModelFrame
+-- GLOBALS: BINDING_HEADER_PETSANDMOUNTS, BINDING_NAME_PETSANDMOUNTSMOUNT
+-- GLOBALS: BINDING_NAME_PETSANDMOUNTSMOUNTPASSENGERS, BINDING_NAME_PETSANDMOUNTSMOUNTFLYING
+-- GLOBALS: BINDING_NAME_PETSANDMOUNTSMOUNTGROUND, BINDING_NAME_PETSANDMOUNTSMOUNTAQUATIC
+-- GLOBALS: PetsAndMountsMenuModelFrame, PetsAndMountsConfigModelFrame
 -- GLOBALS: UnitFactionGroup, UnitRace, UIDropDownMenu_SetAnchor
 
 --[[-------------------------------------------------------------------------------
@@ -106,9 +108,9 @@ end
 function A:ShowHideMinimap()
     if ( A.db.profile.ldbi.hide ) then
         A:Message(L["Minimap icon is hidden if you want to show it back use: /pam or /petsandmounts"], true);
-        LibStub("LibDBIcon-1.0"):Hide("BrokerPAMLDBI");
+        LibStub("LibDBIcon-1.0"):Hide("PetsAndMountsLDBI");
     else
-        LibStub("LibDBIcon-1.0"):Show("BrokerPAMLDBI");
+        LibStub("LibDBIcon-1.0"):Show("PetsAndMountsLDBI");
     end
 end
 
@@ -837,7 +839,7 @@ local function PAMMenu(self, level)
 
     A:InitializeDB();
 
-    A.isBrokerPamMenu = 1;
+    A.isPetsAndMountsMenu = 1;
 
     if ( level == 1 ) then
         -- Menu title
@@ -950,7 +952,7 @@ local function PAMMenu(self, level)
                 A.db.profile.autoPet = not A.db.profile.autoPet;
                 A:SetMainTimer();
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -962,7 +964,7 @@ local function PAMMenu(self, level)
                 A.db.profile.notWhenStealthed = not A.db.profile.notWhenStealthed;
                 A:SetStealthEvents();
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -974,7 +976,7 @@ local function PAMMenu(self, level)
                 A.db.profile.ldbi.hide = not A.db.profile.ldbi.hide;
                 A:ShowHideMinimap();
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -985,7 +987,7 @@ local function PAMMenu(self, level)
             self.info.func = function()
                 A.db.profile.modelRotation = not A.db.profile.modelRotation;
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1030,7 +1032,7 @@ local function PAMMenu(self, level)
                     UIDropDownMenu_AddButton(self.info, level);
 
                     _G["DropDownList3Button"..buttonIndex]:HookScript("OnEnter", function()
-                        if ( not A.isBrokerPamMenu or DropDownList2Button1:GetText() == L["Mounts"] ) then
+                        if ( not A.isPetsAndMountsMenu or DropDownList2Button1:GetText() == L["Mounts"] ) then
                             A.menuModelFrame:Hide();
 
                             return;
@@ -1083,7 +1085,7 @@ local function PAMMenu(self, level)
                 A.db.profile.modelFrameHeight = 100;
                 A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1100,7 +1102,7 @@ local function PAMMenu(self, level)
                 A.db.profile.modelFrameHeight = 150;
                 A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1117,7 +1119,7 @@ local function PAMMenu(self, level)
                 A.db.profile.modelFrameHeight = 200;
                 A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1134,7 +1136,7 @@ local function PAMMenu(self, level)
                 A.db.profile.modelFrameHeight = 250;
                 A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1151,7 +1153,7 @@ local function PAMMenu(self, level)
                 A.db.profile.modelFrameHeight = 300;
                 A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1168,7 +1170,7 @@ local function PAMMenu(self, level)
                 A.db.profile.modelFrameHeight = 350;
                 A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1185,7 +1187,7 @@ local function PAMMenu(self, level)
                 A.db.profile.modelFrameHeight = 400;
                 A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1206,7 +1208,7 @@ local function PAMMenu(self, level)
                             UIDropDownMenu_AddButton(self.info, level);
 
                             _G["DropDownList4Button"..buttonIndex]:HookScript("OnEnter", function()
-                                if ( not A.isBrokerPamMenu ) then
+                                if ( not A.isPetsAndMountsMenu ) then
                                     A.menuModelFrame:Hide();
 
                                     return;
@@ -1345,7 +1347,7 @@ function A:ZONE_CHANGED_NEW_AREA()
     A:AutoPetDelay();
 
     if ( A.AceConfigRegistry ) then
-        A.AceConfigRegistry:NotifyChange("BrokerPAMConfig");
+        A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
     end
 end
 
@@ -1430,7 +1432,7 @@ A.aceDefaultDB =
         },
         classesMacrosEnabled = 1, -- d
         dockButton = nil, -- d
-        BrokerPAMSecureButtonPets = -- d
+        PetsAndMountsSecureButtonPets = -- d
         {
             hide = nil,
             lock = nil,
@@ -1445,7 +1447,7 @@ A.aceDefaultDB =
                 offY = 0,
             },
         },
-        BrokerPAMSecureButtonMounts = -- d
+        PetsAndMountsSecureButtonMounts = -- d
         {
             hide = nil,
             lock = nil,
@@ -1562,7 +1564,7 @@ end
 function A:LoadAddonConfig()
     A:DebugMessage("LoadAddonConfig() - Loading configuration addon");
 
-    local loaded, reason = LoadAddOn("Broker_PAMConfig");
+    local loaded, reason = LoadAddOn("PetsAndMountsConfig");
 
     if ( loaded ) then
         local categories = INTERFACEOPTIONS_ADDONCATEGORIES;
@@ -1587,7 +1589,7 @@ end
 
 --- Add to blizzard options frame a temporary category
 function A:AddToBlizzTemp()
-    local f  = CreateFrame("Frame", "BrokerPAMTempConfigFrame");
+    local f  = CreateFrame("Frame", "PetsAndMountsTempConfigFrame");
     f.name = L["Pets & Mounts config loader"];
 
     local b = CreateFrame("Button", nil, f, "UIPanelButtonTemplate");
@@ -1638,20 +1640,20 @@ function A:OnInitialize()
     A.db.RegisterCallback(self, "OnProfileReset", "SetEverything");
 
     -- Menu frame & table
-    A.menuFrame = CreateFrame("Frame", "BrokerPAMMenuFrame");
+    A.menuFrame = CreateFrame("Frame", "PetsAndMountsMenuFrame");
     A.menuFrame.displayMode = "MENU";
     A.menuFrame.info = {};
     A.menuFrame.initialize = PAMMenu;
     DropDownList1:HookScript("OnHide", function(self)
-        A.isBrokerPamMenu = nil;
+        A.isPetsAndMountsMenu = nil;
     end);
 
     -- Menu model frame
-    A.menuModelFrame = BrokerPamMenuModelFrame;
+    A.menuModelFrame = PetsAndMountsMenuModelFrame;
     A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
 
     -- Config model frame
-    A.configModelFrame = BrokerPamConfigModelFrame;
+    A.configModelFrame = PetsAndMountsConfigModelFrame;
     A.configModelFrame:SetSize(A.db.profile.configModelFrameWidth, A.db.profile.configModelFrameHeight);
 
     -- DB auto update hooks
@@ -1669,12 +1671,12 @@ function A:OnInitialize()
     end);
 
     -- LDB
-    A.ldbObject = LibStub("LibDataBroker-1.1"):NewDataObject("BrokerPAMLDB", {
+    A.ldbObject = LibStub("LibDataBroker-1.1"):NewDataObject("PetsAndMountsLDB", {
         type = "data source",
         text = L["Pets & Mounts"],
         label = L["Pets & Mounts"],
         icon = "Interface\\ICONS\\Achievement_WorldEvent_Brewmaster",
-        tocname = "Broker_PAM",
+        tocname = "PetsAndMounts",
         OnClick = function(self, button)
             if (button == "LeftButton") then
                 if ( IsShiftKeyDown() ) then
@@ -1729,7 +1731,7 @@ function A:OnInitialize()
     });
 
     -- LDBIcon
-    LibStub("LibDBIcon-1.0"):Register("BrokerPAMLDBI", A.ldbObject, A.db.profile.ldbi);
+    LibStub("LibDBIcon-1.0"):Register("PetsAndMountsLDBI", A.ldbObject, A.db.profile.ldbi);
 
     -- Add the config loader to blizzard addon configuration panel
     A:AddToBlizzTemp();

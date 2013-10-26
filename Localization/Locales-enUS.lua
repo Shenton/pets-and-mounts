@@ -1,12 +1,12 @@
 ﻿--[[-------------------------------------------------------------------------------
-    Broker Pets & Mounts
-    Data Broker display for easy acces to pets and mounts.
+    Pets & Mounts
+    Auto and random summon highly customizable for your pets and mounts, with Data Broker support.
     By: Shenton
 
     Localization-enUS.lua
 -------------------------------------------------------------------------------]]--
 
-local L = LibStub("AceLocale-3.0"):NewLocale("BrokerPAM", "enUS", true);
+local L = LibStub("AceLocale-3.0"):NewLocale("PetsAndMounts", "enUS", true);
 
 if L then
 L["Pets & Mounts"] = true;

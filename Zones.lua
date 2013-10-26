@@ -1,12 +1,12 @@
 --[[-------------------------------------------------------------------------------
-    Broker Pets & Mounts
-    Data Broker display for easy acces to pets and mounts.
+    Pets & Mounts
+    Auto and random summon highly customizable for your pets and mounts, with Data Broker support.
     By: Shenton
 
     Zones.lua
 -------------------------------------------------------------------------------]]--
 
-local A = _G["BrokerPAMGlobal"];
+local A = _G["PetsAndMountsGlobal"];
 local L = A.L;
 
 -- Globals to locals

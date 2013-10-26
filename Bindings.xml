@@ -1,8 +1,8 @@
 ﻿<Bindings>
-    <Binding name="BROKERPAMPET" header="BROKERPAM"></Binding>
-    <Binding name="BROKERPAMMOUNT" header="BROKERPAM"></Binding>
-    <Binding name="BROKERPAMMOUNTPASSENGERS" header="BROKERPAM"></Binding>
-    <Binding name="BROKERPAMMOUNTFLYING" header="BROKERPAM"></Binding>
-    <Binding name="BROKERPAMMOUNTGROUND" header="BROKERPAM"></Binding>
-    <Binding name="BROKERPAMMOUNTAQUATIC" header="BROKERPAM"></Binding>
+    <Binding name="PETSANDMOUNTSPET" header="PETSANDMOUNTS"></Binding>
+    <Binding name="PETSANDMOUNTSMOUNT" header="PETSANDMOUNTS"></Binding>
+    <Binding name="PETSANDMOUNTSMOUNTPASSENGERS" header="PETSANDMOUNTS"></Binding>
+    <Binding name="PETSANDMOUNTSMOUNTFLYING" header="PETSANDMOUNTS"></Binding>
+    <Binding name="PETSANDMOUNTSMOUNTGROUND" header="PETSANDMOUNTS"></Binding>
+    <Binding name="PETSANDMOUNTSMOUNTAQUATIC" header="PETSANDMOUNTS"></Binding>
 </Bindings>
