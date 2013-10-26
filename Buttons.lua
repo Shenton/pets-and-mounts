@@ -321,6 +321,11 @@ end
 
 --- Set button position
 function A:SetButtonPos(button)
+    if ( InCombatLockdown() ) then
+        A:Message(L["Unable to edit buttons while in combat."], 1);
+        return;
+    end
+
     if ( type(button) ~= "string" ) then
         button = button:GetName();
     end
@@ -331,6 +336,11 @@ end
 
 --- Lock button
 function A:LockButton(button)
+    if ( InCombatLockdown() ) then
+        A:Message(L["Unable to edit buttons while in combat."], 1);
+        return;
+    end
+
     if ( type(button) ~= "string" ) then
         button = button:GetName();
     end
@@ -347,6 +357,11 @@ end
 
 --- Unlock button, saving position
 function A:UnlockButton(button)
+    if ( InCombatLockdown() ) then
+        A:Message(L["Unable to edit buttons while in combat."], 1);
+        return;
+    end
+
     if ( type(button) ~= "string" ) then
         button = button:GetName();
     end
@@ -389,6 +404,11 @@ end
 
 --- Button hide/show toggle
 function A:ToggleButtonHideShow(button)
+    if ( InCombatLockdown() ) then
+        A:Message(L["Unable to edit buttons while in combat."], 1);
+        return;
+    end
+
     if ( type(button) ~= "string" ) then
         button = button:GetName();
     end
@@ -476,6 +496,11 @@ end
 
 --- Set buttons on login
 function A:SetButtons()
+    if ( InCombatLockdown() ) then
+        A:Message(L["Unable to edit buttons while in combat."], 1);
+        return;
+    end
+
     -- Position
     A:SetButtonPos("PetsAndMountsSecureButtonPets");
     A:SetButtonPos("PetsAndMountsSecureButtonMounts");

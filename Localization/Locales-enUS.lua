@@ -205,4 +205,5 @@ L["Cannot dock buttons together when at least one of them is hidden."] = true;
 L["Tried to summon %s. It is a mount this toon cannot use (Horde/Alliance specific, achievement, level, etc)."] = true;
 L["Minimap icon is hidden if you want to show it back use: /pam or /petsandmounts"] = true;
 L["Failed to load configuration, reason: %s."] = true;
+L["Unable to edit buttons while in combat."] = true;
 end

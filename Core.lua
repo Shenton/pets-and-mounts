@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------]]--
 
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
--- TODO: prevent buttons modification while in combat, those are secures
 -- TODO: fix force one pet, it do not summon the forced pet when having another one
 
 -- Ace libs (<3)

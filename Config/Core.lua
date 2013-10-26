@@ -551,13 +551,12 @@ function A:AceConfig()
                                 desc = L["Hide the companions button."],
                                 type = "toggle",
                                 set = function(info, val)
+                                    if ( InCombatLockdown() ) then
+                                        A:Message(L["Unable to edit buttons while in combat."], 1);
+                                        return;
+                                    end
+
                                     A.db.profile.PetsAndMountsSecureButtonPets.hide = not A.db.profile.PetsAndMountsSecureButtonPets.hide;
-
-                                    -- if ( A.db.profile.PetsAndMountsSecureButtonPets.hide and A.db.profile.dockButton ) then
-                                        -- A.db.profile.dockButton = nil;
-                                        -- A:UnDockButton();
-                                    -- end
-
                                     A:SetButtons();
                                 end,
                                 get = function(info) return A.db.profile.PetsAndMountsSecureButtonPets.hide; end,
@@ -569,6 +568,11 @@ function A:AceConfig()
                                 desc = L["Lock the companions button."],
                                 type = "toggle",
                                 set = function(info, val)
+                                    if ( InCombatLockdown() ) then
+                                        A:Message(L["Unable to edit buttons while in combat."], 1);
+                                        return;
+                                    end
+
                                     if ( A.db.profile.dockButton ) then
                                         return;
                                     end
@@ -598,6 +602,11 @@ function A:AceConfig()
                                 max = 5,
                                 step = 0.1,
                                 set = function(info, val)
+                                    if ( InCombatLockdown() ) then
+                                        A:Message(L["Unable to edit buttons while in combat."], 1);
+                                        return;
+                                    end
+
                                     A.db.profile.PetsAndMountsSecureButtonPets.scale = val;
                                     A:SetButtons();
                                 end,
@@ -610,6 +619,11 @@ function A:AceConfig()
                                 desc = L["Reset the companions button configuration."],
                                 type = "execute",
                                 func = function()
+                                    if ( InCombatLockdown() ) then
+                                        A:Message(L["Unable to edit buttons while in combat."], 1);
+                                        return;
+                                    end
+
                                     A.db.profile.PetsAndMountsSecureButtonPets =
                                     {
                                         hide = nil,
@@ -642,18 +656,12 @@ function A:AceConfig()
                                 desc = L["Hide the mounts button."],
                                 type = "toggle",
                                 set = function(info, val)
+                                    if ( InCombatLockdown() ) then
+                                        A:Message(L["Unable to edit buttons while in combat."], 1);
+                                        return;
+                                    end
+
                                     A.db.profile.PetsAndMountsSecureButtonMounts.hide = not A.db.profile.PetsAndMountsSecureButtonMounts.hide;
-
-                                    -- if ( A.db.profile.PetsAndMountsSecureButtonMounts.hide and A.db.profile.dockButton ) then
-                                        -- A.db.profile.dockButton = nil;
-                                        -- A:UnDockButton();
-
-                                        -- if ( not A.db.profile.PetsAndMountsSecureButtonMounts.lock and A.db.profile.PetsAndMountsSecureButtonPets.lock ) then
-                                            -- A.db.profile.PetsAndMountsSecureButtonPets.lock = nil;
-                                            -- A:SetButtons();
-                                        -- end
-                                    -- end
-
                                     A:SetButtons();
                                 end,
                                 get = function(info) return A.db.profile.PetsAndMountsSecureButtonMounts.hide; end,
@@ -665,6 +673,11 @@ function A:AceConfig()
                                 desc = L["Lock the mounts button."],
                                 type = "toggle",
                                 set = function(info, val)
+                                    if ( InCombatLockdown() ) then
+                                        A:Message(L["Unable to edit buttons while in combat."], 1);
+                                        return;
+                                    end
+
                                     A.db.profile.PetsAndMountsSecureButtonMounts.lock = not A.db.profile.PetsAndMountsSecureButtonMounts.lock;
                                     A:SetButtons();
                                 end,
@@ -690,6 +703,11 @@ function A:AceConfig()
                                 max = 5,
                                 step = 0.1,
                                 set = function(info, val)
+                                    if ( InCombatLockdown() ) then
+                                        A:Message(L["Unable to edit buttons while in combat."], 1);
+                                        return;
+                                    end
+
                                     A.db.profile.PetsAndMountsSecureButtonMounts.scale = val;
                                     A:SetButtons();
                                 end,
@@ -702,6 +720,11 @@ function A:AceConfig()
                                 desc = L["Reset the mounts button configuration."],
                                 type = "execute",
                                 func = function()
+                                    if ( InCombatLockdown() ) then
+                                        A:Message(L["Unable to edit buttons while in combat."], 1);
+                                        return;
+                                    end
+
                                     A.db.profile.PetsAndMountsSecureButtonMounts =
                                     {
                                         hide = nil,
@@ -734,6 +757,11 @@ function A:AceConfig()
                                 desc = L["Dock companion button to the mount button."],
                                 type = "toggle",
                                 set = function(info, val)
+                                    if ( InCombatLockdown() ) then
+                                        A:Message(L["Unable to edit buttons while in combat."], 1);
+                                        return;
+                                    end
+
                                     if ( A.db.profile.PetsAndMountsSecureButtonMounts.hide or A.db.profile.PetsAndMountsSecureButtonPets.hide ) then
                                         A:Message(L["Cannot dock buttons together when at least one of them is hidden."], 1);
                                         return;
@@ -757,6 +785,11 @@ function A:AceConfig()
                                 type = "select",
                                 values = dockAnchorsSelect,
                                 set = function(info, val)
+                                    if ( InCombatLockdown() ) then
+                                        A:Message(L["Unable to edit buttons while in combat."], 1);
+                                        return;
+                                    end
+
                                     A.db.profile.dockAnchor = val;
                                     A:DockButton();
                                 end,
