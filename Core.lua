@@ -6,10 +6,8 @@
     Core.lua
 -------------------------------------------------------------------------------]]--
 
--- TODO: fix menu model frame position
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 -- TODO: Modify IsSwimming method to return the 3 states, swimming, surface and not swimming, then do something with that
--- TODO: add all the localization files
 -- TODO: multi anchor docked icon
 
 -- Ace libs (<3)
@@ -237,18 +235,18 @@ function A:TableValueToKey(tbl, val)
 end
 
 --- Return anchor points according to cursor position
--- function A:GetAnchor()
-    -- local w = GetScreenWidth();
-    -- local x = GetCursorPosition();
+function A:GetMenuModelFrameAnchor()
+    local w = GetScreenWidth();
+    local x = GetCursorPosition();
 
-    -- w = (w * UIParent:GetEffectiveScale()) / 2;
+    w = (w * UIParent:GetEffectiveScale()) / 2;
 
-    -- if ( x > w ) then return "TOPRIGHT", "TOPLEFT"; end
+    if ( x > w ) then return "TOPRIGHT", "TOPLEFT"; end
 
-    -- return "TOPLEFT", "TOPRIGHT";
--- end
+    return "TOPLEFT", "TOPRIGHT";
+end
 
-function A:GetAnchor()
+function A:GetMenuButtonAnchor()
     local ps = UIParent:GetEffectiveScale();
     local px, py = UIParent:GetCenter();
     local x, y = GetCursorPosition();
@@ -1044,7 +1042,7 @@ local function PAMMenu(self, level)
                         A.menuModelFrame:SetCreature(vv.creatureID);
 
                         -- Frame pos
-                        local point, relativePoint = A:GetAnchor();
+                        local point, relativePoint = A:GetMenuModelFrameAnchor();
                         A.menuModelFrame:ClearAllPoints();
                         A.menuModelFrame:SetPoint(point, DropDownList3, relativePoint, 0, 0);
                         A.menuModelFrame:Show();
@@ -1220,7 +1218,7 @@ local function PAMMenu(self, level)
                                 A.menuModelFrame:SetCreature(vvv.creatureID);
 
                                 -- Frame pos
-                                local point, relativePoint = A:GetAnchor();
+                                local point, relativePoint = A:GetMenuModelFrameAnchor();
                                 A.menuModelFrame:ClearAllPoints();
                                 A.menuModelFrame:SetPoint(point, DropDownList4, relativePoint, 0, 0);
                                 A.menuModelFrame:Show();

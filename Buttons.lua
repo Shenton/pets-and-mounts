@@ -206,7 +206,7 @@ function A:PreClickMount(button, clickedBy)
         button:SetAttribute("type", "macro");
         button:SetAttribute("macrotext", nil);
 
-        local point, relativePoint = A:GetAnchor();
+        local point, relativePoint = A:GetMenuButtonAnchor();
 
         UIDropDownMenu_SetAnchor(A.menuFrame, 0, 0, point, button, relativePoint);
         ToggleDropDownMenu(1, nil, A.menuFrame, button);
@@ -251,7 +251,7 @@ function A:PreClickPet(button, clickedBy)
         button:SetAttribute("type", "macro");
         button:SetAttribute("macrotext", nil);
 
-        local point, relativePoint = A:GetAnchor();
+        local point, relativePoint = A:GetMenuButtonAnchor();
 
         UIDropDownMenu_SetAnchor(A.menuFrame, 0, 0, point, button, relativePoint);
         ToggleDropDownMenu(1, nil, A.menuFrame, button);
