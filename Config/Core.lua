@@ -36,6 +36,14 @@ local modelFrameSizeSelect =
     [400] = "400x400",
 };
 
+local dockAnchorsSelect =
+{
+    ["Top"] = L["Top"],
+    ["Right"] = L["Right"],
+    ["Bottom"] = L["Bottom"],
+    ["Left"] = L["Left"],
+};
+
 -- Init addon databases
 A:InitializeDB();
 
@@ -734,12 +742,25 @@ function A:AceConfig()
                                     A.db.profile.dockButton = not A.db.profile.dockButton;
 
                                     if ( A.db.profile.dockButton ) then
-                                        A:DockButton("pets");
+                                        A:DockButton();
                                     else
                                         A:UnDockButton();
                                     end
                                 end,
                                 get = function(info) return A.db.profile.dockButton; end,
+                            },
+                            dockAnchor =
+                            {
+                                order = 220,
+                                name = L["Dock anchor"],
+                                desc = L["Select on which side of the mounts button the companions button should dock."],
+                                type = "select",
+                                values = dockAnchorsSelect,
+                                set = function(info, val)
+                                    A.db.profile.dockAnchor = val;
+                                    A:DockButton();
+                                end,
+                                get = function() return A.db.profile.dockAnchor; end,
                             },
                         },
                     },
@@ -1776,7 +1797,7 @@ function A:AceConfig()
                             {
                                 order = 201,
                                 name = L["Reset"],
-                                desc = L["Use this to reset the current area."],
+                                desc = L["Use this to reset the working area to the current area."],
                                 type = "execute",
                                 func = function() A.currentMapIDForPets = nil; end,
                             },
@@ -2139,7 +2160,7 @@ function A:AceConfig()
                             {
                                 order = 201,
                                 name = L["Reset"],
-                                desc = L["Use this to reset the current area."],
+                                desc = L["Use this to reset the working area to the current area."],
                                 type = "execute",
                                 func = function() A.currentMapIDForMounts = nil; end,
                             },

@@ -7,7 +7,8 @@
 -------------------------------------------------------------------------------]]--
 
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
--- TODO: multi anchor docked icon
+-- TODO: prevent buttons modification while in combat, those are secures
+-- TODO: fix force one pet, it do not summon the forced pet when having another one
 
 -- Ace libs (<3)
 local A = LibStub("AceAddon-3.0"):NewAddon("PetsAndMounts", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0");
@@ -1492,6 +1493,7 @@ A.aceDefaultDB =
         },
         classesMacrosEnabled = 1, -- d
         dockButton = nil, -- d
+        dockAnchor = "Left", -- d
         PetsAndMountsSecureButtonPets = -- d
         {
             hide = nil,

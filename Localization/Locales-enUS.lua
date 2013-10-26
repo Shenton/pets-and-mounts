@@ -9,37 +9,68 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("PetsAndMounts", "enUS", true);
 
 if L then
+-- Addon name
 L["Pets & Mounts"] = true;
-L["Companions"] = true;
-L["Mounts"] = true;
-L["Options"] = true;
-L["Close"] = true;
-L["Filters"] = true;
-L["Binding"] = true;
-L["Timers"] = true;
-L["Ground"] = true;
-L["Fly"] = true;
-L["Hybrid"] = true;
-L["Aquatic"] = true;
-L["Passenger"] = true;
-L["Debug"] = true;
-L["Summon"] = true;
-L["Size"] = true;
-L["None"] = true;
-L["Sets"] = true;
-L["Current"] = true;
-L["Load"] = true;
-L["Save"] = true;
-L["Name"] = true;
+-- Words
 L["Accept"] = true;
+L["Aquatic"] = true;
+
+L["Binding"] = true;
+L["Bottom"] = true;
+
 L["Cancel"] = true;
-L["Delete"] = true;
 L["Choose"] = true;
+L["Close"] = true;
+L["Companions"] = true;
+L["Current"] = true;
+
+L["Debug"] = true;
+L["Delete"] = true;
+L["Dock"] = true;
+
+L["Enable"] = true;
+
+L["Filters"] = true;
+L["Fly"] = true;
+
+L["Ground"] = true;
+
+L["Hide"] = true;
+L["Hybrid"] = true;
+
+L["Left"] = true;
+L["Load"] = true;
+L["Lock"] = true;
+
+L["Minimap"] = true;
+L["Mounts"] = true;
+
+L["Name"] = true;
 L["New"] = true;
+L["None"] = true;
+
+L["Off"] = true;
+L["On"] = true;
+L["Options"] = true;
+
+L["Passenger"] = true;
+
 L["Reset"] = true;
-L["Show or hide minimap icon"] = true;
+L["Right"] = true;
+
+L["Save"] = true;
+L["Scale"] = true;
+L["Sets"] = true;
+L["Size"] = true;
+L["Summon"] = true;
+L["Surface"] = true;
+
+L["Timers"] = true;
+L["Tooltip"] = true;
+L["Top"] = true;
+
+-- Config
 L["Model rotation"] = true;
-L["Model frame size"] = true;
 L["Auto summon"] = true;
 L["Auto pet options"] = true;
 L["Auto summon a random companion."] = true;
@@ -69,7 +100,6 @@ L["Random passengers mount"] = true;
 L["Random flying mount"] = true;
 L["Random ground mount"] = true;
 L["Random aquatic mount"] = true;
-L["Minimap"] = true;
 L["Show icon"] = true;
 L["Display an icon on the minimap."] = true;
 L["Model frames"] = true;
@@ -78,7 +108,6 @@ L["Activate the model rotation in the frame."] = true;
 L["Menu frame"] = true;
 L["Select the model frame size."] = true;
 L["Pets & Mounts config loader"] = true;
-L["Failed to load configuration, reason: %s."] = true;
 L["Load configuration"] = true;
 L["Force One"] = true;
 L["Companions and mounts informations updated."] = true;
@@ -86,8 +115,6 @@ L["Select the companion to force summon."] = true;
 L["Select the %s mount to force summon."] = true;
 L["Currently using set: %s\n\n"] = true;
 L["Set %s already exists."] = true;
-L["Minimap icon is hidden if you want to show it back use: /pam or /petsandmounts"] = true;
-L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random companion.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Revoke current companion.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open the configuration panel."] = true;
 L["You already got a set named %s.\n\nEnter a new name or leave it blank to overwrite."] = true;
 L["Database update to revision %d needed."] = true;
 L["A full database update is needed."] = true;
@@ -95,17 +122,6 @@ L["Database updated to revision %d."] = true;
 L["Delete set %s?"] = true;
 L["A set named %s already exists, renaming it to %s."] = true;
 L["Deleted set %s, due to Blizzard modification to companions code."] = true;
-L["On"] = true;
-L["Off"] = true;
-L["Forced companion: %s"] = true;
-L["Forced aquatic mount: %s"] = true;
-L["Forced ground mount: %s"] = true;
-L["Forced fly mount: %s"] = true;
-L["Forced hybrid mount: %s"] = true;
-L["Forced passenger mount: %s"] = true;
-L["Companions set in use: %s."] = true;
-L["Mounts set in use: %s."] = true;
-L["Enable"] = true;
 L["Area mounts"] = true;
 L["With this enabled it will summon a specific mount according to your current area. Example: the Abyssal Seahorse in Vashj'ir."] = true;
 L["Arena instance"] = true;
@@ -119,26 +135,17 @@ L["Area type"] = true;
 L["Select witch type of area to work with."] = true;
 L["Enable auto pet options override."] = true;
 L["Override options for %s"] = true;
-L["Auto summon companion is %s."] = true;
-L["Not when stealthed is %s."] = true;
 L["Random companion"] = true;
 L["Bind a key to summon a random companion."] = true;
-L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random pet.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Hide button.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."] = true;
-L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random mount.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Hide button.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."] = true;
 L["Class specific"] = true;
 L["With this enabled it will use flying forms for druids (Only class with specific \"mount\" atm)."] = true;
 L["Buttons options"] = true;
 L["Companions button"] = true;
 L["Mounts button"] = true;
-L["Hide"] = true;
 L["Hide the companions button."] = true;
-L["Lock"] = true;
 L["Lock the companions button."] = true;
-L["Tooltip"] = true;
 L["Enable the tooltip of the companions button."] = true;
-L["Scale"] = true;
 L["Set the scale of the companions button."] = true;
-L["Reset"] = true;
 L["Reset the companions button configuration."] = true;
 L["Hide the mounts button."] = true;
 L["Lock the mounts button."] = true;
@@ -146,7 +153,6 @@ L["Enable the tooltip of the mounts button."] = true;
 L["Set the scale of the mounts button."] = true;
 L["Reset the mounts button configuration."] = true;
 L["Common options"] = true;
-L["Dock"] = true;
 L["Dock companion button to the mount button."] = true;
 L["Area override"] = true;
 L["Build zones database"] = true;
@@ -163,19 +169,40 @@ L["Greenstone Village"] = true;
 L["Lion's Landing (A)"] = true;
 L["Theramore's Fall (A)"] = true;
 L["Theramore's Fall (H)"] = true;
-L["Use this to reset the current area."] = true;
-L["Tried to summon %s. It is a mount this toon cannot use (Horde/Alliance specific, achievement, level, etc)."] = true;
+L["Use this to reset the working area to the current area."] = true;
 L["Haunted Memento"] = true;
 L["Do not automatically summon a pet when the Haunted Memento is in your bags."] = true;
 L["Database options"] = true;
 L["Magic Broom"] = true;
 L["Summon the Magic Broom when it is in your bags."] = true;
-L["Cannot dock buttons together when at least one of them is hidden."] = true;
-L["Use me to move both buttons."] = true;
 L["Surface mount"] = true;
 L["If you are in a non flyable area and at the water surface, it will summon a mount able to walk on water. Support Death Knights Path of Frost, Shamans Water Walking and Warlocks glyph."] = true;
 L["Prefer surface spell"] = true;
 L["If surface mount options is enabled, it will prefer using your water walking spell other the mount. This only works for Death Knights and Shamans."] = true;
-L["Surface"] = true;
 L["Random surface mount"] = true;
+L["Dock anchor"] = true;
+L["Select on which side of the mounts button the companions button should dock."] = true;
+-- Dropdown menu
+L["Show or hide minimap icon"] = true;
+L["Model frame size"] = true;
+-- Tooltip
+L["Use me to move both buttons."] = true;
+L["Auto summon companion is %s."] = true;
+L["Not when stealthed is %s."] = true;
+L["Forced companion: %s"] = true;
+L["Forced aquatic mount: %s"] = true;
+L["Forced ground mount: %s"] = true;
+L["Forced fly mount: %s"] = true;
+L["Forced hybrid mount: %s"] = true;
+L["Forced passenger mount: %s"] = true;
+L["Companions set in use: %s."] = true;
+L["Mounts set in use: %s."] = true;
+L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random pet.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Hide button.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."] = true;
+L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random mount.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Hide button.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."] = true;
+L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random companion.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Revoke current companion.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open the configuration panel."] = true;
+-- Messages
+L["Cannot dock buttons together when at least one of them is hidden."] = true;
+L["Tried to summon %s. It is a mount this toon cannot use (Horde/Alliance specific, achievement, level, etc)."] = true;
+L["Minimap icon is hidden if you want to show it back use: /pam or /petsandmounts"] = true;
+L["Failed to load configuration, reason: %s."] = true;
 end

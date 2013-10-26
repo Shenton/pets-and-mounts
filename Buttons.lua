@@ -410,11 +410,11 @@ end
 function A:DockButton()
     A.db.profile.PetsAndMountsSecureButtonPets.anchor =
     {
-        point = "LEFT",
+        point = A.dockButtonsAnchors[A.db.profile.dockAnchor][1],
         relativeTo = "PetsAndMountsSecureButtonMounts",
-        relativePoint = "RIGHT",
-        offX = 4,
-        offY = 0,
+        relativePoint = A.dockButtonsAnchors[A.db.profile.dockAnchor][2],
+        offX = A.dockButtonsAnchors[A.db.profile.dockAnchor][3],
+        offY = A.dockButtonsAnchors[A.db.profile.dockAnchor][4],
     };
 
     A:LockButton("PetsAndMountsSecureButtonPets")

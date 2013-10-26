@@ -129,6 +129,16 @@ A.surfaceMounts =
     118089, -- Azure Water Strider
 };
 
+-- Docked buttons anchors
+-- point, relativePoint offX offY
+A.dockButtonsAnchors =
+{
+    ["Top"] = {"BOTTOM","TOP",0,4},
+    ["Right"] = {"LEFT","RIGHT",4,0},
+    ["Bottom"] = {"TOP","BOTTOM",0,-4},
+    ["Left"] = {"RIGHT","LEFT",-4,0},
+};
+
 -- Mount with restriction, location, spell, faction, etc
 A.restrictedMounts =
 {
