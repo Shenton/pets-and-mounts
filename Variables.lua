@@ -38,7 +38,7 @@ A.mountCat =
     L["Hybrid"],
     L["Aquatic"],
     L["Passenger"],
-    L["Surface"]
+    L["Surface"],
 };
 
 -- Mounts with passengers spellID

@@ -500,8 +500,8 @@ function A:BuildUsableMountsTable(tbl)
                 local professionOne, professionTwo = GetProfessions();
                 local professionOneSkill, professionTwoSkill, _;
 
-                _, _, _, professionOneSkill, _, _, _, _, professionOne = A:GetProfession(professionOne);
-                _, _, _, professionTwoSkill, _, _, _, _, professionTwo = A:GetProfession(professionTwo);
+                _, _, professionOneSkill, _, _, _, professionOne = GetProfessionInfo(professionOne);
+                _, _, professionTwoSkill, _, _, _, professionTwo = GetProfessionInfo(professionTwo);
 
                 if ( (professionOne == A.restrictedMounts[v].args[1] and professionOneSkill >= A.restrictedMounts[v].args[2])
                 or (professionTwo == A.restrictedMounts[v].args[1] and professionTwoSkill >= A.restrictedMounts[v].args[2]) ) then
