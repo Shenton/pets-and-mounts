@@ -48,6 +48,7 @@ local bit = bit;
 -- GLOBALS: BINDING_NAME_PETSANDMOUNTSMOUNTGROUND, BINDING_NAME_PETSANDMOUNTSMOUNTAQUATIC
 -- GLOBALS: PetsAndMountsMenuModelFrame, PetsAndMountsConfigModelFrame
 -- GLOBALS: UnitFactionGroup, UnitRace, UIDropDownMenu_SetAnchor
+-- GLOBALS: NUM_GLYPH_SLOTS, GetGlyphSocketInfo
 
 --[[-------------------------------------------------------------------------------
     Common methods

@@ -12,6 +12,7 @@ local L = A.L;
 -- Globals to locals
 local pairs = pairs;
 local _G = _G;
+local tostring = tostring;
 
 -- GLOBALS: BINDING_HEADER_PETSANDMOUNTS, BINDING_NAME_PETSANDMOUNTSPET, BINDING_NAME_PETSANDMOUNTSMOUNT
 -- GLOBALS: BINDING_NAME_PETSANDMOUNTSMOUNTPASSENGERS, BINDING_NAME_PETSANDMOUNTSMOUNTFLYING
@@ -20,7 +21,7 @@ local _G = _G;
 -- GLOBALS: IsFlyableArea, IsSpellKnown, GetSpellInfo, IsShiftKeyDown, IsControlKeyDown
 -- GLOBALS: PetsAndMountsSecureButtonMounts, PetsAndMountsSecureButtonPets, GetScreenWidth
 -- GLOBALS: GameTooltip, GetItemCount, GetItemInfo, UIDropDownMenu_SetAnchor
--- GLOBALS: ToggleDropDownMenu, type
+-- GLOBALS: ToggleDropDownMenu, type, BINDING_NAME_PETSANDMOUNTSMOUNTSURFACE, UnitBuff
 
 --[[-------------------------------------------------------------------------------
     Bindings

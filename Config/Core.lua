@@ -20,6 +20,7 @@ local tonumber = tonumber;
 
 -- GLOBALS: GetCurrentBindingSet, SetBinding, SaveBindings
 -- GLOBALS: GetBindingKey, StaticPopup_Show, LibStub, GetMapNameByID
+-- GLOBALS: InCombatLockdown
 
 -- Ace3 libs <3
 A.AceConfigDialog = LibStub("AceConfigDialog-3.0");

@@ -6,6 +6,8 @@ local AceGUI = LibStub("AceGUI-3.0")
 local min, max, floor = math.min, math.max, math.floor
 local select, pairs, ipairs, type = select, pairs, ipairs, type
 local tsort = table.sort
+local error = error
+local tostring = tostring
 
 -- WoW APIs
 local PlaySound = PlaySound
@@ -14,7 +16,7 @@ local _G = _G
 
 -- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
 -- List them here for Mikk's FindGlobals script
--- GLOBALS: CLOSE
+-- GLOBALS: CLOSE, C_PetJournal
 
 local function fixlevels(parent,...)
     local i = 1
