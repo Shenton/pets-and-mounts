@@ -36,12 +36,11 @@ local stealthAuras =
     [1] = GetSpellInfo(51755),
     [2] = GetSpellInfo(32612),
 };
-local _, class = UnitClass("player");
 function A:IsStealthed()
     if ( IsStealthed() ) then
         A:DebugMessage("IsStealthed() - Stealthed");
         return 1;
-    elseif ( class == "HUNTER" or class == "MAGE" ) then
+    elseif ( A.playerClass == "HUNTER" or A.playerClass == "MAGE" ) then
         for k,v in ipairs(stealthAuras) do
             if ( UnitBuff("player", v) ) then
                 A:DebugMessage("IsStealthed() - Stealth/Invis buff found");
@@ -129,25 +128,26 @@ function A:BuildUsablePetsTable(tbl)
     local out = {};
 
     for k,v in ipairs(tbl) do
-        local id = select(11, C_PetJournal.GetPetInfoByPetID(v));
+        --local id = select(11, C_PetJournal.GetPetInfoByPetID(v));
+        local _, customName, _, _, _, _, _, name, _, _, id = C_PetJournal.GetPetInfoByPetID(v);
 
         if ( A.restrictedPets[id] ) then -- Got a restricted pet
             -- Banned
             if ( A.restrictedPets[id].type == "banned" ) then
-                A:DebugMessage(("Restricted pet type: %s - spell: %d"):format(A.restrictedPets[id].type, id));
+                A:DebugMessage(("Restricted pet: %s - type: %s - npc: %d"):format(customName or name, A.restrictedPets[id].type, id));
             -- Faction
             elseif ( A.restrictedPets[id].type == "faction" ) then
                 if ( type(A.restrictedPets[id].args) == "table" ) then
                     if ( tContains(A.restrictedPets[id].args, A.playerFaction) ) then
                         out[#out+1] = v;
                     else
-                        A:DebugMessage(("Restricted pet type: %s - spell: %d"):format(A.restrictedPets[id].type, id));
+                        A:DebugMessage(("Restricted pet: %s - type: %s - npc: %d"):format(customName or name, A.restrictedPets[id].type, id));
                     end
                 else
                     if ( A.restrictedPets[id].args == A.playerFaction ) then
                         out[#out+1] = v;
                     else
-                        A:DebugMessage(("Restricted pet type: %s - spell: %d"):format(A.restrictedPets[id].type, id));
+                        A:DebugMessage(("Restricted pet: %s - type: %s - npc: %d"):format(customName or name, A.restrictedPets[id].type, id));
                     end
                 end
             end

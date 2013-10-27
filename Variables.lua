@@ -133,6 +133,18 @@ A.dockButtonsAnchors =
 };
 
 -- Pets with restrictions, faction mostly, and some useless (winter helpers)
+--[[
+# Format
+[npcID] =
+{
+    type = "string type",
+    args = "whatever is restricted, can be a table",
+}
+
+# Types
+banned - simple ban no args here
+faction - args = Not localized faction as returned by UnitFactionGroup()
+]]--
 A.restrictedPets =
 {
     [15705] = -- Winter's Little Helper
@@ -143,12 +155,12 @@ A.restrictedPets =
     {
         type = "banned",
     },
-    [101989] = -- Horde Balloon
+    [54541] = -- Horde Balloon
     {
         type = "faction",
         args = "Horde",
     },
-    [101986] = -- Alliance Balloon
+    [54539] = -- Alliance Balloon
     {
         type = "faction",
         args = "Alliance",
@@ -156,6 +168,22 @@ A.restrictedPets =
 };
 
 -- Mount with restriction, location, spell, faction, etc
+--[[
+# Format
+[spellID] =
+{
+    type = "string type",
+    args = "whatever is restricted, can be a table",
+}
+
+# Types
+location - args = MapID
+spell - args = SpellID
+class - args = Class string not localized, arg 2 of UnitCLass()
+race&class - args = race and class concatenate, arg 2 of UnitRace() and same as class
+profession - args = args[1] = profession skill line, args[2] = profession skill level
+faction - args = Not localized faction as returned by UnitFactionGroup()
+]]--
 A.restrictedMounts =
 {
     -- Location specific mount

@@ -8,6 +8,7 @@
 
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 -- TODO: I really need to find a better way to build the maps names DB
+-- TODO: Look into achievement mounts or unique per character mounts for restricted mounts
 
 -- Ace libs (<3)
 local A = LibStub("AceAddon-3.0"):NewAddon("PetsAndMounts", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0");
