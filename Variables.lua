@@ -58,10 +58,11 @@ A.passengerMounts =
     75973, -- X-53 Touring Rocket
 };
 
--- Mounts with another bitfield than the aquatic ones
+-- Mounts with another bit field than the aquatic ones
 -- this will force them to aquatics
 A.aquaticMounts =
 {
+    30174, -- Riding Turtle
     64731, -- Sea Turtle
 };
 
