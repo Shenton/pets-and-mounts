@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------]]--
 
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
--- TODO: fix force one pet, it do not summon the forced pet when having another one
 
 -- Ace libs (<3)
 local A = LibStub("AceAddon-3.0"):NewAddon("PetsAndMounts", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0");

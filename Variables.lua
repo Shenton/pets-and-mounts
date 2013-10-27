@@ -65,13 +65,6 @@ A.aquaticMounts =
     64731, -- Sea Turtle
 };
 
--- Those companions will not be auto summoned
-A.bannedPets =
-{
-    15705, -- Winter's Little Helper
-    15698, -- Father Winter's Helper
-};
-
 -- Mounts listed here can only be summoned in a specific area
 A.uniqueAreaMounts =
 {
@@ -114,7 +107,7 @@ A.areaTypesLocales =
 {
     arena = L["Arena instance"], -- A PvP Arena instance
     none = L["Open world"], -- Normal world area (e.g. Northrend, Kalimdor, Deeprun Tram)
-    party = L["Party instance"], -- An instance for 5-man groups
+    party = L["Party instance"], -- An instance for 5-men groups
     pvp = L["Battleground instance"], -- A PvP battleground instance
     raid = L["Raid instance"], -- An instance for raid groups
     scenario = L["Scenario instance"], -- A scenario instance
@@ -137,6 +130,29 @@ A.dockButtonsAnchors =
     ["Right"] = {"LEFT","RIGHT",4,0},
     ["Bottom"] = {"TOP","BOTTOM",0,-4},
     ["Left"] = {"RIGHT","LEFT",-4,0},
+};
+
+-- Pets with restrictions, faction mostly, and some useless (winter helpers)
+A.restrictedPets =
+{
+    [15705] = -- Winter's Little Helper
+    {
+        type = "banned",
+    },
+    [15698] = -- Father Winter's Helper
+    {
+        type = "banned",
+    },
+    [101989] = -- Horde Balloon
+    {
+        type = "faction",
+        args = "Horde",
+    },
+    [101986] = -- Alliance Balloon
+    {
+        type = "faction",
+        args = "Alliance",
+    },
 };
 
 -- Mount with restriction, location, spell, faction, etc

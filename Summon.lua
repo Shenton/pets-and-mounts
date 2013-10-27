@@ -71,15 +71,6 @@ function A:HasRegenBuff()
     return nil;
 end
 
---- Check if a pet is banned
-function A:CheckBannedPet(id)
-    local _, _, _, _, _, _, _, _, _, _, creatureID = C_PetJournal.GetPetInfoByPetID(id);
-
-    if ( tContains(A.bannedPets, creatureID) ) then return 1; end
-
-    return nil;
-end
-
 --- Check if the Haunted Memento is in the player bags
 -- If it is and the Haunted Memento option is set, return true
 function A:CheckHauntedMemento()
@@ -131,13 +122,85 @@ function A:RevokePet()
     C_PetJournal.SummonPetByGUID(currentPet);
 end
 
+--- Build a table with usable pets
+-- @param tbl The original mounts table
+-- @return The table filtered
+function A:BuildUsablePetsTable(tbl)
+    local out = {};
+
+    for k,v in ipairs(tbl) do
+        local id = select(11, C_PetJournal.GetPetInfoByPetID(v));
+
+        if ( A.restrictedPets[id] ) then -- Got a restricted pet
+            -- Banned
+            if ( A.restrictedPets[id].type == "banned" ) then
+                A:DebugMessage(("Restricted pet type: %s - spell: %d"):format(A.restrictedPets[id].type, id));
+            -- Faction
+            elseif ( A.restrictedPets[id].type == "faction" ) then
+                if ( type(A.restrictedPets[id].args) == "table" ) then
+                    if ( tContains(A.restrictedPets[id].args, A.playerFaction) ) then
+                        out[#out+1] = v;
+                    else
+                        A:DebugMessage(("Restricted pet type: %s - spell: %d"):format(A.restrictedPets[id].type, id));
+                    end
+                else
+                    if ( A.restrictedPets[id].args == A.playerFaction ) then
+                        out[#out+1] = v;
+                    else
+                        A:DebugMessage(("Restricted pet type: %s - spell: %d"):format(A.restrictedPets[id].type, id));
+                    end
+                end
+            end
+        else
+            out[#out+1] = v;
+        end
+    end
+
+    return out;
+end
+
+--- Get a random pet from a petts table
+-- @param tbl The original petts table
+-- @return The pet ID
+function A:GetRandomPet(tbl)
+    if ( not A.usablePetsCache ) then
+        A.usablePetsCache = {};
+    end
+
+    if ( not A.usablePetsCache[tbl] ) then
+        A.usablePetsCache[tbl] = A:BuildUsablePetsTable(tbl);
+    end
+
+    local index = math.random(#A.usablePetsCache[tbl]);
+
+    return A.usablePetsCache[tbl][index];
+end
+
+--- Check if we got a least one mount available after restriction in the given table
+-- @param tbl The original mounts table
+-- @return The number of mounts available or nil
+function A:GotRandomPet(tbl)
+    if ( not A.usablePetsCache ) then
+        A.usablePetsCache = {};
+    end
+
+    if ( not A.usablePetsCache[tbl] ) then
+        A.usablePetsCache[tbl] = A:BuildUsablePetsTable(tbl);
+    end
+
+    local num = #A.usablePetsCache[tbl];
+
+    if ( num > 0 ) then return num; end
+
+    return nil;
+end
+
 --- Get a random pet from databases and summon it
--- @param auto Bool called from AutoPet()
-function A:RandomPet(auto)
+function A:RandomPet()
     -- DB init
     A:InitializeDB();
 
-    -- Fav pets cleaning
+    -- Fav pets cleaning, yes this is unclean, but if this is used to soon it fail as pet info are unavailable
     if ( not A.favoritesCleaned ) then
         A:CleanPetsFavorites();
         A.favoritesCleaned = 1;
@@ -146,29 +209,11 @@ function A:RandomPet(auto)
     local id;
 
     -- Get a random pet
-    if ( #A.db.profile.favoritePets > 0 ) then
-        id = math.random(#A.db.profile.favoritePets);
-        id = A.db.profile.favoritePets[id];
-    elseif ( #A.pamTable.petsIds > 0 ) then
-        id = math.random(#A.pamTable.petsIds);
-        id = A.pamTable.petsIds[id];
+    if ( A:GotRandomPet(A.db.profile.favoritePets) ) then
+        id = A:GetRandomPet(A.db.profile.favoritePets);
+    elseif ( A:GotRandomPet(A.pamTable.petsIds) ) then
+        id = A:GetRandomPet(A.pamTable.petsIds);
     else
-        return;
-    end
-
-    -- Recall this method if we already got the same pet, will work if the player got at least 10 pets (global an fav)
-    if ( #A.pamTable.petsIds >= 10 and #A.db.profile.favoritePets >= 10 ) then
-        if ( C_PetJournal.GetSummonedPetGUID() and C_PetJournal.GetSummonedPetGUID() == id ) then
-            A:RandomPet();
-            A:DebugMessage("RandomPet() - Already got that pet, resummon");
-            return;
-        end
-    end
-
-    -- If called by AutoPet() filter some nasty buggy pets
-    -- For example winter helpers refuses to be summoned
-    if ( auto and A:CheckBannedPet(id) ) then
-        A:DebugMessage("RandomPet() - Banned pet filter");
         return;
     end
 
@@ -177,6 +222,9 @@ end
 
 --- Check if a pet can be summoned
 function A:AutoPet()
+    -- DB init
+    A:InitializeDB();
+
     local currentPet = C_PetJournal.GetSummonedPetGUID();
 
     -- Got a pet, option is set to not have a pet when stealthed
@@ -215,49 +263,32 @@ function A:AutoPet()
         return;
     end
 
-    -- Area override
-    if ( A.db.profile.petByMapID[tostring(A.currentMapID)] ) then
+    if ( currentPet and A.db.profile.alreadyGotPet ) then -- Option is set to not summon when having a pet
+        A:DebugMessage("AutoPet() - Already got a pet");
+    elseif ( A.db.profile.forceOne.pet ) then -- Forced pet
+        if ( currentPet and currentPet == A.db.profile.forceOne.pet ) then
+            A:DebugMessage("AutoPet() - Forced pet is current");
+        else
+            A:DebugMessage("AutoPet() - Forced pet");
+            A:SummonPet(A.db.profile.forceOne.pet);
+        end
+    elseif ( A.db.profile.petByMapID[tostring(A.currentMapID)] ) then -- Area pet
         if ( A.db.profile.petByMapID[tostring(A.currentMapID)] == currentPet ) then
             A:DebugMessage("AutoPet() - Area override pet - Already got that pet");
-            return;
         else
             A:DebugMessage("AutoPet() - Area override pet - summon");
             A:SummonPet(A.db.profile.petByMapID[tostring(A.currentMapID)]);
-            return;
         end
-    end
-
-    -- Got a pet
-    if ( currentPet ) then
-        -- Option is set to not summon when having a pet
-        if ( A.db.profile.alreadyGotPet ) then
-            A:DebugMessage("AutoPet() - Already got a pet");
-            return;
+    elseif ( A:GotRandomPet(A.db.profile.favoritePets) ) then -- Fav pets
+        if ( currentPet and tContains(A.db.profile.favoritePets, currentPet) ) then
+            A:DebugMessage("AutoPet() - Already got a fav pet");
         else
-            -- Current pet is in fav list, return
-            if ( tContains(A.db.profile.favoritePets, currentPet) ) then
-                A:DebugMessage("AutoPet() - Already got a fav pet");
-                return;
-            -- Check if the current pet is banned and not forced
-            elseif ( (A.db.profile.forceOne.pet ~= currentPet) and A:CheckBannedPet(currentPet) ) then
-                A:DebugMessage("AutoPet() - Summoned pet is banned");
-                A:RandomPet(1);
-                return;
-            -- No fav pet, return
-            elseif ( #A.db.profile.favoritePets == 0 ) then
-                A:DebugMessage("AutoPet() - No fav pet");
-                return;
-            end
+            local id = A:GetRandomPet(A.db.profile.favoritePets);
+            A:SummonPet(id);
         end
-    end
-
-    -- Summon pet
-    if ( A.db.profile.forceOne.pet ) then -- Got forced
-        A:DebugMessage("AutoPet() - Forced pet");
-        A:SummonPet(A.db.profile.forceOne.pet);
-    else -- Summon a random pet
-        A:DebugMessage("AutoPet() - Random pet");
-        A:RandomPet(1);
+    elseif ( not currentPet and A:GotRandomPet(A.pamTable.petsIds) ) then -- All pets
+        local id = A:GetRandomPet(A.pamTable.petsIds);
+        A:SummonPet(id);
     end
 end
 
