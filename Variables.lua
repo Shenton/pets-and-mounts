@@ -39,6 +39,7 @@ A.mountCat =
     L["Aquatic"],
     L["Passenger"],
     L["Surface"],
+    L["Repair"],
 };
 
 -- Mounts with passengers spellID
@@ -66,6 +67,14 @@ A.aquaticMounts =
     64731, -- Sea Turtle
 };
 
+-- Repair mounts spellID
+A.repairMounts =
+{
+    122708, -- Grand Expedition Yak
+    61425, -- Traveler's Tundra Mammoth (Alliance)
+    61447, -- Traveler's Tundra Mammoth (Horde)
+};
+
 -- Mounts listed here can only be summoned in a specific area
 A.uniqueAreaMounts =
 {
@@ -91,6 +100,7 @@ A.uniqueAreaMounts =
     },
     [5] = {}, -- with passengers
     [6] = {}, -- Surface
+    [7] = {}, -- Repair
 };
 
 -- Area types handled by the addon, for auto summon behavior according to area type

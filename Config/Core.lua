@@ -1153,6 +1153,43 @@ function A:AceConfig()
                                     return key;
                                 end,
                             },
+                            randomRepairMount =
+                            {
+                                order = 60,
+                                name = L["Random repair mount"],
+                                type = "header",
+                            },
+                            randomRepairMountKey1 =
+                            {
+                                order = 61,
+                                name = L["Key one"],
+                                desc = L["Bind a key to summon a random mount."],
+                                type = "keybinding",
+                                set = function(info, val)
+                                    local set = GetCurrentBindingSet();
+
+                                    SetBinding(val, "PETSANDMOUNTSMOUNTREPAIR", set);
+                                    SaveBindings(set);
+                                end,
+                                get = function(info) return GetBindingKey("PETSANDMOUNTSMOUNTREPAIR"); end,
+                            },
+                            randomRepairMountKey2 =
+                            {
+                                order = 62,
+                                name = L["Key two"],
+                                desc = L["Bind a key to summon a random mount."],
+                                type = "keybinding",
+                                set = function(info, val)
+                                    local set = GetCurrentBindingSet();
+
+                                    SetBinding(val, "PETSANDMOUNTSMOUNTREPAIR", set);
+                                    SaveBindings(set);
+                                end,
+                                get = function(info)
+                                    local _, key = GetBindingKey("PETSANDMOUNTSMOUNTREPAIR");
+                                    return key;
+                                end,
+                            },
                         },
                     },
                     minimap =
@@ -1395,39 +1432,6 @@ function A:AceConfig()
                                     },
                                 },
                             },
-                            -- new =
-                            -- {
-                                -- order = 20,
-                                -- name = L["New"],
-                                -- type = "group",
-                                -- inline = true,
-                                -- args =
-                                -- {
-                                    -- input =
-                                    -- {
-                                        -- order = 0,
-                                        -- name = L["Name"],
-                                        -- type = "input",
-                                        -- set = function(info, val) A.newMountSetName = val; end,
-                                        -- get = function() return A.newMountSetName; end,
-                                    -- },
-                                    -- exec =
-                                    -- {
-                                        -- order = 1,
-                                        -- name = L["Save"],
-                                        -- type = "execute",
-                                        -- disabled = not A.newMountSetName,
-                                        -- func = function()
-                                            -- if ( A.db.global.savedSets.mounts[A.newMountSetName] ) then
-                                                -- StaticPopup_Show("PetsAndMountsOverwriteOrChangeNameSet", A.newMountSetName);
-                                            -- else
-                                                -- A.db.global.savedSets.mounts[A.newMountSetName] = {};
-                                                -- A.newMountSetName = nil;
-                                            -- end
-                                        -- end;
-                                    -- },
-                                -- },
-                            -- },
                             save =
                             {
                                 order = 30,
@@ -1718,6 +1722,33 @@ function A:AceConfig()
                                         A.db.profile.forceOne.mount[6] = nil;
                                     else
                                         A.db.profile.forceOne.mount[6] = val;
+                                    end
+                                end,
+                            },
+                            repair =
+                            {
+                                order = 6,
+                                name = L["Repair"],
+                                desc = L["Select the %s mount to force summon."]:format(L["Repair"]),
+                                type = "select",
+                                dialogControl = "Dropdown-SortByValue",
+                                values = function()
+                                    local out = { [0] = L["None"] };
+
+                                    for k,v in A:PairsByKeys(A.pamTable.mounts[7]) do
+                                        for kk,vv in ipairs(v) do
+                                            out[vv.spellID] = vv.name;
+                                        end
+                                    end
+
+                                    return out;
+                                end,
+                                get = function() return A.db.profile.forceOne.mount[7]; end,
+                                set = function(self, val)
+                                    if ( val == 0 ) then
+                                        A.db.profile.forceOne.mount[7] = nil;
+                                    else
+                                        A.db.profile.forceOne.mount[7] = val;
                                     end
                                 end,
                             },
@@ -2197,6 +2228,55 @@ function A:AceConfig()
                                     end
                                 end,
                             },
+                            repair =
+                            {
+                                order = 160,
+                                name = L["Repair"],
+                                desc = L["Select the %s mount to force summon."]:format(L["Repair"]),
+                                type = "select",
+                                dialogControl = "Dropdown-SortByValue",
+                                values = function()
+                                    local out = { [0] = L["None"] };
+
+                                    for k,v in A:PairsByKeys(A.pamTable.mounts[7]) do
+                                        for kk,vv in ipairs(v) do
+                                            out[vv.spellID] = vv.name;
+                                        end
+                                    end
+
+                                    return out;
+                                end,
+                                get = function()
+                                    local mapID;
+
+                                    if ( A.currentMapIDForMounts ) then
+                                        mapID = A.currentMapIDForMounts;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( A.db.profile.mountByMapID[7][tostring(mapID)] ) then
+                                        return A.db.profile.mountByMapID[7][tostring(mapID)];
+                                    else
+                                        return 0;
+                                    end
+                                end,
+                                set = function(self, val)
+                                    local mapID;
+
+                                    if ( A.currentMapIDForMounts ) then
+                                        mapID = A.currentMapIDForMounts;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( val == 0 ) then
+                                        A.db.profile.mountByMapID[7][tostring(mapID)] = nil;
+                                    else
+                                        A.db.profile.mountByMapID[7][tostring(mapID)] = val;
+                                    end
+                                end,
+                            },
                             zoneSelectReset =
                             {
                                 order = 200,
@@ -2318,12 +2398,6 @@ function A:AceConfig()
 
     orderGroup = 0;
     orderItem = 0;
-    --[1] = {}, -- Ground
-    --[2] = {}, -- Fly
-    --[3] = {}, -- Hybrid (ground & fly)
-    --[4] = {}, -- Aquatic
-    --[5] = {}, -- with passengers
-    --[6] = {}, -- Water walking
     for k,v in ipairs(A.pamTable.mounts) do
         if ( A:TableNotEmpty(v) ) then
             options.args.mounts.args[A.mountCat[k]] =
@@ -2431,7 +2505,6 @@ function A:AceConfig()
         order = 1000,
         name = L["Reset"],
         type = "group",
-        --inline = true,
         args =
         {
             toggle =
@@ -2457,6 +2530,7 @@ function A:AceConfig()
                         [4] = {}, -- Aquatic
                         [5] = {}, -- with passengers
                         [6] = {}, -- Water walking
+                        [7] = {}, -- Repair
                     };
 
                     -- Fav mounts reset, deleting cache

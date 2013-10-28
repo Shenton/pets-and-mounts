@@ -9,6 +9,7 @@
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 -- TODO: I really need to find a better way to build the maps names DB
 -- TODO: Look into achievement mounts or unique per character mounts for restricted mounts
+-- TODO: Add masque support
 
 -- Ace libs (<3)
 local A = LibStub("AceAddon-3.0"):NewAddon("PetsAndMounts", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0");
@@ -634,6 +635,7 @@ function A:BuildMountsTable(force)
         [4] = {}, -- Aquatic
         [5] = {}, -- with passengers
         [6] = {}, -- Water walking
+        [7] = {}, -- Repair
     };
     A.pamTable.mountsIds =
     {
@@ -643,6 +645,7 @@ function A:BuildMountsTable(force)
         [4] = {}, -- Aquatic
         [5] = {}, -- with passengers
         [6] = {}, -- Water walking
+        [7] = {}, -- Repair
     };
 
     for i=1,mountsCount do
@@ -692,6 +695,24 @@ function A:BuildMountsTable(force)
             A.pamTable.mountsIds[6][#A.pamTable.mountsIds[6]+1] = spellID;
 
             A.pamTable.mounts[6][leadingLetter][#A.pamTable.mounts[6][leadingLetter]+1] =
+            {
+                id = i,
+                spellID = spellID,
+                creatureID = creatureID,
+                name = creatureName,
+                icon = icon,
+                isSummoned = isSummoned,
+                mountType = mountType,
+            };
+        end
+
+        -- Forced repair mounts
+        if ( tContains(A.repairMounts, spellID) ) then
+            if ( not A.pamTable.mounts[7][leadingLetter] ) then A.pamTable.mounts[7][leadingLetter] = {}; end
+
+            A.pamTable.mountsIds[7][#A.pamTable.mountsIds[7]+1] = spellID;
+
+            A.pamTable.mounts[7][leadingLetter][#A.pamTable.mounts[7][leadingLetter]+1] =
             {
                 id = i,
                 spellID = spellID,
@@ -1513,6 +1534,7 @@ A.aceDefaultDB =
             [4] = {}, -- Aquatic
             [5] = {}, -- with passengers
             [6] = {}, -- Water walking
+            [7] = {}, -- Repair
         },
         forceOne = -- d
         {
@@ -1525,6 +1547,7 @@ A.aceDefaultDB =
                 [4] = nil, -- Aquatic
                 [5] = nil, -- with passengers
                 [6] = nil, -- Water walking
+                [7] = nil, -- Repair
             },
         },
         savedSets = -- d
@@ -1580,6 +1603,7 @@ A.aceDefaultDB =
             [4] = {}, -- Aquatic
             [5] = {}, -- with passengers
             [6] = {}, -- Water walking
+            [7] = {}, -- Repair
         },
     },
 };

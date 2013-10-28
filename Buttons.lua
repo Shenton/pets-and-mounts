@@ -36,6 +36,7 @@ BINDING_NAME_PETSANDMOUNTSMOUNTFLYING = L["Random flying mount"];
 BINDING_NAME_PETSANDMOUNTSMOUNTGROUND = L["Random ground mount"];
 BINDING_NAME_PETSANDMOUNTSMOUNTAQUATIC = L["Random aquatic mount"];
 BINDING_NAME_PETSANDMOUNTSMOUNTSURFACE = L["Random surface mount"];
+BINDING_NAME_PETSANDMOUNTSMOUNTREPAIR = L["Random repair mount"];
 
 --- Set bindings
 local bindings =
@@ -47,6 +48,7 @@ local bindings =
     ["PETSANDMOUNTSMOUNTGROUND"] = "PetsAndMountsSecureButtonGround",
     ["PETSANDMOUNTSMOUNTAQUATIC"] = "PetsAndMountsSecureButtonAquatic",
     ["PETSANDMOUNTSMOUNTSURFACE"] = "PetsAndMountsSecureButtonSurface",
+    ["PETSANDMOUNTSMOUNTREPAIR"] = "PetsAndMountsSecureButtonRepair",
 };
 function A:SetBindings()
     if ( InCombatLockdown() ) then
@@ -76,6 +78,7 @@ local buttonsMacro =
         ["PetsAndMountsSecureButtonGround"] = "/cancelform\n/run PetsAndMountsGlobal:RandomMount(1)",
         ["PetsAndMountsSecureButtonAquatic"] = "/cancelform\n/run PetsAndMountsGlobal:RandomMount(4)",
         ["PetsAndMountsSecureButtonSurface"] = "/cancelform\n/run PetsAndMountsGlobal:RandomMount(6)",
+        ["PetsAndMountsSecureButtonRepair"] = "/cancelform\n/run PetsAndMountsGlobal:RandomMount(7)",
     },
     [2] = -- Without
     {
@@ -85,6 +88,7 @@ local buttonsMacro =
         ["PetsAndMountsSecureButtonGround"] = "/run PetsAndMountsGlobal:RandomMount(1)",
         ["PetsAndMountsSecureButtonAquatic"] = "/run PetsAndMountsGlobal:RandomMount(4)",
         ["PetsAndMountsSecureButtonSurface"] = "/run PetsAndMountsGlobal:RandomMount(6)",
+        ["PetsAndMountsSecureButtonRepair"] = "/run PetsAndMountsGlobal:RandomMount(7)",
     },
 };
 function A:SetButtonsMacro()

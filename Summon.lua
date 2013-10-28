@@ -634,7 +634,7 @@ function A:RandomMount(cat)
 
     if ( not cat ) then cat = A:SetMountCat(); end
     -- ground, do not want hybrid when ground - aqua - passenger
-    if ( (cat == 1 and A.db.profile.noHybridWhenGround) or cat == 4 or cat == 5 or cat == 6 ) then
+    if ( (cat == 1 and A.db.profile.noHybridWhenGround) or cat == 4 or cat == 5 or cat == 6 or cat == 7 ) then
         -- Got forced
         if ( A.db.profile.forceOne.mount[cat] ) then
             A:DebugMessage(("RandomMount() - No hybrid - Got forced - %i"):format(cat));

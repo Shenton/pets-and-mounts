@@ -55,6 +55,7 @@ L["Options"] = true;
 
 L["Passenger"] = true;
 
+L["Repair"] = true;
 L["Reset"] = true;
 L["Right"] = true;
 
@@ -184,6 +185,7 @@ L["Dock anchor"] = true;
 L["Select on which side of the mounts button the companions button should dock."] = true;
 L["Vehicle exit"] = true;
 L["If you are in a vehicle using the random mount will make you leave the vehicle."] = true;
+L["Random repair mount"] = true;
 -- Dropdown menu
 L["Show or hide minimap icon"] = true;
 L["Model frame size"] = true;
