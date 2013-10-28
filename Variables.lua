@@ -1208,3 +1208,76 @@ A.restrictedMounts =
         args = "Horde",
     },
 };
+
+-- Underwater breathing spells
+-- Using them all, just in case
+-- Thank you Wowhead
+A.underwaterBreathingSpells =
+{
+    1234, -- Joe's God Mode
+    5421, -- Aquatic Form Passive
+    7178, -- Water Breathing
+    11789, -- Water Breathing
+    16591, -- Noggenfogger Elixir
+    17443, -- Air Bubbles
+    17775, -- Air Bubbles
+    18733, -- Air Bubbles
+    22807, -- Greater Water Breathing
+    24347, -- Master Angler
+    24925, -- Hallow's End Candy
+    27827, -- Spirit of Redemption
+    31920, -- Nagrand Cherry
+    40621, -- Water Breathing
+    41273, -- Deepdiving Pearl
+    42275, -- Repaired Diving Gear
+    44235, -- Water Breathing
+    44258, -- Breathing Tube
+    44270, -- Breathing Tube
+    44467, -- Recovery Diver's Potion
+    48359, -- Tua'kea's Breathing Bladder
+    48719, -- Water Breathing
+    50003, -- Breathing Tube
+    51244, -- Water Breathing
+    68121, -- Naga Breath
+    71661, -- Mechashark X-Steam
+    71914, -- Irresistible Pool Pony
+    73701, -- Sea Legs
+    75627, -- Speedbarge Diving Helm
+    76546, -- Ride Vehicle
+    81812, -- Spirit Vision 3
+    81952, -- Ride Submarine Chase Vehicle - Seat 2
+    82258, -- Teleport Alliance Camera Vehicle
+    82367, -- Underwater Breathing
+    83028, -- Teleport HORDE Camera Vehicle
+    83705, -- Submerged
+    85354, -- Puffer Breath
+    88416, -- Silversnap Swim Tonic
+    91722, -- Puffer Breath
+    94758, -- Submarine Sonar Sound
+    95675, -- Blackwater Boon
+    95830, -- Ride Vehicle WITH WATER BREATHING
+    95833, -- Vashj'ir Vehicle Water Breathing Aura
+    102737, -- Curse of the Coy
+    102942, -- Curse of the Crocodile
+    103422, -- Rell's Report
+    103824, -- Amber's Report
+    104345, -- Shokia's Report
+    104474, -- Shokia's Report
+    104475, -- Shokia's Report
+    105707, -- Darkwater Potion
+    110298, -- Noggenfogger Elixir [PH]
+    110450, -- Bassgut Breathing
+    118078, -- Modified Gear Level (5.0 Testing Only)
+    119689, -- Diving Helmet
+    119966, -- Blessing of the Pearlfin
+    123503, -- Amber Residue
+    123710, -- Mazu's Breath
+    124555, -- Mark of Skeer
+    127285, -- Shimmering Water
+    129678, -- Enchanted Essence
+    131052, -- Mark of Korven
+    144299, -- Damaged Diving Helmet
+    147643, -- Cursed Swabby Helmet
+    149408, -- Curse of the Sea
+    149409, -- Curse of the Sea
+};

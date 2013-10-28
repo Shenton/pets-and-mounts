@@ -326,18 +326,69 @@ function A:IsFlyable()
     return nil;
 end
 
+--- Check if the player got a water breathing buff
+function A:GotWaterBreathingBuff()
+    if ( not A.waterBreathingBuffsCache ) then
+        A:DebugMessage("GotWaterBreathingBuff() - Building water breathing buffs cache");
+
+        A.waterBreathingBuffsCache = {};
+
+        for k,v in ipairs(A.underwaterBreathingSpells) do
+            local name = GetSpellInfo(v);
+
+            if ( name ) then
+                A.waterBreathingBuffsCache[#A.waterBreathingBuffsCache+1] = name;
+            end
+        end
+    end
+
+    for k,v in ipairs(A.waterBreathingBuffsCache) do
+        if ( UnitBuff("player", v) ) then
+            A:DebugMessage("GotWaterBreathingBuff() - Got water breathing buff");
+            return 1;
+        end
+    end
+
+    A:DebugMessage("GotWaterBreathingBuff() - No water breathing buff");
+    return nil;
+end
+
+--- Check if the player is at the water surface
+function A:AtSurface()
+    if ( A.swimmingCheckSpellID ) then -- Got a surface checking mount, easy check \o/
+        if ( IsUsableSpell(A.swimmingCheckSpellID) ) then
+            A:DebugMessage("AtSurface() - Spell is usable");
+            return 1;
+        end
+    else -- No surface checking mount, going for mirror, which is not perfect
+        local timer, _, _, rate = GetMirrorTimerInfo(2);
+
+        if ( timer == "UNKNOWN" ) then -- And this is where it sux, ok no breath mirror, but it can be an underwater breathing buff
+            if ( not A:GotWaterBreathingBuff() ) then
+                A:DebugMessage("AtSurface() - No water breathing buff");
+                return 1
+            end
+        elseif ( timer == "BREATH" and rate > -1 ) then -- This work fine as bar is filling up quickly, the player was in the water
+            A:DebugMessage("AtSurface() - Mirror is filling up quickly");
+            return 1;
+        end
+    end
+
+    return nil;
+end
+
 --- Check if the player is swimming and not at the surface
 -- @return 1 if swimming, 2 if at the water surface, or nil
 function A:IsSwimming()
     if ( IsSwimming() or IsSubmerged() ) then -- Swimming
-        if ( A.swimmingCheckSpellID and IsUsableSpell(A.swimmingCheckSpellID) ) then -- At the surface
-            A:DebugMessage("IsSwimming() - Spell is usable");
+        if ( A:AtSurface() ) then -- At the surface
+            A:DebugMessage("IsSwimming() - At the surface");
             return 2;
         elseif ( IsSubmerged() ) then -- Bottom of the water - Have to do this here since 5.4 it is tainted and work as IsSwimming
             A:DebugMessage("IsSwimming() - IsSubmerged");
             return 1;
         else -- Really swimming
-            A:DebugMessage("IsSwimming() - Spell is not usable");
+            A:DebugMessage("IsSwimming() - Swimming");
             return 1;
         end
     else

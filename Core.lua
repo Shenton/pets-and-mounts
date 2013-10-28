@@ -406,59 +406,64 @@ end
 -------------------------------------------------------------------------------]]--
 
 -- Pets filters handling methods
-A.petsFilters = {};
-A.petsFilters.types = {};
-A.petsFilters.sources = {};
+local petsFilters = {};
+petsFilters.types = {};
+petsFilters.sources = {};
 function A:StoreAndResetPetsFilters()
     -- Store filters
-    A.petsFilters["LE_PET_JOURNAL_FLAG_COLLECTED"] = C_PetJournal.IsFlagFiltered(LE_PET_JOURNAL_FLAG_COLLECTED);
-    A.petsFilters["LE_PET_JOURNAL_FLAG_FAVORITES"] = C_PetJournal.IsFlagFiltered(LE_PET_JOURNAL_FLAG_FAVORITES);
-    A.petsFilters["LE_PET_JOURNAL_FLAG_NOT_COLLECTED"] = C_PetJournal.IsFlagFiltered(LE_PET_JOURNAL_FLAG_NOT_COLLECTED);
+    petsFilters["LE_PET_JOURNAL_FLAG_COLLECTED"] = C_PetJournal.IsFlagFiltered(LE_PET_JOURNAL_FLAG_COLLECTED); -- Collected
+    petsFilters["LE_PET_JOURNAL_FLAG_FAVORITES"] = C_PetJournal.IsFlagFiltered(LE_PET_JOURNAL_FLAG_FAVORITES); -- Only favorites
+    petsFilters["LE_PET_JOURNAL_FLAG_NOT_COLLECTED"] = C_PetJournal.IsFlagFiltered(LE_PET_JOURNAL_FLAG_NOT_COLLECTED); -- Not collected
 
     for i=1,C_PetJournal.GetNumPetTypes() do
-        A.petsFilters.types[i] = C_PetJournal.IsPetTypeFiltered(i);
+        petsFilters.types[i] = C_PetJournal.IsPetTypeFiltered(i);
     end
 
     for i=1,C_PetJournal.GetNumPetSources() do
-        A.petsFilters.sources[i] = C_PetJournal.IsPetSourceFiltered(i);
+        petsFilters.sources[i] = C_PetJournal.IsPetSourceFiltered(i);
     end
 
-    --if ( PetJournalSearchBox ) then
-        A.petsFilters["SearchBoxValue"] = PetJournalSearchBox:GetText();
-    --end
+    if ( PetJournalSearchBox and PetJournalSearchBox:GetText() ~= SEARCH ) then
+        petsFilters["SearchBoxValue"] = PetJournalSearchBox:GetText();
+    end
 
     -- Set filters for DB update
-    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_COLLECTED, 1);
-    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_FAVORITES, nil);
-    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_NOT_COLLECTED, nil);
+    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_COLLECTED, 1); -- Collected - Obviously needed
+    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_FAVORITES, nil); -- Only favorites - Do not want that
+    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_NOT_COLLECTED, 1); -- Not collected - Needed as it will allow us to get the full number of pets
     C_PetJournal.AddAllPetTypesFilter();
     C_PetJournal.AddAllPetSourcesFilter();
-    C_PetJournal.ClearSearchFilter();
+
+    if ( petsFilters["SearchBoxValue"] ) then
+        C_PetJournal.SetSearchFilter("");
+    end
 end
 
 --- Restore pets filters
 function A:RestorePetsFilters()
-    --if ( PetJournalSearchBox ) then
-        PetJournalSearchBox:SetText(A.petsFilters["SearchBoxValue"]);
-    --end
+    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_COLLECTED, not petsFilters["LE_PET_JOURNAL_FLAG_COLLECTED"]);
+    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_FAVORITES, not petsFilters["LE_PET_JOURNAL_FLAG_FAVORITES"]);
+    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_NOT_COLLECTED, not petsFilters["LE_PET_JOURNAL_FLAG_NOT_COLLECTED"]);
 
     for i=1,C_PetJournal.GetNumPetTypes() do
-        C_PetJournal.SetPetTypeFilter(i, not A.petsFilters.types[i]);
+        C_PetJournal.SetPetTypeFilter(i, not petsFilters.types[i]);
     end
 
     for i=1,C_PetJournal.GetNumPetSources() do
-        C_PetJournal.SetPetSourceFilter(i, not A.petsFilters.sources[i]);
+        C_PetJournal.SetPetSourceFilter(i, not petsFilters.sources[i]);
     end
 
-    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_COLLECTED, not A.petsFilters["LE_PET_JOURNAL_FLAG_COLLECTED"]);
-    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_FAVORITES, not A.petsFilters["LE_PET_JOURNAL_FLAG_FAVORITES"]);
-    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_NOT_COLLECTED, not A.petsFilters["LE_PET_JOURNAL_FLAG_NOT_COLLECTED"]);
+    if ( PetJournalSearchBox and petsFilters["SearchBoxValue"] ) then
+        C_PetJournal.SetSearchFilter(petsFilters["SearchBoxValue"]);
+    end
+
+    petsFilters["SearchBoxValue"] = nil;
 end
 
 --- Build the companions table
 function A:BuildPetsTable(force)
     -- First, check if an update is needed
-    local numPets, numOwned = C_PetJournal.GetNumPets();
+    local _, numOwned = C_PetJournal.GetNumPets();
 
     if ( not force and A.lastPetsCount == numOwned ) then
         A:DebugMessage("BuildPetsTable() - No update needed");
@@ -472,11 +477,14 @@ function A:BuildPetsTable(force)
     -- Update needed, store filters and set them for update
     A:StoreAndResetPetsFilters();
 
+    -- Getting total number of pets AFTER resetting filters (derp)
+    local numPets = C_PetJournal.GetNumPets();
+
     A.pamTable.pets = {};
     A.pamTable.petsIds = {};
 
     for i=1,numPets do
-        local petID, _, isOwned, customName, _, _, _, creatureName, icon, _, creatureID = C_PetJournal.GetPetInfoByIndex(i, false);
+        local petID, _, isOwned, customName, _, _, _, creatureName, icon, _, creatureID = C_PetJournal.GetPetInfoByIndex(i);
         --local petID, speciesID, isOwned, customName, level, favorite, isRevoked, name, icon, petType, creatureID, sourceText, description, isWildPet, canBattle = C_PetJournal.GetPetInfoByIndex(index, isWild);
 
         if ( isOwned ) then
@@ -688,9 +696,8 @@ function A:BuildMountsTable(force)
 
         cat = A:GetMountCategory(mountType);
 
-        -- Using the first non water mount found for testing swimming area
-        if ( not A.swimmingCheckSpellID and (mountType == 23 or mountType == 7 or mountType == 22
-        or mountType == 21 or mountType == 6 or mountType == 5 or mountType == 20 or mountType == 4) ) then
+        -- Using the first non water mount found for water surface testing
+        if ( not A.swimmingCheckSpellID and bit.band(mountType, 0x8) == 0 ) then
             A.swimmingCheckSpellID = spellID;
         end
 
@@ -1297,6 +1304,16 @@ function A:PLAYER_REGEN_ENABLED()
         A.delayedButtonsMacro = nil;
     end
 
+    if ( A.delayedPetsTableUpdate ) then
+        A:BuildPetsTable();
+        A.delayedPetsTableUpdate = nil;
+    end
+
+    if ( A.delayedMountsTableUpdate ) then
+        A:BuildMountsTable();
+        A.delayedMountsTableUpdate = nil;
+    end
+
     A:AutoPetDelay();
 end
 
@@ -1342,44 +1359,9 @@ function A:COMBAT_LOG_EVENT_UNFILTERED(event, ...)
     end
 end
 
--- Imo the best way to know if a new pet or mount was learned
---BATTLE_PET_NEW_PET = "%s has been added to your pet journal!";
-A.battlePetNewPet = string.gsub(BATTLE_PET_NEW_PET, "%.", "%%.");
-A.battlePetNewPet = string.gsub(A.battlePetNewPet, "%%s", "(.+)");
-
---ERR_LEARN_COMPANION_S = "You have added the pet %s to your collection.";
-A.errLearnCompanion = string.gsub(ERR_LEARN_COMPANION_S, "%.", "%%.");
-A.errLearnCompanion = string.gsub(A.errLearnCompanion, "%%s", "(.+)");
-
---ERR_LEARN_MOUNT_S = "You have added the mount %s to your collection.";
-A.errLearnMount = string.gsub(ERR_LEARN_MOUNT_S, "%.", "%%.");
-A.errLearnMount = string.gsub(A.errLearnMount, "%%s", "(.+)");
-
-function A:CHAT_MSG_SYSTEM(event, msg)
-    -- Pets messages
-    local pet = string.match(msg, A.battlePetNewPet);
-
-    if ( not pet ) then pet = string.match(msg, A.errLearnCompanion); end
-
-    if ( pet ) then
-        A:DebugMessage(("CHAT_MSG_SYSTEM() - New pet %s."):format(pet));
-        A:BuildPetsTable();
-        A:CleanPetsFavorites();
-    end
-
-    -- Mounts messages
-    local mount = string.match(msg, A.errLearnMount);
-
-    if ( mount ) then
-        A:DebugMessage(("CHAT_MSG_SYSTEM() - New mount %s."):format(mount));
-        A:BuildMountsTable();
-    end
-end
-
 function A:PLAYER_ENTERING_WORLD()
     A:AutoPetDelay();
     A:SetAutoSummonOverride();
-    --A:SetPostClickMacro();
     A:GetCurrentMapID();
 end
 
@@ -1391,11 +1373,6 @@ function A:ZONE_CHANGED_NEW_AREA()
         A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
     end
 end
-
--- function A:MINIMAP_UPDATE_TRACKING()
-    -- A:GetCurrentMapID();
-    -- A:UnregisterEvent("MINIMAP_UPDATE_TRACKING");
--- end
 
 function A:PLAYER_LEVEL_UP(event, level, ...)
     A.playerLevel = level;
@@ -1417,6 +1394,60 @@ function A:GLYPH_UPDATED()
         A:BuildMountsTable(1);
         A.lockLastGlyphState = isGlyphed;
     end
+end
+
+function A:COMPANION_UPDATE(event, companionType)
+    if ( companionType == "CRITTER" ) then
+        if ( InCombatLockdown() ) then
+            A.delayedPetsTableUpdate = 1;
+            return;
+        end
+
+        A:BuildPetsTable();
+    elseif ( companionType == "MOUNT" ) then
+        if ( InCombatLockdown() ) then
+            A.delayedMountsTableUpdate = 1;
+            return;
+        end
+
+        A:BuildMountsTable();
+    end
+end
+
+function A:COMPANION_LEARNED()
+    if ( InCombatLockdown() ) then
+        A.delayedMountsTableUpdate = 1;
+        return;
+    end
+
+    A:BuildMountsTable();
+end
+
+function A:COMPANION_UNLEARNED()
+    if ( InCombatLockdown() ) then
+        A.delayedMountsTableUpdate = 1;
+        return;
+    end
+
+    A:BuildMountsTable();
+end
+
+function A:PET_JOURNAL_PET_DELETED()
+    if ( InCombatLockdown() ) then
+        A.delayedPetsTableUpdate = 1;
+        return;
+    end
+
+    A:BuildPetsTable();
+end
+
+function A:PET_JOURNAL_LIST_UPDATE()
+    if ( InCombatLockdown() ) then
+        A.delayedPetsTableUpdate = 1;
+        return;
+    end
+
+    A:BuildPetsTable();
 end
 
 --[[-------------------------------------------------------------------------------
@@ -1721,18 +1752,18 @@ function A:OnInitialize()
     A.configModelFrame:SetSize(A.db.profile.configModelFrameWidth, A.db.profile.configModelFrameHeight);
 
     -- DB auto update hooks
-    hooksecurefunc(C_PetJournal, "CagePetByID", function()
-        A:DebugMessage("Hook - C_PetJournal.CagePetByID() called");
-        A:BuildPetsTable();
-    end);
-    hooksecurefunc(C_PetJournal, "ReleasePetByID", function()
-        A:DebugMessage("Hook - C_PetJournal.ReleasePetByID() called");
-        A:BuildPetsTable();
-    end);
-    hooksecurefunc(C_PetJournal, "SetCustomName", function()
-        A:DebugMessage("Hook - C_PetJournal.SetCustomName() called");
-        A:BuildPetsTable();
-    end);
+    -- hooksecurefunc(C_PetJournal, "CagePetByID", function()
+        -- A:DebugMessage("Hook - C_PetJournal.CagePetByID() called");
+        -- A:BuildPetsTable();
+    -- end);
+    -- hooksecurefunc(C_PetJournal, "ReleasePetByID", function()
+        -- A:DebugMessage("Hook - C_PetJournal.ReleasePetByID() called");
+        -- A:BuildPetsTable();
+    -- end);
+    -- hooksecurefunc(C_PetJournal, "SetCustomName", function()
+        -- A:DebugMessage("Hook - C_PetJournal.SetCustomName() called");
+        -- A:BuildPetsTable();
+    -- end);
 
     -- LDB
     A.ldbObject = LibStub("LibDataBroker-1.1"):NewDataObject("PetsAndMountsLDB", {
@@ -1820,20 +1851,20 @@ function A:OnEnable()
     A:RegisterEvent("UNIT_EXITED_VEHICLE", "AutoPetDelay"); -- Exiting a vehicule.
     A:RegisterEvent("UPDATE_BINDINGS", "SetBindings");
     -- Db auto update events
-    A:RegisterEvent("CHAT_MSG_SYSTEM");
-    A:RegisterEvent("COMPANION_LEARNED", "BuildBothTables");
-    A:RegisterEvent("COMPANION_UNLEARNED", "BuildBothTables");
+    A:RegisterEvent("COMPANION_LEARNED");
+    A:RegisterEvent("COMPANION_UNLEARNED");
+    A:RegisterEvent("PET_JOURNAL_PET_DELETED");
+    A:RegisterEvent("PET_JOURNAL_LIST_UPDATE");
+    A:RegisterEvent("COMPANION_UPDATE");
     -- Update post click macros
     A:RegisterEvent("PLAYER_LEVEL_UP");
     -- Update current mapID
     A:RegisterEvent("ZONE_CHANGED_NEW_AREA");
-    --A:RegisterEvent("MINIMAP_UPDATE_TRACKING"); -- Using this for the first current mapID update
 
     -- Set everything
     A:SetEverything();
 
     if ( A.playerClass == "WARLOCK" ) then -- If it is a lock, building database on spec switch or glyph modification is needed
-        --A:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", "BuildMountsTable", 1);
         A:RegisterEvent("GLYPH_UPDATED"); -- Will also fire when switching spec
     end
 end

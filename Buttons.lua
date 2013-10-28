@@ -214,12 +214,12 @@ function A:PreClickMount(button, clickedBy)
             A.db.profile[button:GetName()].hide = 1;
             A:SetButtons();
         else
-            if ( A.db.profile.magicBroom and GetItemCount(37011, nil, nil) == 1 and not A:IsSwimming() ) then -- 37011 - Magic Broom from Hallow's End
+            if ( A.db.profile.magicBroom and GetItemCount(37011, nil, nil) > 0 and (A:IsSwimming() == 2 or not A:IsSwimming()) ) then -- 37011 - Magic Broom from Hallow's End
                 if ( not A.magicBroomName ) then A.magicBroomName = GetItemInfo(37011); end
 
                 button:SetAttribute("type", "macro");
                 button:SetAttribute("macrotext", "/use "..A.magicBroomName or "Magic Broom");
-            elseif ( A.db.profile.surfaceMount and A:IsSwimming() == 2 and (A.playerClass == "DEATHKNIGHT" or A.playerClass == "SHAMAN") ) then -- DK and Sham water walking spells
+            elseif ( A.db.profile.surfaceMount and (A.playerClass == "DEATHKNIGHT" or A.playerClass == "SHAMAN") and A:IsSwimming() == 2 ) then -- DK and Sham water walking spells
                 if ( A.db.profile.preferSurfaceSpell or (not A.db.profile.preferSurfaceSpell and not A:GotMountAllTable(6)) ) then
                     if ( A.playerClass == "DEATHKNIGHT" and not UnitBuff("player", A.deathKnightPathOfFrost) ) then
                         button:SetAttribute("type", "macro");
