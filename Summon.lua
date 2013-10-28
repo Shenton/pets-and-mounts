@@ -617,6 +617,9 @@ function A:RandomMount(cat)
         A:DebugMessage("RandomMount() - Dismount");
         Dismount();
         return;
+    elseif ( A.db.profile.vehicleExit and A:IsPlayerInVehicle() ) then
+        VehicleExit();
+        return;
     end
 
     if ( UnitCastingInfo("player") -- Not when casting
@@ -630,7 +633,6 @@ function A:RandomMount(cat)
     local id;
 
     if ( not cat ) then cat = A:SetMountCat(); end
-
     -- ground, do not want hybrid when ground - aqua - passenger
     if ( (cat == 1 and A.db.profile.noHybridWhenGround) or cat == 4 or cat == 5 or cat == 6 ) then
         -- Got forced

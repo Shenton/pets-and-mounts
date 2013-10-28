@@ -109,6 +109,27 @@ end
     Mounts smart button pre & post clicks
 -------------------------------------------------------------------------------]]--
 
+function A:SetMacroDismountString()
+    if ( A.db.profile.vehicleExit ) then
+        A.macroDismountString = "/dismount [mounted]\n/leavevehicle [vehicleui]";
+    else
+        A.macroDismountString = "/dismount [mounted]";
+    end
+end
+
+--- Check if we got at least one mount for the given cat, check all tables after restriction
+function A:GotMountAllTable(cat)
+    if ( A.db.profile.forceOne.mount[cat]
+    or A.db.profile.mountByMapID[cat][tostring(A.currentMapID)]
+    or A.db.profile.areaMounts and A.uniqueAreaMounts[cat][A.currentMapID]
+    or A:GotRandomMount(A.db.profile.favoriteMounts[cat])
+    or A:GotRandomMount(A.pamTable.mountsIds[cat]) ) then
+        return 1;
+    end
+
+    return nil;
+end
+
 --[[
     Expert Riding 34090
     Artisan Riding 34091
@@ -132,13 +153,13 @@ end
 
 function A:SetDruidPreClickMacro()
     if ( IsFlyableArea() and IsSpellKnown(40120) ) then
-        A.preClickDruidMacro = ("/cast %s\n/dismount [mounted]"):format(A.druidSwiftFlightForm);
+        A.preClickDruidMacro = ("/cast %s\n%s"):format(A.druidSwiftFlightForm, A.macroDismountString);
     elseif ( A.playerLevel >= 58 and A:IsFlyable() ) then
-        A.preClickDruidMacro = ("/cast %s\n/dismount [mounted]"):format(A.druidFlightForm);
+        A.preClickDruidMacro = ("/cast %s\n%s"):format(A.druidFlightForm, A.macroDismountString);
     elseif ( A.playerLevel >= 20 and A:CanRide() ) then
         A.preClickDruidMacro = "/cancelform\n/run PetsAndMountsGlobal:RandomMount()";
     elseif ( A.playerLevel >= 16 ) then
-        A.preClickDruidMacro = ("/cast %s\n/dismount [mounted]"):format(A.druidTravelForm);
+        A.preClickDruidMacro = ("/cast %s\n%s"):format(A.druidTravelForm, A.macroDismountString);
     else
         A.preClickDruidMacro = "";
     end
@@ -164,9 +185,9 @@ function A:SetPostClickMacro()
         A:SetDruidSpells();
 
         if ( A.playerLevel >= 18 ) then
-            A.postClickMacro = ("/cast [swimming] %s; %s\n/dismount [mounted]"):format(A.druidAquaticForm, A.druidTravelForm);
+            A.postClickMacro = ("/cast [swimming] %s; %s\n%s"):format(A.druidAquaticForm, A.druidTravelForm, A.macroDismountString);
         elseif ( A.playerLevel >= 16 ) then
-            A.postClickMacro = ("/cast %s\n/dismount [mounted]"):format(A.druidTravelForm);
+            A.postClickMacro = ("/cast %s\n%s"):format(A.druidTravelForm, A.macroDismountString);
         else
             A.postClickMacro = "";
         end
@@ -174,29 +195,16 @@ function A:SetPostClickMacro()
         A:SetShamanSpells();
 
         if ( A.playerLevel >= 16 ) then
-            A.postClickMacro = ("/cast %s\n/dismount [mounted]"):format(A.shamanGhostWolf);
+            A.postClickMacro = ("/cast %s\n%s"):format(A.shamanGhostWolf, A.macroDismountString);
         else
             A.postClickMacro = "";
         end
     elseif ( A.playerClass == "DEATHKNIGHT" ) then -- No specific post macro for DK, but this is a good place to set their spells
         A:SetdeathKnightSpell();
-        A.postClickMacro = "/dismount [mounted]";
+        A.postClickMacro = A.macroDismountString;
     else
-        A.postClickMacro = "/dismount [mounted]";
+        A.postClickMacro = A.macroDismountString;
     end
-end
-
---- Check if we got at least one mount for the given cat, check all tables after restriction
-function A:GotMountAllTable(cat)
-    if ( A.db.profile.forceOne.mount[cat]
-    or A.db.profile.mountByMapID[cat][tostring(A.currentMapID)]
-    or A.db.profile.areaMounts and A.uniqueAreaMounts[cat][A.currentMapID]
-    or A:GotRandomMount(A.db.profile.favoriteMounts[cat])
-    or A:GotRandomMount(A.pamTable.mountsIds[cat]) ) then
-        return 1;
-    end
-
-    return nil;
 end
 
 --- PreClick
@@ -214,11 +222,11 @@ function A:PreClickMount(button, clickedBy)
             A.db.profile[button:GetName()].hide = 1;
             A:SetButtons();
         else
-            if ( A.db.profile.magicBroom and GetItemCount(37011, nil, nil) > 0 and (A:IsSwimming() == 2 or not A:IsSwimming()) ) then -- 37011 - Magic Broom from Hallow's End
+            if ( A.db.profile.magicBroom and GetItemCount(37011, nil, nil) > 0 and (A:IsSwimming() == 2 or not A:IsSwimming()) and not (A.db.profile.vehicleExit and A:IsPlayerInVehicle()) ) then -- 37011 - Magic Broom from Hallow's End
                 if ( not A.magicBroomName ) then A.magicBroomName = GetItemInfo(37011); end
 
                 button:SetAttribute("type", "macro");
-                button:SetAttribute("macrotext", "/use "..A.magicBroomName or "Magic Broom");
+                button:SetAttribute("macrotext", ("/use %s"):format(A.magicBroomName or "Magic Broom"));
             elseif ( A.db.profile.surfaceMount and (A.playerClass == "DEATHKNIGHT" or A.playerClass == "SHAMAN") and A:IsSwimming() == 2 ) then -- DK and Sham water walking spells
                 if ( A.db.profile.preferSurfaceSpell or (not A.db.profile.preferSurfaceSpell and not A:GotMountAllTable(6)) ) then
                     if ( A.playerClass == "DEATHKNIGHT" and not UnitBuff("player", A.deathKnightPathOfFrost) ) then

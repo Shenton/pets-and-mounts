@@ -355,6 +355,15 @@ function A:IsGUID(GUID)
     return 1;
 end
 
+--- Check if the player is using a vehicle
+function A:IsPlayerInVehicle()
+    if ( UnitInVehicle("player") ) then return 1; end
+
+    if ( UnitHasVehicleUI("player") ) then return 1; end
+
+    return nil;
+end
+
 --[[-------------------------------------------------------------------------------
     Frames methods
 -------------------------------------------------------------------------------]]--
@@ -868,13 +877,16 @@ function A:SetEverything()
 
     A:SetDebugMessage();
     A:ShowHideMinimap();
-    A:SetStealthEvents();
-    A:SetBindings();
-    A:SetButtonsMacro();
     A:SetAutoSummonOverride(1);
-    A:SetMainTimer();
-    A:SetButtons();
+    A:SetStealthEvents();
+
+    A:SetMacroDismountString();
     A:SetPostClickMacro();
+    A:SetButtonsMacro();
+    A:SetBindings();
+    A:SetButtons();
+
+    A:SetMainTimer();
 end
 
 --[[-------------------------------------------------------------------------------
@@ -1490,6 +1502,7 @@ A.aceDefaultDB =
         magicBroom = 1, -- d
         surfaceMount = 1, -- d
         preferSurfaceSpell = nil, -- d
+        vehicleExit = 1, -- d
         ldbi = {}, -- d
         favoritePets = {}, -- d
         favoriteMounts = -- d

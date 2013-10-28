@@ -529,6 +529,19 @@ function A:AceConfig()
                                 set = function(info, val) A.db.profile.preferSurfaceSpell = not A.db.profile.preferSurfaceSpell; end,
                                 get = function(info) return A.db.profile.preferSurfaceSpell; end,
                             },
+                            vehicleExit =
+                            {
+                                order = 7,
+                                name = L["Vehicle exit"],
+                                desc = L["If you are in a vehicle using the random mount will make you leave the vehicle."],
+                                type = "toggle",
+                                set = function(info, val)
+                                    A.db.profile.vehicleExit = not A.db.profile.vehicleExit;
+                                    A:SetMacroDismountString();
+                                    A:SetPostClickMacro();
+                                end,
+                                get = function(info) return A.db.profile.vehicleExit; end,
+                            },
                         },
                     },
                     buttonOptions =
