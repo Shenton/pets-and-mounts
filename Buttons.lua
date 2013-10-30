@@ -632,3 +632,12 @@ function A:SetTooltip(frame)
 
     GameTooltip:Show();
 end
+
+--[[-------------------------------------------------------------------------------
+    Masque support
+-------------------------------------------------------------------------------]]--
+
+if ( IsAddOnLoaded("Masque") ) then
+    LibStub("Masque"):Group(L["Pets & Mounts"], L["Mounts button"]):AddButton(PetsAndMountsSecureButtonMounts);
+    LibStub("Masque"):Group(L["Pets & Mounts"], L["Companions button"]):AddButton(PetsAndMountsSecureButtonPets);
+end
