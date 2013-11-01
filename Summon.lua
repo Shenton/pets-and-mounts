@@ -595,7 +595,7 @@ function A:GetRandomMount(tbl)
     return A.usableMountsCache[tbl][index];
 end
 
---- Check if we got a least one mount available after restriction in the given table
+--- Check if we got a least one mount available after restriction, in the given table
 -- @param tbl The original mounts table
 -- @return The number of mounts available or nil
 function A:GotRandomMount(tbl)
@@ -610,6 +610,25 @@ function A:GotRandomMount(tbl)
     local num = #A.usableMountsCache[tbl];
 
     if ( num > 0 ) then return num; end
+
+    return nil;
+end
+
+--- Return if the mount summon should be filtered
+function A:IsMountSummonFiltered()
+    if ( not A.mountsSummonFiltersCache ) then
+        A.mountsSummonFiltersCache = {};
+
+        for k,v in ipairs(A.mountsSummonFilters) do
+            if ( A.db.profile.mountsSummonFilters[k] ) then
+                A.mountsSummonFiltersCache[k] = v.func;
+            end
+        end
+    end
+
+    for k,v in ipairs(A.mountsSummonFiltersCache) do
+        if ( v() ) then return 1; end
+    end
 
     return nil;
 end
@@ -633,10 +652,7 @@ function A:RandomMount(cat)
         return;
     end
 
-    if ( UnitCastingInfo("player") -- Not when casting
-    or IsFalling() -- Not when falling.
-    or IsIndoors() -- Not indoor, "should" work in indoor place when you can mount, but will see, theramore scenario is flyable and you cant use fly mount, meh blizzard
-    or UnitOnTaxi("player") ) then -- Not on a fly path.
+    if ( A:IsMountSummonFiltered() ) then
         A:DebugMessage("RandomMount() - No summon filter");
         return;
     end

@@ -797,6 +797,11 @@ function A:AddSummonFilters()
             A.db.profile.petsSummonFilters[k] = 1;
         end
     end
+    for k,v in ipairs(A.mountsSummonFilters) do
+        if ( not A.db.profile.mountsSummonFilters[k] ) then
+            A.db.profile.mountsSummonFilters[k] = 1;
+        end
+    end
 end
 
 --[[-------------------------------------------------------------------------------
@@ -1694,6 +1699,7 @@ A.aceDefaultDB =
             [7] = {}, -- Repair
         },
         petsSummonFilters = {},
+        mountsSummonFilters = {},
     },
 };
 

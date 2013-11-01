@@ -1396,3 +1396,66 @@ A.petsSummonFilters =
         option = nil,
     },
 };
+
+A.mountsSummonFilters =
+{
+    { -- 1
+        name = L["Stealthed"],
+        func = function() return A:IsStealthed(); end,
+        option = 1,
+    },
+    { -- 2
+        name = L["Feign Death"],
+        func = function() return UnitIsFeignDeath("player"); end,
+        option = 1,
+    },
+    { -- 3
+        name = L["Casting"],
+        func = function()
+            if ( UnitCastingInfo("player") ) then return 1; end
+            if ( UnitChannelInfo("player") ) then return 1; end
+            return nil;
+        end,
+        option = 1,
+    },
+    { -- 4
+        --name = L["Dead"],
+        func = function() return UnitIsDeadOrGhost("player"); end,
+        option = nil,
+    },
+    { -- 5
+        name = L["Combat"],
+        func = function() return InCombatLockdown(); end,
+        option = 1,
+    },
+    { -- 6
+        name = L["Looting"],
+        func = function()
+            if ( GetNumLootItems() > 0 ) then
+                return 1;
+            end
+            return nil;
+        end,
+        option = 1,
+    },
+    { -- 7
+        name = L["Vehicle"],
+        func = function() return UnitHasVehicleUI("player"); end,
+        option = 1,
+    },
+    { -- 8
+        --name = L["Fly path"],
+        func = function() return UnitOnTaxi("player"); end,
+        option = nil,
+    },
+    { -- 9
+        name = L["Regen"],
+        func = function() return A:HasRegenBuff(); end,
+        option = 1,
+    },
+    {
+        name = L["Indoor"],
+        func = function() return IsIndoors(); end,
+        option = 1,
+    },
+};

@@ -20,6 +20,7 @@ L["Bindings"] = true;
 L["Bottom"] = true;
 
 L["Cancel"] = true;
+L["Casting"] = true;
 L["Choose"] = true;
 L["Close"] = true;
 L["Combat"] = true;
@@ -41,9 +42,12 @@ L["Ground"] = true;
 L["Hide"] = true;
 L["Hybrid"] = true;
 
+L["Indoor"] = true;
+
 L["Left"] = true;
 L["Load"] = true;
 L["Lock"] = true;
+L["Looting"] = true;
 
 L["Minimap"] = true;
 L["Miscellaneous"] = true;
@@ -60,6 +64,7 @@ L["Options"] = true;
 
 L["Passenger"] = true;
 
+L["Regen"] = true;
 L["Release"] = true;
 L["Repair"] = true;
 L["Reset"] = true;
@@ -68,6 +73,7 @@ L["Right"] = true;
 L["Save"] = true;
 L["Scale"] = true;
 L["Size"] = true;
+L["Stealthed"] = true
 L["Summon"] = true;
 L["Surface"] = true;
 
@@ -89,7 +95,7 @@ L["If you got a companion it will dismiss it when going stealthed."] = true;
 L["Add %s to favorite."] = true;
 L["Auto summon timer"] = true;
 L["Select how often the addon will check if you got a companion."] = true;
-L["Shift timer"] = true
+L["Shift timer"] = true;
 L["Select the shift timer, this is the time before summoning a random companion after reviving, porting, unstealthing, etc."] = true;
 L["Filter multiple"] = true;
 L["This will prevent adding to the list all the companions with same names."] = true;
@@ -195,7 +201,7 @@ L["Vehicle exit"] = true;
 L["If you are in a vehicle using the random mount will make you leave the vehicle."] = true;
 L["Random repair mount"] = true;
 L["Companions list"] = true;
-L["Mounts list"] = true
+L["Mounts list"] = true;
 L["Sets options"] = true;
 L["Favorites override"] = true;
 L["Companions auto summon filters"] = true;
@@ -203,6 +209,9 @@ L["Prevent companion auto summon when: %s"] = true;
 L["Random hybrid mount"] = true;
 L["Dock options"] = true;
 L["Zones database"] = true;
+L["Random mount summon filters"] = true;
+L["Prevent mount summon when: %s"] = true;
+L["Feign Death"] = true;
 -- Dropdown menu
 L["Show or hide minimap icon"] = true;
 L["Model frame size"] = true;

@@ -619,7 +619,7 @@ function A:AceConfig()
                         {
                             mountOptions =
                             {
-                                order = 300,
+                                order = 0,
                                 name = L["Random mount options"],
                                 type = "group",
                                 inline = true,
@@ -711,6 +711,14 @@ function A:AceConfig()
                                         get = function(info) return A.db.profile.vehicleExit; end,
                                     },
                                 },
+                            },
+                            mountsSummonFilters =
+                            {
+                                order = 100,
+                                name = L["Random mount summon filters"],
+                                type = "group",
+                                inline = true,
+                                args = {},
                             },
                         },
                     },
@@ -2729,6 +2737,29 @@ function A:AceConfig()
                 end,
                 set = function() A.db.profile.petsSummonFilters[k] = not A.db.profile.petsSummonFilters[k]; end,
                 get = function() return A.db.profile.petsSummonFilters[k]; end,
+            };
+            orderItem = orderItem + 1;
+        end
+    end
+
+    -- Mounts summon filters
+    orderItem = 0;
+    for k,v in ipairs(A.mountsSummonFilters) do
+        if ( v.option ) then
+            options.args.options.args.mountsOptions.args.mountsSummonFilters.args[v.name] =
+            {
+                order = orderItem,
+                name = v.name,
+                type = "toggle",
+                desc = function()
+                    if ( v.desc ) then
+                        return v.desc;
+                    end
+
+                    return L["Prevent mount summon when: %s"]:format(v.name);
+                end,
+                set = function() A.db.profile.mountsSummonFilters[k] = not A.db.profile.mountsSummonFilters[k]; end,
+                get = function() return A.db.profile.mountsSummonFilters[k]; end,
             };
             orderItem = orderItem + 1;
         end
