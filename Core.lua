@@ -9,7 +9,7 @@
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 -- TODO: I really need to find a better way to build the maps names DB
 -- TODO: Look into achievement mounts or unique per character mounts for restricted mounts
--- TODO: Add masque support
+-- TODO: Fix companion staying where you died in dungeons/raid
 
 -- Ace libs (<3)
 local A = LibStub("AceAddon-3.0"):NewAddon("PetsAndMounts", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0");
@@ -535,6 +535,7 @@ function A:BuildPetsTable(force)
     end
 
     A:RestorePetsFilters();
+    A:CleanPetsFavorites();
     A:DebugMessage("BuildPetsTable() - Update successful");
 end
 
@@ -773,6 +774,15 @@ function A:CleanPetsFavorites()
         if ( not C_PetJournal.GetPetInfoByPetID(v) ) then
             table.remove(A.db.profile.favoritePets, k);
             A:DebugMessage(("CleanPetsFavorites() - Removed petID: %s"):format(v));
+        end
+    end
+end
+
+--- Add summon filters to the database
+function A:AddSummonFilters()
+    for k,v in ipairs(A.petsSummonFilters) do
+        if ( not A.db.profile.petsSummonFilters[k] ) then
+            A.db.profile.petsSummonFilters[k] = 1;
         end
     end
 end
@@ -1386,7 +1396,6 @@ function A:COMBAT_LOG_EVENT_UNFILTERED(event, ...)
 
         if ( tContains(A.stealthSpellsIDs, spellID) ) then
             A:DebugMessage("COMBAT_LOG_EVENT_UNFILTERED() - Stealth/invis spell cast, revoking pet.");
-            A.stealthCasted = 1;
             A:RevokePet();
         end
     end
@@ -1482,6 +1491,12 @@ function A:PET_JOURNAL_LIST_UPDATE()
 
     A:BuildPetsTable();
 end
+
+--[[-------------------------------------------------------------------------------
+    Addon communication
+-------------------------------------------------------------------------------]]--
+
+
 
 --[[-------------------------------------------------------------------------------
     Ace DB and database revision methods
@@ -1605,6 +1620,7 @@ A.aceDefaultDB =
             [6] = {}, -- Water walking
             [7] = {}, -- Repair
         },
+        petsSummonFilters = {},
     },
 };
 
@@ -1733,7 +1749,7 @@ function A:AddToBlizzTemp()
 
         if ( loaded ) then
             InterfaceAddOnsList_Update();
-            InterfaceOptionsFrame_OpenToCategory(A.configFrame);
+            InterfaceOptionsFrame_OpenToCategory(A.configFrameOptions);
         end
     end);
 
@@ -1744,12 +1760,12 @@ end
 -- Load it if needed
 function A:OpenConfigPanel()
     if ( A.AceConfigDialog ) then
-        InterfaceOptionsFrame_OpenToCategory(A.configFrame);
+        InterfaceOptionsFrame_OpenToCategory(A.configFrameOptions);
     else
         local loaded = A:LoadAddonConfig();
 
         if ( loaded ) then
-            InterfaceOptionsFrame_OpenToCategory(A.configFrame);
+            InterfaceOptionsFrame_OpenToCategory(A.configFrameOptions);
         end
     end
 end
@@ -1765,6 +1781,7 @@ function A:OnInitialize()
     A.db = LibStub("AceDB-3.0"):New("petsAndMountsDB", A.aceDefaultDB, true);
     A:DatabaseRevisionCheck();
     A:RemoveDatabaseOldEntries();
+    A:AddSummonFilters();
 
     -- Profile modification callbacks
     A.db.RegisterCallback(self, "OnProfileChanged", "SetEverything");

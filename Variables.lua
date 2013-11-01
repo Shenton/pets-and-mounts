@@ -1291,3 +1291,101 @@ A.underwaterBreathingSpells =
     149408, -- Curse of the Sea
     149409, -- Curse of the Sea
 };
+
+-- Pets summon filters
+-- Integer indexed table of tables
+-- Each table contains:
+-- - name = name of the filter localized, optional when option is false
+-- - func = the function called by the auto pet method, it return true when it should be filtered
+-- - option = bool if true it will appear in the options panel and can be disabled/enabled by the player
+-- - desc = optional, it will search for a description to add to the Ace3 config
+A.petsSummonFilters =
+{
+    { -- 1
+        --name = L["Stealthed"],
+        func = function() return A:IsStealthed(); end,
+        option = nil,
+    },
+    { -- 2
+        --name = L["Feign Death"],
+        func = function() return UnitIsFeignDeath("player"); end,
+        option = nil,
+    },
+    { -- 3
+        --name = L["Casting"],
+        func = function()
+            if ( UnitCastingInfo("player") ) then return 1; end
+            if ( UnitChannelInfo("player") ) then return 1; end
+            return nil;
+        end,
+        option = nil,
+    },
+    { -- 4
+        --name = L["Dead"],
+        func = function() return UnitIsDeadOrGhost("player"); end,
+        option = nil,
+    },
+    { -- 5
+        name = L["Combat"],
+        func = function() return InCombatLockdown(); end,
+        option = 1,
+    },
+    { -- 6
+        -- Will never go to options, Combat, reviving, fly path end, etc, delay.
+        func = function() return A.noAutoPet; end,
+        option = nil,
+    },
+    { -- 7
+        --name = L["Looting"],
+        func = function()
+            if ( GetNumLootItems() > 0 ) then
+                return 1;
+            end
+            return nil;
+        end,
+        option = nil,
+    },
+    { -- 8
+        name = L["Mounted"],
+        func = function() return IsMounted(); end,
+        option = 1,
+    },
+    { -- 9
+        name = L["Flying"],
+        func = function() return IsFlying(); end,
+        option = 1,
+    },
+    { -- 10
+        --name = L["Falling"],
+        func = function() return IsFalling(); end,
+        option = nil,
+    },
+    { -- 11
+        name = L["Vehicle"],
+        func = function() return UnitHasVehicleUI("player"); end,
+        option = 1,
+    },
+    { -- 12
+        --name = L["Fly path"],
+        func = function() return UnitOnTaxi("player"); end,
+        option = nil,
+    },
+    { -- 13
+        --name = L["Regen"],
+        func = function() return A:HasRegenBuff(); end,
+        option = nil,
+    },
+    { -- 14
+        --name = L["Control lost"],
+        func = function() return not HasFullControl(); end,
+        option = nil,
+    },
+    { -- 15
+        --name = L["Barber"],
+        func = function()
+            if ( GetBarberShopStyleInfo(1) ) then return 1; end
+            return nil;
+        end,
+        option = nil,
+    },
+};

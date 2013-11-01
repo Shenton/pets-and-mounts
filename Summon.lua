@@ -96,12 +96,6 @@ function A:SummonPet(id)
     if ( C_PetJournal.PetIsSummonable(id) ) then
         A:DebugMessage("RandomPet() - Summon pet: "..A:GetPetNameByID(id));
 
-        if ( A.stealthCasted ) then
-            A:DebugMessage("SummonPet() - stealthCasted");
-            A.stealthCasted = nil;
-            return;
-        end
-
         C_PetJournal.SummonPetByGUID(id);
     end
 end
@@ -202,10 +196,10 @@ function A:RandomPet()
     A:InitializeDB();
 
     -- Fav pets cleaning, yes this is unclean, but if this is used to soon it fail as pet info are unavailable
-    if ( not A.favoritesCleaned ) then
-        A:CleanPetsFavorites();
-        A.favoritesCleaned = 1;
-    end
+    -- if ( not A.favoritesCleaned ) then
+        -- A:CleanPetsFavorites();
+        -- A.favoritesCleaned = 1;
+    -- end
 
     local id;
 
@@ -219,6 +213,25 @@ function A:RandomPet()
     end
 
     A:SummonPet(id);
+end
+
+--- Return if the pet summon should be filtered
+function A:IsPetSummonFiltered()
+    if ( not A.petsSummonFiltersCache ) then
+        A.petsSummonFiltersCache = {};
+
+        for k,v in ipairs(A.petsSummonFilters) do
+            if ( A.db.profile.petsSummonFilters[k] ) then
+                A.petsSummonFiltersCache[k] = v.func;
+            end
+        end
+    end
+
+    for k,v in ipairs(A.petsSummonFiltersCache) do
+        if ( v() ) then return 1; end
+    end
+
+    return nil;
 end
 
 --- Check if a pet can be summoned
@@ -235,26 +248,18 @@ function A:AutoPet()
         return;
     end
 
-    if ( not A:IsAutoPetEnabled() -- Auto pet is disabled.
-    or A:IsStealthed() -- You don't want a pet to summon while stealthed, nether, or you hate your e-life.
-    or UnitIsFeignDeath("player") -- Not when feigning death, seriously no, will look dumb to stand up with a companion next to you.
-    or UnitCastingInfo("player") -- Not when casting.
-    or UnitChannelInfo("player") -- Not when channeling.
-    or UnitIsDeadOrGhost("player") -- Not when dead (thanks captain).
-    or InCombatLockdown() -- Not when in combat.
-    or A.noAutoPet -- Combat, reviving, fly path end, etc, delay.
-    or GetNumLootItems() > 0 -- Player is looting.
-    or IsMounted() -- Not when mounted.
-    or IsFlying() -- Not when flying, dunno if this is usefull, perhaps when using a flying "mount" from a dungeon event.
-    or IsFalling() -- Not when falling. Can seem useless, but summoning a pet trigger a GCD and, falling + GCD + trying to cast a slowfall spell = dead.
-    or UnitHasVehicleUI("player") -- Not when in a vehicule.
-    or UnitOnTaxi("player") -- Not on a fly path.
-    or A:HasRegenBuff() -- Not when eating/drinking.
-    or A.stealthCasted -- A stealth/invis spell was casted, this will (should...) prevent some rare case of unsteatlth by summoning pet.
-    or not HasFullControl() -- Not when not having full control.
-    or GetBarberShopStyleInfo(1) ) then -- Not at barber shop
-        A:DebugMessage("AutoPet() - No summon filter");
-        A.stealthCasted = nil;
+    -- Auto pet is disabled.
+    if ( not A:IsAutoPetEnabled() ) then return; end
+
+    -- Option is set to not summon when having a pet
+    if ( currentPet and A.db.profile.alreadyGotPet ) then
+        A:DebugMessage("AutoPet() - Already got a pet");
+        return;
+    end
+
+    -- Pet summon filtered
+    if ( A:IsPetSummonFiltered() ) then
+        A:DebugMessage("AutoPet() - Pet summon filtered");
         return;
     end
 
@@ -264,9 +269,7 @@ function A:AutoPet()
         return;
     end
 
-    if ( currentPet and A.db.profile.alreadyGotPet ) then -- Option is set to not summon when having a pet
-        A:DebugMessage("AutoPet() - Already got a pet");
-    elseif ( A.db.profile.forceOne.pet ) then -- Forced pet
+    if ( A.db.profile.forceOne.pet ) then -- Forced pet
         if ( currentPet and currentPet == A.db.profile.forceOne.pet ) then
             A:DebugMessage("AutoPet() - Forced pet is current");
         else
@@ -552,11 +555,16 @@ function A:BuildUsableMountsTable(tbl)
                 local professionOne, professionTwo = GetProfessions();
                 local professionOneSkill, professionTwoSkill, _;
 
-                _, _, professionOneSkill, _, _, _, professionOne = GetProfessionInfo(professionOne);
-                _, _, professionTwoSkill, _, _, _, professionTwo = GetProfessionInfo(professionTwo);
+                if ( professionOne ) then
+                    _, _, professionOneSkill, _, _, _, professionOne = GetProfessionInfo(professionOne);
+                end
 
-                if ( (professionOne == A.restrictedMounts[v].args[1] and professionOneSkill >= A.restrictedMounts[v].args[2])
-                or (professionTwo == A.restrictedMounts[v].args[1] and professionTwoSkill >= A.restrictedMounts[v].args[2]) ) then
+                if ( professionTwo ) then
+                    _, _, professionTwoSkill, _, _, _, professionTwo = GetProfessionInfo(professionTwo);
+                end
+
+                if ( (professionOne and professionOne == A.restrictedMounts[v].args[1] and professionOneSkill >= A.restrictedMounts[v].args[2])
+                or (professionTwo and professionTwo == A.restrictedMounts[v].args[1] and professionTwoSkill >= A.restrictedMounts[v].args[2]) ) then
                     out[#out+1] = v;
                 else
                     A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
@@ -767,6 +775,6 @@ function A:RandomMount(cat)
     if ( A:SummonMountBySpellId(id) ) then return; end
 
     -- If we are here the player cannot use the mount (horde/alliance specific, achievement, level, etc)
-    A:DebugMessage("Tried to summon mount: "..select(1,GetSpellInfo(id)));
+    --A:DebugMessage("Tried to summon mount: "..select(1,GetSpellInfo(id)));
     A:Message(L["Tried to summon %s. It is a mount this toon cannot use (Horde/Alliance specific, achievement, level, etc)."]:format(select(1,GetSpellInfo(id))));
 end

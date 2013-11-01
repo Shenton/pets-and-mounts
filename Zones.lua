@@ -10,7 +10,7 @@ local A = _G["PetsAndMountsGlobal"];
 local L = A.L;
 
 -- Globals to locals
-local pairs = pairs;
+local ipairs = ipairs;
 local tostring = tostring;
 
 -- GLOBALS: GetMapNameByID, WorldMapFrame, SetMapToCurrentZone, GetCurrentMapAreaID
@@ -44,7 +44,7 @@ function A:BuildMapIDsDB()
         A.db.global.zonesIDsToName = {};
     end
 
-    for k,v in pairs(A.zonesIDs) do
+    for k,v in ipairs(A.zonesIDs) do
         if ( A.zonesIDsOverride[v] ) then
             if ( A.zonesIDsOverride[v] == "JUSTIGNOREME" ) then
                 A.db.global.zonesIDsToName[tostring(v)] = nil;
@@ -69,7 +69,7 @@ function A:BuildMapIDsDB()
     end
 end
 
--- Hook a script on hide of the worldframe
+-- Hook a script on hide of the worldmap frame
 -- used to update the current mapID without
 -- switching it while the player got his map open
 WorldMapFrame:HookScript("OnHide", function()

@@ -15,12 +15,13 @@ L["Pets & Mounts"] = true;
 L["Accept"] = true;
 L["Aquatic"] = true;
 
-L["Binding"] = true;
+L["Bindings"] = true;
 L["Bottom"] = true;
 
 L["Cancel"] = true;
 L["Choose"] = true;
 L["Close"] = true;
+L["Combat"] = true;
 L["Companions"] = true;
 L["Current"] = true;
 
@@ -32,6 +33,7 @@ L["Enable"] = true;
 
 L["Filters"] = true;
 L["Fly"] = true;
+L["Flying"] = true;
 
 L["Ground"] = true;
 
@@ -43,6 +45,7 @@ L["Load"] = true;
 L["Lock"] = true;
 
 L["Minimap"] = true;
+L["Mounted"] = true;
 L["Mounts"] = true;
 
 L["Name"] = true;
@@ -61,7 +64,6 @@ L["Right"] = true;
 
 L["Save"] = true;
 L["Scale"] = true;
-L["Sets"] = true;
 L["Size"] = true;
 L["Summon"] = true;
 L["Surface"] = true;
@@ -70,10 +72,12 @@ L["Timers"] = true;
 L["Tooltip"] = true;
 L["Top"] = true;
 
+L["Vehicle"] = true;
+
 -- Config
 L["Model rotation"] = true;
 L["Auto summon"] = true;
-L["Auto pet options"] = true;
+L["Auto companion options"] = true;
 L["Auto summon a random companion."] = true;
 L["Not with a companion"] = true;
 L["Auto summon will not work if you already have a companion, or it will summon a random favorite companion."] = true;
@@ -131,7 +135,7 @@ L["Party instance"] = true;
 L["Battleground instance"] = true;
 L["Raid instance"] = true;
 L["Scenario instance"] = true;
-L["Auto pet options override"] = true;
+L["Auto companion options override"] = true;
 L["Area type"] = true;
 L["Select witch type of area to work with."] = true;
 L["Enable auto pet options override."] = true;
@@ -140,7 +144,7 @@ L["Random companion"] = true;
 L["Bind a key to summon a random companion."] = true;
 L["Class specific"] = true;
 L["With this enabled it will use flying forms for druids (Only class with specific \"mount\" atm)."] = true;
-L["Buttons options"] = true;
+L["Buttons"] = true;
 L["Companions button"] = true;
 L["Mounts button"] = true;
 L["Hide the companions button."] = true;
@@ -186,6 +190,12 @@ L["Select on which side of the mounts button the companions button should dock."
 L["Vehicle exit"] = true;
 L["If you are in a vehicle using the random mount will make you leave the vehicle."] = true;
 L["Random repair mount"] = true;
+L["Companions list"] = true;
+L["Mounts list"] = true
+L["Sets options"] = true;
+L["Favorites override"] = true;
+L["Companions auto summon filters"] = true;
+L["Prevent companion auto summon when: %s"] = true;
 -- Dropdown menu
 L["Show or hide minimap icon"] = true;
 L["Model frame size"] = true;
