@@ -26,6 +26,7 @@ A.color =
     GREEN = "|cff33ff99",
     BLUE = "|cff3399ff",
     WHITE = "|cffffffff",
+    WARRIOR = "|cffc79c6e",
     RESET = "|r",
 };
 

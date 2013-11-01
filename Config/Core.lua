@@ -178,10 +178,10 @@ StaticPopupDialogs["PetsAndMountsDeleteSet"] =
     Config table
 -------------------------------------------------------------------------------]]--
 
-local options, orderGroup, orderItem, petName, petAutoSummonOverrideSelected;
+local orderGroup, orderItem, petName, petAutoSummonOverrideSelected;
 local optionsOverrideHeaderText = L["None"];
 function A:AceConfig()
-    options =
+    local options =
     {
         name = L["Pets & Mounts"],
         type = "group",
@@ -1392,7 +1392,7 @@ function A:AceConfig()
             pets =
             {
                 order = 10,
-                name = L["Companions"],
+                name = L["Companions list"],
                 type = "group",
                 args = {},
             },
@@ -1402,7 +1402,7 @@ function A:AceConfig()
             mounts =
             {
                 order = 20,
-                name = L["Mounts"],
+                name = L["Mounts list"],
                 type = "group",
                 childGroups = "tab",
                 args = {},
@@ -2505,6 +2505,224 @@ function A:AceConfig()
                     },
                 },
             },
+            about =
+            {
+                order = 50,
+                name = L["About"],
+                type = "group",
+                args =
+                {
+                    name =
+                    {
+                        order = 0,
+                        name = A.color.WARRIOR..L["Pets & Mounts"],
+                        width = "full",
+                        type = "description",
+                        fontSize = "large",
+                    },
+                    emptyLine1 =
+                    {
+                        order = 1,
+                        name = " ",
+                        width = "full",
+                        type = "description",
+                        fontSize = "medium",
+                    },
+                    desc =
+                    {
+                        order = 2,
+                        name = L["Auto and random summon for your pets and mounts, highly customizable. With Data Broker support."],
+                        width = "full",
+                        type = "description",
+                        fontSize = "medium",
+                    },
+                    emptyLine2 =
+                    {
+                        order = 3,
+                        name = " ",
+                        width = "full",
+                        type = "description",
+                        fontSize = "medium",
+                    },
+                    author =
+                    {
+                        order = 4,
+                        name = A.color.BLUE..L["Author"]..A.color.RESET..": "..GetAddOnMetadata("PetsAndMounts", "Author"),
+                        width = "full",
+                        type = "description",
+                        fontSize = "medium",
+                    },
+                    licence =
+                    {
+                        order = 5,
+                        name = A.color.BLUE..L["Licence"]..A.color.RESET..": BSD",
+                        width = "full",
+                        type = "description",
+                        fontSize = "medium",
+                    },
+                    version =
+                    {
+                        order = 6,
+                        name = function()
+                            local version, revision = A:GetAddonVersion(A.version);
+                            local color;
+
+                            if ( A.addonUpdateMessageInfo ) then
+                                color = A.color.RED;
+                            else
+                                color = A.color.GREEN;
+                            end
+
+                            return A.color.BLUE..L["Version"]..A.color.RESET..": "..L["You are running Pets & Mounts version %s revision %s %s."]
+                            :format(color..tostring(version)..A.color.RESET, color..tostring(revision), L[A.versionStage]..A.color.RESET);
+                        end,
+                        width = "full",
+                        type = "description",
+                        fontSize = "medium",
+                    },
+                    newVersion =
+                    {
+                        order = 7,
+                        name = function()
+                            if ( A.addonUpdateMessageInfo ) then
+                                return A.color.BLUE..L["New version"]..A.color.RESET..": "..L["A new version is available, version |cff33ff99%s|r revision |cff33ff99%s %s|r."]
+                                :format(tostring(A.addonUpdateMessageInfo[1]), tostring(A.addonUpdateMessageInfo[2]), L[A.addonUpdateMessageInfo[3]]);
+                            end
+                            return " ";
+                        end,
+                        width = "full",
+                        hidden = function()
+                            if ( A.addonUpdateMessageInfo ) then
+                                return nil;
+                            end
+                            return 1;
+                        end,
+                        type = "description",
+                        fontSize = "medium",
+                    },
+                    emptyLine3 =
+                    {
+                        order = 8,
+                        name = " ",
+                        width = "full",
+                        type = "description",
+                        fontSize = "medium",
+                    },
+                    webSiteInput =
+                    {
+                        order = 9,
+                        name = L["Web site"],
+                        width = "full",
+                        type = "input",
+                        set = function() return; end,
+                        get = function() return A.addonURL; end,
+                    },
+                    emptyLine4 =
+                    {
+                        order = 100,
+                        name = " \n",
+                        width = "full",
+                        type = "description",
+                        fontSize = "medium",
+                    },
+                    credits =
+                    {
+                        order = 101,
+                        name = A.color.WARRIOR..L["Credits"],
+                        width = "full",
+                        type = "description",
+                        fontSize = "large",
+                    },
+                    emptyLine5 =
+                    {
+                        order = 102,
+                        name = " ",
+                        width = "full",
+                        type = "description",
+                        fontSize = "medium",
+                    },
+                    warcraftMounts =
+                    {
+                        order = 110,
+                        name = " ",
+                        width = "full",
+                        type = "description",
+                        fontSize = "medium",
+                        image = function() return "Interface\\AddOns\\PetsAndMounts\\Media\\warcraftmounts", 256, 105; end,
+                        imageCoords = {0, 1, 0, 0.82},
+                    },
+                    warcraftMountsWebSite =
+                    {
+                        order = 111,
+                        name = "Warcraft Mounts",
+                        width = "full",
+                        type = "input",
+                        set = function() return; end,
+                        get = function() return "http://www.warcraftmounts.com"; end,
+                    },
+                    emptyLine6 =
+                    {
+                        order = 112,
+                        name = " ",
+                        width = "full",
+                        type = "description",
+                        fontSize = "medium",
+                    },
+                    warcraftPets =
+                    {
+                        order = 120,
+                        name = " ",
+                        width = "full",
+                        type = "description",
+                        fontSize = "medium",
+                        image = function() return "Interface\\AddOns\\PetsAndMounts\\Media\\warcraftpets", 256, 256; end,
+                    },
+                    warcraftPetsWebSite =
+                    {
+                        order = 121,
+                        name = "Warcraft Pets",
+                        width = "full",
+                        type = "input",
+                        set = function() return; end,
+                        get = function() return "http://www.warcraftpets.com"; end,
+                    },
+                    emptyLine7 =
+                    {
+                        order = 122,
+                        name = " ",
+                        width = "full",
+                        type = "description",
+                        fontSize = "medium",
+                    },
+                    wowhead =
+                    {
+                        order = 130,
+                        name = " ",
+                        width = "full",
+                        type = "description",
+                        fontSize = "medium",
+                        image = function() return "Interface\\AddOns\\PetsAndMounts\\Media\\wowhead", 256, 116; end,
+                        imageCoords = {0, 1, 0, 0.9},
+                    },
+                    wowheadWebSite =
+                    {
+                        order = 131,
+                        name = "Wowhead",
+                        width = "full",
+                        type = "input",
+                        set = function() return; end,
+                        get = function() return "http://www.wowhead.com"; end,
+                    },
+                    emptyLine8 =
+                    {
+                        order = 132,
+                        name = " ",
+                        width = "full",
+                        type = "description",
+                        fontSize = "medium",
+                    },
+                },
+            },
         },
     };
 
@@ -2772,15 +2990,23 @@ function A:AceConfig()
     return options;
 end
 
+local options = A:AceConfig();
+
 -- Register with AceConfig
-LibStub("AceConfig-3.0"):RegisterOptionsTable("PetsAndMountsConfig", A.AceConfig);
+LibStub("AceConfig-3.0"):RegisterOptionsTable(L["Pets & Mounts"], options.args.options);
+LibStub("AceConfig-3.0"):RegisterOptionsTable(L["Pets & Mounts"]..": "..options.args.pets.name, options.args.pets);
+LibStub("AceConfig-3.0"):RegisterOptionsTable(L["Pets & Mounts"]..": "..options.args.mounts.name, options.args.mounts);
+LibStub("AceConfig-3.0"):RegisterOptionsTable(L["Pets & Mounts"]..": "..options.args.sets.name, options.args.sets);
+LibStub("AceConfig-3.0"):RegisterOptionsTable(L["Pets & Mounts"]..": "..options.args.favOverride.name, options.args.favOverride);
+LibStub("AceConfig-3.0"):RegisterOptionsTable(L["Pets & Mounts"]..": "..options.args.about.name, options.args.about);
 
 -- Adding addon options to Blizzard UI
-A.configFrameOptions = A.AceConfigDialog:AddToBlizOptions("PetsAndMountsConfig", L["Pets & Mounts"], nil, "options");
-A.configFramePets = A.AceConfigDialog:AddToBlizOptions("PetsAndMountsConfig", L["Companions list"], L["Pets & Mounts"], "pets");
-A.configFrameMounts = A.AceConfigDialog:AddToBlizOptions("PetsAndMountsConfig", L["Mounts list"], L["Pets & Mounts"], "mounts");
-A.configFrameSets = A.AceConfigDialog:AddToBlizOptions("PetsAndMountsConfig", L["Sets options"], L["Pets & Mounts"], "sets");
-A.configFrameFavOverride = A.AceConfigDialog:AddToBlizOptions("PetsAndMountsConfig", L["Favorites override"], L["Pets & Mounts"], "favOverride");
+A.configFrameOptions = A.AceConfigDialog:AddToBlizOptions(L["Pets & Mounts"],  L["Pets & Mounts"]);
+A.configFramePets = A.AceConfigDialog:AddToBlizOptions(L["Pets & Mounts"]..": "..options.args.pets.name, options.args.pets.name, L["Pets & Mounts"]);
+A.configFrameMounts = A.AceConfigDialog:AddToBlizOptions(L["Pets & Mounts"]..": "..options.args.mounts.name, options.args.mounts.name, L["Pets & Mounts"]);
+A.configFrameSets = A.AceConfigDialog:AddToBlizOptions(L["Pets & Mounts"]..": "..options.args.sets.name, options.args.sets.name, L["Pets & Mounts"]);
+A.configFrameFavOverride = A.AceConfigDialog:AddToBlizOptions(L["Pets & Mounts"]..": "..options.args.favOverride.name, options.args.favOverride.name, L["Pets & Mounts"]);
+A.configFrameAbout = A.AceConfigDialog:AddToBlizOptions(L["Pets & Mounts"]..": "..options.args.about.name, options.args.about.name, L["Pets & Mounts"]);
 
 -- Hide model frame hooks
 A.configFramePets:HookScript("OnHide", function() A.configModelFrame:Hide(); end);

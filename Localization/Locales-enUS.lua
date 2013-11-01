@@ -12,9 +12,12 @@ if L then
 -- Addon name
 L["Pets & Mounts"] = true;
 -- Words
+L["About"] = true;
 L["Accept"] = true;
+L["Add-on"] = true;
 L["Alpha"] = true;
 L["Aquatic"] = true;
+L["Author"] = true;
 
 L["Bindings"] = true;
 L["Bottom"] = true;
@@ -25,6 +28,7 @@ L["Choose"] = true;
 L["Close"] = true;
 L["Combat"] = true;
 L["Companions"] = true;
+L["Credits"] = true;
 L["Current"] = true;
 
 L["Debug"] = true;
@@ -45,6 +49,7 @@ L["Hybrid"] = true;
 L["Indoor"] = true;
 
 L["Left"] = true;
+L["Licence"] = true;
 L["Load"] = true;
 L["Lock"] = true;
 L["Looting"] = true;
@@ -82,6 +87,7 @@ L["Tooltip"] = true;
 L["Top"] = true;
 
 L["Vehicle"] = true;
+L["Version"] = true;
 
 -- Config
 L["Model rotation"] = true;
@@ -212,6 +218,12 @@ L["Zones database"] = true;
 L["Random mount summon filters"] = true;
 L["Prevent mount summon when: %s"] = true;
 L["Feign Death"] = true;
+-- About
+L["Auto and random summon for your pets and mounts, highly customizable. With Data Broker support."] = true;
+L["A new version is available, version |cff33ff99%s|r revision |cff33ff99%s %s|r."] = true;
+L["You are running Pets & Mounts version %s revision %s %s."] = true;
+L["Web site"] = true;
+L["New version"] = true;
 -- Dropdown menu
 L["Show or hide minimap icon"] = true;
 L["Model frame size"] = true;
