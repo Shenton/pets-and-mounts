@@ -621,7 +621,10 @@ end
 function A:RandomMount(cat)
     A:InitializeDB();
 
-    if ( IsMounted() and ((IsFlying() and A.db.profile.dismountFlying) or not IsFlying()) ) then
+    if ( not A.db.profile.dismountFlying and IsMounted() and IsFlying() ) then
+        A:DebugMessage("RandomMount() - Flying no dismount");
+        return;
+    elseif ( IsMounted() ) then
         A:DebugMessage("RandomMount() - Dismount");
         Dismount();
         return;
@@ -641,8 +644,10 @@ function A:RandomMount(cat)
     local id;
 
     if ( not cat ) then cat = A:SetMountCat(); end
-    -- ground, do not want hybrid when ground - aqua - passenger
-    if ( (cat == 1 and A.db.profile.noHybridWhenGround) or cat == 4 or cat == 5 or cat == 6 or cat == 7 ) then
+    -- ground/fly, do not want hybrid when ground/fly - all forced cat
+    if ( (cat == 1 and A.db.profile.noHybridWhenGround)
+    or (cat == 2 and A.db.profile.noHybridWhenFly)
+    or cat == 3 or cat == 4 or cat == 5 or cat == 6 or cat == 7 ) then
         -- Got forced
         if ( A.db.profile.forceOne.mount[cat] ) then
             A:DebugMessage(("RandomMount() - No hybrid - Got forced - %i"):format(cat));
@@ -668,7 +673,7 @@ function A:RandomMount(cat)
             return;
         end
     -- ground, want hybrid when ground - fly
-    elseif ( (cat == 1 and not A.db.profile.noHybridWhenGround) or cat == 2 ) then
+    elseif ( (cat == 1 and not A.db.profile.noHybridWhenGround) or (cat == 2 and not A.db.profile.noHybridWhenFly) ) then
         -- Got forced ground/fly and hybrid
         if ( A.db.profile.forceOne.mount[cat] and A.db.profile.forceOne.mount[3] ) then
             -- hybrid
@@ -770,11 +775,12 @@ function A:RandomMount(cat)
             A:DebugMessage(("RandomMount() - No mount for that cat - %i"):format(cat));
             return;
         end
+    else -- Unsupported cat
+        return;
     end
 
     if ( A:SummonMountBySpellId(id) ) then return; end
 
     -- If we are here the player cannot use the mount (horde/alliance specific, achievement, level, etc)
-    --A:DebugMessage("Tried to summon mount: "..select(1,GetSpellInfo(id)));
-    A:Message(L["Tried to summon %s. It is a mount this toon cannot use (Horde/Alliance specific, achievement, level, etc)."]:format(select(1,GetSpellInfo(id))));
+    A:Message(L["Tried to summon %s. It is a mount this toon cannot use (Horde/Alliance specific, achievement, level, etc)."]:format(select(1,GetSpellInfo(id))), 1);
 end

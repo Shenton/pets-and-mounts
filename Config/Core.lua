@@ -201,10 +201,10 @@ function A:AceConfig()
                     --
                     -- Main options tree - Common tab
                     --
-                    commonOptions =
+                    miscellaneousOptions =
                     {
                         order = 0,
-                        name = L["Options"],
+                        name = L["Miscellaneous"],
                         type = "group",
                         args =
                         {
@@ -628,15 +628,24 @@ function A:AceConfig()
                                     noHybridWhenGround =
                                     {
                                         order = 0,
-                                        name = L["No hybrid"],
+                                        name = L["No hybrid (Ground)"],
                                         desc = L["Do not summon an hybrid mount in a ground only area."],
                                         type = "toggle",
                                         set = function(info, val) A.db.profile.noHybridWhenGround = not A.db.profile.noHybridWhenGround; end,
                                         get = function(info) return A.db.profile.noHybridWhenGround; end,
                                     },
-                                    dismountFlying =
+                                    noHybridWhenFly =
                                     {
                                         order = 1,
+                                        name = L["No hybrid (Fly)"],
+                                        desc = L["Do not summon an hybrid mount in a flyable area."],
+                                        type = "toggle",
+                                        set = function(info, val) A.db.profile.noHybridWhenFly = not A.db.profile.noHybridWhenFly; end,
+                                        get = function(info) return A.db.profile.noHybridWhenFly; end,
+                                    },
+                                    dismountFlying =
+                                    {
+                                        order = 2,
                                         name = L["Flying dismount"],
                                         desc = L["Using the random mount bind when flying will dismount you."],
                                         type = "toggle",
@@ -645,7 +654,7 @@ function A:AceConfig()
                                     },
                                     areaMounts =
                                     {
-                                        order = 2,
+                                        order = 3,
                                         name = L["Area mounts"],
                                         desc = L["With this enabled it will summon a specific mount according to your current area. Example: the Abyssal Seahorse in Vashj'ir."],
                                         type = "toggle",
@@ -654,7 +663,7 @@ function A:AceConfig()
                                     },
                                     classesMacrosEnabled =
                                     {
-                                        order = 3,
+                                        order = 4,
                                         name = L["Class specific"],
                                         desc = L["With this enabled it will use flying forms for druids (Only class with specific \"mount\" atm)."],
                                         type = "toggle",
@@ -663,7 +672,7 @@ function A:AceConfig()
                                     },
                                     magicBroom =
                                     {
-                                        order = 4,
+                                        order = 5,
                                         name = L["Magic Broom"],
                                         desc = L["Summon the Magic Broom when it is in your bags."],
                                         type = "toggle",
@@ -672,7 +681,7 @@ function A:AceConfig()
                                     },
                                     surfaceMount =
                                     {
-                                        order = 5,
+                                        order = 6,
                                         name = L["Surface mount"],
                                         desc = L["If you are in a non flyable area and at the water surface, it will summon a mount able to walk on water. Support Death Knights Path of Frost, Shamans Water Walking and Warlocks glyph."],
                                         type = "toggle",
@@ -681,7 +690,7 @@ function A:AceConfig()
                                     },
                                     preferSurfaceSpell =
                                     {
-                                        order = 6,
+                                        order = 7,
                                         name = L["Prefer surface spell"],
                                         desc = L["If surface mount options is enabled, it will prefer using your water walking spell other the mount. This only works for Death Knights and Shamans."],
                                         type = "toggle",
@@ -690,7 +699,7 @@ function A:AceConfig()
                                     },
                                     vehicleExit =
                                     {
-                                        order = 7,
+                                        order = 8,
                                         name = L["Vehicle exit"],
                                         desc = L["If you are in a vehicle using the random mount will make you leave the vehicle."],
                                         type = "toggle",
@@ -715,23 +724,17 @@ function A:AceConfig()
                         type = "group",
                         args =
                         {
-                            binding =
+                            randomPet =
                             {
-                                order = 100,
-                                name = L["Bindings"],
+                                order = 0,
+                                name = L["Random companion"],
                                 type = "group",
                                 inline = true,
                                 args =
                                 {
-                                    randomPet =
-                                    {
-                                        order = 0,
-                                        name = L["Random companion"],
-                                        type = "header",
-                                    },
                                     randomPetKey1 =
                                     {
-                                        order = 1,
+                                        order = 0,
                                         name = L["Key one"],
                                         desc = L["Bind a key to summon a random companion."],
                                         type = "keybinding",
@@ -745,7 +748,7 @@ function A:AceConfig()
                                     },
                                     randomPetKey2 =
                                     {
-                                        order = 2,
+                                        order = 1,
                                         name = L["Key two"],
                                         desc = L["Bind a key to summon a random companion."],
                                         type = "keybinding",
@@ -760,15 +763,19 @@ function A:AceConfig()
                                             return key;
                                         end,
                                     },
-                                    randomMount =
-                                    {
-                                        order = 5,
-                                        name = L["Random mount"],
-                                        type = "header",
-                                    },
+                                },
+                            },
+                            randomMount =
+                            {
+                                order = 1,
+                                name = L["Random mount"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
                                     randomMountKey1 =
                                     {
-                                        order = 6,
+                                        order = 0,
                                         name = L["Key one"],
                                         desc = L["Bind a key to summon a random mount."],
                                         type = "keybinding",
@@ -782,7 +789,7 @@ function A:AceConfig()
                                     },
                                     randomMountKey2 =
                                     {
-                                        order = 7,
+                                        order = 1,
                                         name = L["Key two"],
                                         desc = L["Bind a key to summon a random mount."],
                                         type = "keybinding",
@@ -797,15 +804,19 @@ function A:AceConfig()
                                             return key;
                                         end,
                                     },
-                                    randomPassengerMount =
-                                    {
-                                        order = 10,
-                                        name = L["Random passengers mount"],
-                                        type = "header",
-                                    },
+                                },
+                            },
+                            randomPassengersMount =
+                            {
+                                order = 2,
+                                name = L["Random passengers mount"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
                                     randomPassengerMountKey1 =
                                     {
-                                        order = 11,
+                                        order = 0,
                                         name = L["Key one"],
                                         desc = L["Bind a key to summon a random mount."],
                                         type = "keybinding",
@@ -819,7 +830,7 @@ function A:AceConfig()
                                     },
                                     randomPassengerMountKey2 =
                                     {
-                                        order = 12,
+                                        order = 1,
                                         name = L["Key two"],
                                         desc = L["Bind a key to summon a random mount."],
                                         type = "keybinding",
@@ -834,15 +845,19 @@ function A:AceConfig()
                                             return key;
                                         end,
                                     },
-                                    randomFlyMount =
-                                    {
-                                        order = 20,
-                                        name = L["Random flying mount"],
-                                        type = "header",
-                                    },
+                                },
+                            },
+                            randomFlyingMount =
+                            {
+                                order = 3,
+                                name = L["Random flying mount"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
                                     randomFlyMountKey1 =
                                     {
-                                        order = 21,
+                                        order = 0,
                                         name = L["Key one"],
                                         desc = L["Bind a key to summon a random mount."],
                                         type = "keybinding",
@@ -856,7 +871,7 @@ function A:AceConfig()
                                     },
                                     randomFlyMountKey2 =
                                     {
-                                        order = 22,
+                                        order = 1,
                                         name = L["Key two"],
                                         desc = L["Bind a key to summon a random mount."],
                                         type = "keybinding",
@@ -871,15 +886,19 @@ function A:AceConfig()
                                             return key;
                                         end,
                                     },
-                                    randomGroundMount =
-                                    {
-                                        order = 30,
-                                        name = L["Random ground mount"],
-                                        type = "header",
-                                    },
+                                },
+                            },
+                            randomGroundMount =
+                            {
+                                order = 4,
+                                name = L["Random ground mount"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
                                     randomGroundMountKey1 =
                                     {
-                                        order = 31,
+                                        order = 0,
                                         name = L["Key one"],
                                         desc = L["Bind a key to summon a random mount."],
                                         type = "keybinding",
@@ -893,7 +912,7 @@ function A:AceConfig()
                                     },
                                     randomGroundMountKey2 =
                                     {
-                                        order = 32,
+                                        order = 1,
                                         name = L["Key two"],
                                         desc = L["Bind a key to summon a random mount."],
                                         type = "keybinding",
@@ -908,15 +927,19 @@ function A:AceConfig()
                                             return key;
                                         end,
                                     },
-                                    randomAquaticMount =
-                                    {
-                                        order = 40,
-                                        name = L["Random aquatic mount"],
-                                        type = "header",
-                                    },
+                                },
+                            },
+                            randomAquaticMount =
+                            {
+                                order = 5,
+                                name = L["Random aquatic mount"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
                                     randomAquaticMountKey1 =
                                     {
-                                        order = 41,
+                                        order = 0,
                                         name = L["Key one"],
                                         desc = L["Bind a key to summon a random mount."],
                                         type = "keybinding",
@@ -930,7 +953,7 @@ function A:AceConfig()
                                     },
                                     randomAquaticMountKey2 =
                                     {
-                                        order = 42,
+                                        order = 1,
                                         name = L["Key two"],
                                         desc = L["Bind a key to summon a random mount."],
                                         type = "keybinding",
@@ -945,15 +968,19 @@ function A:AceConfig()
                                             return key;
                                         end,
                                     },
-                                    randomSurfaceMount =
-                                    {
-                                        order = 50,
-                                        name = L["Random surface mount"],
-                                        type = "header",
-                                    },
+                                },
+                            },
+                            randomSurfaceMount =
+                            {
+                                order = 6,
+                                name = L["Random surface mount"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
                                     randomSurfaceMountKey1 =
                                     {
-                                        order = 51,
+                                        order = 0,
                                         name = L["Key one"],
                                         desc = L["Bind a key to summon a random mount."],
                                         type = "keybinding",
@@ -967,7 +994,7 @@ function A:AceConfig()
                                     },
                                     randomSurfaceMountKey2 =
                                     {
-                                        order = 52,
+                                        order = 1,
                                         name = L["Key two"],
                                         desc = L["Bind a key to summon a random mount."],
                                         type = "keybinding",
@@ -982,15 +1009,19 @@ function A:AceConfig()
                                             return key;
                                         end,
                                     },
-                                    randomRepairMount =
-                                    {
-                                        order = 60,
-                                        name = L["Random repair mount"],
-                                        type = "header",
-                                    },
+                                },
+                            },
+                            randomRepairMount =
+                            {
+                                order = 7,
+                                name = L["Random repair mount"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
                                     randomRepairMountKey1 =
                                     {
-                                        order = 61,
+                                        order = 0,
                                         name = L["Key one"],
                                         desc = L["Bind a key to summon a random mount."],
                                         type = "keybinding",
@@ -1004,7 +1035,7 @@ function A:AceConfig()
                                     },
                                     randomRepairMountKey2 =
                                     {
-                                        order = 62,
+                                        order = 1,
                                         name = L["Key two"],
                                         desc = L["Bind a key to summon a random mount."],
                                         type = "keybinding",
@@ -1016,6 +1047,47 @@ function A:AceConfig()
                                         end,
                                         get = function(info)
                                             local _, key = GetBindingKey("PETSANDMOUNTSMOUNTREPAIR");
+                                            return key;
+                                        end,
+                                    },
+                                },
+                            },
+                            randomHybridMount =
+                            {
+                                order = 8,
+                                name = L["Random hybrid mount"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
+                                    randomRepairMountKey1 =
+                                    {
+                                        order = 0,
+                                        name = L["Key one"],
+                                        desc = L["Bind a key to summon a random mount."],
+                                        type = "keybinding",
+                                        set = function(info, val)
+                                            local set = GetCurrentBindingSet();
+
+                                            SetBinding(val, "PETSANDMOUNTSMOUNTHYBRID", set);
+                                            SaveBindings(set);
+                                        end,
+                                        get = function(info) return GetBindingKey("PETSANDMOUNTSMOUNTHYBRID"); end,
+                                    },
+                                    randomRepairMountKey2 =
+                                    {
+                                        order = 1,
+                                        name = L["Key two"],
+                                        desc = L["Bind a key to summon a random mount."],
+                                        type = "keybinding",
+                                        set = function(info, val)
+                                            local set = GetCurrentBindingSet();
+
+                                            SetBinding(val, "PETSANDMOUNTSMOUNTHYBRID", set);
+                                            SaveBindings(set);
+                                        end,
+                                        get = function(info)
+                                            local _, key = GetBindingKey("PETSANDMOUNTSMOUNTHYBRID");
                                             return key;
                                         end,
                                     },
@@ -1033,23 +1105,17 @@ function A:AceConfig()
                         type = "group",
                         args =
                         {
-                            buttonOptions =
+                            petsButton =
                             {
-                                order = 200,
-                                name = L["Buttons"],
+                                order = 0,
+                                name = L["Companions button"],
                                 type = "group",
                                 inline = true,
                                 args =
                                 {
-                                    petHeader =
-                                    {
-                                        order = 0,
-                                        name = L["Companions button"],
-                                        type = "header",
-                                    },
                                     petHide =
                                     {
-                                        order = 10,
+                                        order = 0,
                                         name = L["Hide"],
                                         desc = L["Hide the companions button."],
                                         type = "toggle",
@@ -1066,7 +1132,7 @@ function A:AceConfig()
                                     },
                                     petLock =
                                     {
-                                        order = 11,
+                                        order = 1,
                                         name = L["Lock"],
                                         desc = L["Lock the companions button."],
                                         type = "toggle",
@@ -1087,7 +1153,7 @@ function A:AceConfig()
                                     },
                                     petTooltip =
                                     {
-                                        order = 12,
+                                        order = 2,
                                         name = L["Tooltip"],
                                         desc = L["Enable the tooltip of the companions button."],
                                         type = "toggle",
@@ -1096,7 +1162,7 @@ function A:AceConfig()
                                     },
                                     petScale =
                                     {
-                                        order = 13,
+                                        order = 3,
                                         name = L["Scale"],
                                         desc = L["Set the scale of the companions button."],
                                         type = "range",
@@ -1117,7 +1183,7 @@ function A:AceConfig()
                                     },
                                     petReset =
                                     {
-                                        order = 14,
+                                        order = 4,
                                         name = L["Reset"],
                                         desc = L["Reset the companions button configuration."],
                                         type = "execute",
@@ -1146,15 +1212,19 @@ function A:AceConfig()
                                             A:SetButtons();
                                         end,
                                     },
-                                    mountHeader =
-                                    {
-                                        order = 100,
-                                        name = L["Mounts button"],
-                                        type = "header",
-                                    },
+                                },
+                            },
+                            mountsButton =
+                            {
+                                order = 1,
+                                name = L["Mounts button"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
                                     mountHide =
                                     {
-                                        order = 110,
+                                        order = 0,
                                         name = L["Hide"],
                                         desc = L["Hide the mounts button."],
                                         type = "toggle",
@@ -1171,7 +1241,7 @@ function A:AceConfig()
                                     },
                                     mountLock =
                                     {
-                                        order = 111,
+                                        order = 1,
                                         name = L["Lock"],
                                         desc = L["Lock the mounts button."],
                                         type = "toggle",
@@ -1188,7 +1258,7 @@ function A:AceConfig()
                                     },
                                     mountTooltip =
                                     {
-                                        order = 112,
+                                        order = 2,
                                         name = L["Tooltip"],
                                         desc = L["Enable the tooltip of the mounts button."],
                                         type = "toggle",
@@ -1197,7 +1267,7 @@ function A:AceConfig()
                                     },
                                     mountScale =
                                     {
-                                        order = 113,
+                                        order = 3,
                                         name = L["Scale"],
                                         desc = L["Set the scale of the mounts button."],
                                         type = "range",
@@ -1218,7 +1288,7 @@ function A:AceConfig()
                                     },
                                     mountReset =
                                     {
-                                        order = 114,
+                                        order = 4,
                                         name = L["Reset"],
                                         desc = L["Reset the mounts button configuration."],
                                         type = "execute",
@@ -1247,15 +1317,19 @@ function A:AceConfig()
                                             A:SetButtons();
                                         end,
                                     },
-                                    common =
-                                    {
-                                        order = 200,
-                                        name = L["Common options"],
-                                        type = "header",
-                                    },
+                                },
+                            },
+                            dock =
+                            {
+                                order = 2,
+                                name = L["Dock options"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
                                     dock =
                                     {
-                                        order = 210,
+                                        order = 0,
                                         name = L["Dock"],
                                         desc = L["Dock companion button to the mount button."],
                                         type = "toggle",
@@ -1282,7 +1356,7 @@ function A:AceConfig()
                                     },
                                     dockAnchor =
                                     {
-                                        order = 220,
+                                        order = 1,
                                         name = L["Dock anchor"],
                                         desc = L["Select on which side of the mounts button the companions button should dock."],
                                         type = "select",
@@ -2390,7 +2464,7 @@ function A:AceConfig()
                             common =
                             {
                                 order = 200,
-                                name = L["Common options"],
+                                name = L["Zones database"],
                                 type = "group",
                                 inline = true,
                                 args =

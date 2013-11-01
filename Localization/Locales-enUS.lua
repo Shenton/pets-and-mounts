@@ -46,6 +46,7 @@ L["Load"] = true;
 L["Lock"] = true;
 
 L["Minimap"] = true;
+L["Miscellaneous"] = true;
 L["Mounted"] = true;
 L["Mounts"] = true;
 
@@ -99,8 +100,10 @@ L["Bind a key to summon a random mount."] = true;
 L["Key one"] = true;
 L["Key two"] = true;
 L["Random mount options"] = true;
-L["No hybrid"] = true;
+L["No hybrid (Ground)"] = true;
+L["No hybrid (Fly)"] = true;
 L["Do not summon an hybrid mount in a ground only area."] = true;
+L["Do not summon an hybrid mount in a flyable area."] = true;
 L["Flying dismount"] = true;
 L["Using the random mount bind when flying will dismount you."] = true;
 L["Random passengers mount"] = true;
@@ -159,7 +162,6 @@ L["Lock the mounts button."] = true;
 L["Enable the tooltip of the mounts button."] = true;
 L["Set the scale of the mounts button."] = true;
 L["Reset the mounts button configuration."] = true;
-L["Common options"] = true;
 L["Dock companion button to the mount button."] = true;
 L["Area override"] = true;
 L["Build zones database"] = true;
@@ -198,6 +200,9 @@ L["Sets options"] = true;
 L["Favorites override"] = true;
 L["Companions auto summon filters"] = true;
 L["Prevent companion auto summon when: %s"] = true;
+L["Random hybrid mount"] = true;
+L["Dock options"] = true;
+L["Zones database"] = true;
 -- Dropdown menu
 L["Show or hide minimap icon"] = true;
 L["Model frame size"] = true;
@@ -222,4 +227,5 @@ L["Tried to summon %s. It is a mount this toon cannot use (Horde/Alliance specif
 L["Minimap icon is hidden if you want to show it back use: /pam or /petsandmounts"] = true;
 L["Failed to load configuration, reason: %s."] = true;
 L["Unable to edit buttons while in combat."] = true;
+L["A newer version of Pets & Mounts is available. You have version %s revision %s %s, %s got version %s revision %s %s. Get it on Curse at %s or with the Curse client."] = true;
 end

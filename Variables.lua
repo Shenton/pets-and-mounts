@@ -11,9 +11,9 @@ local L = A.L;
 
 -- AddOn version
 A.version = GetAddOnMetadata("PetsAndMounts", "Version");
-A.versionStage = L["Release"];
+A.versionStage = "Release";
 --@alpha@
-A.versionStage = L["Alpha"];
+A.versionStage = "Alpha";
 --@end-alpha@
 
 -- Addon URL

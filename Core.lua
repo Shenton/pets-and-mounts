@@ -9,7 +9,7 @@
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 -- TODO: I really need to find a better way to build the maps names DB
 -- TODO: Look into achievement mounts or unique per character mounts for restricted mounts
--- TODO: Fix companion staying where you died in dungeons/raid
+-- TODO: Fix companion staying where you died
 
 -- Ace libs (<3)
 local A = LibStub("AceAddon-3.0"):NewAddon("PetsAndMounts", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0", "AceComm-3.0");
@@ -1518,26 +1518,32 @@ end
 
 --- Receiving an addon message
 function A:OnCommReceived(...)
+    -- Don't bother the player again
     if ( A.addonUpdateMessageInfo ) then return; end
 
-    local prefix, message, method, who, stage, version, revision, localVersion, localRevision;
+    local prefix, message, method, who, remoteStage, remoteVersion, remoteRevision, localVersion, localRevision;
 
+    -- Addon comm info
     prefix, message, method, who = ...;
-    stage, version = strsplit(":", message);
-    version, revision = A:GetAddonVersion(version);
+
+    -- Prevent own message
+    if ( who == UnitName("player") ) then return; end
+
+    remoteStage, remoteVersion = strsplit(":", message);
+    remoteVersion, remoteRevision = A:GetAddonVersion(remoteVersion);
     localVersion, localRevision = A:GetAddonVersion(A.version);
 
-    if ( not stage or not version or not revision ) then
+    if ( not remoteStage or not remoteVersion or not remoteRevision ) then
         return;
     end
 
     A:DebugMessage(("OnCommReceived() - method: %s - who: %s - msg: %s"):format(method, who, message));
 
-    if ( stage == A.versionStage or (stage == L["Release"] and A.versionStage == L["Alpha"]) ) then
-        if ( A:IsRemoteNewer(localVersion, version, localRevision, revision) ) then
-            A.addonUpdateMessageInfo = {version, revision, stage};
+    if ( remoteStage == A.versionStage or (remoteStage == "Release" and A.versionStage == "Alpha") ) then
+        if ( A:IsRemoteNewer(localVersion, remoteVersion, localRevision, remoteRevision) ) then
+            A.addonUpdateMessageInfo = {remoteVersion, remoteRevision, remoteStage};
             A:Message(L["A newer version of Pets & Mounts is available. You have version %s revision %s %s, %s got version %s revision %s %s. Get it on Curse at %s or with the Curse client."]
-            :format(tostring(localVersion), tostring(localRevision), A.versionStage, who, tostring(version), tostring(revision), stage, A.addonURL));
+            :format(tostring(localVersion), tostring(localRevision), L[A.versionStage], who, tostring(remoteVersion), tostring(remoteRevision), L[remoteStage], A.addonURL));
         end
     end
 end
@@ -1597,8 +1603,9 @@ A.aceDefaultDB =
         shiftTimer = 20, -- d
         alreadyGotPet = 1, -- d
         notWhenStealthed = 1, -- d
-        noHybridWhenGround = 1, -- d
-        dismountFlying = 1, -- d
+        noHybridWhenGround = nil, -- d
+        noHybridWhenFly = nil, -- d
+        dismountFlying = nil, -- d
         areaMounts = 1, -- d
         hauntedMemento = 1, -- d
         magicBroom = 1, -- d
