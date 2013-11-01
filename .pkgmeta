@@ -1,4 +1,4 @@
-﻿package-as: PetsAndMounts
+package-as: PetsAndMounts
 
 ignore:
  - .pkgmeta

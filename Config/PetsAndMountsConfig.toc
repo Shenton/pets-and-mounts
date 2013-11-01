@@ -1,4 +1,4 @@
-﻿## Interface: 50400
+## Interface: 50400
 ## Title: Pets & Mounts Configuration
 ## Notes: Auto and random summon highly customizable for your pets and mounts, with Data Broker support.
 ## Author: Shenton

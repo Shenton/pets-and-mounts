@@ -1,4 +1,4 @@
-﻿<Bindings>
+<Bindings>
     <Binding name="PETSANDMOUNTSPET" header="PETSANDMOUNTS"></Binding>
     <Binding name="PETSANDMOUNTSMOUNT" header="PETSANDMOUNTS"></Binding>
     <Binding name="PETSANDMOUNTSMOUNTPASSENGERS" header="PETSANDMOUNTS"></Binding>
