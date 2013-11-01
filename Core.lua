@@ -12,7 +12,7 @@
 -- TODO: Fix companion staying where you died in dungeons/raid
 
 -- Ace libs (<3)
-local A = LibStub("AceAddon-3.0"):NewAddon("PetsAndMounts", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0");
+local A = LibStub("AceAddon-3.0"):NewAddon("PetsAndMounts", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0", "AceComm-3.0");
 local L = LibStub("AceLocale-3.0"):GetLocale("PetsAndMounts");
 A.L = L;
 
@@ -363,6 +363,18 @@ function A:IsPlayerInVehicle()
     if ( UnitHasVehicleUI("player") ) then return 1; end
 
     return nil;
+end
+
+--- Return the addon version
+-- @param version Full version number (string)
+-- @return version - float, revision - int
+-- ex: 1.4.1 => 1.4 float 1 int
+function A:GetAddonVersion(version)
+    local revision;
+
+    version, revision = string.match(version, "^(%d+%.%d+)%.(%d+)$");
+
+    return tonumber(version), tonumber(revision);
 end
 
 --[[-------------------------------------------------------------------------------
@@ -1405,6 +1417,7 @@ function A:PLAYER_ENTERING_WORLD()
     A:AutoPetDelay();
     A:SetAutoSummonOverride();
     A:GetCurrentMapID();
+    A:SendAddonVersion();
 end
 
 function A:ZONE_CHANGED_NEW_AREA()
@@ -1496,7 +1509,60 @@ end
     Addon communication
 -------------------------------------------------------------------------------]]--
 
+--- Check if the version send is newer than the local one
+function A:IsRemoteNewer(vL, vR, rL, rR)
+    if ( vL < vR ) then return 1; end
+    if ( vL == vR and rL < rR ) then return 1; end
+    return nil;
+end
 
+--- Receiving an addon message
+function A:OnCommReceived(...)
+    if ( A.addonUpdateMessageInfo ) then return; end
+
+    local prefix, message, method, who, stage, version, revision, localVersion, localRevision;
+
+    prefix, message, method, who = ...;
+    stage, version = strsplit(":", message);
+    version, revision = A:GetAddonVersion(version);
+    localVersion, localRevision = A:GetAddonVersion(A.version);
+
+    if ( not stage or not version or not revision ) then
+        return;
+    end
+
+    A:DebugMessage(("OnCommReceived() - method: %s - who: %s - msg: %s"):format(method, who, message));
+
+    if ( stage == A.versionStage or (stage == L["Release"] and A.versionStage == L["Alpha"]) ) then
+        if ( A:IsRemoteNewer(localVersion, version, localRevision, revision) ) then
+            A.addonUpdateMessageInfo = {version, revision, stage};
+            A:Message(L["A newer version of Pets & Mounts is available. You have version %s revision %s %s, %s got version %s revision %s %s. Get it on Curse at %s or with the Curse client."]
+            :format(tostring(localVersion), tostring(localRevision), A.versionStage, who, tostring(version), tostring(revision), stage, A.addonURL));
+        end
+    end
+end
+
+function A:SendAddonVersion()
+    -- Guild
+    if ( IsInGuild() ) then
+        A:SendCommMessage("PAMCommPrefix", A.versionStage..":"..A.version, "GUILD");
+    end
+
+    -- Party/Raid
+    local numMembers = GetNumGroupMembers();
+
+    if ( numMembers > 0 and IsInRaid() ) then
+        A:SendCommMessage("PAMCommPrefix", A.versionStage..":"..A.version, "RAID");
+    elseif ( numMembers > 0 and not IsInRaid() ) then
+        A:SendCommMessage("PAMCommPrefix", A.versionStage..":"..A.version, "PARTY");
+    end
+
+    if ( A.addonVersionMessageTimer ) then
+        A:CancelTimer(A.addonVersionMessageTimer, 1);
+    end
+
+    A.addonVersionMessageTimer = A:ScheduleTimer("SendAddonVersion", 600);
+end
 
 --[[-------------------------------------------------------------------------------
     Ace DB and database revision methods
@@ -1805,20 +1871,6 @@ function A:OnInitialize()
     A.configModelFrame = PetsAndMountsConfigModelFrame;
     A.configModelFrame:SetSize(A.db.profile.configModelFrameWidth, A.db.profile.configModelFrameHeight);
 
-    -- DB auto update hooks
-    -- hooksecurefunc(C_PetJournal, "CagePetByID", function()
-        -- A:DebugMessage("Hook - C_PetJournal.CagePetByID() called");
-        -- A:BuildPetsTable();
-    -- end);
-    -- hooksecurefunc(C_PetJournal, "ReleasePetByID", function()
-        -- A:DebugMessage("Hook - C_PetJournal.ReleasePetByID() called");
-        -- A:BuildPetsTable();
-    -- end);
-    -- hooksecurefunc(C_PetJournal, "SetCustomName", function()
-        -- A:DebugMessage("Hook - C_PetJournal.SetCustomName() called");
-        -- A:BuildPetsTable();
-    -- end);
-
     -- LDB
     A.ldbObject = LibStub("LibDataBroker-1.1"):NewDataObject("PetsAndMountsLDB", {
         type = "data source",
@@ -1881,6 +1933,10 @@ function A:OnInitialize()
 
     -- LDBIcon
     LibStub("LibDBIcon-1.0"):Register("PetsAndMountsLDBI", A.ldbObject, A.db.profile.ldbi);
+
+    -- Addon communication
+    A:RegisterComm("PAMCommPrefix");
+    --A:ScheduleRepeatingTimer("SendAddonVersion", 600);
 
     -- Add the config loader to blizzard addon configuration panel
     A:AddToBlizzTemp();

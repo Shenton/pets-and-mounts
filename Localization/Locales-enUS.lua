@@ -13,6 +13,7 @@ if L then
 L["Pets & Mounts"] = true;
 -- Words
 L["Accept"] = true;
+L["Alpha"] = true;
 L["Aquatic"] = true;
 
 L["Bindings"] = true;
@@ -58,6 +59,7 @@ L["Options"] = true;
 
 L["Passenger"] = true;
 
+L["Release"] = true;
 L["Repair"] = true;
 L["Reset"] = true;
 L["Right"] = true;
