@@ -302,12 +302,12 @@ end
 
 --- Return a bool value with a random based on the two args
 function A:RandHybrid(ground, hybrid)
-    ground = ground * 1000;
-    hybrid = hybrid * 1000;
+    ground = ground * 10000;
+    hybrid = hybrid * 10000;
 
     local total = ground + hybrid;
 
-    if ( math.random(total) > hybrid ) then
+    if ( hybrid >= math.random(total) ) then
         return 1;
     end
 
