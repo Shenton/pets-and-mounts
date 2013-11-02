@@ -2953,7 +2953,10 @@ function A:AceConfig()
 
                     return L["Prevent companion auto summon when: %s"]:format(v.name);
                 end,
-                set = function() A.db.profile.petsSummonFilters[k] = not A.db.profile.petsSummonFilters[k]; end,
+                set = function()
+                    A.db.profile.petsSummonFilters[k] = not A.db.profile.petsSummonFilters[k];
+                    A.petsSummonFiltersCache = nil;
+                end,
                 get = function() return A.db.profile.petsSummonFilters[k]; end,
             };
             orderItem = orderItem + 1;
@@ -2976,7 +2979,10 @@ function A:AceConfig()
 
                     return L["Prevent mount summon when: %s"]:format(v.name);
                 end,
-                set = function() A.db.profile.mountsSummonFilters[k] = not A.db.profile.mountsSummonFilters[k]; end,
+                set = function()
+                    A.db.profile.mountsSummonFilters[k] = not A.db.profile.mountsSummonFilters[k];
+                    A.mountsSummonFiltersCache = nil;
+                end,
                 get = function() return A.db.profile.mountsSummonFilters[k]; end,
             };
             orderItem = orderItem + 1;
