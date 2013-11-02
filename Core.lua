@@ -1548,7 +1548,7 @@ function A:OnCommReceived(...)
         if ( A:IsRemoteNewer(localVersion, remoteVersion, localRevision, remoteRevision) ) then
             A.addonUpdateMessageInfo = {remoteVersion, remoteRevision, remoteStage};
             A:Message(L["A newer version of Pets & Mounts is available. You have version %s revision %s %s, %s got version %s revision %s %s. Get it on Curse at %s or with the Curse client."]
-            :format(tostring(localVersion), tostring(localRevision), L[A.versionStage], who, tostring(remoteVersion), tostring(remoteRevision), L[remoteStage], A.addonURL));
+            :format(tostring(localVersion), tostring(localRevision), L[A.versionStage], who, tostring(remoteVersion), tostring(remoteRevision), L[remoteStage], A.color.BLUE.."|HPAM:config:About|h[Link]|h|r"));
         end
     end
 end
@@ -1573,6 +1573,29 @@ function A:SendAddonVersion()
     end
 
     A.addonVersionMessageTimer = A:ScheduleTimer("SendAddonVersion", 600);
+end
+
+--[[-------------------------------------------------------------------------------
+    Custom link handling
+-------------------------------------------------------------------------------]]--
+
+-- Saving default or already hooked SetItemRef
+A.DefaultSetItemRef = SetItemRef;
+
+-- Hook
+function SetItemRef(link, text, button, chatFrame)
+    local linkType, linkSubType, linkArg = strsplit(":", link);
+
+    if ( linkType == "PAM" ) then
+        if ( linkSubType == "config" ) then
+            A:OpenConfigPanel(linkArg);
+        end
+
+        return;
+    end
+
+    -- /Hook
+    A:DefaultSetItemRef(link, text, button, chatFrame);
 end
 
 --[[-------------------------------------------------------------------------------
@@ -1837,14 +1860,24 @@ end
 
 --- Display configuration panel
 -- Load it if needed
-function A:OpenConfigPanel()
+function A:OpenConfigPanel(cat)
     if ( A.AceConfigDialog ) then
-        InterfaceOptionsFrame_OpenToCategory(A.configFrameOptions);
+        if ( cat ) then
+            cat = A["configFrame"..cat];
+
+            if ( not cat ) then
+                cat = A.configFrameOptions;
+            end
+        else
+            cat = A.configFrameOptions;
+        end
+
+        InterfaceOptionsFrame_OpenToCategory(cat);
     else
         local loaded = A:LoadAddonConfig();
 
         if ( loaded ) then
-            InterfaceOptionsFrame_OpenToCategory(A.configFrameOptions);
+            A:OpenConfigPanel(cat);
         end
     end
 end
@@ -1949,7 +1982,6 @@ function A:OnInitialize()
 
     -- Addon communication
     A:RegisterComm("PAMCommPrefix");
-    --A:ScheduleRepeatingTimer("SendAddonVersion", 600);
 
     -- Add the config loader to blizzard addon configuration panel
     A:AddToBlizzTemp();
