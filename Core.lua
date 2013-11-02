@@ -1060,7 +1060,7 @@ local function PAMMenu(self, level)
                 A.db.profile.autoPet = not A.db.profile.autoPet;
                 A:SetMainTimer();
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+                    A:NotifyChangeForAll();
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1072,7 +1072,7 @@ local function PAMMenu(self, level)
                 A.db.profile.notWhenStealthed = not A.db.profile.notWhenStealthed;
                 A:SetStealthEvents();
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+                    A:NotifyChangeForAll();
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1084,7 +1084,7 @@ local function PAMMenu(self, level)
                 A.db.profile.ldbi.hide = not A.db.profile.ldbi.hide;
                 A:ShowHideMinimap();
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+                    A:NotifyChangeForAll();
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1095,7 +1095,7 @@ local function PAMMenu(self, level)
             self.info.func = function()
                 A.db.profile.modelRotation = not A.db.profile.modelRotation;
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+                    A:NotifyChangeForAll();
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1193,7 +1193,7 @@ local function PAMMenu(self, level)
                 A.db.profile.modelFrameHeight = 100;
                 A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+                    A:NotifyChangeForAll();
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1210,7 +1210,7 @@ local function PAMMenu(self, level)
                 A.db.profile.modelFrameHeight = 150;
                 A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+                    A:NotifyChangeForAll();
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1227,7 +1227,7 @@ local function PAMMenu(self, level)
                 A.db.profile.modelFrameHeight = 200;
                 A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+                    A:NotifyChangeForAll();
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1244,7 +1244,7 @@ local function PAMMenu(self, level)
                 A.db.profile.modelFrameHeight = 250;
                 A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+                    A:NotifyChangeForAll();
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1261,7 +1261,7 @@ local function PAMMenu(self, level)
                 A.db.profile.modelFrameHeight = 300;
                 A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+                    A:NotifyChangeForAll();
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1278,7 +1278,7 @@ local function PAMMenu(self, level)
                 A.db.profile.modelFrameHeight = 350;
                 A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+                    A:NotifyChangeForAll();
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1295,7 +1295,7 @@ local function PAMMenu(self, level)
                 A.db.profile.modelFrameHeight = 400;
                 A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                 if ( A.AceConfigRegistry ) then
-                    A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+                    A:NotifyChangeForAll();
                 end
             end;
             UIDropDownMenu_AddButton(self.info, level);
@@ -1430,7 +1430,7 @@ function A:ZONE_CHANGED_NEW_AREA()
     A:AutoPetDelay();
 
     if ( A.AceConfigRegistry ) then
-        A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+        A:NotifyChangeForAll();
     end
 end
 

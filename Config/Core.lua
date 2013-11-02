@@ -67,7 +67,7 @@ StaticPopupDialogs["PetsAndMountsOverwriteOrChangeNameSet"] =
     OnHide = function()
         A.newPetSetName = nil;
         A.newMountSetName = nil;
-        A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+        A:NotifyChangeForAll();
     end,
     EditBoxOnTextChanged = function (self) self:GetParent().button1:Enable(); end,
     EditBoxOnEnterPressed = function(self)
@@ -82,7 +82,7 @@ StaticPopupDialogs["PetsAndMountsOverwriteOrChangeNameSet"] =
                 A.newMountSetName = nil;
             end
 
-            A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+            A:NotifyChangeForAll();
             return;
         end
 
@@ -103,7 +103,7 @@ StaticPopupDialogs["PetsAndMountsOverwriteOrChangeNameSet"] =
                 self:GetParent():Hide();
             end
 
-            A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+            A:NotifyChangeForAll();
         end
     end,
     EditBoxOnEscapePressed = function(self) self:GetParent():Hide(); end,
@@ -119,7 +119,7 @@ StaticPopupDialogs["PetsAndMountsOverwriteOrChangeNameSet"] =
                 A.newMountSetName = nil;
             end
 
-            A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+            A:NotifyChangeForAll();
             return;
         end
 
@@ -138,7 +138,7 @@ StaticPopupDialogs["PetsAndMountsOverwriteOrChangeNameSet"] =
                 A.newPetSetName = nil;
             end
 
-            A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+            A:NotifyChangeForAll();
         end
     end,
     preferredIndex = 3,
@@ -157,10 +157,8 @@ StaticPopupDialogs["PetsAndMountsDeleteSet"] =
     OnHide = function()
         A.deleteSetPets = nil;
         A.deleteSetMounts = nil;
-        A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+        A:NotifyChangeForAll();
     end,
-    -- EditBoxOnEnterPressed = function(self)
-    -- end,
     EditBoxOnEscapePressed = function(self) self:GetParent():Hide(); end,
     OnAccept = function(self)
         if ( A.deleteSetPets ) then
@@ -169,7 +167,7 @@ StaticPopupDialogs["PetsAndMountsDeleteSet"] =
             A.db.global.savedSets.mounts[A.deleteSetMounts] = nil;
         end
 
-        A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+        A:NotifyChangeForAll();
     end,
     preferredIndex = 3,
 };
@@ -222,11 +220,11 @@ function A:AceConfig()
                                         name = L["Filter multiple"],
                                         desc = L["This will prevent adding to the list all the companions with same names."],
                                         type = "toggle",
-                                        set = function(info, val)
+                                        set = function()
                                             A.db.profile.filterMultiple = not A.db.profile.filterMultiple;
                                             A:BuildPetsTable();
                                         end,
-                                        get = function(info) return A.db.profile.filterMultiple; end,
+                                        get = function() return A.db.profile.filterMultiple; end,
                                     },
                                     noFilterCustom =
                                     {
@@ -234,11 +232,11 @@ function A:AceConfig()
                                         name = L["Do not filter named companions"],
                                         desc = L["If the companion got a custom name it will not be filtered."],
                                         type = "toggle",
-                                        set = function(info, val)
+                                        set = function()
                                             A.db.profile.noFilterCustom = not A.db.profile.noFilterCustom;
                                             A:BuildPetsTable();
                                         end,
-                                        get = function(info) return A.db.profile.noFilterCustom; end,
+                                        get = function() return A.db.profile.noFilterCustom; end,
                                     },
                                 },
                             },
@@ -262,7 +260,7 @@ function A:AceConfig()
                                         name = L["Model rotation"],
                                         desc = L["Activate the model rotation in the frame."],
                                         type = "toggle",
-                                        set = function(info, val)
+                                        set = function()
                                             A.db.profile.configModelRotation = not A.db.profile.configModelRotation;
 
                                             if ( not A.db.profile.configModelRotation ) then
@@ -270,7 +268,7 @@ function A:AceConfig()
                                                 A.configModelFrame:SetRotation(A.configModelFrame.rotation);
                                             end
                                         end,
-                                        get = function(info) return A.db.profile.configModelRotation; end,
+                                        get = function() return A.db.profile.configModelRotation; end,
                                     },
                                     configSize =
                                     {
@@ -280,7 +278,7 @@ function A:AceConfig()
                                         type = "select",
                                         values = modelFrameSizeSelect,
                                         get = function() return A.db.profile.configModelFrameWidth; end,
-                                        set = function(self, val)
+                                        set = function(info, val)
                                             A.db.profile.configModelFrameWidth = val;
                                             A.db.profile.configModelFrameHeight = val;
                                             A.configModelFrame:SetSize(A.db.profile.configModelFrameWidth, A.db.profile.configModelFrameHeight);
@@ -298,8 +296,8 @@ function A:AceConfig()
                                         name = L["Model rotation"],
                                         desc = L["Activate the model rotation in the frame."],
                                         type = "toggle",
-                                        set = function(info, val) A.db.profile.modelRotation = not A.db.profile.modelRotation; end,
-                                        get = function(info) return A.db.profile.modelRotation; end,
+                                        set = function() A.db.profile.modelRotation = not A.db.profile.modelRotation; end,
+                                        get = function() return A.db.profile.modelRotation; end,
                                     },
                                     menuSize =
                                     {
@@ -309,7 +307,7 @@ function A:AceConfig()
                                         type = "select",
                                         values = modelFrameSizeSelect,
                                         get = function() return A.db.profile.modelFrameWidth; end,
-                                        set = function(self, val)
+                                        set = function(info, val)
                                             A.db.profile.modelFrameWidth = val;
                                             A.db.profile.modelFrameHeight = val;
                                             A.configModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
@@ -331,11 +329,11 @@ function A:AceConfig()
                                         name = L["Show icon"],
                                         desc = L["Display an icon on the minimap."],
                                         type = "toggle",
-                                        set = function(info, val)
+                                        set = function()
                                             A.db.profile.ldbi.hide = not A.db.profile.ldbi.hide;
                                             A:ShowHideMinimap();
                                         end,
-                                        get = function(info) return not A.db.profile.ldbi.hide; end,
+                                        get = function() return not A.db.profile.ldbi.hide; end,
                                     },
                                 },
                             },
@@ -352,11 +350,11 @@ function A:AceConfig()
                                         order = 0,
                                         name = L["Debug"],
                                         type = "toggle",
-                                        set = function(info, val)
+                                        set = function()
                                             A.db.profile.debug = not A.db.profile.debug;
                                             A:SetDebugMessage();
                                         end,
-                                        get = function(info) return A.db.profile.debug; end,
+                                        get = function() return A.db.profile.debug; end,
                                     },
                                 },
                             },
@@ -392,11 +390,11 @@ function A:AceConfig()
                                         name = L["Auto summon"],
                                         desc = L["Auto summon a random companion."],
                                         type = "toggle",
-                                        set = function(info, val)
+                                        set = function()
                                             A.db.profile.autoPet = not A.db.profile.autoPet;
                                             A:SetMainTimer();
                                         end,
-                                        get = function(info) return A.db.profile.autoPet; end,
+                                        get = function() return A.db.profile.autoPet; end,
                                     },
                                     alreadyGotPet =
                                     {
@@ -404,8 +402,8 @@ function A:AceConfig()
                                         name = L["Not with a companion"],
                                         desc = L["Auto summon will not work if you already have a companion, or it will summon a random favorite companion."],
                                         type = "toggle",
-                                        set = function(info, val) A.db.profile.alreadyGotPet = not A.db.profile.alreadyGotPet; end,
-                                        get = function(info) return A.db.profile.alreadyGotPet; end,
+                                        set = function() A.db.profile.alreadyGotPet = not A.db.profile.alreadyGotPet; end,
+                                        get = function() return A.db.profile.alreadyGotPet; end,
                                     },
                                     notWhenStealthed =
                                     {
@@ -413,11 +411,11 @@ function A:AceConfig()
                                         name = L["Revoke when stealthed"],
                                         desc = L["If you got a companion it will dismiss it when going stealthed."],
                                         type = "toggle",
-                                        set = function(info, val)
+                                        set = function()
                                             A.db.profile.notWhenStealthed = not A.db.profile.notWhenStealthed;
                                             A:SetStealthEvents();
                                         end,
-                                        get = function(info) return A.db.profile.notWhenStealthed; end,
+                                        get = function() return A.db.profile.notWhenStealthed; end,
                                     },
                                     hauntedMemento =
                                     {
@@ -425,8 +423,8 @@ function A:AceConfig()
                                         name = L["Haunted Memento"],
                                         desc = L["Do not automatically summon a pet when the Haunted Memento is in your bags."],
                                         type = "toggle",
-                                        set = function(info, val) A.db.profile.hauntedMemento = not A.db.profile.hauntedMemento; end,
-                                        get = function(info) return A.db.profile.hauntedMemento; end,
+                                        set = function() A.db.profile.hauntedMemento = not A.db.profile.hauntedMemento; end,
+                                        get = function() return A.db.profile.hauntedMemento; end,
                                     },
                                     timers =
                                     {
@@ -448,7 +446,7 @@ function A:AceConfig()
                                             A.db.profile.mainTimer = val;
                                             A:SetMainTimer();
                                         end,
-                                        get = function(info) return A.db.profile.mainTimer; end,
+                                        get = function() return A.db.profile.mainTimer; end,
                                     },
                                     shiftTimer =
                                     {
@@ -461,7 +459,7 @@ function A:AceConfig()
                                         step = 1,
                                         width = "full",
                                         set = function(info, val) A.db.profile.shiftTimer = val; end,
-                                        get = function(info) return A.db.profile.shiftTimer; end,
+                                        get = function() return A.db.profile.shiftTimer; end,
                                     },
                                 },
                             },
@@ -485,10 +483,10 @@ function A:AceConfig()
                                         name = L["Enable"],
                                         desc = L["Enable auto pet options override."],
                                         type = "toggle",
-                                        set = function(info, val)
+                                        set = function()
                                             A.db.profile.enableAutoSummonOverride = not A.db.profile.enableAutoSummonOverride;
                                         end,
-                                        get = function(info) return A.db.profile.enableAutoSummonOverride; end,
+                                        get = function() return A.db.profile.enableAutoSummonOverride; end,
                                     },
                                     areaSelectHeader =
                                     {
@@ -502,7 +500,7 @@ function A:AceConfig()
                                         name = L["Area type"],
                                         desc = L["Select witch type of area to work with."],
                                         type = "select",
-                                        disabled = not A.db.profile.enableAutoSummonOverride,
+                                        disabled = function() return not A.db.profile.enableAutoSummonOverride; end,
                                         values = function()
                                             local out = {};
 
@@ -544,7 +542,7 @@ function A:AceConfig()
 
                                             return nil;
                                         end,
-                                        set = function(info, val)
+                                        set = function()
                                             if ( not petAutoSummonOverrideSelected ) then return; end
 
                                             if ( not A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] ) then
@@ -553,7 +551,7 @@ function A:AceConfig()
 
                                             A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].autoPet = not A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].autoPet;
                                         end,
-                                        get = function(info)
+                                        get = function()
                                             if ( A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] ) then
                                                 return A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].autoPet;
                                             else
@@ -578,7 +576,7 @@ function A:AceConfig()
 
                                             return nil;
                                         end,
-                                        set = function(info, val)
+                                        set = function()
                                             if ( not petAutoSummonOverrideSelected ) then return; end
 
                                             if ( not A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] ) then
@@ -587,7 +585,7 @@ function A:AceConfig()
 
                                             A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].notWhenStealthed = not A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].notWhenStealthed;
                                         end,
-                                        get = function(info)
+                                        get = function()
                                             if ( A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] ) then
                                                 return A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].notWhenStealthed;
                                             else
@@ -631,8 +629,8 @@ function A:AceConfig()
                                         name = L["No hybrid (Ground)"],
                                         desc = L["Do not summon an hybrid mount in a ground only area."],
                                         type = "toggle",
-                                        set = function(info, val) A.db.profile.noHybridWhenGround = not A.db.profile.noHybridWhenGround; end,
-                                        get = function(info) return A.db.profile.noHybridWhenGround; end,
+                                        set = function() A.db.profile.noHybridWhenGround = not A.db.profile.noHybridWhenGround; end,
+                                        get = function() return A.db.profile.noHybridWhenGround; end,
                                     },
                                     noHybridWhenFly =
                                     {
@@ -640,8 +638,8 @@ function A:AceConfig()
                                         name = L["No hybrid (Fly)"],
                                         desc = L["Do not summon an hybrid mount in a flyable area."],
                                         type = "toggle",
-                                        set = function(info, val) A.db.profile.noHybridWhenFly = not A.db.profile.noHybridWhenFly; end,
-                                        get = function(info) return A.db.profile.noHybridWhenFly; end,
+                                        set = function() A.db.profile.noHybridWhenFly = not A.db.profile.noHybridWhenFly; end,
+                                        get = function() return A.db.profile.noHybridWhenFly; end,
                                     },
                                     dismountFlying =
                                     {
@@ -649,8 +647,8 @@ function A:AceConfig()
                                         name = L["Flying dismount"],
                                         desc = L["Using the random mount bind when flying will dismount you."],
                                         type = "toggle",
-                                        set = function(info, val) A.db.profile.dismountFlying = not A.db.profile.dismountFlying; end,
-                                        get = function(info) return A.db.profile.dismountFlying; end,
+                                        set = function() A.db.profile.dismountFlying = not A.db.profile.dismountFlying; end,
+                                        get = function() return A.db.profile.dismountFlying; end,
                                     },
                                     areaMounts =
                                     {
@@ -658,8 +656,8 @@ function A:AceConfig()
                                         name = L["Area mounts"],
                                         desc = L["With this enabled it will summon a specific mount according to your current area. Example: the Abyssal Seahorse in Vashj'ir."],
                                         type = "toggle",
-                                        set = function(info, val) A.db.profile.areaMounts = not A.db.profile.areaMounts; end,
-                                        get = function(info) return A.db.profile.areaMounts; end,
+                                        set = function() A.db.profile.areaMounts = not A.db.profile.areaMounts; end,
+                                        get = function() return A.db.profile.areaMounts; end,
                                     },
                                     classesMacrosEnabled =
                                     {
@@ -667,8 +665,8 @@ function A:AceConfig()
                                         name = L["Class specific"],
                                         desc = L["With this enabled it will use flying forms for druids (Only class with specific \"mount\" atm)."],
                                         type = "toggle",
-                                        set = function(info, val) A.db.profile.classesMacrosEnabled = not A.db.profile.classesMacrosEnabled; end,
-                                        get = function(info) return A.db.profile.classesMacrosEnabled; end,
+                                        set = function() A.db.profile.classesMacrosEnabled = not A.db.profile.classesMacrosEnabled; end,
+                                        get = function() return A.db.profile.classesMacrosEnabled; end,
                                     },
                                     magicBroom =
                                     {
@@ -676,8 +674,8 @@ function A:AceConfig()
                                         name = L["Magic Broom"],
                                         desc = L["Summon the Magic Broom when it is in your bags."],
                                         type = "toggle",
-                                        set = function(info, val) A.db.profile.magicBroom = not A.db.profile.magicBroom; end,
-                                        get = function(info) return A.db.profile.magicBroom; end,
+                                        set = function() A.db.profile.magicBroom = not A.db.profile.magicBroom; end,
+                                        get = function() return A.db.profile.magicBroom; end,
                                     },
                                     surfaceMount =
                                     {
@@ -685,8 +683,8 @@ function A:AceConfig()
                                         name = L["Surface mount"],
                                         desc = L["If you are in a non flyable area and at the water surface, it will summon a mount able to walk on water. Support Death Knights Path of Frost, Shamans Water Walking and Warlocks glyph."],
                                         type = "toggle",
-                                        set = function(info, val) A.db.profile.surfaceMount = not A.db.profile.surfaceMount; end,
-                                        get = function(info) return A.db.profile.surfaceMount; end,
+                                        set = function() A.db.profile.surfaceMount = not A.db.profile.surfaceMount; end,
+                                        get = function() return A.db.profile.surfaceMount; end,
                                     },
                                     preferSurfaceSpell =
                                     {
@@ -694,8 +692,8 @@ function A:AceConfig()
                                         name = L["Prefer surface spell"],
                                         desc = L["If surface mount options is enabled, it will prefer using your water walking spell other the mount. This only works for Death Knights and Shamans."],
                                         type = "toggle",
-                                        set = function(info, val) A.db.profile.preferSurfaceSpell = not A.db.profile.preferSurfaceSpell; end,
-                                        get = function(info) return A.db.profile.preferSurfaceSpell; end,
+                                        set = function() A.db.profile.preferSurfaceSpell = not A.db.profile.preferSurfaceSpell; end,
+                                        get = function() return A.db.profile.preferSurfaceSpell; end,
                                     },
                                     vehicleExit =
                                     {
@@ -703,12 +701,12 @@ function A:AceConfig()
                                         name = L["Vehicle exit"],
                                         desc = L["If you are in a vehicle using the random mount will make you leave the vehicle."],
                                         type = "toggle",
-                                        set = function(info, val)
+                                        set = function()
                                             A.db.profile.vehicleExit = not A.db.profile.vehicleExit;
                                             A:SetMacroDismountString();
                                             A:SetPostClickMacro();
                                         end,
-                                        get = function(info) return A.db.profile.vehicleExit; end,
+                                        get = function() return A.db.profile.vehicleExit; end,
                                     },
                                 },
                             },
@@ -752,7 +750,7 @@ function A:AceConfig()
                                             SetBinding(val, "PETSANDMOUNTSPET", set);
                                             SaveBindings(set);
                                         end,
-                                        get = function(info) return GetBindingKey("PETSANDMOUNTSPET"); end,
+                                        get = function() return GetBindingKey("PETSANDMOUNTSPET"); end,
                                     },
                                     randomPetKey2 =
                                     {
@@ -766,7 +764,7 @@ function A:AceConfig()
                                             SetBinding(val, "PETSANDMOUNTSPET", set);
                                             SaveBindings(set);
                                         end,
-                                        get = function(info)
+                                        get = function()
                                             local _, key = GetBindingKey("PETSANDMOUNTSPET");
                                             return key;
                                         end,
@@ -793,7 +791,7 @@ function A:AceConfig()
                                             SetBinding(val, "PETSANDMOUNTSMOUNT", set);
                                             SaveBindings(set);
                                         end,
-                                        get = function(info) return GetBindingKey("PETSANDMOUNTSMOUNT"); end,
+                                        get = function() return GetBindingKey("PETSANDMOUNTSMOUNT"); end,
                                     },
                                     randomMountKey2 =
                                     {
@@ -807,7 +805,7 @@ function A:AceConfig()
                                             SetBinding(val, "PETSANDMOUNTSMOUNT", set);
                                             SaveBindings(set);
                                         end,
-                                        get = function(info)
+                                        get = function()
                                             local _, key = GetBindingKey("PETSANDMOUNTSMOUNT");
                                             return key;
                                         end,
@@ -834,7 +832,7 @@ function A:AceConfig()
                                             SetBinding(val, "PETSANDMOUNTSMOUNTPASSENGERS", set);
                                             SaveBindings(set);
                                         end,
-                                        get = function(info) return GetBindingKey("PETSANDMOUNTSMOUNTPASSENGERS"); end,
+                                        get = function() return GetBindingKey("PETSANDMOUNTSMOUNTPASSENGERS"); end,
                                     },
                                     randomPassengerMountKey2 =
                                     {
@@ -848,7 +846,7 @@ function A:AceConfig()
                                             SetBinding(val, "PETSANDMOUNTSMOUNTPASSENGERS", set);
                                             SaveBindings(set);
                                         end,
-                                        get = function(info)
+                                        get = function()
                                             local _, key = GetBindingKey("PETSANDMOUNTSMOUNTPASSENGERS");
                                             return key;
                                         end,
@@ -875,7 +873,7 @@ function A:AceConfig()
                                             SetBinding(val, "PETSANDMOUNTSMOUNTFLYING", set);
                                             SaveBindings(set);
                                         end,
-                                        get = function(info) return GetBindingKey("PETSANDMOUNTSMOUNTFLYING"); end,
+                                        get = function() return GetBindingKey("PETSANDMOUNTSMOUNTFLYING"); end,
                                     },
                                     randomFlyMountKey2 =
                                     {
@@ -889,7 +887,7 @@ function A:AceConfig()
                                             SetBinding(val, "PETSANDMOUNTSMOUNTFLYING", set);
                                             SaveBindings(set);
                                         end,
-                                        get = function(info)
+                                        get = function()
                                             local _, key = GetBindingKey("PETSANDMOUNTSMOUNTFLYING");
                                             return key;
                                         end,
@@ -916,7 +914,7 @@ function A:AceConfig()
                                             SetBinding(val, "PETSANDMOUNTSMOUNTGROUND", set);
                                             SaveBindings(set);
                                         end,
-                                        get = function(info) return GetBindingKey("PETSANDMOUNTSMOUNTGROUND"); end,
+                                        get = function() return GetBindingKey("PETSANDMOUNTSMOUNTGROUND"); end,
                                     },
                                     randomGroundMountKey2 =
                                     {
@@ -930,7 +928,7 @@ function A:AceConfig()
                                             SetBinding(val, "PETSANDMOUNTSMOUNTGROUND", set);
                                             SaveBindings(set);
                                         end,
-                                        get = function(info)
+                                        get = function()
                                             local _, key = GetBindingKey("PETSANDMOUNTSMOUNTGROUND");
                                             return key;
                                         end,
@@ -957,7 +955,7 @@ function A:AceConfig()
                                             SetBinding(val, "PETSANDMOUNTSMOUNTAQUATIC", set);
                                             SaveBindings(set);
                                         end,
-                                        get = function(info) return GetBindingKey("PETSANDMOUNTSMOUNTAQUATIC"); end,
+                                        get = function() return GetBindingKey("PETSANDMOUNTSMOUNTAQUATIC"); end,
                                     },
                                     randomAquaticMountKey2 =
                                     {
@@ -971,7 +969,7 @@ function A:AceConfig()
                                             SetBinding(val, "PETSANDMOUNTSMOUNTAQUATIC", set);
                                             SaveBindings(set);
                                         end,
-                                        get = function(info)
+                                        get = function()
                                             local _, key = GetBindingKey("PETSANDMOUNTSMOUNTAQUATIC");
                                             return key;
                                         end,
@@ -998,7 +996,7 @@ function A:AceConfig()
                                             SetBinding(val, "PETSANDMOUNTSMOUNTSURFACE", set);
                                             SaveBindings(set);
                                         end,
-                                        get = function(info) return GetBindingKey("PETSANDMOUNTSMOUNTSURFACE"); end,
+                                        get = function() return GetBindingKey("PETSANDMOUNTSMOUNTSURFACE"); end,
                                     },
                                     randomSurfaceMountKey2 =
                                     {
@@ -1012,7 +1010,7 @@ function A:AceConfig()
                                             SetBinding(val, "PETSANDMOUNTSMOUNTSURFACE", set);
                                             SaveBindings(set);
                                         end,
-                                        get = function(info)
+                                        get = function()
                                             local _, key = GetBindingKey("PETSANDMOUNTSMOUNTSURFACE");
                                             return key;
                                         end,
@@ -1039,7 +1037,7 @@ function A:AceConfig()
                                             SetBinding(val, "PETSANDMOUNTSMOUNTREPAIR", set);
                                             SaveBindings(set);
                                         end,
-                                        get = function(info) return GetBindingKey("PETSANDMOUNTSMOUNTREPAIR"); end,
+                                        get = function() return GetBindingKey("PETSANDMOUNTSMOUNTREPAIR"); end,
                                     },
                                     randomRepairMountKey2 =
                                     {
@@ -1053,7 +1051,7 @@ function A:AceConfig()
                                             SetBinding(val, "PETSANDMOUNTSMOUNTREPAIR", set);
                                             SaveBindings(set);
                                         end,
-                                        get = function(info)
+                                        get = function()
                                             local _, key = GetBindingKey("PETSANDMOUNTSMOUNTREPAIR");
                                             return key;
                                         end,
@@ -1080,7 +1078,7 @@ function A:AceConfig()
                                             SetBinding(val, "PETSANDMOUNTSMOUNTHYBRID", set);
                                             SaveBindings(set);
                                         end,
-                                        get = function(info) return GetBindingKey("PETSANDMOUNTSMOUNTHYBRID"); end,
+                                        get = function() return GetBindingKey("PETSANDMOUNTSMOUNTHYBRID"); end,
                                     },
                                     randomRepairMountKey2 =
                                     {
@@ -1094,7 +1092,7 @@ function A:AceConfig()
                                             SetBinding(val, "PETSANDMOUNTSMOUNTHYBRID", set);
                                             SaveBindings(set);
                                         end,
-                                        get = function(info)
+                                        get = function()
                                             local _, key = GetBindingKey("PETSANDMOUNTSMOUNTHYBRID");
                                             return key;
                                         end,
@@ -1127,7 +1125,7 @@ function A:AceConfig()
                                         name = L["Hide"],
                                         desc = L["Hide the companions button."],
                                         type = "toggle",
-                                        set = function(info, val)
+                                        set = function()
                                             if ( InCombatLockdown() ) then
                                                 A:Message(L["Unable to edit buttons while in combat."], 1);
                                                 return;
@@ -1136,7 +1134,7 @@ function A:AceConfig()
                                             A.db.profile.PetsAndMountsSecureButtonPets.hide = not A.db.profile.PetsAndMountsSecureButtonPets.hide;
                                             A:SetButtons();
                                         end,
-                                        get = function(info) return A.db.profile.PetsAndMountsSecureButtonPets.hide; end,
+                                        get = function() return A.db.profile.PetsAndMountsSecureButtonPets.hide; end,
                                     },
                                     petLock =
                                     {
@@ -1144,7 +1142,7 @@ function A:AceConfig()
                                         name = L["Lock"],
                                         desc = L["Lock the companions button."],
                                         type = "toggle",
-                                        set = function(info, val)
+                                        set = function()
                                             if ( InCombatLockdown() ) then
                                                 A:Message(L["Unable to edit buttons while in combat."], 1);
                                                 return;
@@ -1157,7 +1155,7 @@ function A:AceConfig()
                                             A.db.profile.PetsAndMountsSecureButtonPets.lock = not A.db.profile.PetsAndMountsSecureButtonPets.lock;
                                             A:SetButtons();
                                         end,
-                                        get = function(info) return A.db.profile.PetsAndMountsSecureButtonPets.lock; end,
+                                        get = function() return A.db.profile.PetsAndMountsSecureButtonPets.lock; end,
                                     },
                                     petTooltip =
                                     {
@@ -1165,8 +1163,8 @@ function A:AceConfig()
                                         name = L["Tooltip"],
                                         desc = L["Enable the tooltip of the companions button."],
                                         type = "toggle",
-                                        set = function(info, val) A.db.profile.PetsAndMountsSecureButtonPets.tooltip = not A.db.profile.PetsAndMountsSecureButtonPets.tooltip; end,
-                                        get = function(info) return A.db.profile.PetsAndMountsSecureButtonPets.tooltip; end,
+                                        set = function() A.db.profile.PetsAndMountsSecureButtonPets.tooltip = not A.db.profile.PetsAndMountsSecureButtonPets.tooltip; end,
+                                        get = function() return A.db.profile.PetsAndMountsSecureButtonPets.tooltip; end,
                                     },
                                     petScale =
                                     {
@@ -1187,7 +1185,7 @@ function A:AceConfig()
                                             A.db.profile.PetsAndMountsSecureButtonPets.scale = val;
                                             A:SetButtons();
                                         end,
-                                        get = function(info) return A.db.profile.PetsAndMountsSecureButtonPets.scale; end,
+                                        get = function() return A.db.profile.PetsAndMountsSecureButtonPets.scale; end,
                                     },
                                     petReset =
                                     {
@@ -1236,7 +1234,7 @@ function A:AceConfig()
                                         name = L["Hide"],
                                         desc = L["Hide the mounts button."],
                                         type = "toggle",
-                                        set = function(info, val)
+                                        set = function()
                                             if ( InCombatLockdown() ) then
                                                 A:Message(L["Unable to edit buttons while in combat."], 1);
                                                 return;
@@ -1245,7 +1243,7 @@ function A:AceConfig()
                                             A.db.profile.PetsAndMountsSecureButtonMounts.hide = not A.db.profile.PetsAndMountsSecureButtonMounts.hide;
                                             A:SetButtons();
                                         end,
-                                        get = function(info) return A.db.profile.PetsAndMountsSecureButtonMounts.hide; end,
+                                        get = function() return A.db.profile.PetsAndMountsSecureButtonMounts.hide; end,
                                     },
                                     mountLock =
                                     {
@@ -1253,7 +1251,7 @@ function A:AceConfig()
                                         name = L["Lock"],
                                         desc = L["Lock the mounts button."],
                                         type = "toggle",
-                                        set = function(info, val)
+                                        set = function()
                                             if ( InCombatLockdown() ) then
                                                 A:Message(L["Unable to edit buttons while in combat."], 1);
                                                 return;
@@ -1262,7 +1260,7 @@ function A:AceConfig()
                                             A.db.profile.PetsAndMountsSecureButtonMounts.lock = not A.db.profile.PetsAndMountsSecureButtonMounts.lock;
                                             A:SetButtons();
                                         end,
-                                        get = function(info) return A.db.profile.PetsAndMountsSecureButtonMounts.lock; end,
+                                        get = function() return A.db.profile.PetsAndMountsSecureButtonMounts.lock; end,
                                     },
                                     mountTooltip =
                                     {
@@ -1270,8 +1268,8 @@ function A:AceConfig()
                                         name = L["Tooltip"],
                                         desc = L["Enable the tooltip of the mounts button."],
                                         type = "toggle",
-                                        set = function(info, val) A.db.profile.PetsAndMountsSecureButtonMounts.tooltip = not A.db.profile.PetsAndMountsSecureButtonMounts.tooltip; end,
-                                        get = function(info) return A.db.profile.PetsAndMountsSecureButtonMounts.tooltip; end,
+                                        set = function() A.db.profile.PetsAndMountsSecureButtonMounts.tooltip = not A.db.profile.PetsAndMountsSecureButtonMounts.tooltip; end,
+                                        get = function() return A.db.profile.PetsAndMountsSecureButtonMounts.tooltip; end,
                                     },
                                     mountScale =
                                     {
@@ -1292,7 +1290,7 @@ function A:AceConfig()
                                             A.db.profile.PetsAndMountsSecureButtonMounts.scale = val;
                                             A:SetButtons();
                                         end,
-                                        get = function(info) return A.db.profile.PetsAndMountsSecureButtonMounts.scale; end,
+                                        get = function() return A.db.profile.PetsAndMountsSecureButtonMounts.scale; end,
                                     },
                                     mountReset =
                                     {
@@ -1341,7 +1339,7 @@ function A:AceConfig()
                                         name = L["Dock"],
                                         desc = L["Dock companion button to the mount button."],
                                         type = "toggle",
-                                        set = function(info, val)
+                                        set = function()
                                             if ( InCombatLockdown() ) then
                                                 A:Message(L["Unable to edit buttons while in combat."], 1);
                                                 return;
@@ -1360,7 +1358,7 @@ function A:AceConfig()
                                                 A:UnDockButton();
                                             end
                                         end,
-                                        get = function(info) return A.db.profile.dockButton; end,
+                                        get = function() return A.db.profile.dockButton; end,
                                     },
                                     dockAnchor =
                                     {
@@ -1434,6 +1432,7 @@ function A:AceConfig()
                                     return L["Currently using set: %s\n\n"]:format(current);
                                 end,
                                 type = "description",
+                                fontSize = "medium",
                             },
                             load =
                             {
@@ -1456,8 +1455,8 @@ function A:AceConfig()
                                             end
 
                                             return out;
-                                        end;
-                                        get = nil,
+                                        end,
+                                        get = function() return nil; end,
                                         set = function(info, val)
                                             if ( A.db.global.savedSets.pets[val] ) then
                                                 A.db.profile.favoritePets = {};
@@ -1481,21 +1480,32 @@ function A:AceConfig()
                                         name = L["Name"],
                                         type = "input",
                                         set = function(info, val) A.newPetSetName = val; end,
+                                        get = function() return A.newPetSetName; end,
                                     },
                                     exec =
                                     {
                                         order = 1,
                                         name = L["Save"],
                                         type = "execute",
-                                        disabled = not A.newPetSetName,
+                                        disabled = function()
+                                            if ( A.newPetSetName ) then
+                                                return nil;
+                                            end
+
+                                            return 1;
+                                        end,
                                         func = function()
-                                            if ( A.db.global.savedSets.pets[A.newPetSetName] ) then
+                                            if ( #A.db.profile.favoritePets == 0 ) then
+                                                A:Message(L["You have no favorite selected."], 1);
+                                                A.newPetSetName = nil;
+                                            elseif ( A.db.global.savedSets.pets[A.newPetSetName] ) then
                                                 StaticPopup_Show("PetsAndMountsOverwriteOrChangeNameSet", A.newPetSetName);
                                             else
                                                 A.db.global.savedSets.pets[A.newPetSetName] = A:CopyTable(A.db.profile.favoritePets);
+                                                A:Message(L["New companions set %s added."]:format(A.newPetSetName));
                                                 A.newPetSetName = nil;
                                             end
-                                        end;
+                                        end,
                                     },
                                 },
                             },
@@ -1521,7 +1531,7 @@ function A:AceConfig()
 
                                             return out;
                                         end;
-                                        get = nil,
+                                        get = function() return A.deleteSetPets; end,
                                         set = function(info, val)
                                             A.deleteSetMounts = nil;
                                             A.deleteSetPets = val;
@@ -1532,10 +1542,10 @@ function A:AceConfig()
                                         order = 1,
                                         name = L["Delete"],
                                         type = "execute",
-                                        disabled = not A.deleteSetPets,
+                                        disabled = function() return not A.deleteSetPets; end,
                                         func = function()
                                             StaticPopup_Show("PetsAndMountsDeleteSet", A.deleteSetPets);
-                                        end;
+                                        end,
                                     },
                                 },
                             },
@@ -1558,6 +1568,7 @@ function A:AceConfig()
                                     return L["Currently using set: %s\n\n"]:format(current);
                                 end,
                                 type = "description",
+                                fontSize = "medium",
                             },
                             load =
                             {
@@ -1580,8 +1591,8 @@ function A:AceConfig()
                                             end
 
                                             return out;
-                                        end;
-                                        get = nil,
+                                        end,
+                                        get = function() return nil; end,
                                         set = function(info, val)
                                             if ( A.db.global.savedSets.mounts[val] ) then
                                                 A.db.profile.favoriteMounts = {};
@@ -1605,21 +1616,38 @@ function A:AceConfig()
                                         name = L["Name"],
                                         type = "input",
                                         set = function(info, val) A.newMountSetName = val; end,
+                                        get = function() return A.newMountSetName; end,
                                     },
                                     exec =
                                     {
                                         order = 1,
                                         name = L["Save"],
                                         type = "execute",
-                                        disabled = not A.newMountSetName,
+                                        disabled = function() 
+                                            if ( A.newMountSetName ) then
+                                                return nil;
+                                            end
+
+                                            return 1;
+                                        end,
                                         func = function()
-                                            if ( A.db.global.savedSets.mounts[A.newMountSetName] ) then
+                                            local gotOne;
+
+                                            for k,v in ipairs(A.db.profile.favoriteMounts) do
+                                                if ( #v > 0 ) then gotOne = 1; end
+                                            end
+
+                                            if ( not gotOne ) then
+                                                A:Message(L["You have no favorite selected."], 1);
+                                                A.newMountSetName = nil;
+                                            elseif ( A.db.global.savedSets.mounts[A.newMountSetName] ) then
                                                 StaticPopup_Show("PetsAndMountsOverwriteOrChangeNameSet", A.newMountSetName);
                                             else
                                                 A.db.global.savedSets.mounts[A.newMountSetName] = A:CopyTable(A.db.profile.favoriteMounts);
+                                                A:Message(L["New mounts set %s added."]:format(A.newMountSetName));
                                                 A.newMountSetName = nil;
                                             end
-                                        end;
+                                        end,
                                     },
                                 },
                             },
@@ -1645,7 +1673,7 @@ function A:AceConfig()
 
                                             return out;
                                         end;
-                                        get = nil,
+                                        get = function() return A.deleteSetMounts; end,
                                         set = function(info, val)
                                             A.deleteSetPets = nil;
                                             A.deleteSetMounts = val;
@@ -1656,10 +1684,10 @@ function A:AceConfig()
                                         order = 1,
                                         name = L["Delete"],
                                         type = "execute",
-                                        disabled = not A.deleteSetMounts,
+                                        disabled = function() return not A.deleteSetMounts; end,
                                         func = function()
                                             StaticPopup_Show("PetsAndMountsDeleteSet", A.deleteSetMounts);
-                                        end;
+                                        end,
                                     },
                                 },
                             },
@@ -1718,7 +1746,7 @@ function A:AceConfig()
                                             return out;
                                         end,
                                         get = function() return A.db.profile.forceOne.pet; end,
-                                        set = function(self, val)
+                                        set = function(info, val)
                                             if ( val == 0 ) then
                                                 A.db.profile.forceOne.pet = nil;
                                             else
@@ -1755,7 +1783,7 @@ function A:AceConfig()
                                             return out;
                                         end,
                                         get = function() return A.db.profile.forceOne.mount[4]; end,
-                                        set = function(self, val)
+                                        set = function(info, val)
                                             if ( val == 0 ) then
                                                 A.db.profile.forceOne.mount[4] = nil;
                                             else
@@ -1782,7 +1810,7 @@ function A:AceConfig()
                                             return out;
                                         end,
                                         get = function() return A.db.profile.forceOne.mount[1]; end,
-                                        set = function(self, val)
+                                        set = function(info, val)
                                             if ( val == 0 ) then
                                                 A.db.profile.forceOne.mount[1] = nil;
                                             else
@@ -1809,7 +1837,7 @@ function A:AceConfig()
                                             return out;
                                         end,
                                         get = function() return A.db.profile.forceOne.mount[2]; end,
-                                        set = function(self, val)
+                                        set = function(info, val)
                                             if ( val == 0 ) then
                                                 A.db.profile.forceOne.mount[2] = nil;
                                             else
@@ -1836,7 +1864,7 @@ function A:AceConfig()
                                             return out;
                                         end,
                                         get = function() return A.db.profile.forceOne.mount[3]; end,
-                                        set = function(self, val)
+                                        set = function(info, val)
                                             if ( val == 0 ) then
                                                 A.db.profile.forceOne.mount[3] = nil;
                                             else
@@ -1863,7 +1891,7 @@ function A:AceConfig()
                                             return out;
                                         end,
                                         get = function() return A.db.profile.forceOne.mount[5]; end,
-                                        set = function(self, val)
+                                        set = function(info, val)
                                             if ( val == 0 ) then
                                                 A.db.profile.forceOne.mount[5] = nil;
                                             else
@@ -1890,7 +1918,7 @@ function A:AceConfig()
                                             return out;
                                         end,
                                         get = function() return A.db.profile.forceOne.mount[6]; end,
-                                        set = function(self, val)
+                                        set = function(info, val)
                                             if ( val == 0 ) then
                                                 A.db.profile.forceOne.mount[6] = nil;
                                             else
@@ -1917,7 +1945,7 @@ function A:AceConfig()
                                             return out;
                                         end,
                                         get = function() return A.db.profile.forceOne.mount[7]; end,
-                                        set = function(self, val)
+                                        set = function(info, val)
                                             if ( val == 0 ) then
                                                 A.db.profile.forceOne.mount[7] = nil;
                                             else
@@ -1968,6 +1996,7 @@ function A:AceConfig()
                                             return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)));
                                         end,
                                         type = "description",
+                                        fontSize = "medium",
                                     },
                                     zoneSelect =
                                     {
@@ -1984,7 +2013,7 @@ function A:AceConfig()
                                             end
                                         end,
                                         get = function() return A.currentMapIDForPets; end,
-                                        set = function(self, val) A.currentMapIDForPets = val; end,
+                                        set = function(info, val) A.currentMapIDForPets = val; end,
                                     },
                                     zoneSelectPet =
                                     {
@@ -2025,7 +2054,7 @@ function A:AceConfig()
                                                 return 0;
                                             end
                                         end,
-                                        set = function(self, val)
+                                        set = function(info, val)
                                             local mapID;
 
                                             if ( A.currentMapIDForPets ) then
@@ -2086,6 +2115,7 @@ function A:AceConfig()
                                             return L["Currently working with: %s\n\n"]:format(GetMapNameByID(mapID));
                                         end,
                                         type = "description",
+                                        fontSize = "medium",
                                     },
                                     zoneSelect =
                                     {
@@ -2102,7 +2132,7 @@ function A:AceConfig()
                                             end
                                         end,
                                         get = function() return A.currentMapIDForMounts; end,
-                                        set = function(self, val) A.currentMapIDForMounts = val; end,
+                                        set = function(info, val) A.currentMapIDForMounts = val; end,
                                     },
                                     zoneSelectMounts =
                                     {
@@ -2143,7 +2173,7 @@ function A:AceConfig()
                                                 return 0;
                                             end
                                         end,
-                                        set = function(self, val)
+                                        set = function(info, val)
                                             local mapID;
 
                                             if ( A.currentMapIDForMounts ) then
@@ -2192,7 +2222,7 @@ function A:AceConfig()
                                                 return 0;
                                             end
                                         end,
-                                        set = function(self, val)
+                                        set = function(info, val)
                                             local mapID;
 
                                             if ( A.currentMapIDForMounts ) then
@@ -2241,7 +2271,7 @@ function A:AceConfig()
                                                 return 0;
                                             end
                                         end,
-                                        set = function(self, val)
+                                        set = function(info, val)
                                             local mapID;
 
                                             if ( A.currentMapIDForMounts ) then
@@ -2290,7 +2320,7 @@ function A:AceConfig()
                                                 return 0;
                                             end
                                         end,
-                                        set = function(self, val)
+                                        set = function(info, val)
                                             local mapID;
 
                                             if ( A.currentMapIDForMounts ) then
@@ -2339,7 +2369,7 @@ function A:AceConfig()
                                                 return 0;
                                             end
                                         end,
-                                        set = function(self, val)
+                                        set = function(info, val)
                                             local mapID;
 
                                             if ( A.currentMapIDForMounts ) then
@@ -2388,7 +2418,7 @@ function A:AceConfig()
                                                 return 0;
                                             end
                                         end,
-                                        set = function(self, val)
+                                        set = function(info, val)
                                             local mapID;
 
                                             if ( A.currentMapIDForMounts ) then
@@ -2437,7 +2467,7 @@ function A:AceConfig()
                                                 return 0;
                                             end
                                         end,
-                                        set = function(self, val)
+                                        set = function(info, val)
                                             local mapID;
 
                                             if ( A.currentMapIDForMounts ) then
@@ -2490,6 +2520,7 @@ function A:AceConfig()
                                             end
                                         end,
                                         type = "description",
+                                        fontSize = "medium",
                                     },
                                     buildDB =
                                     {
@@ -2751,7 +2782,7 @@ function A:AceConfig()
             {
                 order = orderItem,
                 name = petName,
-                desc = function(self)
+                desc = function()
                     -- Model
                     A.configModelFrame.rotation = 0;
                     A.configModelFrame:SetCreature(vv.creatureID);
@@ -2769,17 +2800,16 @@ function A:AceConfig()
                         return L["Add %s to favorite."]:format(vv.name);
                     end
                 end,
-                --icon = string.gsub(vv.icon, "\\", "\\\\"),
                 image = vv.icon,
                 type = "toggle",
-                set = function(info, val)
+                set = function()
                     if ( tContains(A.db.profile.favoritePets, vv.petID) ) then
                         A:TableRemove(A.db.profile.favoritePets, vv.petID);
                     else
                         A.db.profile.favoritePets[#A.db.profile.favoritePets+1] = vv.petID;
                     end
                 end,
-                get = function(info)
+                get = function()
                     if ( tContains(A.db.profile.favoritePets, vv.petID) ) then
                         return 1;
                     else
@@ -2801,7 +2831,6 @@ function A:AceConfig()
                 order = k,
                 name = A.mountCat[k],
                 type = "group",
-                --childGroups = "tab",
                 args = {},
             };
 
@@ -2822,7 +2851,7 @@ function A:AceConfig()
                     {
                         order = orderItem,
                         name = vvv.name,
-                        desc = function(self)
+                        desc = function()
                             -- Model
                             A.configModelFrame.rotation = 0;
                             A.configModelFrame:SetCreature(vvv.creatureID);
@@ -2844,14 +2873,14 @@ function A:AceConfig()
                         end,
                         image = vvv.icon,
                         type = "toggle",
-                        set = function(info, val)
+                        set = function()
                             if ( tContains(A.db.profile.favoriteMounts[k], vvv.spellID) ) then
                                 A:TableRemove(A.db.profile.favoriteMounts[k], vvv.spellID);
                             else
                                 A.db.profile.favoriteMounts[k][#A.db.profile.favoriteMounts[k]+1] = vvv.spellID;
                             end
                         end,
-                        get = function(info)
+                        get = function()
                             if ( tContains(A.db.profile.favoriteMounts[k], vvv.spellID) ) then
                                 return 1;
                             else
@@ -2879,7 +2908,7 @@ function A:AceConfig()
                 order = 0,
                 name = L["Enable"],
                 type = "toggle",
-                get = A.enablePetResetButton,
+                get = function() return A.enablePetResetButton; end,
                 set = function() A.enablePetResetButton = not A.enablePetResetButton; end,
             },
             exec =
@@ -2887,7 +2916,7 @@ function A:AceConfig()
                 order = 1,
                 name = L["Reset"],
                 type = "execute",
-                disabled = not A.enablePetResetButton,
+                disabled = function() return not A.enablePetResetButton; end,
                 func = function()
                     A.db.profile.favoritePets = {};
                     A.enablePetResetButton = nil;
@@ -2908,7 +2937,7 @@ function A:AceConfig()
                 order = 0,
                 name = L["Enable"],
                 type = "toggle",
-                get = A.enableMountResetButton,
+                get = function() return A.enableMountResetButton; end,
                 set = function() A.enableMountResetButton = not A.enableMountResetButton; end,
             },
             exec =
@@ -2916,7 +2945,7 @@ function A:AceConfig()
                 order = 1,
                 name = L["Reset"],
                 type = "execute",
-                disabled = not A.enableMountResetButton,
+                disabled = function() return not A.enableMountResetButton; end,
                 func = function()
                     A.db.profile.favoriteMounts =
                     {
@@ -3017,3 +3046,13 @@ A.configFrameAbout = A.AceConfigDialog:AddToBlizOptions(L["Pets & Mounts"]..": "
 -- Hide model frame hooks
 A.configFramePets:HookScript("OnHide", function() A.configModelFrame:Hide(); end);
 A.configFrameMounts:HookScript("OnHide", function() A.configModelFrame:Hide(); end);
+
+-- NotifyChange method
+function A:NotifyChangeForAll()
+    A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"], options.args.options);
+    A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"]..": "..options.args.pets.name, options.args.pets);
+    A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"]..": "..options.args.mounts.name, options.args.mounts);
+    A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"]..": "..options.args.sets.name, options.args.sets);
+    A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"]..": "..options.args.favOverride.name, options.args.favOverride);
+    A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"]..": "..options.args.about.name, options.args.about);
+end

@@ -368,7 +368,7 @@ function A:LockButton(button)
     A.db.profile[button].lock = 1;
 
     if ( A.AceConfigRegistry ) then
-        A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+        A:NotifyChangeForAll();
     end
 end
 
@@ -402,7 +402,7 @@ function A:UnlockButton(button)
     A.db.profile[button].lock = nil;
 
     if ( A.AceConfigRegistry ) then
-        A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+        A:NotifyChangeForAll();
     end
 end
 
@@ -439,7 +439,7 @@ function A:ToggleButtonHideShow(button)
     end
 
     if ( A.AceConfigRegistry ) then
-        A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+        A:NotifyChangeForAll();
     end
 end
 
@@ -570,7 +570,7 @@ function A:SetButtons()
 
     -- Refresh config panel
     if ( A.AceConfigRegistry ) then
-        A.AceConfigRegistry:NotifyChange("PetsAndMountsConfig");
+        A:NotifyChangeForAll();
     end
 end
 
