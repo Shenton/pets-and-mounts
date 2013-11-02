@@ -2514,19 +2514,37 @@ function A:AceConfig()
                                             local count = A:TableCount(A.db.global.zonesIDsToName);
 
                                             if ( count > 1 ) then
-                                                return L["The addon currently know %d zones\n\n"]:format(count);
+                                                return L["The add-on currently knows %d areas\n\n"]:format(count);
                                             else
-                                                return L["The addon currently know %d area\n\n"]:format(count);
+                                                return L["The add-on currently knows %d area\n\n"]:format(count);
                                             end
                                         end,
                                         type = "description",
                                         fontSize = "medium",
                                     },
+                                    debugInfo =
+                                    {
+                                        order = 1,
+                                        name = A.color.RED..L["Debug is enabled. Building the areas database will reset it first."],
+                                        hidden = function() return not A.db.profile.debug; end,
+                                        width = "full",
+                                        type = "description",
+                                        fontSize = "large",
+                                    },
+                                    blankLine =
+                                    {
+                                        order = 2,
+                                        name = " ",
+                                        hidden = function() return not A.db.profile.debug; end,
+                                        width = "full",
+                                        type = "description",
+                                        fontSize = "large",
+                                    },
                                     buildDB =
                                     {
                                         order = 10,
-                                        name = L["Build zones database"],
-                                        desc = L["Build the zones database, this is not needed for the addon to work, but it will know the zones without discovering them first."],
+                                        name = L["Build areas database"],
+                                        desc = L["Build the areas database, this is not needed for the addon to work, but it will know the areas without discovering them first."],
                                         type = "execute",
                                         func = function() A:BuildMapIDsDB(); end,
                                     },

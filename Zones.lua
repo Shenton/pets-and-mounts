@@ -15,20 +15,30 @@ local tostring = tostring;
 
 -- GLOBALS: GetMapNameByID, WorldMapFrame, SetMapToCurrentZone, GetCurrentMapAreaID
 
--- Gathered on http://wowpedia.org/MapID
-A.zonesIDs = {13, 772, 894, 43, 181, 464, 476, 890, 42, 381, 101, 4, 141, 891, 182, 121, 795, 241, 606, 9, 11, 321, 888, 261, 607, 81, 161, 41, 471, 61, 362, 720, 201, 889, 281, 14, 614, 16, 17, 19, 29, 866, 32,
-892, 27, 34, 23, 30, 462, 463, 545, 611, 24, 341, 499, 610, 35, 895, 37, 864, 36, 684, 685, 28, 615, 480, 21, 301, 689, 893, 38, 673, 26, 502, 20, 708, 709, 700, 382, 613, 22, 39, 40, 466, 475, 465, 477, 479,
-473, 481, 478, 467, 485, 486, 510, 504, 488, 490, 491, 541, 492, 493, 495, 501, 496, 751, 640, 605, 544, 737, 862, 858, 929, 928, 857, 809, 905, 903, 806, 873, 808, 810, 811, 807, 401, 461, 935, 482, 540, 860,
-512, 856, 736, 626, 443, 878, 912, 899, 883, 940, 939, 884, 900, 914, 937, 920, 880, 911, 938, 906, 851, 882, 688, 704, 721, 699, 691, 750, 680, 760, 761, 764, 765, 756, 690, 687, 692, 749, 686, 755, 696, 717,
-766, 722, 797, 798, 732, 734, 723, 724, 731, 733, 725, 729, 730, 710, 728, 727, 726, 796, 776, 775, 799, 779, 780, 789, 782, 522, 533, 534, 530, 525, 603, 526, 602, 521, 601, 520, 528, 536, 542, 523, 524, 604,
-535, 718, 527, 531, 609, 543, 529, 532, 753, 820, 757, 759, 819, 747, 768, 769, 767, 816, 781, 793, 752, 754, 824, 800, 758, 773, 875, 885, 871, 874, 898, 877, 887, 876, 867, 897, 896, 886, 930};
-
--- Thanks to those damn scenarios with the same map name
--- Maelstrom got two IDs 751 & 737, just ignore them, I think those two maps are when you arrive to Deepholme and the "dream" when Thrall says you failed
+-- MapIDs with the same name, scenarios, quest in instance (legendary, green fire, etc), special events, etc
 A.zonesIDsOverride =
 {
-    [751] = "JUSTIGNOREME",
-    [737] = "JUSTIGNOREME",
+    [539] = "JUSTIGNOREME", -- Gilneas
+    [678] = "JUSTIGNOREME", -- Gilneas
+    [679] = "JUSTIGNOREME", -- Gilneas
+    [751] = "JUSTIGNOREME", -- The Maelstrom
+    [737] = "JUSTIGNOREME", -- The Maelstrom
+    [681] = "JUSTIGNOREME", -- The Lost Isles
+    [682] = "JUSTIGNOREME", -- The Lost Isles
+    [683] = "JUSTIGNOREME", -- Mount Hyjal
+    [748] = "JUSTIGNOREME", -- Uldum
+    [770] = "JUSTIGNOREME", -- Twilight Highlands
+    [697] = "JUSTIGNOREME", -- Zul'Gurub
+    [803] = "JUSTIGNOREME", -- The Nexus
+    [813] = "JUSTIGNOREME", -- Eye of the Storm
+    [762] = "JUSTIGNOREME", -- Scarlet Monastery
+    [879] = "JUSTIGNOREME", -- Kun-Lai Summit
+    [881] = "JUSTIGNOREME", -- Temple of Kotmogu
+    [907] = "JUSTIGNOREME", -- Dustwallow Marsh
+    [910] = "JUSTIGNOREME", -- Krasarang Wilds
+    [919] = "JUSTIGNOREME", -- Black Temple
+    [924] = "JUSTIGNOREME", -- Dalaran
+    [933] = "JUSTIGNOREME", -- Isle of Thunder
     [939] = L["Blood in the Snow"],
     [937] = L["Dark Heart of Pandaria"],
     [920] = L["Domination Point (H)"],
@@ -44,26 +54,26 @@ function A:BuildMapIDsDB()
         A.db.global.zonesIDsToName = {};
     end
 
-    for k,v in ipairs(A.zonesIDs) do
-        if ( A.zonesIDsOverride[v] ) then
-            if ( A.zonesIDsOverride[v] == "JUSTIGNOREME" ) then
-                A.db.global.zonesIDsToName[tostring(v)] = nil;
+    for i=1,2000 do
+        if ( A.zonesIDsOverride[i] ) then
+            if ( A.zonesIDsOverride[i] == "JUSTIGNOREME" ) then
+                A.db.global.zonesIDsToName[tostring(i)] = nil;
             else
-                A.db.global.zonesIDsToName[tostring(v)] = A.zonesIDsOverride[v];
+                A.db.global.zonesIDsToName[tostring(i)] = A.zonesIDsOverride[i];
             end
         else
-            local name = GetMapNameByID(v);
+            local name = GetMapNameByID(i);
 
             if ( name ) then
                 if ( A.db.profile.debug ) then
                     if ( A:TableValueToKey(A.db.global.zonesIDsToName, name) ) then
-                        A:DebugMessage(("BuildMapIDsDB() - %d %s already stored - with ID %s"):format(v, name, A:TableValueToKey(A.db.global.zonesIDsToName, name)));
+                        A:DebugMessage(("BuildMapIDsDB() - %d %s already stored - with ID %s"):format(i, name, A:TableValueToKey(A.db.global.zonesIDsToName, name)));
                     end
                 end
 
-                A.db.global.zonesIDsToName[tostring(v)] = name;
+                A.db.global.zonesIDsToName[tostring(i)] = name;
             else
-                A.db.global.zonesIDsToName[tostring(v)] = nil;
+                A.db.global.zonesIDsToName[tostring(i)] = nil;
             end
         end
     end
@@ -97,6 +107,45 @@ function A:GetCurrentMapID()
 
     if ( not A.db.global.zonesIDsToName[tostring(mapID)] and GetMapNameByID(mapID) ) then
         A.db.global.zonesIDsToName[tostring(mapID)] = GetMapNameByID(mapID);
+        if ( A.AceConfigDialog ) then A:NotifyChangeForAll(); end
         A:DebugMessage(("GetCurrentMapID() - Added %d - %s"):format(mapID, GetMapNameByID(mapID) or "Unavailable"));
     end
 end
+
+--@debug@
+-- Dump zones with the same name in a AceGUI dialog
+function A:CreateMapIDFrame()
+    if ( not A.mapIDFrame ) then
+        if ( not A.AceConfigDialog ) then
+            local loaded = A:LoadAddonConfig();
+            if ( not loaded ) then return; end
+        end
+        if( not A.AceGUI ) then A.AceGUI = LibStub("AceGUI-3.0"); end
+        A.mapIDFrame = A.AceGUI:Create("Frame");
+        A.mapIDFrame:SetTitle("MapID Frame");
+        A.mapIDFrame:SetLayout("FLow");
+        A.mapIDFrame.editBox = A.AceGUI:Create("MultiLineEditBox");
+        A.mapIDFrame.editBox:SetNumLines(20);
+        A.mapIDFrame.editBox:SetFullWidth(1);
+        A.mapIDFrame:AddChild(A.mapIDFrame.editBox);
+    end
+end
+function A:ProcessMapID()
+    A:CreateMapIDFrame();
+    local maps = {};
+    local count = 0;
+    local result = "";
+    for i=1,2000 do
+        local name = GetMapNameByID(i);
+        if ( name ) then
+            if ( maps[name] ) then
+                result = result..name.." - "..i.." - "..maps[name].."\n";
+            end
+            maps[name] = i;
+            count = count + 1;
+            A.mapIDFrame.editBox:SetText(result);
+            A.mapIDFrame:SetStatusText(count);
+        end
+    end
+end
+--@end-debug@

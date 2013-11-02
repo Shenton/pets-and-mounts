@@ -93,8 +93,10 @@ function A:SlashCommand(input)
 
     if ( arg1 == "" ) then
         A:OpenConfigPanel();
+    --@debug@
     elseif ( arg1 == "test" ) then
         --
+    --@end-debug@
     elseif ( arg1 == "refresh" ) then
         A:BuildBothTables(1);
         A:Message(L["Companions and mounts informations updated."]);
@@ -103,6 +105,10 @@ function A:SlashCommand(input)
         A:ShowHideMinimap();
     elseif ( arg1 == "resetzones" ) then
         A.db.global.zonesIDsToName = {};
+    --@debug@
+    elseif ( arg1 == "mapids" ) then
+        A:ProcessMapID();
+    --@end-debug@
     end
 end
 
@@ -273,6 +279,9 @@ end
 --- Return creature ID from spell ID (mount)
 -- Used by modified AceGUI widget dropdown
 function A:GetCreatureIDFromSpellID(spellID)
+    -- Init addon databases
+    A:InitializeDB();
+
     for k,v in ipairs(A.pamTable.mounts) do
         for kk,vv in pairs(v) do
             for kkk,vvv in ipairs(vv) do
@@ -768,7 +777,6 @@ function A:BuildBothTables(force)
     A:DebugMessage("BuildBothTables()");
     A:BuildPetsTable(force);
     A:BuildMountsTable(force);
-    --A:CleanPetsFavorites();
 end
 
 --- Initialize the databases
@@ -778,6 +786,15 @@ function A:InitializeDB()
     A:DebugMessage("Initializing databases");
     A:BuildBothTables();
     A.initialized = 1;
+
+    -- Registering database update events here
+    -- I do not know if something change for me but I was able to get pets and mount info when login in
+    -- It is obviously not the same for everyone as some players were receiving errors (expected string got nil) within the DB update methods
+    A:RegisterEvent("COMPANION_LEARNED");
+    A:RegisterEvent("COMPANION_UNLEARNED");
+    A:RegisterEvent("PET_JOURNAL_PET_DELETED");
+    A:RegisterEvent("PET_JOURNAL_LIST_UPDATE");
+    A:RegisterEvent("COMPANION_UPDATE");
 end
 
 --- Remove unknown pets from favorites
@@ -1419,10 +1436,27 @@ function A:COMBAT_LOG_EVENT_UNFILTERED(event, ...)
 end
 
 function A:PLAYER_ENTERING_WORLD()
-    A:AutoPetDelay();
     A:SetAutoSummonOverride();
     A:GetCurrentMapID();
     A:SendAddonVersion();
+
+    -- Set those here, prevent every addon actions with pets or mounts too soon
+    if ( A.onFirstLoadActions ) then
+        A:RegisterEvent("PLAYER_REGEN_DISABLED"); -- Combat.
+        A:RegisterEvent("PLAYER_REGEN_ENABLED"); -- Out of combat.
+        A:RegisterEvent("PLAYER_CONTROL_GAINED", "AutoPetDelay"); -- After a cc or fly path.
+        A:RegisterEvent("PLAYER_UNGHOST", "AutoPetDelay"); -- It's alive!! (Corpse run, zoning)
+        A:RegisterEvent("PLAYER_ALIVE", "AutoPetDelay"); -- It's alive!! (Res, also fire when releasing)
+        A:RegisterEvent("PLAYER_LOSES_VEHICLE_DATA", "AutoPetDelay"); -- Quitting a vehicle or a multi mount you control.
+        A:RegisterEvent("UNIT_EXITED_VEHICLE", "AutoPetDelay"); -- Exiting a vehicle.
+        A.onFirstLoadActions = nil;
+        return;
+    end
+
+    -- No delay for you on fist loading
+    -- I think there is an issue with AceTimer. If A:AutoPetDelay() is called on first loading
+    -- ScheduleTimer will call A:AutoPetDelayCallback() after 2 seconds while it is set to 20
+    A:AutoPetDelay();
 end
 
 function A:ZONE_CHANGED_NEW_AREA()
@@ -1721,8 +1755,8 @@ A.aceDefaultDB =
             [6] = {}, -- Water walking
             [7] = {}, -- Repair
         },
-        petsSummonFilters = {},
-        mountsSummonFilters = {},
+        petsSummonFilters = {}, -- d
+        mountsSummonFilters = {}, -- d
     },
 };
 
@@ -1995,22 +2029,8 @@ function A:OnEnable()
     A:RegisterChatCommand("pam", "SlashCommand");
 
     -- Events
-    -- Auto summon pet events
-    A:RegisterEvent("PLAYER_REGEN_DISABLED"); -- Combat.
-    A:RegisterEvent("PLAYER_REGEN_ENABLED"); -- Out of combat.
-    A:RegisterEvent("PLAYER_ENTERING_WORLD"); -- Every loading screen.
-    A:RegisterEvent("PLAYER_CONTROL_GAINED", "AutoPetDelay"); -- After a cc or fly path.
-    A:RegisterEvent("PLAYER_UNGHOST", "AutoPetDelay"); -- It's alive!! (Corpse run, zoning)
-    A:RegisterEvent("PLAYER_ALIVE", "AutoPetDelay"); -- It's alive!! (Res, also fire when releasing)
-    A:RegisterEvent("PLAYER_LOSES_VEHICLE_DATA", "AutoPetDelay"); -- Quitting a vehicule or a multi mount you control.
-    A:RegisterEvent("UNIT_EXITED_VEHICLE", "AutoPetDelay"); -- Exiting a vehicule.
+    A:RegisterEvent("PLAYER_ENTERING_WORLD");
     A:RegisterEvent("UPDATE_BINDINGS", "SetBindings");
-    -- Db auto update events
-    A:RegisterEvent("COMPANION_LEARNED");
-    A:RegisterEvent("COMPANION_UNLEARNED");
-    A:RegisterEvent("PET_JOURNAL_PET_DELETED");
-    A:RegisterEvent("PET_JOURNAL_LIST_UPDATE");
-    A:RegisterEvent("COMPANION_UPDATE");
     -- Update post click macros
     A:RegisterEvent("PLAYER_LEVEL_UP");
     -- Update current mapID
@@ -2019,7 +2039,8 @@ function A:OnEnable()
     -- Set everything
     A:SetEverything();
 
-    if ( A.playerClass == "WARLOCK" ) then -- If it is a lock, building database on spec switch or glyph modification is needed
+    -- If it is a lock, building database on spec switch or glyph modification is needed
+    if ( A.playerClass == "WARLOCK" ) then
         A:RegisterEvent("GLYPH_UPDATED"); -- Will also fire when switching spec
     end
 end

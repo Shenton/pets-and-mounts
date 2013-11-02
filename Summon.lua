@@ -195,12 +195,6 @@ function A:RandomPet()
     -- DB init
     A:InitializeDB();
 
-    -- Fav pets cleaning, yes this is unclean, but if this is used to soon it fail as pet info are unavailable
-    -- if ( not A.favoritesCleaned ) then
-        -- A:CleanPetsFavorites();
-        -- A.favoritesCleaned = 1;
-    -- end
-
     local id;
 
     -- Get a random pet
