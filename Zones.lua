@@ -13,7 +13,7 @@ local L = A.L;
 local ipairs = ipairs;
 local tostring = tostring;
 
--- GLOBALS: GetMapNameByID, WorldMapFrame, SetMapToCurrentZone, GetCurrentMapAreaID
+-- GLOBALS: GetMapNameByID, WorldMapFrame, SetMapToCurrentZone, GetCurrentMapAreaID, LibStub
 
 -- MapIDs with the same name, scenarios, quest in instance (legendary, green fire, etc), special events, etc
 A.zonesIDsOverride =

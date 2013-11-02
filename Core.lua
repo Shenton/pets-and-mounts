@@ -32,6 +32,7 @@ local select = select;
 local strsplit = strsplit;
 local tContains = tContains;
 local bit = bit;
+local tonumber = tonumber;
 
 -- GLOBALS: PlaySound, DEFAULT_CHAT_FRAME, GetScreenWidth, GetNumCompanions
 -- GLOBALS: GetCursorPosition, UIParent, GetInstanceInfo, UnitGUID, UnitLevel
@@ -51,7 +52,8 @@ local bit = bit;
 -- GLOBALS: BINDING_NAME_PETSANDMOUNTSMOUNTGROUND, BINDING_NAME_PETSANDMOUNTSMOUNTAQUATIC
 -- GLOBALS: PetsAndMountsMenuModelFrame, PetsAndMountsConfigModelFrame
 -- GLOBALS: UnitFactionGroup, UnitRace, UIDropDownMenu_SetAnchor
--- GLOBALS: NUM_GLYPH_SLOTS, GetGlyphSocketInfo
+-- GLOBALS: NUM_GLYPH_SLOTS, GetGlyphSocketInfo, SetItemRef, UnitInVehicle
+-- GLOBALS: UnitHasVehicleUI, SEARCH, UnitName, IsInGuild, GetNumGroupMembers, IsInRaid
 
 --[[-------------------------------------------------------------------------------
     Common methods

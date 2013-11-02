@@ -22,6 +22,7 @@ local tostring = tostring;
 -- GLOBALS: PetsAndMountsSecureButtonMounts, PetsAndMountsSecureButtonPets, GetScreenWidth
 -- GLOBALS: GameTooltip, GetItemCount, GetItemInfo, UIDropDownMenu_SetAnchor
 -- GLOBALS: ToggleDropDownMenu, type, BINDING_NAME_PETSANDMOUNTSMOUNTSURFACE, UnitBuff
+-- GLOBALS: BINDING_NAME_PETSANDMOUNTSMOUNTREPAIR, BINDING_NAME_PETSANDMOUNTSMOUNTHYBRID
 
 --[[-------------------------------------------------------------------------------
     Bindings

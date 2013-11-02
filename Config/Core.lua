@@ -18,9 +18,8 @@ local strtrim = strtrim;
 local tostring = tostring;
 local tonumber = tonumber;
 
--- GLOBALS: GetCurrentBindingSet, SetBinding, SaveBindings
--- GLOBALS: GetBindingKey, StaticPopup_Show, LibStub, GetMapNameByID
--- GLOBALS: InCombatLockdown
+-- GLOBALS: GetCurrentBindingSet, SetBinding, SaveBindings, GetBindingKey, StaticPopup_Show
+-- GLOBALS: InCombatLockdown, GetAddOnMetadata, LibStub, GetMapNameByID
 
 -- Ace3 libs <3
 A.AceConfigDialog = LibStub("AceConfigDialog-3.0");

@@ -9,6 +9,10 @@
 local A = _G["PetsAndMountsGlobal"];
 local L = A.L;
 
+-- GLOBALS: UnitIsFeignDeath, UnitCastingInfo, UnitChannelInfo, UnitIsDeadOrGhost, InCombatLockdown
+-- GLOBALS: GetNumLootItems, IsMounted, IsFlying, IsFalling, UnitHasVehicleUI, UnitOnTaxi
+-- GLOBALS: HasFullControl, GetBarberShopStyleInfo, UnitIsFeignDeath, IsIndoors
+
 -- Used in PLAYER_ENTERING_WORLD event
 -- When it is still true it will permit actions we only want when entering world
 A.onFirstLoadActions = 1;
