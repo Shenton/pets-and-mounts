@@ -12,7 +12,7 @@
 -- TODO: Fix companion staying where you died
 
 -- Ace libs (<3)
-local A = LibStub("AceAddon-3.0"):NewAddon("PetsAndMounts", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0", "AceComm-3.0");
+local A = LibStub("AceAddon-3.0"):NewAddon("PetsAndMounts", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0", "AceComm-3.0", "AceHook-3.0");
 local L = LibStub("AceLocale-3.0"):GetLocale("PetsAndMounts");
 A.L = L;
 
@@ -1615,11 +1615,7 @@ end
     Custom link handling
 -------------------------------------------------------------------------------]]--
 
--- Saving default or already hooked SetItemRef
-A.DefaultSetItemRef = SetItemRef;
-
--- Hook
-function SetItemRef(link, text, button, chatFrame)
+function A:SetItemRef(link, ...)
     local linkType, linkSubType, linkArg = strsplit(":", link);
 
     if ( linkType == "PAM" ) then
@@ -1627,11 +1623,9 @@ function SetItemRef(link, text, button, chatFrame)
             A:OpenConfigPanel(linkArg);
         end
 
-        return;
+    else
+        A.hooks.SetItemRef(link, ...);
     end
-
-    -- /Hook
-    A:DefaultSetItemRef(link, text, button, chatFrame);
 end
 
 --[[-------------------------------------------------------------------------------
@@ -2018,6 +2012,9 @@ function A:OnInitialize()
 
     -- Addon communication
     A:RegisterComm("PAMCommPrefix");
+
+    -- Raw hook
+    A:RawHook("SetItemRef", true);
 
     -- Add the config loader to blizzard addon configuration panel
     A:AddToBlizzTemp();
