@@ -231,7 +231,13 @@ function A:PreClickMount(button, clickedBy)
             A.db.profile[button:GetName()].hide = 1;
             A:SetButtons();
         else
-            if ( A.db.profile.magicBroom and GetItemCount(37011, nil, nil) > 0 and (A:IsSwimming() == 2 or not A:IsSwimming()) and not (A.db.profile.vehicleExit and A:IsPlayerInVehicle()) ) then -- 37011 - Magic Broom from Hallow's End
+            if ( A.db.profile.shimmeringMoonstone and GetItemCount(101675, nil, nil) > 0 and (A:IsSwimming() == 2 or not A:IsSwimming())
+            and not A:IsFlyable() and not (A.db.profile.vehicleExit and A:IsPlayerInVehicle()) ) then -- 37011 - Shimmering Moonstone from Darkmoon fair (Moonfang drop)
+                if ( not A.shimmeringMoonstoneName ) then A.shimmeringMoonstoneName = GetItemInfo(101675); end
+
+                button:SetAttribute("type", "macro");
+                button:SetAttribute("macrotext", ("/use %s"):format(A.shimmeringMoonstoneName or "Shimmering Moonstone"));
+            elseif ( A.db.profile.magicBroom and GetItemCount(37011, nil, nil) > 0 and (A:IsSwimming() == 2 or not A:IsSwimming()) and not (A.db.profile.vehicleExit and A:IsPlayerInVehicle()) ) then -- 37011 - Magic Broom from Hallow's End
                 if ( not A.magicBroomName ) then A.magicBroomName = GetItemInfo(37011); end
 
                 button:SetAttribute("type", "macro");

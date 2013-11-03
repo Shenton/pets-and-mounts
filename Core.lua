@@ -1670,6 +1670,7 @@ A.aceDefaultDB =
         surfaceMount = 1, -- d
         preferSurfaceSpell = nil, -- d
         vehicleExit = 1, -- d
+        shimmeringMoonstone = 1, -- d
         ldbi = {}, -- d
         favoritePets = {}, -- d
         favoriteMounts = -- d

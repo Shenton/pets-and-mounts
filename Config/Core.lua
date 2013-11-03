@@ -667,15 +667,6 @@ function A:AceConfig()
                                         set = function() A.db.profile.classesMacrosEnabled = not A.db.profile.classesMacrosEnabled; end,
                                         get = function() return A.db.profile.classesMacrosEnabled; end,
                                     },
-                                    magicBroom =
-                                    {
-                                        order = 5,
-                                        name = L["Magic Broom"],
-                                        desc = L["Summon the Magic Broom when it is in your bags."],
-                                        type = "toggle",
-                                        set = function() A.db.profile.magicBroom = not A.db.profile.magicBroom; end,
-                                        get = function() return A.db.profile.magicBroom; end,
-                                    },
                                     surfaceMount =
                                     {
                                         order = 6,
@@ -706,6 +697,24 @@ function A:AceConfig()
                                             A:SetPostClickMacro();
                                         end,
                                         get = function() return A.db.profile.vehicleExit; end,
+                                    },
+                                    magicBroom =
+                                    {
+                                        order = 1000,
+                                        name = L["Magic Broom"],
+                                        desc = L["Summon the Magic Broom when it is in your bags."],
+                                        type = "toggle",
+                                        set = function() A.db.profile.magicBroom = not A.db.profile.magicBroom; end,
+                                        get = function() return A.db.profile.magicBroom; end,
+                                    },
+                                    shimmeringMoonstone =
+                                    {
+                                        order = 1001,
+                                        name = L["Shimmering Moonstone"],
+                                        desc = L["Summon Moonfang when the Shimmering Moonstone is in your bags."],
+                                        type = "toggle",
+                                        set = function() A.db.profile.shimmeringMoonstone = not A.db.profile.shimmeringMoonstone; end,
+                                        get = function() return A.db.profile.shimmeringMoonstone; end,
                                     },
                                 },
                             },
