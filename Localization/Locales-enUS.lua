@@ -89,6 +89,17 @@ L["Top"] = true;
 L["Vehicle"] = true;
 L["Version"] = true;
 
+-- Pet types
+L["Humanoid"] = true;
+L["Dragonkin"] = true;
+L["Flying"] = true;
+L["Undead"] = true;
+L["Critter"] = true;
+L["Magic"] = true;
+L["Elemental"] = true;
+L["Beast"] = true;
+L["Aquatic"] = true;
+L["Mechanical"] = true;
 -- Config
 L["Model rotation"] = true;
 L["Auto summon"] = true;
@@ -214,6 +225,13 @@ L["Feign Death"] = true;
 L["Debug is enabled. Building the areas database will reset it first."] = true;
 L["Shimmering Moonstone"] = true;
 L["Summon Moonfang when the Shimmering Moonstone is in your bags."] = true;
+L["Companions list options"] = true;
+L["Append default name"] = true;
+L["When a companion got a custom name, it will append its default name."] = true;
+L["Color custom name"] = true;
+L["When a companion got a custom name, it will be colored."] = true;
+L["Custom name color"] = true;
+L["Pick a color for your companions custom names."] = true;
 -- About
 L["Auto and random summon for your pets and mounts, highly customizable. With Data Broker support."] = true;
 L["A new version is available, version |cff33ff99%s|r revision |cff33ff99%s %s|r."] = true;

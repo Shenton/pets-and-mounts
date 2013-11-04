@@ -175,7 +175,7 @@ StaticPopupDialogs["PetsAndMountsDeleteSet"] =
     Config table
 -------------------------------------------------------------------------------]]--
 
-local orderGroup, orderItem, petName, petAutoSummonOverrideSelected;
+local orderGroup, orderItem, petAutoSummonOverrideSelected;
 local optionsOverrideHeaderText = L["None"];
 function A:AceConfig()
     local options =
@@ -221,7 +221,7 @@ function A:AceConfig()
                                         type = "toggle",
                                         set = function()
                                             A.db.profile.filterMultiple = not A.db.profile.filterMultiple;
-                                            A:BuildPetsTable();
+                                            A:BuildPetsTable(1);
                                         end,
                                         get = function() return A.db.profile.filterMultiple; end,
                                     },
@@ -233,7 +233,7 @@ function A:AceConfig()
                                         type = "toggle",
                                         set = function()
                                             A.db.profile.noFilterCustom = not A.db.profile.noFilterCustom;
-                                            A:BuildPetsTable();
+                                            A:BuildPetsTable(1);
                                         end,
                                         get = function() return A.db.profile.noFilterCustom; end,
                                     },
@@ -601,6 +601,55 @@ function A:AceConfig()
                                 type = "group",
                                 inline = true,
                                 args = {},
+                            },
+                            petListOptions =
+                            {
+                                order = 300,
+                                name = L["Companions list options"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
+                                    appendDefaultName =
+                                    {
+                                        order = 0,
+                                        name = L["Append default name"],
+                                        desc = L["When a companion got a custom name, it will append its default name."],
+                                        type = "toggle",
+                                        set = function() A.db.profile.appendPetDefaultName = not A.db.profile.appendPetDefaultName; end,
+                                        get = function() return A.db.profile.appendPetDefaultName; end,
+                                    },
+                                    colorCustomName =
+                                    {
+                                        order = 1,
+                                        name = L["Color custom name"],
+                                        desc = L["When a companion got a custom name, it will be colored."],
+                                        type = "toggle",
+                                        set = function() A.db.profile.colorPetWithCustomName = not A.db.profile.colorPetWithCustomName; end,
+                                        get = function() return A.db.profile.colorPetWithCustomName; end,
+                                    },
+                                    customNameColorPicker =
+                                    {
+                                        order = 2,
+                                        name = L["Custom name color"],
+                                        desc = L["Pick a color for your companions custom names."],
+                                        type = "color",
+                                        hasAlpha = true,
+                                        set = function(info, r, g, b, a)
+                                            A.db.profile.petWithCustomNameColor.r = r;
+                                            A.db.profile.petWithCustomNameColor.g = g;
+                                            A.db.profile.petWithCustomNameColor.b = b;
+                                            A.db.profile.petWithCustomNameColor.a = a;
+                                            A.db.profile.petWithCustomNameColor.hexa = "|c"..A:PercentToHex(r, g, b, a);
+                                        end,
+                                        get = function()
+                                            return A.db.profile.petWithCustomNameColor.r,
+                                            A.db.profile.petWithCustomNameColor.g,
+                                            A.db.profile.petWithCustomNameColor.b,
+                                            A.db.profile.petWithCustomNameColor.a;
+                                        end,
+                                    },
+                                },
                             },
                         },
                     },
@@ -1393,17 +1442,18 @@ function A:AceConfig()
                 },
             },
             --
-            -- Pets list options tree
+            -- Pets list tree
             --
             pets =
             {
                 order = 10,
                 name = L["Companions list"],
                 type = "group",
+                childGroups = "tab",
                 args = {},
             },
             --
-            -- Mounts list options tree
+            -- Mounts list tree
             --
             mounts =
             {
@@ -1414,7 +1464,7 @@ function A:AceConfig()
                 args = {},
             },
             --
-            -- Sets options tree
+            -- Sets tree
             --
             sets =
             {
@@ -2785,66 +2835,88 @@ function A:AceConfig()
 
     orderGroup = 0;
     orderItem = 0;
-    for k,v in A:PairsByKeys(A.pamTable.pets) do
-        options.args.pets.args[k] =
+    for k,v in ipairs(A.pamTable.pets) do
+        options.args.pets.args[A.petTypes[k]] =
         {
-            order = orderGroup,
-            name = k,
+            order = k,
+            name = L[A.petTypes[k]],
             type = "group",
-            inline = true,
             args = {},
         };
 
-        orderGroup = orderGroup + 1;
-
-        for _,vv in ipairs(v) do
-            if ( vv.customName ) then
-                petName = vv.customName;
-            else
-                petName = vv.name;
-            end
-
-            options.args.pets.args[k].args[vv.name..vv.petID] =
+        for kk,vv in A:PairsByKeys(v) do
+            options.args.pets.args[A.petTypes[k]].args[kk] =
             {
-                order = orderItem,
-                name = petName,
-                desc = function()
-                    -- Model
-                    A.configModelFrame.rotation = 0;
-                    A.configModelFrame:SetCreature(vv.creatureID);
-
-                    -- Frame pos
-                    A.configModelFrame:ClearAllPoints()
-                    A.configModelFrame:SetPoint("TOPLEFT", A.configFrameOptions, "TOPRIGHT", 0, 0);
-                    A.configModelFrame:Show();
-
-                    if ( A.db.profile.debug ) then
-                        return L["Add %s to favorite."]:format(vv.name).."\n\n"
-                        .."ID: "..vv.petID.."\n"
-                        .."CreatureID: "..vv.creatureID
-                    else
-                        return L["Add %s to favorite."]:format(vv.name);
-                    end
-                end,
-                image = vv.icon,
-                type = "toggle",
-                set = function()
-                    if ( tContains(A.db.profile.favoritePets, vv.petID) ) then
-                        A:TableRemove(A.db.profile.favoritePets, vv.petID);
-                    else
-                        A.db.profile.favoritePets[#A.db.profile.favoritePets+1] = vv.petID;
-                    end
-                end,
-                get = function()
-                    if ( tContains(A.db.profile.favoritePets, vv.petID) ) then
-                        return 1;
-                    else
-                        return nil;
-                    end
-                end,
+                order = orderGroup,
+                name = kk,
+                type = "group",
+                inline = true,
+                args = {},
             };
 
-            orderItem = orderItem + 1;
+            orderGroup = orderGroup + 1;
+
+            for kkk,vvv in ipairs(vv) do
+                options.args.pets.args[A.petTypes[k]].args[kk].args[vvv.name..vvv.petID] =
+                {
+                    order = orderItem,
+                    name = function()
+                        local petName;
+
+                        if ( vvv.defaultName ) then
+                            if ( A.db.profile.appendPetDefaultName ) then
+                                petName = vvv.name.." ("..vvv.defaultName..")";
+                            else
+                                petName = vvv.name;
+                            end
+
+                            if ( A.db.profile.colorPetWithCustomName ) then
+                                petName = A.db.profile.petWithCustomNameColor.hexa..petName;
+                            end
+                        else
+                            petName = vvv.name;
+                        end
+
+                        return petName;
+                    end,
+                    desc = function()
+                        -- Model
+                        A.configModelFrame.rotation = 0;
+                        A.configModelFrame:SetCreature(vvv.creatureID);
+
+                        -- Frame pos
+                        A.configModelFrame:ClearAllPoints()
+                        A.configModelFrame:SetPoint("TOPLEFT", A.configFrameOptions, "TOPRIGHT", 0, 0);
+                        A.configModelFrame:Show();
+
+                        if ( A.db.profile.debug ) then
+                            return L["Add %s to favorite."]:format(vvv.name).."\n\n"
+                            .."ID: "..vvv.petID.."\n"
+                            .."CreatureID: "..vvv.creatureID
+                        else
+                            return L["Add %s to favorite."]:format(vvv.name);
+                        end
+                    end,
+                    image = vvv.icon,
+                    type = "toggle",
+                    set = function()
+                        if ( tContains(A.db.profile.favoritePets, vvv.petID) ) then
+                            A:TableRemove(A.db.profile.favoritePets, vvv.petID);
+                        else
+                            A.db.profile.favoritePets[#A.db.profile.favoritePets+1] = vvv.petID;
+                        end
+                    end,
+                    get = function()
+                        if ( tContains(A.db.profile.favoritePets, vvv.petID) ) then
+                            return 1;
+                        else
+                            return nil;
+                        end
+                    end,
+                };
+
+                orderItem = orderItem + 1;
+            end
         end
     end
 
@@ -2926,7 +2998,6 @@ function A:AceConfig()
         order = 1000,
         name = L["Reset"],
         type = "group",
-        inline = true,
         args =
         {
             toggle =

@@ -6,10 +6,20 @@
     Core.lua
 -------------------------------------------------------------------------------]]--
 
+-- TODO: fix bindings in options panel - ticket 12
+-- TODO: fix Moonkin Hatchling - add faction filter if possible - do not filter it if not - ticket 13
+-- TODO: Look into achievement mounts or unique per character mounts for restricted mounts - ticket 6
+
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
--- TODO: I really need to find a better way to build the maps names DB
--- TODO: Look into achievement mounts or unique per character mounts for restricted mounts
 -- TODO: Fix companion staying where you died
+
+-- TODO: Built in set for pets families
+-- TODO: search system for pets and mounts
+-- TODO: Area sets
+-- TODO: Summon a selected cat (option) mount with alt+click
+
+-- TODO: Add a function to "copy" highlighted player's mounts (random companion has it. Really handy) - Makulatur on Curse comments
+-- TODO: Revoke pet on pet button click - Makulatur on Curse comments
 
 -- Ace libs (<3)
 local A = LibStub("AceAddon-3.0"):NewAddon("PetsAndMounts", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0", "AceComm-3.0", "AceHook-3.0");
@@ -388,6 +398,48 @@ function A:GetAddonVersion(version)
     return tonumber(version), tonumber(revision);
 end
 
+--- Round function (http://lua-users.org/wiki/SimpleRound)
+-- @param num The number to round
+-- @param idp Decimal places
+function A:Round(num, idp)
+    local mult = 10^(idp or 0);
+    return math.floor(num * mult + 0.5) / mult;
+end
+
+--- Color percent to hex
+local b16 =
+{
+    [0] = "0",
+    [1] = "1",
+    [2] = "2",
+    [3] = "3",
+    [4] = "4",
+    [5] = "5",
+    [6] = "6",
+    [7] = "7",
+    [8] = "8",
+    [9] = "9",
+    [10] = "a",
+    [11] = "b",
+    [12] = "c",
+    [13] = "d",
+    [14] = "e",
+    [15] = "f"
+};
+function A:PercentToHex(r, g, b, a)
+    r = A:Round(r * 255);
+    g = A:Round(g * 255);
+    b = A:Round(b * 255);
+    a = A:Round(a * 255);
+
+    r = b16[math.floor(r / 16)]..b16[r % 16];
+    g = b16[math.floor(g / 16)]..b16[g % 16];
+    b = b16[math.floor(b / 16)]..b16[b % 16];
+    a = b16[math.floor(a / 16)]..b16[a % 16];
+
+    return a..r..g..b;
+end
+
 --[[-------------------------------------------------------------------------------
     Frames methods
 -------------------------------------------------------------------------------]]--
@@ -513,45 +565,58 @@ function A:BuildPetsTable(force)
     -- Getting total number of pets AFTER resetting filters (derp)
     local numPets = C_PetJournal.GetNumPets();
 
-    A.pamTable.pets = {};
+    A.pamTable.pets = -- A.petTypes
+    {
+        [1] = {}, -- Humanoid
+        [2] = {}, -- Dragonkin
+        [3] = {}, -- Flying
+        [4] = {}, -- Undead
+        [5] = {}, -- Critter
+        [6] = {}, -- Magic
+        [7] = {}, -- Elemental
+        [8] = {}, -- Beast
+        [9] = {}, -- Aquatic
+        [10] = {}, -- Mechanical
+    };
     A.pamTable.petsIds = {};
 
     for i=1,numPets do
-        local petID, _, isOwned, customName, _, _, _, creatureName, icon, _, creatureID = C_PetJournal.GetPetInfoByIndex(i);
-        --local petID, speciesID, isOwned, customName, level, favorite, isRevoked, name, icon, petType, creatureID, sourceText, description, isWildPet, canBattle = C_PetJournal.GetPetInfoByIndex(index, isWild);
+        local petID, _, isOwned, customName, _, _, _, creatureName, icon, petType, creatureID = C_PetJournal.GetPetInfoByIndex(i);
+        --local petID, speciesID, isOwned, customName, level, favorite, isRevoked, name, icon, petType, creatureID, sourceText, description, isWildPet, canBattle = C_PetJournal.GetPetInfoByIndex(index);
 
-        if ( isOwned ) then
-            if ( customName and A.db.profile.noFilterCustom ) then
-                local leadingLetter = string.sub(customName, 1, 1);
+        if ( isOwned ) then -- Do we possess that pet?
+            if ( A.petTypes[petType] ) then -- Do the add-on handle that pet type?
+                if ( customName and A.db.profile.noFilterCustom ) then -- Got a custom name?
+                    local leadingLetter = string.sub(customName, 1, 1);
+                    if ( not A.pamTable.pets[petType][leadingLetter] ) then A.pamTable.pets[petType][leadingLetter] = {}; end
 
-                if ( not A.pamTable.pets[leadingLetter] ) then A.pamTable.pets[leadingLetter] = {}; end
-
-                A.pamTable.petsIds[#A.pamTable.petsIds+1] = petID;
-
-                A.pamTable.pets[leadingLetter][#A.pamTable.pets[leadingLetter]+1] =
-                {
-                    petID = petID,
-                    name = customName,
-                    icon = icon,
-                    creatureID = creatureID,
-                };
-            else
-                local leadingLetter = string.sub(creatureName, 1, 1);
-
-                if ( not A.pamTable.pets[leadingLetter] ) then A.pamTable.pets[leadingLetter] = {}; end
-
-                if ( not A:NameExists(A.pamTable.pets[leadingLetter], creatureName)
-                --or (A:NameExists(A.pamTable.pets[leadingLetter], creatureName) and not A.db.profile.filterMultiple)
-                or not A.db.profile.filterMultiple ) then
                     A.pamTable.petsIds[#A.pamTable.petsIds+1] = petID;
 
-                    A.pamTable.pets[leadingLetter][#A.pamTable.pets[leadingLetter]+1] =
+                    A.pamTable.pets[petType][leadingLetter][#A.pamTable.pets[petType][leadingLetter]+1] =
                     {
                         petID = petID,
-                        name = creatureName,
+                        name = customName,
                         icon = icon,
                         creatureID = creatureID,
+                        defaultName = creatureName,
+                        petType = petType,
                     };
+                else
+                    local leadingLetter = string.sub(creatureName, 1, 1);
+                    if ( not A.pamTable.pets[petType][leadingLetter] ) then A.pamTable.pets[petType][leadingLetter] = {}; end
+
+                    if ( not A:NameExists(A.pamTable.pets[petType][leadingLetter], creatureName) or not A.db.profile.filterMultiple ) then
+                        A.pamTable.petsIds[#A.pamTable.petsIds+1] = petID;
+
+                        A.pamTable.pets[petType][leadingLetter][#A.pamTable.pets[petType][leadingLetter]+1] =
+                        {
+                            petID = petID,
+                            name = creatureName,
+                            icon = icon,
+                            creatureID = creatureID,
+                            petType = petType,
+                        };
+                    end
                 end
             end
         end
@@ -1033,11 +1098,14 @@ local function PAMMenu(self, level)
             self.info.hasArrow = 1;
             self.info.disabled = nil;
 
-            for k in A:PairsByKeys(A.pamTable.pets) do
-                self.info.text = "   "..k;
-                self.info.value = "PETS"..k;
-                self.info.icon = nil;
-                UIDropDownMenu_AddButton(self.info, level);
+            -- Pets families menu
+            for k,v in A:PairsByKeys(A.pamTable.pets) do
+                if ( A:TableNotEmpty(v) ) then
+                    self.info.text = "   "..L[A.petTypes[k]];
+                    self.info.value = "PETS"..A.petTypes[k];
+                    self.info.icon = nil;
+                    UIDropDownMenu_AddButton(self.info, level);
+                end
             end
         end
 
@@ -1057,6 +1125,7 @@ local function PAMMenu(self, level)
             self.info.hasArrow = 1;
             self.info.disabled = nil;
 
+            -- Mounts categories menu
             for k,v in A:PairsByKeys(A.pamTable.mounts) do
                 if ( A:TableNotEmpty(v) ) then
                     self.info.text = "   "..A.mountCat[k];
@@ -1128,58 +1197,24 @@ local function PAMMenu(self, level)
             UIDropDownMenu_AddButton(self.info, level);
         end
     elseif (level == 3 ) then
-        local summonedPet = C_PetJournal.GetSummonedPetGUID();
-
         self.info.notCheckable = 1;
-        self.info.hasArrow = nil;
 
-        -- Pets
-        for k,v in A:PairsByKeys(A.pamTable.pets) do
-            buttonIndex = 1;
-
-            for _,vv in ipairs(v) do
-                if ( UIDROPDOWNMENU_MENU_VALUE == "PETS"..k ) then
-                    if ( vv.petID == summonedPet ) then
-                        isSummoned = 1;
-                    else
-                        isSummoned = nil;
+        -- Pets leading letters menu
+        for k,v in ipairs(A.pamTable.pets) do
+            if ( A:TableNotEmpty(v) ) then
+                if ( UIDROPDOWNMENU_MENU_VALUE == "PETS"..A.petTypes[k] ) then
+                    for kk,vv in A:PairsByKeys(v) do
+                        self.info.text = "   "..kk;
+                        self.info.value = "PETS"..A.petTypes[k]..kk;
+                        self.info.icon = nil;
+                        self.info.hasArrow = 1;
+                        UIDropDownMenu_AddButton(self.info, level);
                     end
-
-                    if ( vv.customName ) then
-                        self.info.text = vv.customName;
-                    else
-                        self.info.text = vv.name;
-                    end
-
-                    self.info.icon = vv.icon;
-                    self.info.disabled = isSummoned;
-                    self.info.keepShownOnClick = 1;
-                    self.info.hasArrow = nil;
-                    self.info.func = function() A:SummonPet(vv.petID); end;
-                    UIDropDownMenu_AddButton(self.info, level);
-
-                    _G["DropDownList3Button"..buttonIndex]:HookScript("OnEnter", function()
-                        if ( not A.isPetsAndMountsMenu or DropDownList2Button1:GetText() == L["Mounts"] ) then
-                            A.menuModelFrame:Hide();
-
-                            return;
-                        end
-
-                        -- Model
-                        A.menuModelFrame:SetCreature(vv.creatureID);
-
-                        -- Frame pos
-                        local point, relativePoint = A:GetMenuModelFrameAnchor();
-                        A.menuModelFrame:ClearAllPoints();
-                        A.menuModelFrame:SetPoint(point, DropDownList3, relativePoint, 0, 0);
-                        A.menuModelFrame:Show();
-                    end);
-                    _G["DropDownList3Button"..buttonIndex]:HookScript("OnLeave", function() A.menuModelFrame:Hide(); end);
-                    buttonIndex = buttonIndex + 1;
                 end
             end
         end
 
+        -- Mounts leading letters menu
         for k,v in ipairs(A.pamTable.mounts) do
             if ( A:TableNotEmpty(v) ) then
                 if ( UIDROPDOWNMENU_MENU_VALUE == "MOUNTS"..A.mountCat[k] ) then
@@ -1320,6 +1355,60 @@ local function PAMMenu(self, level)
             UIDropDownMenu_AddButton(self.info, level);
         end
     elseif (level == 4 ) then
+        local summonedPet = C_PetJournal.GetSummonedPetGUID();
+
+        -- Pets list
+        for k,v in ipairs(A.pamTable.pets) do
+            if ( A:TableNotEmpty(v) ) then
+                buttonIndex = 1;
+
+                for kk,vv in A:PairsByKeys(v) do
+                    if ( UIDROPDOWNMENU_MENU_VALUE == "PETS"..A.petTypes[k]..kk ) then
+                        for kkk,vvv in ipairs(vv) do
+                            if ( vvv.petID == summonedPet ) then
+                                isSummoned = 1;
+                            else
+                                isSummoned = nil;
+                            end
+
+                            if ( vvv.customName ) then
+                                self.info.text = vvv.customName;
+                            else
+                                self.info.text = vvv.name;
+                            end
+
+                            self.info.icon = vvv.icon;
+                            self.info.disabled = isSummoned;
+                            self.info.keepShownOnClick = 1;
+                            self.info.hasArrow = nil;
+                            self.info.func = function() A:SummonPet(vvv.petID); end;
+                            UIDropDownMenu_AddButton(self.info, level);
+
+                            _G["DropDownList4Button"..buttonIndex]:HookScript("OnEnter", function()
+                                if ( not A.isPetsAndMountsMenu ) then
+                                    A.menuModelFrame:Hide();
+
+                                    return;
+                                end
+
+                                -- Model
+                                A.menuModelFrame:SetCreature(vvv.creatureID);
+
+                                -- Frame pos
+                                local point, relativePoint = A:GetMenuModelFrameAnchor();
+                                A.menuModelFrame:ClearAllPoints();
+                                A.menuModelFrame:SetPoint(point, DropDownList4, relativePoint, 0, 0);
+                                A.menuModelFrame:Show();
+                            end);
+                            _G["DropDownList4Button"..buttonIndex]:HookScript("OnLeave", function() A.menuModelFrame:Hide(); end);
+                            buttonIndex = buttonIndex + 1;
+                        end
+                    end
+                end
+            end
+        end
+
+        -- Mounts list
         for k,v in ipairs(A.pamTable.mounts) do
             if ( A:TableNotEmpty(v) ) then
                 buttonIndex = 1;
@@ -1671,6 +1760,16 @@ A.aceDefaultDB =
         preferSurfaceSpell = nil, -- d
         vehicleExit = 1, -- d
         shimmeringMoonstone = 1, -- d
+        appendPetDefaultName = 1, -- d
+        colorPetWithCustomName = 1, -- d
+        petWithCustomNameColor = -- d
+        {
+            r = 0.9137254901960784,
+            g = 0.3450980392156863,
+            b = 0.2078431372549019,
+            a = 1,
+            hexa = "|cffe95835",
+        },
         ldbi = {}, -- d
         favoritePets = {}, -- d
         favoriteMounts = -- d

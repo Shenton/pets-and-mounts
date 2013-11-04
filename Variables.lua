@@ -159,6 +159,21 @@ A.dockButtonsAnchors =
     ["Left"] = {"RIGHT","LEFT",-4,0},
 };
 
+-- Pet species, called petTypes by Blizzard, so we will do the same
+A.petTypes =
+{
+    L["Humanoid"],
+    L["Dragonkin"],
+    L["Flying"],
+    L["Undead"],
+    L["Critter"],
+    L["Magic"],
+    L["Elemental"],
+    L["Beast"],
+    L["Aquatic"],
+    L["Mechanical"],
+};
+
 -- Pets with restrictions, faction mostly, and some useless (winter helpers)
 --[[
 # Format
