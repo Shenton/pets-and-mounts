@@ -1,11 +1,11 @@
 <Bindings>
-    <Binding name="PETSANDMOUNTSPET" header="PETSANDMOUNTS"></Binding>
-    <Binding name="PETSANDMOUNTSMOUNT" header="PETSANDMOUNTS"></Binding>
-    <Binding name="PETSANDMOUNTSMOUNTPASSENGERS" header="PETSANDMOUNTS"></Binding>
-    <Binding name="PETSANDMOUNTSMOUNTFLYING" header="PETSANDMOUNTS"></Binding>
-    <Binding name="PETSANDMOUNTSMOUNTGROUND" header="PETSANDMOUNTS"></Binding>
-    <Binding name="PETSANDMOUNTSMOUNTAQUATIC" header="PETSANDMOUNTS"></Binding>
-    <Binding name="PETSANDMOUNTSMOUNTSURFACE" header="PETSANDMOUNTS"></Binding>
-    <Binding name="PETSANDMOUNTSMOUNTREPAIR" header="PETSANDMOUNTS"></Binding>
-    <Binding name="PETSANDMOUNTSMOUNTHYBRID" header="PETSANDMOUNTS"></Binding>
+    <Binding name="CLICK PetsAndMountsSecureButtonPets:LeftButton" header="PETSANDMOUNTS"/>
+    <Binding name="CLICK PetsAndMountsSecureButtonMounts:LeftButton"/>
+    <Binding name="CLICK PetsAndMountsSecureButtonPassengers:LeftButton"/>
+    <Binding name="CLICK PetsAndMountsSecureButtonFlying:LeftButton"/>
+    <Binding name="CLICK PetsAndMountsSecureButtonGround:LeftButton"/>
+    <Binding name="CLICK PetsAndMountsSecureButtonAquatic:LeftButton"/>
+    <Binding name="CLICK PetsAndMountsSecureButtonSurface:LeftButton"/>
+    <Binding name="CLICK PetsAndMountsSecureButtonRepair:LeftButton"/>
+    <Binding name="CLICK PetsAndMountsSecureButtonHybrid:LeftButton"/>
 </Bindings>

@@ -14,55 +14,71 @@ local pairs = pairs;
 local _G = _G;
 local tostring = tostring;
 
--- GLOBALS: BINDING_HEADER_PETSANDMOUNTS, BINDING_NAME_PETSANDMOUNTSPET, BINDING_NAME_PETSANDMOUNTSMOUNT
--- GLOBALS: BINDING_NAME_PETSANDMOUNTSMOUNTPASSENGERS, BINDING_NAME_PETSANDMOUNTSMOUNTFLYING
--- GLOBALS: BINDING_NAME_PETSANDMOUNTSMOUNTGROUND, BINDING_NAME_PETSANDMOUNTSMOUNTAQUATIC
--- GLOBALS: InCombatLockdown, GetBindingKey, SetOverrideBindingClick, GetSpellInfo
--- GLOBALS: IsFlyableArea, IsSpellKnown, GetSpellInfo, IsShiftKeyDown, IsControlKeyDown
--- GLOBALS: PetsAndMountsSecureButtonMounts, PetsAndMountsSecureButtonPets, GetScreenWidth
--- GLOBALS: GameTooltip, GetItemCount, GetItemInfo, UIDropDownMenu_SetAnchor
--- GLOBALS: ToggleDropDownMenu, type, BINDING_NAME_PETSANDMOUNTSMOUNTSURFACE, UnitBuff
--- GLOBALS: BINDING_NAME_PETSANDMOUNTSMOUNTREPAIR, BINDING_NAME_PETSANDMOUNTSMOUNTHYBRID
+-- GLOBALS: BINDING_HEADER_PETSANDMOUNTS, InCombatLockdown, GetBindingKey, SetOverrideBindingClick
+-- GLOBALS: IsFlyableArea, IsSpellKnown, GetSpellInfo, IsShiftKeyDown, IsControlKeyDown, GetSpellInfo
+-- GLOBALS: PetsAndMountsSecureButtonMounts, PetsAndMountsSecureButtonPets, GetScreenWidth, type, UnitBuff
+-- GLOBALS: GameTooltip, GetItemCount, GetItemInfo, UIDropDownMenu_SetAnchor, ToggleDropDownMenu
 
 --[[-------------------------------------------------------------------------------
     Bindings
 -------------------------------------------------------------------------------]]--
 
+-- Bindings list
+A.bindingsTable =
+{
+    {
+        name = "CLICK PetsAndMountsSecureButtonPets:LeftButton",
+        localized = L["Random companion"],
+        configDesc = L["Bind a key to summon a random companion."],
+    },
+    {
+        name = "CLICK PetsAndMountsSecureButtonMounts:LeftButton",
+        localized = L["Random mount"],
+        configDesc = L["Bind a key to summon a random mount."],
+    },
+    {
+        name = "CLICK PetsAndMountsSecureButtonPassengers:LeftButton",
+        localized = L["Random passengers mount"],
+        configDesc = L["Bind a key to summon a random mount."],
+    },
+    {
+        name = "CLICK PetsAndMountsSecureButtonFlying:LeftButton",
+        localized = L["Random flying mount"],
+        configDesc = L["Bind a key to summon a random mount."],
+    },
+    {
+        name = "CLICK PetsAndMountsSecureButtonGround:LeftButton",
+        localized = L["Random ground mount"],
+        configDesc = L["Bind a key to summon a random mount."],
+    },
+    {
+        name = "CLICK PetsAndMountsSecureButtonAquatic:LeftButton",
+        localized = L["Random aquatic mount"],
+        configDesc = L["Bind a key to summon a random mount."],
+    },
+    {
+        name = "CLICK PetsAndMountsSecureButtonSurface:LeftButton",
+        localized = L["Random surface mount"],
+        configDesc = L["Bind a key to summon a random mount."],
+    },
+    {
+        name = "CLICK PetsAndMountsSecureButtonRepair:LeftButton",
+        localized = L["Random repair mount"],
+        configDesc = L["Bind a key to summon a random mount."],
+    },
+    {
+        name = "CLICK PetsAndMountsSecureButtonHybrid:LeftButton",
+        localized = L["Random hybrid mount"],
+        configDesc = L["Bind a key to summon a random mount."],
+    },
+};
+
 -- Binding UI localization
 BINDING_HEADER_PETSANDMOUNTS = L["Pets & Mounts"];
-BINDING_NAME_PETSANDMOUNTSPET = L["Random companion"];
-BINDING_NAME_PETSANDMOUNTSMOUNT = L["Random mount"];
-BINDING_NAME_PETSANDMOUNTSMOUNTPASSENGERS = L["Random passengers mount"];
-BINDING_NAME_PETSANDMOUNTSMOUNTFLYING = L["Random flying mount"];
-BINDING_NAME_PETSANDMOUNTSMOUNTGROUND = L["Random ground mount"];
-BINDING_NAME_PETSANDMOUNTSMOUNTAQUATIC = L["Random aquatic mount"];
-BINDING_NAME_PETSANDMOUNTSMOUNTSURFACE = L["Random surface mount"];
-BINDING_NAME_PETSANDMOUNTSMOUNTREPAIR = L["Random repair mount"];
-BINDING_NAME_PETSANDMOUNTSMOUNTHYBRID = L["Random hybrid mount"];
 
---- Set bindings
-local bindings =
-{
-    ["PETSANDMOUNTSPET"] = "PetsAndMountsSecureButtonPets",
-    ["PETSANDMOUNTSMOUNT"] = "PetsAndMountsSecureButtonMounts",
-    ["PETSANDMOUNTSMOUNTPASSENGERS"] = "PetsAndMountsSecureButtonPassengers",
-    ["PETSANDMOUNTSMOUNTFLYING"] = "PetsAndMountsSecureButtonFlying",
-    ["PETSANDMOUNTSMOUNTGROUND"] = "PetsAndMountsSecureButtonGround",
-    ["PETSANDMOUNTSMOUNTAQUATIC"] = "PetsAndMountsSecureButtonAquatic",
-    ["PETSANDMOUNTSMOUNTSURFACE"] = "PetsAndMountsSecureButtonSurface",
-    ["PETSANDMOUNTSMOUNTREPAIR"] = "PetsAndMountsSecureButtonRepair",
-    ["PETSANDMOUNTSMOUNTHYBRID"] = "PetsAndMountsSecureButtonHybrid",
-};
-function A:SetBindings()
-    if ( InCombatLockdown() ) then
-        A.delayedBindings = 1;
-    else
-        for k,v in pairs(bindings) do
-            local key1, key2 = GetBindingKey(k);
-            if ( key1 ) then SetOverrideBindingClick(_G[v], 1, key1, v); end
-
-            if ( key2 ) then SetOverrideBindingClick(_G[v], 1, key2, v); end
-        end
+do
+    for k,v in ipairs(A.bindingsTable) do
+        _G["BINDING_NAME_"..v.name] = v.localized;
     end
 end
 

@@ -785,378 +785,7 @@ function A:AceConfig()
                         order = 400,
                         name = L["Bindings"],
                         type = "group",
-                        args =
-                        {
-                            randomPet =
-                            {
-                                order = 0,
-                                name = L["Random companion"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    randomPetKey1 =
-                                    {
-                                        order = 0,
-                                        name = L["Key one"],
-                                        desc = L["Bind a key to summon a random companion."],
-                                        type = "keybinding",
-                                        set = function(info, val)
-                                            local set = GetCurrentBindingSet();
-
-                                            SetBinding(val, "PETSANDMOUNTSPET", set);
-                                            SaveBindings(set);
-                                        end,
-                                        get = function() return GetBindingKey("PETSANDMOUNTSPET"); end,
-                                    },
-                                    randomPetKey2 =
-                                    {
-                                        order = 1,
-                                        name = L["Key two"],
-                                        desc = L["Bind a key to summon a random companion."],
-                                        type = "keybinding",
-                                        set = function(info, val)
-                                            local set = GetCurrentBindingSet();
-
-                                            SetBinding(val, "PETSANDMOUNTSPET", set);
-                                            SaveBindings(set);
-                                        end,
-                                        get = function()
-                                            local _, key = GetBindingKey("PETSANDMOUNTSPET");
-                                            return key;
-                                        end,
-                                    },
-                                },
-                            },
-                            randomMount =
-                            {
-                                order = 1,
-                                name = L["Random mount"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    randomMountKey1 =
-                                    {
-                                        order = 0,
-                                        name = L["Key one"],
-                                        desc = L["Bind a key to summon a random mount."],
-                                        type = "keybinding",
-                                        set = function(info, val)
-                                            local set = GetCurrentBindingSet();
-
-                                            SetBinding(val, "PETSANDMOUNTSMOUNT", set);
-                                            SaveBindings(set);
-                                        end,
-                                        get = function() return GetBindingKey("PETSANDMOUNTSMOUNT"); end,
-                                    },
-                                    randomMountKey2 =
-                                    {
-                                        order = 1,
-                                        name = L["Key two"],
-                                        desc = L["Bind a key to summon a random mount."],
-                                        type = "keybinding",
-                                        set = function(info, val)
-                                            local set = GetCurrentBindingSet();
-
-                                            SetBinding(val, "PETSANDMOUNTSMOUNT", set);
-                                            SaveBindings(set);
-                                        end,
-                                        get = function()
-                                            local _, key = GetBindingKey("PETSANDMOUNTSMOUNT");
-                                            return key;
-                                        end,
-                                    },
-                                },
-                            },
-                            randomPassengersMount =
-                            {
-                                order = 2,
-                                name = L["Random passengers mount"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    randomPassengerMountKey1 =
-                                    {
-                                        order = 0,
-                                        name = L["Key one"],
-                                        desc = L["Bind a key to summon a random mount."],
-                                        type = "keybinding",
-                                        set = function(info, val)
-                                            local set = GetCurrentBindingSet();
-
-                                            SetBinding(val, "PETSANDMOUNTSMOUNTPASSENGERS", set);
-                                            SaveBindings(set);
-                                        end,
-                                        get = function() return GetBindingKey("PETSANDMOUNTSMOUNTPASSENGERS"); end,
-                                    },
-                                    randomPassengerMountKey2 =
-                                    {
-                                        order = 1,
-                                        name = L["Key two"],
-                                        desc = L["Bind a key to summon a random mount."],
-                                        type = "keybinding",
-                                        set = function(info, val)
-                                            local set = GetCurrentBindingSet();
-
-                                            SetBinding(val, "PETSANDMOUNTSMOUNTPASSENGERS", set);
-                                            SaveBindings(set);
-                                        end,
-                                        get = function()
-                                            local _, key = GetBindingKey("PETSANDMOUNTSMOUNTPASSENGERS");
-                                            return key;
-                                        end,
-                                    },
-                                },
-                            },
-                            randomFlyingMount =
-                            {
-                                order = 3,
-                                name = L["Random flying mount"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    randomFlyMountKey1 =
-                                    {
-                                        order = 0,
-                                        name = L["Key one"],
-                                        desc = L["Bind a key to summon a random mount."],
-                                        type = "keybinding",
-                                        set = function(info, val)
-                                            local set = GetCurrentBindingSet();
-
-                                            SetBinding(val, "PETSANDMOUNTSMOUNTFLYING", set);
-                                            SaveBindings(set);
-                                        end,
-                                        get = function() return GetBindingKey("PETSANDMOUNTSMOUNTFLYING"); end,
-                                    },
-                                    randomFlyMountKey2 =
-                                    {
-                                        order = 1,
-                                        name = L["Key two"],
-                                        desc = L["Bind a key to summon a random mount."],
-                                        type = "keybinding",
-                                        set = function(info, val)
-                                            local set = GetCurrentBindingSet();
-
-                                            SetBinding(val, "PETSANDMOUNTSMOUNTFLYING", set);
-                                            SaveBindings(set);
-                                        end,
-                                        get = function()
-                                            local _, key = GetBindingKey("PETSANDMOUNTSMOUNTFLYING");
-                                            return key;
-                                        end,
-                                    },
-                                },
-                            },
-                            randomGroundMount =
-                            {
-                                order = 4,
-                                name = L["Random ground mount"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    randomGroundMountKey1 =
-                                    {
-                                        order = 0,
-                                        name = L["Key one"],
-                                        desc = L["Bind a key to summon a random mount."],
-                                        type = "keybinding",
-                                        set = function(info, val)
-                                            local set = GetCurrentBindingSet();
-
-                                            SetBinding(val, "PETSANDMOUNTSMOUNTGROUND", set);
-                                            SaveBindings(set);
-                                        end,
-                                        get = function() return GetBindingKey("PETSANDMOUNTSMOUNTGROUND"); end,
-                                    },
-                                    randomGroundMountKey2 =
-                                    {
-                                        order = 1,
-                                        name = L["Key two"],
-                                        desc = L["Bind a key to summon a random mount."],
-                                        type = "keybinding",
-                                        set = function(info, val)
-                                            local set = GetCurrentBindingSet();
-
-                                            SetBinding(val, "PETSANDMOUNTSMOUNTGROUND", set);
-                                            SaveBindings(set);
-                                        end,
-                                        get = function()
-                                            local _, key = GetBindingKey("PETSANDMOUNTSMOUNTGROUND");
-                                            return key;
-                                        end,
-                                    },
-                                },
-                            },
-                            randomAquaticMount =
-                            {
-                                order = 5,
-                                name = L["Random aquatic mount"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    randomAquaticMountKey1 =
-                                    {
-                                        order = 0,
-                                        name = L["Key one"],
-                                        desc = L["Bind a key to summon a random mount."],
-                                        type = "keybinding",
-                                        set = function(info, val)
-                                            local set = GetCurrentBindingSet();
-
-                                            SetBinding(val, "PETSANDMOUNTSMOUNTAQUATIC", set);
-                                            SaveBindings(set);
-                                        end,
-                                        get = function() return GetBindingKey("PETSANDMOUNTSMOUNTAQUATIC"); end,
-                                    },
-                                    randomAquaticMountKey2 =
-                                    {
-                                        order = 1,
-                                        name = L["Key two"],
-                                        desc = L["Bind a key to summon a random mount."],
-                                        type = "keybinding",
-                                        set = function(info, val)
-                                            local set = GetCurrentBindingSet();
-
-                                            SetBinding(val, "PETSANDMOUNTSMOUNTAQUATIC", set);
-                                            SaveBindings(set);
-                                        end,
-                                        get = function()
-                                            local _, key = GetBindingKey("PETSANDMOUNTSMOUNTAQUATIC");
-                                            return key;
-                                        end,
-                                    },
-                                },
-                            },
-                            randomSurfaceMount =
-                            {
-                                order = 6,
-                                name = L["Random surface mount"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    randomSurfaceMountKey1 =
-                                    {
-                                        order = 0,
-                                        name = L["Key one"],
-                                        desc = L["Bind a key to summon a random mount."],
-                                        type = "keybinding",
-                                        set = function(info, val)
-                                            local set = GetCurrentBindingSet();
-
-                                            SetBinding(val, "PETSANDMOUNTSMOUNTSURFACE", set);
-                                            SaveBindings(set);
-                                        end,
-                                        get = function() return GetBindingKey("PETSANDMOUNTSMOUNTSURFACE"); end,
-                                    },
-                                    randomSurfaceMountKey2 =
-                                    {
-                                        order = 1,
-                                        name = L["Key two"],
-                                        desc = L["Bind a key to summon a random mount."],
-                                        type = "keybinding",
-                                        set = function(info, val)
-                                            local set = GetCurrentBindingSet();
-
-                                            SetBinding(val, "PETSANDMOUNTSMOUNTSURFACE", set);
-                                            SaveBindings(set);
-                                        end,
-                                        get = function()
-                                            local _, key = GetBindingKey("PETSANDMOUNTSMOUNTSURFACE");
-                                            return key;
-                                        end,
-                                    },
-                                },
-                            },
-                            randomRepairMount =
-                            {
-                                order = 7,
-                                name = L["Random repair mount"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    randomRepairMountKey1 =
-                                    {
-                                        order = 0,
-                                        name = L["Key one"],
-                                        desc = L["Bind a key to summon a random mount."],
-                                        type = "keybinding",
-                                        set = function(info, val)
-                                            local set = GetCurrentBindingSet();
-
-                                            SetBinding(val, "PETSANDMOUNTSMOUNTREPAIR", set);
-                                            SaveBindings(set);
-                                        end,
-                                        get = function() return GetBindingKey("PETSANDMOUNTSMOUNTREPAIR"); end,
-                                    },
-                                    randomRepairMountKey2 =
-                                    {
-                                        order = 1,
-                                        name = L["Key two"],
-                                        desc = L["Bind a key to summon a random mount."],
-                                        type = "keybinding",
-                                        set = function(info, val)
-                                            local set = GetCurrentBindingSet();
-
-                                            SetBinding(val, "PETSANDMOUNTSMOUNTREPAIR", set);
-                                            SaveBindings(set);
-                                        end,
-                                        get = function()
-                                            local _, key = GetBindingKey("PETSANDMOUNTSMOUNTREPAIR");
-                                            return key;
-                                        end,
-                                    },
-                                },
-                            },
-                            randomHybridMount =
-                            {
-                                order = 8,
-                                name = L["Random hybrid mount"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    randomRepairMountKey1 =
-                                    {
-                                        order = 0,
-                                        name = L["Key one"],
-                                        desc = L["Bind a key to summon a random mount."],
-                                        type = "keybinding",
-                                        set = function(info, val)
-                                            local set = GetCurrentBindingSet();
-
-                                            SetBinding(val, "PETSANDMOUNTSMOUNTHYBRID", set);
-                                            SaveBindings(set);
-                                        end,
-                                        get = function() return GetBindingKey("PETSANDMOUNTSMOUNTHYBRID"); end,
-                                    },
-                                    randomRepairMountKey2 =
-                                    {
-                                        order = 1,
-                                        name = L["Key two"],
-                                        desc = L["Bind a key to summon a random mount."],
-                                        type = "keybinding",
-                                        set = function(info, val)
-                                            local set = GetCurrentBindingSet();
-
-                                            SetBinding(val, "PETSANDMOUNTSMOUNTHYBRID", set);
-                                            SaveBindings(set);
-                                        end,
-                                        get = function()
-                                            local _, key = GetBindingKey("PETSANDMOUNTSMOUNTHYBRID");
-                                            return key;
-                                        end,
-                                    },
-                                },
-                            },
-                        },
+                        args = {},
                     },
                     --
                     -- Main options tree - Buttons tab
@@ -2833,6 +2462,133 @@ function A:AceConfig()
         },
     };
 
+    -- Pets summon filters
+    orderItem = 0;
+    for k,v in ipairs(A.petsSummonFilters) do
+        if ( v.option ) then
+            options.args.options.args.petsOptions.args.petsSummonFilters.args[v.name] =
+            {
+                order = orderItem,
+                name = v.name,
+                type = "toggle",
+                desc = function()
+                    if ( v.desc ) then
+                        return v.desc;
+                    end
+
+                    return L["Prevent companion auto summon when: %s"]:format(v.name);
+                end,
+                set = function()
+                    A.db.profile.petsSummonFilters[k] = not A.db.profile.petsSummonFilters[k];
+                    A.petsSummonFiltersCache = nil;
+                end,
+                get = function() return A.db.profile.petsSummonFilters[k]; end,
+            };
+            orderItem = orderItem + 1;
+        end
+    end
+
+    -- Mounts summon filters
+    orderItem = 0;
+    for k,v in ipairs(A.mountsSummonFilters) do
+        if ( v.option ) then
+            options.args.options.args.mountsOptions.args.mountsSummonFilters.args[v.name] =
+            {
+                order = orderItem,
+                name = v.name,
+                type = "toggle",
+                desc = function()
+                    if ( v.desc ) then
+                        return v.desc;
+                    end
+
+                    return L["Prevent mount summon when: %s"]:format(v.name);
+                end,
+                set = function()
+                    A.db.profile.mountsSummonFilters[k] = not A.db.profile.mountsSummonFilters[k];
+                    A.mountsSummonFiltersCache = nil;
+                end,
+                get = function() return A.db.profile.mountsSummonFilters[k]; end,
+            };
+            orderItem = orderItem + 1;
+        end
+    end
+
+    -- Bindings
+    orderGroup = 0;
+    for k,v in ipairs(A.bindingsTable) do
+        options.args.options.args.bindings.args[tostring(k)] =
+        {
+            order = orderGroup,
+            name = v.localized,
+            type = "group",
+            inline = true,
+            args =
+            {
+                randomPetKey1 =
+                {
+                    order = 0,
+                    name = L["Key one"],
+                    desc = v.configDesc,
+                    type = "keybinding",
+                    set = function(info, val)
+                        local set = GetCurrentBindingSet();
+                        local key1, key2 = GetBindingKey(v.name, set);
+
+                        if ( key1 ) then SetBinding(key1, nil, set); end
+                        if ( key2 ) then SetBinding(key2, nil, set); end
+
+                        if ( val == "" ) then
+                            if ( key2 ) then SetBinding(key2, v.name, set); end
+                        else
+                            SetBinding(val, v.name, set);
+
+                            if ( key2 ) then SetBinding(key2, v.name, set); end
+                        end
+
+                        SaveBindings(set);
+                    end,
+                    get = function()
+                        local set = GetCurrentBindingSet();
+                        return GetBindingKey(v.name, set);
+                    end,
+                },
+                randomPetKey2 =
+                {
+                    order = 1,
+                    name = L["Key two"],
+                    desc = v.configDesc,
+                    type = "keybinding",
+                    set = function(info, val)
+                        local set = GetCurrentBindingSet();
+                        local key1, key2 = GetBindingKey(v.name, set);
+
+                        if ( key1 ) then SetBinding(key1, nil, set); end
+                        if ( key2 ) then SetBinding(key2, nil, set); end
+
+                        if ( val == "" ) then
+                            if ( key1 ) then SetBinding(key1, v.name, set); end
+                        else
+                            if ( key1 ) then SetBinding(key1, v.name, set); end
+
+                            SetBinding(val, v.name, set);
+                        end
+
+                        SaveBindings(set);
+                    end,
+                    get = function()
+                        local set = GetCurrentBindingSet();
+                        local _, key = GetBindingKey(v.name, set);
+                        return key;
+                    end,
+                },
+            },
+        };
+
+        orderGroup = orderGroup + 1;
+    end
+
+    -- Pets list
     orderGroup = 0;
     orderItem = 0;
     for k,v in ipairs(A.pamTable.pets) do
@@ -2920,6 +2676,37 @@ function A:AceConfig()
         end
     end
 
+    -- Pets reset fav button
+    options.args.pets.args.reset =
+    {
+        order = 1000,
+        name = L["Reset"],
+        type = "group",
+        args =
+        {
+            toggle =
+            {
+                order = 0,
+                name = L["Enable"],
+                type = "toggle",
+                get = function() return A.enablePetResetButton; end,
+                set = function() A.enablePetResetButton = not A.enablePetResetButton; end,
+            },
+            exec =
+            {
+                order = 1,
+                name = L["Reset"],
+                type = "execute",
+                disabled = function() return not A.enablePetResetButton; end,
+                func = function()
+                    A.db.profile.favoritePets = {};
+                    A.enablePetResetButton = nil;
+                end,
+            },
+        },
+    };
+
+    -- Mounts list
     orderGroup = 0;
     orderItem = 0;
     for k,v in ipairs(A.pamTable.mounts) do
@@ -2993,35 +2780,7 @@ function A:AceConfig()
         end
     end
 
-    options.args.pets.args.reset =
-    {
-        order = 1000,
-        name = L["Reset"],
-        type = "group",
-        args =
-        {
-            toggle =
-            {
-                order = 0,
-                name = L["Enable"],
-                type = "toggle",
-                get = function() return A.enablePetResetButton; end,
-                set = function() A.enablePetResetButton = not A.enablePetResetButton; end,
-            },
-            exec =
-            {
-                order = 1,
-                name = L["Reset"],
-                type = "execute",
-                disabled = function() return not A.enablePetResetButton; end,
-                func = function()
-                    A.db.profile.favoritePets = {};
-                    A.enablePetResetButton = nil;
-                end,
-            },
-        },
-    };
-
+    -- Mounts reset fav button
     options.args.mounts.args.reset =
     {
         order = 1000,
@@ -3062,58 +2821,6 @@ function A:AceConfig()
             },
         },
     };
-
-    -- Pets summon filters
-    orderItem = 0;
-    for k,v in ipairs(A.petsSummonFilters) do
-        if ( v.option ) then
-            options.args.options.args.petsOptions.args.petsSummonFilters.args[v.name] =
-            {
-                order = orderItem,
-                name = v.name,
-                type = "toggle",
-                desc = function()
-                    if ( v.desc ) then
-                        return v.desc;
-                    end
-
-                    return L["Prevent companion auto summon when: %s"]:format(v.name);
-                end,
-                set = function()
-                    A.db.profile.petsSummonFilters[k] = not A.db.profile.petsSummonFilters[k];
-                    A.petsSummonFiltersCache = nil;
-                end,
-                get = function() return A.db.profile.petsSummonFilters[k]; end,
-            };
-            orderItem = orderItem + 1;
-        end
-    end
-
-    -- Mounts summon filters
-    orderItem = 0;
-    for k,v in ipairs(A.mountsSummonFilters) do
-        if ( v.option ) then
-            options.args.options.args.mountsOptions.args.mountsSummonFilters.args[v.name] =
-            {
-                order = orderItem,
-                name = v.name,
-                type = "toggle",
-                desc = function()
-                    if ( v.desc ) then
-                        return v.desc;
-                    end
-
-                    return L["Prevent mount summon when: %s"]:format(v.name);
-                end,
-                set = function()
-                    A.db.profile.mountsSummonFilters[k] = not A.db.profile.mountsSummonFilters[k];
-                    A.mountsSummonFiltersCache = nil;
-                end,
-                get = function() return A.db.profile.mountsSummonFilters[k]; end,
-            };
-            orderItem = orderItem + 1;
-        end
-    end
 
     -- Profiles
     options.args.options.args.profilesOptions = LibStub("AceDBOptions-3.0"):GetOptionsTable(A.db);

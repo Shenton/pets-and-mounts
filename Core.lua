@@ -1015,7 +1015,6 @@ function A:SetEverything()
     A:SetMacroDismountString();
     A:SetPostClickMacro();
     A:SetButtonsMacro();
-    A:SetBindings();
     A:SetButtons();
 
     A:SetMainTimer();
@@ -1461,11 +1460,6 @@ end
 
 function A:PLAYER_REGEN_ENABLED()
     A:DebugMessage("PLAYER_REGEN_ENABLED() - -Combat");
-
-    if ( A.delayedBindings ) then
-        A:SetBindings();
-        A.delayedBindings = nil;
-    end
 
     if ( A.delayedButtonsMacro ) then
         A:SetButtonsMacro();
@@ -2007,7 +2001,20 @@ function A:OpenConfigPanel(cat)
         local loaded = A:LoadAddonConfig();
 
         if ( loaded ) then
-            A:OpenConfigPanel(cat);
+            -- Yes I could have simply called this method again
+            -- Avoiding "infinite" loop > lazy
+            -- If there is an error in the config addon it will freeze the game until a stack overflow
+            if ( cat ) then
+                cat = A["configFrame"..cat];
+
+                if ( not cat ) then
+                    cat = A.configFrameOptions;
+                end
+            else
+                cat = A.configFrameOptions;
+            end
+
+            InterfaceOptionsFrame_OpenToCategory(cat);
         end
     end
 end
@@ -2129,7 +2136,6 @@ function A:OnEnable()
 
     -- Events
     A:RegisterEvent("PLAYER_ENTERING_WORLD");
-    A:RegisterEvent("UPDATE_BINDINGS", "SetBindings");
     -- Update post click macros
     A:RegisterEvent("PLAYER_LEVEL_UP");
     -- Update current mapID
