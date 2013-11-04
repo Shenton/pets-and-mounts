@@ -162,16 +162,17 @@ A.dockButtonsAnchors =
 -- Pet species, called petTypes by Blizzard, so we will do the same
 A.petTypes =
 {
-    L["Humanoid"],
-    L["Dragonkin"],
-    L["Flying"],
-    L["Undead"],
-    L["Critter"],
-    L["Magic"],
-    L["Elemental"],
-    L["Beast"],
-    L["Aquatic"],
-    L["Mechanical"],
+    "Humanoid",
+    "Dragonkin",
+    "Flying",
+    "Undead",
+    "Critter",
+    "Magic",
+    "Elemental",
+    "Beast",
+    "Aquatic",
+    "Mechanical",
+    --"None";
 };
 
 -- Pets with restrictions, faction mostly, and some useless (winter helpers)
@@ -202,7 +203,37 @@ A.restrictedPets =
         type = "faction",
         args = "Horde",
     },
+    [51649] = -- Moonkin Hatchling - Horde
+    {
+        type = "faction",
+        args = "Horde",
+    },
+    [49588] = -- Guild Page - Horde
+    {
+        type = "faction",
+        args = "Horde",
+    },
+    [49590] = -- Guild Herald - Horde
+    {
+        type = "faction",
+        args = "Horde",
+    },
     [54539] = -- Alliance Balloon
+    {
+        type = "faction",
+        args = "Alliance",
+    },
+    [51601] = -- Moonkin Hatchling - Alliance
+    {
+        type = "faction",
+        args = "Alliance",
+    },
+    [49586] = -- Guild Page - Alliance
+    {
+        type = "faction",
+        args = "Alliance",
+    },
+    [49587] = -- Guild Herald - Alliance
     {
         type = "faction",
         args = "Alliance",

@@ -6,7 +6,8 @@
     Core.lua
 -------------------------------------------------------------------------------]]--
 
--- TODO: fix bindings in options panel - ticket 12
+-- TODO: check random mounts whith no hybrid favorited
+
 -- TODO: fix Moonkin Hatchling - add faction filter if possible - do not filter it if not - ticket 13
 -- TODO: Look into achievement mounts or unique per character mounts for restricted mounts - ticket 6
 
@@ -545,6 +546,25 @@ function A:RestorePetsFilters()
     petsFilters["SearchBoxValue"] = nil;
 end
 
+--- Will check if the pet can be used, this is special as there is some pets with the same name, but faction locked
+function A:CheckPetWithSameName(id)
+    if ( id == 51649 and A.playerFaction == "Alliance" ) then -- Moonkin Hatchling - Horde
+        return nil;
+    elseif ( id == 49588 and A.playerFaction == "Alliance" ) then -- Guild Page - Horde
+        return nil;
+    elseif ( id == 49590 and A.playerFaction == "Alliance" ) then -- Guild Herald - Horde
+        return nil;
+    elseif ( id == 51601 and A.playerFaction == "Horde" ) then -- Moonkin Hatchling - Alliance
+        return nil;
+    elseif ( id == 49586 and A.playerFaction == "Horde" ) then -- Guild Page - Alliance
+        return nil;
+    elseif ( id == 49587 and A.playerFaction == "Horde" ) then -- Guild Herald - Alliance
+        return nil;
+    end
+
+    return 1;
+end
+
 --- Build the companions table
 function A:BuildPetsTable(force)
     -- First, check if an update is needed
@@ -565,7 +585,7 @@ function A:BuildPetsTable(force)
     -- Getting total number of pets AFTER resetting filters (derp)
     local numPets = C_PetJournal.GetNumPets();
 
-    A.pamTable.pets = -- A.petTypes
+    A.pamTable.pets =
     {
         [1] = {}, -- Humanoid
         [2] = {}, -- Dragonkin
@@ -577,6 +597,7 @@ function A:BuildPetsTable(force)
         [8] = {}, -- Beast
         [9] = {}, -- Aquatic
         [10] = {}, -- Mechanical
+        --[11] = {}, -- None
     };
     A.pamTable.petsIds = {};
 
@@ -584,9 +605,11 @@ function A:BuildPetsTable(force)
         local petID, _, isOwned, customName, _, _, _, creatureName, icon, petType, creatureID = C_PetJournal.GetPetInfoByIndex(i);
         --local petID, speciesID, isOwned, customName, level, favorite, isRevoked, name, icon, petType, creatureID, sourceText, description, isWildPet, canBattle = C_PetJournal.GetPetInfoByIndex(index);
 
-        if ( isOwned ) then -- Do we possess that pet?
-            if ( A.petTypes[petType] ) then -- Do the add-on handle that pet type?
-                if ( customName and A.db.profile.noFilterCustom ) then -- Got a custom name?
+        --if ( not petType ) then petType = 11; end
+
+        if ( isOwned and A:CheckPetWithSameName(creatureID) ) then
+            if ( A.petTypes[petType] ) then
+                if ( customName and A.db.profile.noFilterCustom ) then
                     local leadingLetter = string.sub(customName, 1, 1);
                     if ( not A.pamTable.pets[petType][leadingLetter] ) then A.pamTable.pets[petType][leadingLetter] = {}; end
 
@@ -632,7 +655,7 @@ end
 -- 0x02 - Flying mount
 -- 0x04 - Usable at the water's surface
 -- 0x08 - Usable underwater
--- 0x10 - Can jump (the turtle mount cannot, for example)
+-- 0x10 - Can jump
 function A:GetMountCategory(bf)
     local ground = bit.band(bf, 0x1) ~= 0 and 1 or nil;
     local fly = bit.band(bf, 0x2) ~= 0 and 1 or nil;
