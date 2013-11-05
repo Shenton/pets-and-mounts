@@ -662,9 +662,10 @@ function A:GetMountCategory(bf)
     if ( ground and fly and surface and water and jump ) then -- hybrid - 31
         return 3;
     -- 4 Entries x 5
-    elseif ( (ground and fly and surface and water) or (ground and fly and surface and jump) or (ground and fly and water and jump) -- fly - 15 23 27
-    or (fly and surface and water and jump) ) then -- fly - 30
+    elseif ( (ground and fly and surface and water) or (ground and fly and water and jump) or (fly and surface and water and jump) ) then -- fly - 15 27 30
         return 2;
+    elseif ( (ground and fly and surface and jump) ) then -- hybrid - 23
+        return 3;
     elseif ( (ground and surface and water and jump) ) then -- ground - 29
         return 1;
     -- 3 Entries x 10
@@ -903,6 +904,79 @@ function A:AddSummonFilters()
         if ( not A.db.profile.mountsSummonFilters[k] ) then
             A.db.profile.mountsSummonFilters[k] = 1;
         end
+    end
+end
+
+--[[-------------------------------------------------------------------------------
+    Sets methods
+-------------------------------------------------------------------------------]]--
+
+--- Build a temporary table with the selected sets
+-- @param cat Pets or Mounts sets
+-- @param sets A table with selected sets
+-- @return the temp fav table
+function A:BuildTempSetTable(cat, sets)
+    local out;
+
+    if ( cat == "PETS" ) then
+        out = {};
+
+        for k,v in ipairs(sets) do
+            if ( A.db.global.savedSets.pets[v] and #A.db.global.savedSets.pets[v] > 0 ) then
+                for kk,vv in ipairs(A.db.global.savedSets.pets[v]) do
+                    out[#out+1] = vv;
+                end
+            end
+        end
+    elseif ( cat == "MOUNTS" ) then
+        out =
+        {
+            [1] = {}, -- Ground
+            [2] = {}, -- Fly
+            [3] = {}, -- Hybrid (ground & fly)
+            [4] = {}, -- Aquatic
+            [5] = {}, -- with passengers
+            [6] = {}, -- Water walking
+            [7] = {}, -- Repair
+        };
+
+        for k,v in ipairs(sets) do
+            if ( A.db.global.savedSets.mounts[v] ) then
+                for kk,vv in ipairs(A.db.global.savedSets.mounts[v]) do
+                    if ( #vv > 0 ) then
+                        for kkk,vvv in ipairs(vv) do
+                            out[kk][#out[kk]+1] = vvv;
+                        end
+                    end
+                end
+            end
+        end
+    else
+        return nil;
+    end
+
+    return out;
+end
+
+--- Set the favorites pets with the selected sets (global)
+function A:SetPetsSetsGlobal()
+    local pets = A:BuildTempSetTable("PETS", A.db.profile.enabledSets.pets);
+
+    if ( pets ) then
+        A.db.profile.favoritePets = {};
+        A:CopyTable(pets, A.db.profile.favoritePets);
+        A.usablePetsCache = nil;
+    end
+end
+
+--- Set the favorites mounts with the selected sets (global)
+function A:SetMountsSetsGlobal()
+    local mounts = A:BuildTempSetTable("MOUNTS", A.db.profile.enabledSets.mounts);
+
+    if ( mounts ) then
+        A.db.profile.favoriteMounts = {};
+        A:CopyTable(mounts, A.db.profile.favoriteMounts);
+        A.usableMountsCache = nil;
     end
 end
 
@@ -1567,7 +1641,7 @@ function A:ZONE_CHANGED_NEW_AREA()
     A:GetCurrentMapID();
     A:AutoPetDelay();
 
-    if ( A.AceConfigRegistry ) then
+    if ( A.configFrameFavOverride and A.configFrameFavOverride:IsVisible() ) then
         A:NotifyChangeForAll();
     end
 end
@@ -1809,7 +1883,12 @@ A.aceDefaultDB =
                 [7] = nil, -- Repair
             },
         },
-        savedSets = -- d
+        savedSets = -- d -- deprecated
+        {
+            pets = {},
+            mounts = {},
+        },
+        enabledSets = -- d
         {
             pets = {},
             mounts = {},

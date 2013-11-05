@@ -50,7 +50,7 @@ L["Indoor"] = true;
 
 L["Left"] = true;
 L["Licence"] = true;
-L["Load"] = true;
+--L["Load"] = true;
 L["Lock"] = true;
 L["Looting"] = true;
 
@@ -77,6 +77,7 @@ L["Right"] = true;
 
 L["Save"] = true;
 L["Scale"] = true;
+L["Select"] = true;
 L["Size"] = true;
 L["Stealthed"] = true
 L["Summon"] = true;

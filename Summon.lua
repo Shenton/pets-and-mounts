@@ -91,12 +91,12 @@ function A:SummonPet(id)
         return;
     end
 
-    A:DebugMessage("SummonPet()");
-
     if ( C_PetJournal.PetIsSummonable(id) ) then
-        A:DebugMessage("RandomPet() - Summon pet: "..A:GetPetNameByID(id));
+        A:DebugMessage("SummonPet() - Summon pet: "..A:GetPetNameByID(id));
 
         C_PetJournal.SummonPetByGUID(id);
+    else
+        A:DebugMessage("SummonPet() - Pet is not summonable");
     end
 end
 
@@ -281,13 +281,17 @@ function A:AutoPet()
         if ( currentPet and tContains(A.db.profile.favoritePets, currentPet) ) then
             A:DebugMessage("AutoPet() - Already got a fav pet");
         else
+            A:DebugMessage("AutoPet() - Summon fav pet");
             local id = A:GetRandomPet(A.db.profile.favoritePets);
             A:SummonPet(id);
         end
     elseif ( not currentPet and A:GotRandomPet(A.pamTable.petsIds) ) then -- All pets
+        A:DebugMessage("AutoPet() - Summon random pet global");
         local id = A:GetRandomPet(A.pamTable.petsIds);
         A:SummonPet(id);
     end
+
+    A:DebugMessage("AutoPet() - No summon");
 end
 
 --[[-------------------------------------------------------------------------------

@@ -276,8 +276,8 @@ do
             petsAndMountsGlobal.configModelFrame:SetCreature(creatureID);
 
             -- Frame pos
-            petsAndMountsGlobal.configModelFrame:ClearAllPoints()
-            petsAndMountsGlobal.configModelFrame:SetPoint("TOPLEFT", petsAndMountsGlobal.configFrame, "TOPRIGHT", 0, 0);
+            petsAndMountsGlobal.configModelFrame:ClearAllPoints();
+            petsAndMountsGlobal.configModelFrame:SetPoint("TOPLEFT", petsAndMountsGlobal.configFocusFrame, "TOPRIGHT", 0, 0);
             petsAndMountsGlobal.configModelFrame:Show();
         end)
         item:SetCallback("OnLeave", function()

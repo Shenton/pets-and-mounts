@@ -1110,31 +1110,30 @@ function A:AceConfig()
                         inline = true,
                         args =
                         {
-                            current =
-                            {
-                                order = 0,
-                                name = function()
-                                    local current = A:GetCurrentSet("PET");
+                            -- current =
+                            -- {
+                                -- order = 0,
+                                -- name = function()
+                                    -- local current = A:GetCurrentSet("PET");
 
-                                    return L["Currently using set: %s\n\n"]:format(current);
-                                end,
-                                type = "description",
-                                fontSize = "medium",
-                            },
-                            load =
-                            {
-                                order = 10,
-                                name = L["Load"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
+                                    -- return L["Currently using set: %s\n\n"]:format(current);
+                                -- end,
+                                -- type = "description",
+                                -- fontSize = "medium",
+                            -- },
+                            -- load =
+                            -- {
+                                -- order = 10,
+                                -- name = L["Load"],
+                                -- type = "group",
+                                -- inline = true,
+                                -- args =
+                                -- {
                                     select =
                                     {
-                                        order = 0,
-                                        name = L["Load"],
-                                        type = "select",
-                                        style = "dropdown",
+                                        order = 10,
+                                        name = L["Select"],
+                                        type = "multiselect",
                                         values = function()
                                             local out = {};
 
@@ -1144,18 +1143,25 @@ function A:AceConfig()
 
                                             return out;
                                         end,
-                                        get = function() return nil; end,
-                                        set = function(info, val)
-                                            print(val)
-                                            -- if ( A.db.global.savedSets.pets[val] ) then
-                                                -- A.db.profile.favoritePets = {};
-                                                -- A:CopyTable(A.db.global.savedSets.pets[val], A.db.profile.favoritePets);
-                                                -- A.usablePetsCache = nil;
-                                            -- end
+                                        get = function(info, name)
+                                            if ( tContains(A.db.profile.enabledSets.pets, name) ) then
+                                                return 1;
+                                            end
+
+                                            return nil;
+                                        end,
+                                        set = function(info, name, val)
+                                            if ( val ) then
+                                                A.db.profile.enabledSets.pets[#A.db.profile.enabledSets.pets+1] = name;
+                                            else
+                                                A:TableRemove(A.db.profile.enabledSets.pets, name);
+                                            end
+
+                                            A:SetPetsSetsGlobal();
                                         end,
                                     },
-                                },
-                            },
+                                -- },
+                            -- },
                             save =
                             {
                                 order = 20,
@@ -1249,30 +1255,30 @@ function A:AceConfig()
                         inline = true,
                         args =
                         {
-                            current =
-                            {
-                                order = 0,
-                                name = function()
-                                    local current = A:GetCurrentSet("MOUNT");
+                            -- current =
+                            -- {
+                                -- order = 0,
+                                -- name = function()
+                                    -- local current = A:GetCurrentSet("MOUNT");
 
-                                    return L["Currently using set: %s\n\n"]:format(current);
-                                end,
-                                type = "description",
-                                fontSize = "medium",
-                            },
-                            load =
-                            {
-                                order = 10,
-                                name = L["Load"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
+                                    -- return L["Currently using set: %s\n\n"]:format(current);
+                                -- end,
+                                -- type = "description",
+                                -- fontSize = "medium",
+                            -- },
+                            -- load =
+                            -- {
+                                -- order = 10,
+                                -- name = L["Load"],
+                                -- type = "group",
+                                -- inline = true,
+                                -- args =
+                                -- {
                                     select =
                                     {
-                                        order = 0,
-                                        name = L["Load"],
-                                        type = "select",
+                                        order = 10,
+                                        name = L["Select"],
+                                        type = "multiselect",
                                         values = function()
                                             local out = {};
 
@@ -1282,17 +1288,25 @@ function A:AceConfig()
 
                                             return out;
                                         end,
-                                        get = function() return nil; end,
-                                        set = function(info, val)
-                                            if ( A.db.global.savedSets.mounts[val] ) then
-                                                A.db.profile.favoriteMounts = {};
-                                                A:CopyTable(A.db.global.savedSets.mounts[val], A.db.profile.favoriteMounts);
-                                                A.usableMountsCache = nil;
+                                        get = function(info, name)
+                                            if ( tContains(A.db.profile.enabledSets.mounts, name) ) then
+                                                return 1;
                                             end
+
+                                            return nil;
+                                        end,
+                                        set = function(info, name, val)
+                                            if ( val ) then
+                                                A.db.profile.enabledSets.mounts[#A.db.profile.enabledSets.mounts+1] = name;
+                                            else
+                                                A:TableRemove(A.db.profile.enabledSets.mounts, name);
+                                            end
+
+                                            A:SetMountsSetsGlobal();
                                         end,
                                     },
-                                },
-                            },
+                                -- },
+                            -- },
                             save =
                             {
                                 order = 30,
@@ -1413,39 +1427,7 @@ function A:AceConfig()
                                 name = L["Companions"],
                                 type = "group",
                                 inline = true,
-                                args =
-                                {
-                                    pet =
-                                    {
-                                        order = 0,
-                                        name = L["Companions"],
-                                        desc = L["Select the companion to force summon."],
-                                        type = "select",
-                                        dialogControl = "Dropdown-SortByValue",
-                                        values = function()
-                                        -- Using a string instead of an integer for "None", since blizzard stopped using ID but use GUID for pets
-                                        -- Why? Because Ace3 sort keys (btw sorting values would have been better or giving choices)
-                                        -- Fu, rewriting SetList method from dropdown widget
-                                            local out = { [0] = L["None"] };
-
-                                            for k,v in A:PairsByKeys(A.pamTable.pets) do
-                                                for kk,vv in ipairs(v) do
-                                                    out[vv.petID] = vv.name;
-                                                end
-                                            end
-
-                                            return out;
-                                        end,
-                                        get = function() return A.db.profile.forceOne.pet; end,
-                                        set = function(info, val)
-                                            if ( val == 0 ) then
-                                                A.db.profile.forceOne.pet = nil;
-                                            else
-                                                A.db.profile.forceOne.pet = val;
-                                            end
-                                        end,
-                                    },
-                                },
+                                args = {},
                             },
                             mounts =
                             {
@@ -1453,198 +1435,7 @@ function A:AceConfig()
                                 name = L["Mounts"],
                                 type = "group",
                                 inline = true,
-                                args =
-                                {
-                                    aquatic =
-                                    {
-                                        order = 0,
-                                        name = L["Aquatic"],
-                                        desc = L["Select the %s mount to force summon."]:format(L["Aquatic"]),
-                                        type = "select",
-                                        dialogControl = "Dropdown-SortByValue",
-                                        values = function()
-                                            local out = { [0] = L["None"] };
-
-                                            for k,v in A:PairsByKeys(A.pamTable.mounts[4]) do
-                                                for kk,vv in ipairs(v) do
-                                                    out[vv.spellID] = vv.name;
-                                                end
-                                            end
-
-                                            return out;
-                                        end,
-                                        get = function() return A.db.profile.forceOne.mount[4]; end,
-                                        set = function(info, val)
-                                            if ( val == 0 ) then
-                                                A.db.profile.forceOne.mount[4] = nil;
-                                            else
-                                                A.db.profile.forceOne.mount[4] = val;
-                                            end
-                                        end,
-                                    },
-                                    ground =
-                                    {
-                                        order = 1,
-                                        name = L["Ground"],
-                                        desc = L["Select the %s mount to force summon."]:format(L["Ground"]),
-                                        type = "select",
-                                        dialogControl = "Dropdown-SortByValue",
-                                        values = function()
-                                            local out = { [0] = L["None"] };
-
-                                            for k,v in A:PairsByKeys(A.pamTable.mounts[1]) do
-                                                for kk,vv in ipairs(v) do
-                                                    out[vv.spellID] = vv.name;
-                                                end
-                                            end
-
-                                            return out;
-                                        end,
-                                        get = function() return A.db.profile.forceOne.mount[1]; end,
-                                        set = function(info, val)
-                                            if ( val == 0 ) then
-                                                A.db.profile.forceOne.mount[1] = nil;
-                                            else
-                                                A.db.profile.forceOne.mount[1] = val;
-                                            end
-                                        end,
-                                    },
-                                    fly =
-                                    {
-                                        order = 2,
-                                        name = L["Fly"],
-                                        desc = L["Select the %s mount to force summon."]:format(L["Fly"]),
-                                        type = "select",
-                                        dialogControl = "Dropdown-SortByValue",
-                                        values = function()
-                                            local out = { [0] = L["None"] };
-
-                                            for k,v in A:PairsByKeys(A.pamTable.mounts[2]) do
-                                                for kk,vv in ipairs(v) do
-                                                    out[vv.spellID] = vv.name;
-                                                end
-                                            end
-
-                                            return out;
-                                        end,
-                                        get = function() return A.db.profile.forceOne.mount[2]; end,
-                                        set = function(info, val)
-                                            if ( val == 0 ) then
-                                                A.db.profile.forceOne.mount[2] = nil;
-                                            else
-                                                A.db.profile.forceOne.mount[2] = val;
-                                            end
-                                        end,
-                                    },
-                                    hybrid =
-                                    {
-                                        order = 3,
-                                        name = L["Hybrid"],
-                                        desc = L["Select the %s mount to force summon."]:format(L["Hybrid"]),
-                                        type = "select",
-                                        dialogControl = "Dropdown-SortByValue",
-                                        values = function()
-                                            local out = { [0] = L["None"] };
-
-                                            for k,v in A:PairsByKeys(A.pamTable.mounts[3]) do
-                                                for kk,vv in ipairs(v) do
-                                                    out[vv.spellID] = vv.name;
-                                                end
-                                            end
-
-                                            return out;
-                                        end,
-                                        get = function() return A.db.profile.forceOne.mount[3]; end,
-                                        set = function(info, val)
-                                            if ( val == 0 ) then
-                                                A.db.profile.forceOne.mount[3] = nil;
-                                            else
-                                                A.db.profile.forceOne.mount[3] = val;
-                                            end
-                                        end,
-                                    },
-                                    passenger =
-                                    {
-                                        order = 4,
-                                        name = L["Passenger"],
-                                        desc = L["Select the %s mount to force summon."]:format(L["Passenger"]),
-                                        type = "select",
-                                        dialogControl = "Dropdown-SortByValue",
-                                        values = function()
-                                            local out = { [0] = L["None"] };
-
-                                            for k,v in A:PairsByKeys(A.pamTable.mounts[5]) do
-                                                for kk,vv in ipairs(v) do
-                                                    out[vv.spellID] = vv.name;
-                                                end
-                                            end
-
-                                            return out;
-                                        end,
-                                        get = function() return A.db.profile.forceOne.mount[5]; end,
-                                        set = function(info, val)
-                                            if ( val == 0 ) then
-                                                A.db.profile.forceOne.mount[5] = nil;
-                                            else
-                                                A.db.profile.forceOne.mount[5] = val;
-                                            end
-                                        end,
-                                    },
-                                    surface =
-                                    {
-                                        order = 5,
-                                        name = L["Surface"],
-                                        desc = L["Select the %s mount to force summon."]:format(L["Surface"]),
-                                        type = "select",
-                                        dialogControl = "Dropdown-SortByValue",
-                                        values = function()
-                                            local out = { [0] = L["None"] };
-
-                                            for k,v in A:PairsByKeys(A.pamTable.mounts[6]) do
-                                                for kk,vv in ipairs(v) do
-                                                    out[vv.spellID] = vv.name;
-                                                end
-                                            end
-
-                                            return out;
-                                        end,
-                                        get = function() return A.db.profile.forceOne.mount[6]; end,
-                                        set = function(info, val)
-                                            if ( val == 0 ) then
-                                                A.db.profile.forceOne.mount[6] = nil;
-                                            else
-                                                A.db.profile.forceOne.mount[6] = val;
-                                            end
-                                        end,
-                                    },
-                                    repair =
-                                    {
-                                        order = 6,
-                                        name = L["Repair"],
-                                        desc = L["Select the %s mount to force summon."]:format(L["Repair"]),
-                                        type = "select",
-                                        dialogControl = "Dropdown-SortByValue",
-                                        values = function()
-                                            local out = { [0] = L["None"] };
-
-                                            for k,v in A:PairsByKeys(A.pamTable.mounts[7]) do
-                                                for kk,vv in ipairs(v) do
-                                                    out[vv.spellID] = vv.name;
-                                                end
-                                            end
-
-                                            return out;
-                                        end,
-                                        get = function() return A.db.profile.forceOne.mount[7]; end,
-                                        set = function(info, val)
-                                            if ( val == 0 ) then
-                                                A.db.profile.forceOne.mount[7] = nil;
-                                            else
-                                                A.db.profile.forceOne.mount[7] = val;
-                                            end
-                                        end,
-                                    },
-                                },
+                                args = {},
                             },
                         },
                     },
@@ -1712,55 +1503,7 @@ function A:AceConfig()
                                         name = L["Companions"],
                                         type = "header",
                                     },
-                                    pet =
-                                    {
-                                        order = 110,
-                                        name = L["Companions"],
-                                        desc = L["Select the companion to force summon."],
-                                        type = "select",
-                                        dialogControl = "Dropdown-SortByValue",
-                                        values = function()
-                                            local out = { [0] = L["None"] };
-
-                                            for k,v in A:PairsByKeys(A.pamTable.pets) do
-                                                for kk,vv in ipairs(v) do
-                                                    out[vv.petID] = vv.name;
-                                                end
-                                            end
-
-                                            return out;
-                                        end,
-                                        get = function()
-                                            local mapID;
-
-                                            if ( A.currentMapIDForPets ) then
-                                                mapID = A.currentMapIDForPets;
-                                            else
-                                                mapID = A.currentMapID;
-                                            end
-
-                                            if ( A.db.profile.petByMapID[tostring(mapID)] ) then
-                                                return A.db.profile.petByMapID[tostring(mapID)];
-                                            else
-                                                return 0;
-                                            end
-                                        end,
-                                        set = function(info, val)
-                                            local mapID;
-
-                                            if ( A.currentMapIDForPets ) then
-                                                mapID = A.currentMapIDForPets;
-                                            else
-                                                mapID = A.currentMapID;
-                                            end
-
-                                            if ( val == 0 ) then
-                                                A.db.profile.petByMapID[tostring(mapID)] = nil;
-                                            else
-                                                A.db.profile.petByMapID[tostring(mapID)] = val;
-                                            end
-                                        end,
-                                    },
+                                    -- Pets dropdowns goes here
                                     zoneSelectReset =
                                     {
                                         order = 200,
@@ -1831,349 +1574,7 @@ function A:AceConfig()
                                         name = L["Mounts"],
                                         type = "header",
                                     },
-                                    aquatic =
-                                    {
-                                        order = 101,
-                                        name = L["Aquatic"],
-                                        desc = L["Select the %s mount to force summon."]:format(L["Aquatic"]),
-                                        type = "select",
-                                        dialogControl = "Dropdown-SortByValue",
-                                        values = function()
-                                            local out = { [0] = L["None"] };
-
-                                            for k,v in A:PairsByKeys(A.pamTable.mounts[4]) do
-                                                for kk,vv in ipairs(v) do
-                                                    out[vv.spellID] = vv.name;
-                                                end
-                                            end
-
-                                            return out;
-                                        end,
-                                        get = function()
-                                            local mapID;
-
-                                            if ( A.currentMapIDForMounts ) then
-                                                mapID = A.currentMapIDForMounts;
-                                            else
-                                                mapID = A.currentMapID;
-                                            end
-
-                                            if ( A.db.profile.mountByMapID[4][tostring(mapID)] ) then
-                                                return A.db.profile.mountByMapID[4][tostring(mapID)];
-                                            else
-                                                return 0;
-                                            end
-                                        end,
-                                        set = function(info, val)
-                                            local mapID;
-
-                                            if ( A.currentMapIDForMounts ) then
-                                                mapID = A.currentMapIDForMounts;
-                                            else
-                                                mapID = A.currentMapID;
-                                            end
-
-                                            if ( val == 0 ) then
-                                                A.db.profile.mountByMapID[4][tostring(mapID)] = nil;
-                                            else
-                                                A.db.profile.mountByMapID[4][tostring(mapID)] = val;
-                                            end
-                                        end,
-                                    },
-                                    ground =
-                                    {
-                                        order = 110,
-                                        name = L["Ground"],
-                                        desc = L["Select the %s mount to force summon."]:format(L["Ground"]),
-                                        type = "select",
-                                        dialogControl = "Dropdown-SortByValue",
-                                        values = function()
-                                            local out = { [0] = L["None"] };
-
-                                            for k,v in A:PairsByKeys(A.pamTable.mounts[1]) do
-                                                for kk,vv in ipairs(v) do
-                                                    out[vv.spellID] = vv.name;
-                                                end
-                                            end
-
-                                            return out;
-                                        end,
-                                        get = function()
-                                            local mapID;
-
-                                            if ( A.currentMapIDForMounts ) then
-                                                mapID = A.currentMapIDForMounts;
-                                            else
-                                                mapID = A.currentMapID;
-                                            end
-
-                                            if ( A.db.profile.mountByMapID[1][tostring(mapID)] ) then
-                                                return A.db.profile.mountByMapID[1][tostring(mapID)];
-                                            else
-                                                return 0;
-                                            end
-                                        end,
-                                        set = function(info, val)
-                                            local mapID;
-
-                                            if ( A.currentMapIDForMounts ) then
-                                                mapID = A.currentMapIDForMounts;
-                                            else
-                                                mapID = A.currentMapID;
-                                            end
-
-                                            if ( val == 0 ) then
-                                                A.db.profile.mountByMapID[1][tostring(mapID)] = nil;
-                                            else
-                                                A.db.profile.mountByMapID[1][tostring(mapID)] = val;
-                                            end
-                                        end,
-                                    },
-                                    fly =
-                                    {
-                                        order = 120,
-                                        name = L["Fly"],
-                                        desc = L["Select the %s mount to force summon."]:format(L["Fly"]),
-                                        type = "select",
-                                        dialogControl = "Dropdown-SortByValue",
-                                        values = function()
-                                            local out = { [0] = L["None"] };
-
-                                            for k,v in A:PairsByKeys(A.pamTable.mounts[2]) do
-                                                for kk,vv in ipairs(v) do
-                                                    out[vv.spellID] = vv.name;
-                                                end
-                                            end
-
-                                            return out;
-                                        end,
-                                        get = function()
-                                            local mapID;
-
-                                            if ( A.currentMapIDForMounts ) then
-                                                mapID = A.currentMapIDForMounts;
-                                            else
-                                                mapID = A.currentMapID;
-                                            end
-
-                                            if ( A.db.profile.mountByMapID[2][tostring(mapID)] ) then
-                                                return A.db.profile.mountByMapID[2][tostring(mapID)];
-                                            else
-                                                return 0;
-                                            end
-                                        end,
-                                        set = function(info, val)
-                                            local mapID;
-
-                                            if ( A.currentMapIDForMounts ) then
-                                                mapID = A.currentMapIDForMounts;
-                                            else
-                                                mapID = A.currentMapID;
-                                            end
-
-                                            if ( val == 0 ) then
-                                                A.db.profile.mountByMapID[2][tostring(mapID)] = nil;
-                                            else
-                                                A.db.profile.mountByMapID[2][tostring(mapID)] = val;
-                                            end
-                                        end,
-                                    },
-                                    hybrid =
-                                    {
-                                        order = 130,
-                                        name = L["Hybrid"],
-                                        desc = L["Select the %s mount to force summon."]:format(L["Hybrid"]),
-                                        type = "select",
-                                        dialogControl = "Dropdown-SortByValue",
-                                        values = function()
-                                            local out = { [0] = L["None"] };
-
-                                            for k,v in A:PairsByKeys(A.pamTable.mounts[3]) do
-                                                for kk,vv in ipairs(v) do
-                                                    out[vv.spellID] = vv.name;
-                                                end
-                                            end
-
-                                            return out;
-                                        end,
-                                        get = function()
-                                            local mapID;
-
-                                            if ( A.currentMapIDForMounts ) then
-                                                mapID = A.currentMapIDForMounts;
-                                            else
-                                                mapID = A.currentMapID;
-                                            end
-
-                                            if ( A.db.profile.mountByMapID[3][tostring(mapID)] ) then
-                                                return A.db.profile.mountByMapID[3][tostring(mapID)];
-                                            else
-                                                return 0;
-                                            end
-                                        end,
-                                        set = function(info, val)
-                                            local mapID;
-
-                                            if ( A.currentMapIDForMounts ) then
-                                                mapID = A.currentMapIDForMounts;
-                                            else
-                                                mapID = A.currentMapID;
-                                            end
-
-                                            if ( val == 0 ) then
-                                                A.db.profile.mountByMapID[3][tostring(mapID)] = nil;
-                                            else
-                                                A.db.profile.mountByMapID[3][tostring(mapID)] = val;
-                                            end
-                                        end,
-                                    },
-                                    passenger =
-                                    {
-                                        order = 140,
-                                        name = L["Passenger"],
-                                        desc = L["Select the %s mount to force summon."]:format(L["Passenger"]),
-                                        type = "select",
-                                        dialogControl = "Dropdown-SortByValue",
-                                        values = function()
-                                            local out = { [0] = L["None"] };
-
-                                            for k,v in A:PairsByKeys(A.pamTable.mounts[5]) do
-                                                for kk,vv in ipairs(v) do
-                                                    out[vv.spellID] = vv.name;
-                                                end
-                                            end
-
-                                            return out;
-                                        end,
-                                        get = function()
-                                            local mapID;
-
-                                            if ( A.currentMapIDForMounts ) then
-                                                mapID = A.currentMapIDForMounts;
-                                            else
-                                                mapID = A.currentMapID;
-                                            end
-
-                                            if ( A.db.profile.mountByMapID[5][tostring(mapID)] ) then
-                                                return A.db.profile.mountByMapID[5][tostring(mapID)];
-                                            else
-                                                return 0;
-                                            end
-                                        end,
-                                        set = function(info, val)
-                                            local mapID;
-
-                                            if ( A.currentMapIDForMounts ) then
-                                                mapID = A.currentMapIDForMounts;
-                                            else
-                                                mapID = A.currentMapID;
-                                            end
-
-                                            if ( val == 0 ) then
-                                                A.db.profile.mountByMapID[5][tostring(mapID)] = nil;
-                                            else
-                                                A.db.profile.mountByMapID[5][tostring(mapID)] = val;
-                                            end
-                                        end,
-                                    },
-                                    surface =
-                                    {
-                                        order = 150,
-                                        name = L["Surface"],
-                                        desc = L["Select the %s mount to force summon."]:format(L["Surface"]),
-                                        type = "select",
-                                        dialogControl = "Dropdown-SortByValue",
-                                        values = function()
-                                            local out = { [0] = L["None"] };
-
-                                            for k,v in A:PairsByKeys(A.pamTable.mounts[6]) do
-                                                for kk,vv in ipairs(v) do
-                                                    out[vv.spellID] = vv.name;
-                                                end
-                                            end
-
-                                            return out;
-                                        end,
-                                        get = function()
-                                            local mapID;
-
-                                            if ( A.currentMapIDForMounts ) then
-                                                mapID = A.currentMapIDForMounts;
-                                            else
-                                                mapID = A.currentMapID;
-                                            end
-
-                                            if ( A.db.profile.mountByMapID[6][tostring(mapID)] ) then
-                                                return A.db.profile.mountByMapID[6][tostring(mapID)];
-                                            else
-                                                return 0;
-                                            end
-                                        end,
-                                        set = function(info, val)
-                                            local mapID;
-
-                                            if ( A.currentMapIDForMounts ) then
-                                                mapID = A.currentMapIDForMounts;
-                                            else
-                                                mapID = A.currentMapID;
-                                            end
-
-                                            if ( val == 0 ) then
-                                                A.db.profile.mountByMapID[6][tostring(mapID)] = nil;
-                                            else
-                                                A.db.profile.mountByMapID[6][tostring(mapID)] = val;
-                                            end
-                                        end,
-                                    },
-                                    repair =
-                                    {
-                                        order = 160,
-                                        name = L["Repair"],
-                                        desc = L["Select the %s mount to force summon."]:format(L["Repair"]),
-                                        type = "select",
-                                        dialogControl = "Dropdown-SortByValue",
-                                        values = function()
-                                            local out = { [0] = L["None"] };
-
-                                            for k,v in A:PairsByKeys(A.pamTable.mounts[7]) do
-                                                for kk,vv in ipairs(v) do
-                                                    out[vv.spellID] = vv.name;
-                                                end
-                                            end
-
-                                            return out;
-                                        end,
-                                        get = function()
-                                            local mapID;
-
-                                            if ( A.currentMapIDForMounts ) then
-                                                mapID = A.currentMapIDForMounts;
-                                            else
-                                                mapID = A.currentMapID;
-                                            end
-
-                                            if ( A.db.profile.mountByMapID[7][tostring(mapID)] ) then
-                                                return A.db.profile.mountByMapID[7][tostring(mapID)];
-                                            else
-                                                return 0;
-                                            end
-                                        end,
-                                        set = function(info, val)
-                                            local mapID;
-
-                                            if ( A.currentMapIDForMounts ) then
-                                                mapID = A.currentMapIDForMounts;
-                                            else
-                                                mapID = A.currentMapID;
-                                            end
-
-                                            if ( val == 0 ) then
-                                                A.db.profile.mountByMapID[7][tostring(mapID)] = nil;
-                                            else
-                                                A.db.profile.mountByMapID[7][tostring(mapID)] = val;
-                                            end
-                                        end,
-                                    },
+                                    -- Mounts dropdowns goes here
                                     zoneSelectReset =
                                     {
                                         order = 200,
@@ -2646,7 +2047,7 @@ function A:AceConfig()
 
                         -- Frame pos
                         A.configModelFrame:ClearAllPoints()
-                        A.configModelFrame:SetPoint("TOPLEFT", A.configFrameOptions, "TOPRIGHT", 0, 0);
+                        A.configModelFrame:SetPoint("TOPLEFT", A.configFocusFrame, "TOPRIGHT", 0, 0);
                         A.configModelFrame:Show();
 
                         if ( A.db.profile.debug ) then
@@ -2706,6 +2107,7 @@ function A:AceConfig()
                 disabled = function() return not A.enablePetResetButton; end,
                 func = function()
                     A.db.profile.favoritePets = {};
+                    --A.db.profile.enabledSets.pets = {};
                     A.usablePetsCache = nil;
                     A.enablePetResetButton = nil;
                 end,
@@ -2750,7 +2152,7 @@ function A:AceConfig()
 
                             -- Frame pos
                             A.configModelFrame:ClearAllPoints()
-                            A.configModelFrame:SetPoint("TOPLEFT", A.configFrameOptions, "TOPRIGHT", 0, 0);
+                            A.configModelFrame:SetPoint("TOPLEFT", A.configFocusFrame, "TOPRIGHT", 0, 0);
                             A.configModelFrame:Show();
 
                             if ( A.db.profile.debug ) then
@@ -2831,6 +2233,198 @@ function A:AceConfig()
         },
     };
 
+    -- Force one pets
+    orderItem = 0;
+    for k,v in ipairs(A.pamTable.pets) do
+        options.args.favOverride.args.forceOne.args.pets.args[A.petTypes[k]] =
+        {
+            order = orderItem,
+            name = L[A.petTypes[k]],
+            desc = L["Select the companion to force summon."],
+            type = "select",
+            dialogControl = "Dropdown-SortByValue",
+            values = function()
+                local out = { [0] = L["None"] };
+
+                for kk,vv in A:PairsByKeys(v) do
+                    for kkk,vvv in ipairs(vv) do
+                        if ( A.db.profile.forceOne.pet == vvv.petID ) then
+                            A.forcedPetType = k;
+                        end
+
+                        out[vvv.petID] = vvv.name;
+                    end
+                end
+
+                return out;
+            end,
+            get = function() return A.db.profile.forceOne.pet or nil; end, 
+            set = function(info, val)
+                if ( val == 0 ) then
+                    if ( A.forcedPetType == k ) then
+                        A.db.profile.forceOne.pet = nil;
+                    end
+                else
+                    A.db.profile.forceOne.pet = val;
+                    A.forcedPetType = k;
+                end
+            end,
+        };
+
+        orderItem = orderItem + 1;
+    end
+
+    -- Force one mounts
+    orderItem = 0;
+    for k,v in ipairs(A.pamTable.mounts) do
+        options.args.favOverride.args.forceOne.args.mounts.args[A.mountCat[k]] =
+        {
+            order = orderItem,
+            name = A.mountCat[k],
+            desc = L["Select the %s mount to force summon."]:format(A.mountCat[k]),
+            type = "select",
+            dialogControl = "Dropdown-SortByValue",
+            values = function()
+                local out = { [0] = L["None"] };
+
+                for kk,vv in A:PairsByKeys(A.pamTable.mounts[k]) do
+                    for kkk,vvv in ipairs(vv) do
+                        out[vvv.spellID] = vvv.name;
+                    end
+                end
+
+                return out;
+            end,
+            get = function() return A.db.profile.forceOne.mount[k] or nil; end,
+            set = function(info, val)
+                if ( val == 0 ) then
+                    A.db.profile.forceOne.mount[k] = nil;
+                else
+                    A.db.profile.forceOne.mount[k] = val;
+                end
+            end,
+        };
+
+        orderItem = orderItem + 1;
+    end
+
+    -- Area override pets
+    orderItem = 110;
+    for k,v in ipairs(A.pamTable.pets) do
+        options.args.favOverride.args.zoneOverride.args.pets.args[A.petTypes[k]] =
+        {
+            order = orderItem,
+            name = L[A.petTypes[k]],
+            desc = L["Select the companion to force summon."],
+            type = "select",
+            dialogControl = "Dropdown-SortByValue",
+            values = function()
+                local out = { [0] = L["None"] };
+
+                if ( A.currentMapIDForPets ) then
+                    mapID = A.currentMapIDForPets;
+                else
+                    mapID = A.currentMapID;
+                end
+
+                for kk,vv in A:PairsByKeys(A.pamTable.pets[k]) do
+                    for kkk,vvv in ipairs(vv) do
+                        if ( A.db.profile.petByMapID[tostring(mapID)] == vvv.petID ) then
+                            A.zonePetType = k;
+                        end
+
+                        out[vvv.petID] = vvv.name;
+                    end
+                end
+
+                return out;
+            end,
+            get = function()
+                local mapID;
+
+                if ( A.currentMapIDForPets ) then
+                    mapID = A.currentMapIDForPets;
+                else
+                    mapID = A.currentMapID;
+                end
+
+                return A.db.profile.petByMapID[tostring(mapID)] or nil;
+            end,
+            set = function(info, val)
+                local mapID;
+
+                if ( A.currentMapIDForPets ) then
+                    mapID = A.currentMapIDForPets;
+                else
+                    mapID = A.currentMapID;
+                end
+
+                if ( val == 0 ) then
+                    if ( A.zonePetType == k ) then
+                        A.db.profile.petByMapID[tostring(mapID)] = nil;
+                    end
+                else
+                    A.db.profile.petByMapID[tostring(mapID)] = val;
+                    A.zonePetType = k;
+                end
+            end,
+        };
+
+        orderItem = orderItem + 1;
+    end
+
+     -- Area override mounts
+    orderItem = 110;
+    for k,v in ipairs(A.pamTable.mounts) do
+        options.args.favOverride.args.zoneOverride.args.mounts.args[A.mountCat[k]] =
+        {
+            order = orderItem,
+            name = A.mountCat[k],
+            desc = L["Select the %s mount to force summon."]:format(A.mountCat[k]),
+            type = "select",
+            dialogControl = "Dropdown-SortByValue",
+            values = function()
+                local out = { [0] = L["None"] };
+
+                for k,v in A:PairsByKeys(A.pamTable.mounts[k]) do
+                    for kk,vv in ipairs(v) do
+                        out[vv.spellID] = vv.name;
+                    end
+                end
+
+                return out;
+            end,
+            get = function()
+                local mapID;
+
+                if ( A.currentMapIDForMounts ) then
+                    mapID = A.currentMapIDForMounts;
+                else
+                    mapID = A.currentMapID;
+                end
+
+                return A.db.profile.mountByMapID[k][tostring(mapID)] or nil;
+            end,
+            set = function(info, val)
+                local mapID;
+
+                if ( A.currentMapIDForMounts ) then
+                    mapID = A.currentMapIDForMounts;
+                else
+                    mapID = A.currentMapID;
+                end
+
+                if ( val == 0 ) then
+                    A.db.profile.mountByMapID[k][tostring(mapID)] = nil;
+                else
+                    A.db.profile.mountByMapID[k][tostring(mapID)] = val;
+                end
+            end,
+        };
+
+        orderItem = orderItem + 1;
+    end
+
     -- Profiles
     options.args.options.args.profilesOptions = LibStub("AceDBOptions-3.0"):GetOptionsTable(A.db);
     options.args.options.args.profilesOptions.order = 10000;
@@ -2856,16 +2450,32 @@ A.configFrameSets = A.AceConfigDialog:AddToBlizOptions(L["Pets & Mounts"]..": ".
 A.configFrameFavOverride = A.AceConfigDialog:AddToBlizOptions(L["Pets & Mounts"]..": "..options.args.favOverride.name, options.args.favOverride.name, L["Pets & Mounts"]);
 A.configFrameAbout = A.AceConfigDialog:AddToBlizOptions(L["Pets & Mounts"]..": "..options.args.about.name, options.args.about.name, L["Pets & Mounts"]);
 
+-- Assign a var to the current config frame on focus
+A.configFrameOptions:HookScript("OnShow", function(self) A.configFocusFrame = self; end);
+A.configFramePets:HookScript("OnShow", function(self) A.configFocusFrame = self; end);
+A.configFrameMounts:HookScript("OnShow", function(self) A.configFocusFrame = self; end);
+A.configFrameSets:HookScript("OnShow", function(self) A.configFocusFrame = self; end);
+A.configFrameFavOverride:HookScript("OnShow", function(self) A.configFocusFrame = self; end);
+A.configFrameAbout:HookScript("OnShow", function(self) A.configFocusFrame = self; end);
+
 -- Hide model frame hooks
 A.configFramePets:HookScript("OnHide", function() A.configModelFrame:Hide(); end);
 A.configFrameMounts:HookScript("OnHide", function() A.configModelFrame:Hide(); end);
+A.configFrameFavOverride:HookScript("OnHide", function() A.configModelFrame:Hide(); end);
 
 -- NotifyChange method
 function A:NotifyChangeForAll()
-    A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"], options.args.options);
-    A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"]..": "..options.args.pets.name, options.args.pets);
-    A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"]..": "..options.args.mounts.name, options.args.mounts);
-    A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"]..": "..options.args.sets.name, options.args.sets);
-    A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"]..": "..options.args.favOverride.name, options.args.favOverride);
-    A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"]..": "..options.args.about.name, options.args.about);
+    if ( A.configFrameOptions:IsVisible() ) then
+        A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"], options.args.options);
+    elseif ( A.configFramePets:IsVisible() ) then
+        A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"]..": "..options.args.pets.name, options.args.pets);
+    elseif ( A.configFrameMounts:IsVisible() ) then
+        A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"]..": "..options.args.mounts.name, options.args.mounts);
+    elseif ( A.configFrameSets:IsVisible() ) then
+        A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"]..": "..options.args.sets.name, options.args.sets);
+    elseif ( A.configFrameFavOverride:IsVisible() ) then
+        A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"]..": "..options.args.favOverride.name, options.args.favOverride);
+    elseif ( A.configFrameAbout:IsVisible() ) then
+        A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"]..": "..options.args.about.name, options.args.about);
+    end
 end
