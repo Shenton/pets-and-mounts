@@ -6,10 +6,6 @@
     Core.lua
 -------------------------------------------------------------------------------]]--
 
--- TODO: check random mounts whith no hybrid favorited
-
--- TODO: Look into achievement mounts or unique per character mounts for restricted mounts - ticket 6
-
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 -- TODO: Fix companion staying where you died
 

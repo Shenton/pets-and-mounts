@@ -1134,6 +1134,7 @@ function A:AceConfig()
                                         order = 0,
                                         name = L["Load"],
                                         type = "select",
+                                        style = "dropdown",
                                         values = function()
                                             local out = {};
 
@@ -1145,10 +1146,12 @@ function A:AceConfig()
                                         end,
                                         get = function() return nil; end,
                                         set = function(info, val)
-                                            if ( A.db.global.savedSets.pets[val] ) then
-                                                A.db.profile.favoritePets = {};
-                                                A:CopyTable(A.db.global.savedSets.pets[val], A.db.profile.favoritePets);
-                                            end
+                                            print(val)
+                                            -- if ( A.db.global.savedSets.pets[val] ) then
+                                                -- A.db.profile.favoritePets = {};
+                                                -- A:CopyTable(A.db.global.savedSets.pets[val], A.db.profile.favoritePets);
+                                                -- A.usablePetsCache = nil;
+                                            -- end
                                         end,
                                     },
                                 },
@@ -1284,6 +1287,7 @@ function A:AceConfig()
                                             if ( A.db.global.savedSets.mounts[val] ) then
                                                 A.db.profile.favoriteMounts = {};
                                                 A:CopyTable(A.db.global.savedSets.mounts[val], A.db.profile.favoriteMounts);
+                                                A.usableMountsCache = nil;
                                             end
                                         end,
                                     },
@@ -2661,6 +2665,8 @@ function A:AceConfig()
                         else
                             A.db.profile.favoritePets[#A.db.profile.favoritePets+1] = vvv.petID;
                         end
+
+                        A.usablePetsCache = nil;
                     end,
                     get = function()
                         if ( tContains(A.db.profile.favoritePets, vvv.petID) ) then
@@ -2700,6 +2706,7 @@ function A:AceConfig()
                 disabled = function() return not A.enablePetResetButton; end,
                 func = function()
                     A.db.profile.favoritePets = {};
+                    A.usablePetsCache = nil;
                     A.enablePetResetButton = nil;
                 end,
             },
@@ -2764,6 +2771,8 @@ function A:AceConfig()
                             else
                                 A.db.profile.favoriteMounts[k][#A.db.profile.favoriteMounts[k]+1] = vvv.spellID;
                             end
+
+                            A.usableMountsCache = nil;
                         end,
                         get = function()
                             if ( tContains(A.db.profile.favoriteMounts[k], vvv.spellID) ) then
