@@ -8,7 +8,6 @@
 
 -- TODO: check random mounts whith no hybrid favorited
 
--- TODO: fix Moonkin Hatchling - add faction filter if possible - do not filter it if not - ticket 13
 -- TODO: Look into achievement mounts or unique per character mounts for restricted mounts - ticket 6
 
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
@@ -17,7 +16,7 @@
 -- TODO: Built in set for pets families
 -- TODO: search system for pets and mounts
 -- TODO: Area sets
--- TODO: Summon a selected cat (option) mount with alt+click
+-- TODO: Summon a selected category (option) mount with alt+click
 
 -- TODO: Add a function to "copy" highlighted player's mounts (random companion has it. Really handy) - Makulatur on Curse comments
 -- TODO: Revoke pet on pet button click - Makulatur on Curse comments
@@ -1029,6 +1028,7 @@ function A:SetEverything()
     A.playerLevel = UnitLevel("player");
     A.playerFaction = UnitFactionGroup("player");
     A.playerRace = select(2, UnitRace("player"));
+    A.playerName = UnitName("player");
 
     A:SetDebugMessage();
     A:ShowHideMinimap();

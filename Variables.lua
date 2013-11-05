@@ -483,6 +483,94 @@ A.restrictedMounts =
         args = {197, 425},
     },
     --
+    -- Achievements
+    [100332] = -- Vicious War Steed
+    {
+        type = "achievement",
+        args = {5328, 5329, 5823},
+    },
+    [100333] = -- Vicious War Wolf
+    {
+        type = "achievement",
+        args = {5325, 5326, 5824},
+    },
+    [37015] = -- Swift Nether Drake - S1 glad
+    {
+        type = "achievement",
+        args = 886,
+    },
+    [44744] = -- Merciless Nether Drake - S2 glad
+    {
+        type = "achievement",
+        args = 887,
+    },
+    [49193] = -- Vengeful Nether Drake - S3 glad
+    {
+        type = "achievement",
+        args = 888,
+    },
+    [58615] = -- Brutal Nether Drake - S4 glad
+    {
+        type = "achievement",
+        args = 2316,
+    },
+    [64927] = -- Deadly Gladiator's Frost Wyrm - S5 glad
+    {
+        type = "achievement",
+        args = 3096,
+    },
+    [65439] = -- Furious Gladiator's Frost Wyrm - S6 glad
+    {
+        type = "achievement",
+        args = 3756,
+    },
+    [67336] = -- Relentless Gladiator's Frost Wyrm - S7 glad
+    {
+        type = "achievement",
+        args = 3757,
+    },
+    [71810] = -- Wrathful Gladiator's Frost Wyrm - S8 glad
+    {
+        type = "achievement",
+        args = 4600,
+    },
+    [101282] = -- Vicious Gladiator's Twilight Drake - S9 glad
+    {
+        type = "achievement",
+        args = 6003,
+    },
+    [101821] = -- Ruthless Gladiator's Twilight Drake - S10 glad
+    {
+        type = "achievement",
+        args = 6322,
+    },
+    [124550] = -- Cataclysmic Gladiator's Twilight Drake - S11 glad
+    {
+        type = "achievement",
+        args = 6741,
+    },
+    -- According to Warcraft Mounts MOP arena glad mounts are not bound to a unique character
+    -- [139407] = -- Malevolent Gladiator's Cloud Serpent - S12 glad
+    -- {
+        -- type = "achievement",
+        -- args = 8216,
+    -- },
+    -- [148618] = -- Tyrannical Gladiator's Cloud Serpent - S13 glad
+    -- {
+        -- type = "achievement",
+        -- args = 8678,
+    -- },
+    -- [148619] = -- Grievous Gladiator's Cloud Serpent - S14 glad
+    -- {
+        -- type = "achievement",
+        -- args = 8705,
+    -- },
+    -- [148620] = -- Prideful Gladiator's Cloud Serpent - S15 glad
+    -- {
+        -- type = "achievement",
+        -- args = 8707,
+    -- },
+    --
     -- Faction mounts
     -- Alliance Horde
     --

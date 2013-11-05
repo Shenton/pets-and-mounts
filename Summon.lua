@@ -563,6 +563,28 @@ function A:BuildUsableMountsTable(tbl)
                 else
                     A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                 end
+            -- Achievement
+            elseif ( A.restrictedMounts[v].type == "achievement" ) then
+                if ( type(A.restrictedMounts[v].args) == "table" ) then
+                    for kk,vv in ipairs(A.restrictedMounts[v].args) do
+                        local earnedBy = select(14, GetAchievementInfo(vv));
+
+                        if ( A.playerName == earnedBy ) then
+                            out[#out+1] = v;
+                            break;
+                        end
+                    end
+
+                    A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
+                else
+                    local earnedBy = select(14, A.restrictedMounts[v].args);
+
+                    if ( A.playerName == earnedBy ) then
+                        out[#out+1] = v;
+                    else
+                        A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
+                    end
+                end
             end
         else
             out[#out+1] = v;
