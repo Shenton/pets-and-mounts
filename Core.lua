@@ -923,7 +923,9 @@ function A:BuildTempSetTable(cat, sets)
         for k,v in ipairs(sets) do
             if ( A.db.global.savedSets.pets[v] and #A.db.global.savedSets.pets[v] > 0 ) then
                 for kk,vv in ipairs(A.db.global.savedSets.pets[v]) do
-                    out[#out+1] = vv;
+                    if ( not tContains(out, vv) ) then
+                        out[#out+1] = vv;
+                    end
                 end
             end
         end
@@ -944,7 +946,9 @@ function A:BuildTempSetTable(cat, sets)
                 for kk,vv in ipairs(A.db.global.savedSets.mounts[v]) do
                     if ( #vv > 0 ) then
                         for kkk,vvv in ipairs(vv) do
-                            out[kk][#out[kk]+1] = vvv;
+                            if ( not tContains(out, vvv) ) then
+                                out[kk][#out[kk]+1] = vvv;
+                            end
                         end
                     end
                 end
