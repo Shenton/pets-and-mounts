@@ -11,10 +11,6 @@
 
 -- TODO: Built in set for pets families
 -- TODO: search system for pets and mounts
--- TODO: Summon a selected category (option) mount with ctrl+click
-
--- TODO: Add a function to "copy" highlighted player's mounts (random companion has it. Really handy) - Makulatur on Curse comments
--- TODO: Revoke pet on pet button ctrl+click - Makulatur on Curse comments
 
 -- TODO: move back red flying cloud to hybrid and prevent summoning it when under water
 
@@ -1016,7 +1012,7 @@ function A:SetZoneMountsSets(cfg)
             if ( mounts ) then
                 A.db.profile.favoriteMounts = {};
                 A:CopyTable(mounts, A.db.profile.favoriteMounts);
-                A.usablePetsCache = nil;
+                A.usableMountsCache = nil;
                 A.db.profile.lastZoneMountsSetsDefined = A.currentMapID;
             end
         end
@@ -2036,7 +2032,9 @@ A.aceDefaultDB =
         petsSummonFilters = {}, -- d
         mountsSummonFilters = {}, -- d
         mountButtonshiftClickCat = 5, -- d
-        isSwimmingMountCat = 4,
+        isSwimmingMountCat = 4, -- d
+        copyTargetMount = nil,
+        copyMouseoverMount = nil,
     },
 };
 

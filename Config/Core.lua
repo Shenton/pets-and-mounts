@@ -747,6 +747,24 @@ function A:AceConfig()
                                         end,
                                         get = function() return A.db.profile.vehicleExit; end,
                                     },
+                                    copyTargetMount =
+                                    {
+                                        order = 9,
+                                        name = L["Copy target mount"],
+                                        desc = L["If you target someone and he/she is on a mount, it will summon it if you have it. This have priority other copy mouse hover."],
+                                        type = "toggle",
+                                        set = function() A.db.profile.copyTargetMount = not A.db.profile.copyTargetMount; end,
+                                        get = function() return A.db.profile.copyTargetMount; end,
+                                    },
+                                    copyMouseoverMount =
+                                    {
+                                        order = 10,
+                                        name = L["Copy mouse hover mount"],
+                                        desc = L["If you mouse hover someone and he/she is on a mount, it will summon it if you have it. Target copy have priority other this."],
+                                        type = "toggle",
+                                        set = function() A.db.profile.copyMouseoverMount = not A.db.profile.copyMouseoverMount; end,
+                                        get = function() return A.db.profile.copyMouseoverMount; end,
+                                    },
                                     specialMountsHeader =
                                     {
                                         order = 1000,

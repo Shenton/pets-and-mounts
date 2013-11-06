@@ -121,11 +121,20 @@ function A:RevokePet(playerCall)
     C_PetJournal.SummonPetByGUID(currentPet);
 end
 
---- Build a table with usable pets
+--- Get a table with usable pets
+-- It set it as an addon var and return it
 -- @param tbl The original mounts table
--- @return The table filtered
-function A:BuildUsablePetsTable(tbl)
-    local out = {};
+-- @return The table filtered (cached)
+function A:GetUsablePetsTable(tbl)
+    if ( not A.usablePetsCache ) then
+        A.usablePetsCache = {};
+    end
+
+    if ( A.usablePetsCache[tbl] ) then
+        return A.usablePetsCache[tbl];
+    else
+        A.usablePetsCache[tbl] = {};
+    end
 
     for k,v in ipairs(tbl) do
         --local id = select(11, C_PetJournal.GetPetInfoByPetID(v));
@@ -139,39 +148,31 @@ function A:BuildUsablePetsTable(tbl)
             elseif ( A.restrictedPets[id].type == "faction" ) then
                 if ( type(A.restrictedPets[id].args) == "table" ) then
                     if ( tContains(A.restrictedPets[id].args, A.playerFaction) ) then
-                        out[#out+1] = v;
+                        A.usablePetsCache[tbl][#A.usablePetsCache[tbl]+1] = v;
                     else
                         A:DebugMessage(("Restricted pet: %s - type: %s - npc: %d"):format(customName or name, A.restrictedPets[id].type, id));
                     end
                 else
                     if ( A.restrictedPets[id].args == A.playerFaction ) then
-                        out[#out+1] = v;
+                        A.usablePetsCache[tbl][#A.usablePetsCache[tbl]+1] = v;
                     else
                         A:DebugMessage(("Restricted pet: %s - type: %s - npc: %d"):format(customName or name, A.restrictedPets[id].type, id));
                     end
                 end
             end
         else
-            out[#out+1] = v;
+            A.usablePetsCache[tbl][#A.usablePetsCache[tbl]+1] = v;
         end
     end
 
-    return out;
+    return A.usablePetsCache[tbl];
 end
 
 --- Get a random pet from a petts table
 -- @param tbl The original petts table
 -- @return The pet ID
 function A:GetRandomPet(tbl)
-    if ( not A.usablePetsCache ) then
-        A.usablePetsCache = {};
-    end
-
-    if ( not A.usablePetsCache[tbl] ) then
-        A.usablePetsCache[tbl] = A:BuildUsablePetsTable(tbl);
-    end
-
-    local index = math.random(#A.usablePetsCache[tbl]);
+    local index = math.random(#A:GetUsablePetsTable(tbl));
 
     return A.usablePetsCache[tbl][index];
 end
@@ -180,15 +181,7 @@ end
 -- @param tbl The original mounts table
 -- @return The number of mounts available or nil
 function A:GotRandomPet(tbl)
-    if ( not A.usablePetsCache ) then
-        A.usablePetsCache = {};
-    end
-
-    if ( not A.usablePetsCache[tbl] ) then
-        A.usablePetsCache[tbl] = A:BuildUsablePetsTable(tbl);
-    end
-
-    local num = #A.usablePetsCache[tbl];
+    local num = #A:GetUsablePetsTable(tbl);
 
     if ( num > 0 ) then return num; end
 
@@ -470,11 +463,20 @@ function A:GetUniqueAreaMount(cat)
     end
 end
 
---- Build a table with usable mounts
+--- Get a table with usable mounts
+-- It set it as an addon var and return it
 -- @param tbl The original mounts table
--- @return The table filtered
-function A:BuildUsableMountsTable(tbl)
-    local out = {};
+-- @return The table filtered (cached)
+function A:GetUsableMountsTable(tbl)
+    if ( not A.usableMountsCache ) then
+        A.usableMountsCache = {};
+    end
+
+    if ( A.usableMountsCache[tbl] ) then
+        return A.usableMountsCache[tbl];
+    else
+        A.usableMountsCache[tbl] = {};
+    end
 
     for k,v in ipairs(tbl) do
         if ( A.restrictedMounts[v] ) then -- Got a restricted mount
@@ -482,13 +484,13 @@ function A:BuildUsableMountsTable(tbl)
             if ( A.restrictedMounts[v].type == "location" ) then
                 if ( type(A.restrictedMounts[v].args) == "table" ) then
                     if ( tContains(A.restrictedMounts[v].args, A.currentMapID) ) then
-                        out[#out+1] = v;
+                        A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
                     else
                         A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                     end
                 else
                     if ( A.restrictedMounts[v].args == A.currentMapID ) then
-                        out[#out+1] = v;
+                        A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
                     else
                         A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                     end
@@ -498,7 +500,7 @@ function A:BuildUsableMountsTable(tbl)
                 if ( type(A.restrictedMounts[v].args) == "table" ) then
                     for kk,vv in ipairs(A.restrictedMounts[v].args) do
                         if ( IsSpellKnown(vv) ) then
-                            out[#out+1] = v;
+                            A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
                             break;
                         end
                     end
@@ -506,7 +508,7 @@ function A:BuildUsableMountsTable(tbl)
                     A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                 else
                     if ( IsSpellKnown(A.restrictedMounts[v].args) ) then
-                        out[#out+1] = v
+                        A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v
                     else
                         A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                     end
@@ -515,13 +517,13 @@ function A:BuildUsableMountsTable(tbl)
             elseif ( A.restrictedMounts[v].type == "class" ) then
                 if ( type(A.restrictedMounts[v].args) == "table" ) then
                     if ( tContains(A.restrictedMounts[v].args, A.playerClass) ) then
-                        out[#out+1] = v;
+                        A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
                     else
                         A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                     end
                 else
                     if ( A.restrictedMounts[v].args == A.playerClass ) then
-                        out[#out+1] = v;
+                        A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
                     else
                         A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                     end
@@ -530,13 +532,13 @@ function A:BuildUsableMountsTable(tbl)
             elseif ( A.restrictedMounts[v].type == "faction" ) then
                 if ( type(A.restrictedMounts[v].args) == "table" ) then
                     if ( tContains(A.restrictedMounts[v].args, A.playerFaction) ) then
-                        out[#out+1] = v;
+                        A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
                     else
                         A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                     end
                 else
                     if ( A.restrictedMounts[v].args == A.playerFaction ) then
-                        out[#out+1] = v;
+                        A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
                     else
                         A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                     end
@@ -545,13 +547,13 @@ function A:BuildUsableMountsTable(tbl)
             elseif ( A.restrictedMounts[v].type == "race&class" ) then
                 if ( type(A.restrictedMounts[v].args) == "table" ) then
                     if ( tContains(A.restrictedMounts[v].args, A.playerRace..A.playerClass) ) then
-                        out[#out+1] = v;
+                        A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
                     else
                         A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                     end
                 else
                     if ( A.restrictedMounts[v].args == A.playerRace..A.playerClass ) then
-                        out[#out+1] = v;
+                        A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
                     else
                         A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                     end
@@ -571,7 +573,7 @@ function A:BuildUsableMountsTable(tbl)
 
                 if ( (professionOne and professionOne == A.restrictedMounts[v].args[1] and professionOneSkill >= A.restrictedMounts[v].args[2])
                 or (professionTwo and professionTwo == A.restrictedMounts[v].args[1] and professionTwoSkill >= A.restrictedMounts[v].args[2]) ) then
-                    out[#out+1] = v;
+                    A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
                 else
                     A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                 end
@@ -582,7 +584,7 @@ function A:BuildUsableMountsTable(tbl)
                         local earnedBy = select(14, GetAchievementInfo(vv));
 
                         if ( A.playerName == earnedBy ) then
-                            out[#out+1] = v;
+                            A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
                             break;
                         end
                     end
@@ -592,33 +594,25 @@ function A:BuildUsableMountsTable(tbl)
                     local earnedBy = select(14, A.restrictedMounts[v].args);
 
                     if ( A.playerName == earnedBy ) then
-                        out[#out+1] = v;
+                        A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
                     else
                         A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
                     end
                 end
             end
         else
-            out[#out+1] = v;
+            A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
         end
     end
 
-    return out;
+    return A.usableMountsCache[tbl];
 end
 
 --- Get a random mount from a mounts table
 -- @param tbl The original mounts table
 -- @return The mount spellID
 function A:GetRandomMount(tbl)
-    if ( not A.usableMountsCache ) then
-        A.usableMountsCache = {};
-    end
-
-    if ( not A.usableMountsCache[tbl] ) then
-        A.usableMountsCache[tbl] = A:BuildUsableMountsTable(tbl);
-    end
-
-    local index = math.random(#A.usableMountsCache[tbl]);
+    local index = math.random(#A:GetUsableMountsTable(tbl));
 
     return A.usableMountsCache[tbl][index];
 end
@@ -627,15 +621,7 @@ end
 -- @param tbl The original mounts table
 -- @return The number of mounts available or nil
 function A:GotRandomMount(tbl)
-    if ( not A.usableMountsCache ) then
-        A.usableMountsCache = {};
-    end
-
-    if ( not A.usableMountsCache[tbl] ) then
-        A.usableMountsCache[tbl] = A:BuildUsableMountsTable(tbl);
-    end
-
-    local num = #A.usableMountsCache[tbl];
+    local num = #A:GetUsableMountsTable(tbl);
 
     if ( num > 0 ) then return num; end
 
@@ -656,6 +642,30 @@ function A:IsMountSummonFiltered()
 
     for k,v in ipairs(A.mountsSummonFiltersCache) do
         if ( v() ) then return 1; end
+    end
+
+    return nil;
+end
+
+--- Get other player summoned mount
+-- @param unitID target or mouseover
+function A:GetOtherPlayerMount(unitID)
+    local index = 1;
+    local id = select(11, UnitBuff(unitID, index));
+
+    -- One shot, woot!
+    for k,v in ipairs(A.pamTable.mountsIds) do
+        if ( tContains(A:GetUsableMountsTable(v), id) ) then return id; end
+    end
+
+    -- Continue checking
+    while id do
+        index = index + 1;
+        id = select(11, UnitBuff(unitID, index));
+
+        for k,v in ipairs(A.pamTable.mountsIds) do
+            if ( tContains(A:GetUsableMountsTable(v), id) ) then return id; end
+        end
     end
 
     return nil;
@@ -683,6 +693,22 @@ function A:RandomMount(cat)
     if ( A:IsMountSummonFiltered() ) then
         A:DebugMessage("RandomMount() - No summon filter");
         return;
+    end
+
+    if ( A.db.profile.copyTargetMount ) then
+        if ( UnitExists("target") and UnitIsPlayer("target") and not UnitIsUnit("target", "player") ) then
+            local id = A:GetOtherPlayerMount("target");
+
+            if ( A:SummonMountBySpellId(id) ) then return; end
+        end
+    end
+
+    if ( A.db.profile.copyMouseoverMount ) then
+        if ( UnitExists("mouseover") and UnitIsPlayer("mouseover") and not UnitIsUnit("mouseover", "player") ) then
+            local id = A:GetOtherPlayerMount("mouseover");
+
+            if ( A:SummonMountBySpellId(id) ) then return; end
+        end
     end
 
     local id;
