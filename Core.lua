@@ -6,14 +6,11 @@
     Core.lua
 -------------------------------------------------------------------------------]]--
 
--- TODO: Sets in use display
-
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 -- TODO: Fix companion staying where you died
 
 -- TODO: Built in set for pets families
 -- TODO: search system for pets and mounts
--- TODO: Area sets
 -- TODO: Summon a selected category (option) mount with ctrl+click
 
 -- TODO: Add a function to "copy" highlighted player's mounts (random companion has it. Really handy) - Makulatur on Curse comments

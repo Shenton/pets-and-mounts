@@ -1111,58 +1111,48 @@ function A:AceConfig()
                         --inline = true,
                         args =
                         {
-                            -- current =
-                            -- {
-                                -- order = 0,
-                                -- name = function()
-                                    -- local current = A:GetCurrentSet("PET");
+                            selectedFav =
+                            {
+                                order = 0,
+                                name = function()
+                                    local count = #A.db.profile.favoritePets;
 
-                                    -- return L["Currently using set: %s\n\n"]:format(current);
-                                -- end,
-                                -- type = "description",
-                                -- fontSize = "medium",
-                            -- },
-                            -- load =
-                            -- {
-                                -- order = 10,
-                                -- name = L["Load"],
-                                -- type = "group",
-                                -- inline = true,
-                                -- args =
-                                -- {
-                                    select =
-                                    {
-                                        order = 10,
-                                        name = L["Select"],
-                                        type = "multiselect",
-                                        values = function()
-                                            local out = {};
+                                    return L["You currently have %d selected favorites.\n\n"]:format(count);
+                                end,
+                                type = "description",
+                                fontSize = "medium",
+                            },
+                            select =
+                            {
+                                order = 10,
+                                name = L["Select"],
+                                type = "multiselect",
+                                values = function()
+                                    local out = {};
 
-                                            for k in pairs(A.db.global.savedSets.pets) do
-                                                out[k] = k;
-                                            end
+                                    for k in pairs(A.db.global.savedSets.pets) do
+                                        out[k] = k;
+                                    end
 
-                                            return out;
-                                        end,
-                                        get = function(info, name)
-                                            if ( tContains(A.db.profile.enabledSets.pets, name) ) then
-                                                return 1;
-                                            end
+                                    return out;
+                                end,
+                                get = function(info, name)
+                                    if ( tContains(A.db.profile.enabledSets.pets, name) ) then
+                                        return 1;
+                                    end
 
-                                            return nil;
-                                        end,
-                                        set = function(info, name, val)
-                                            if ( val ) then
-                                                A.db.profile.enabledSets.pets[#A.db.profile.enabledSets.pets+1] = name;
-                                            else
-                                                A:TableRemove(A.db.profile.enabledSets.pets, name);
-                                            end
+                                    return nil;
+                                end,
+                                set = function(info, name, val)
+                                    if ( val ) then
+                                        A.db.profile.enabledSets.pets[#A.db.profile.enabledSets.pets+1] = name;
+                                    else
+                                        A:TableRemove(A.db.profile.enabledSets.pets, name);
+                                    end
 
-                                            A:SetGlobalPetsSets();
-                                        end,
-                                    },
-                                -- },
-                            -- },
+                                    A:SetGlobalPetsSets();
+                                end,
+                            },
                             save =
                             {
                                 order = 20,
@@ -1253,61 +1243,54 @@ function A:AceConfig()
                         order = 1,
                         name = L["Mounts"],
                         type = "group",
-                        --inline = true,
                         args =
                         {
-                            -- current =
-                            -- {
-                                -- order = 0,
-                                -- name = function()
-                                    -- local current = A:GetCurrentSet("MOUNT");
+                            selectedFav =
+                            {
+                                order = 0,
+                                name = function()
+                                    local count = 0;
 
-                                    -- return L["Currently using set: %s\n\n"]:format(current);
-                                -- end,
-                                -- type = "description",
-                                -- fontSize = "medium",
-                            -- },
-                            -- load =
-                            -- {
-                                -- order = 10,
-                                -- name = L["Load"],
-                                -- type = "group",
-                                -- inline = true,
-                                -- args =
-                                -- {
-                                    select =
-                                    {
-                                        order = 10,
-                                        name = L["Select"],
-                                        type = "multiselect",
-                                        values = function()
-                                            local out = {};
+                                    for k,v in ipairs(A.db.profile.favoriteMounts) do
+                                        count = count + #v;
+                                    end
 
-                                            for k in pairs(A.db.global.savedSets.mounts) do
-                                                out[k] = k;
-                                            end
+                                    return L["You currently have %d selected favorites.\n\n"]:format(count);
+                                end,
+                                type = "description",
+                                fontSize = "medium",
+                            },
+                            select =
+                            {
+                                order = 10,
+                                name = L["Select"],
+                                type = "multiselect",
+                                values = function()
+                                    local out = {};
 
-                                            return out;
-                                        end,
-                                        get = function(info, name)
-                                            if ( tContains(A.db.profile.enabledSets.mounts, name) ) then
-                                                return 1;
-                                            end
+                                    for k in pairs(A.db.global.savedSets.mounts) do
+                                        out[k] = k;
+                                    end
 
-                                            return nil;
-                                        end,
-                                        set = function(info, name, val)
-                                            if ( val ) then
-                                                A.db.profile.enabledSets.mounts[#A.db.profile.enabledSets.mounts+1] = name;
-                                            else
-                                                A:TableRemove(A.db.profile.enabledSets.mounts, name);
-                                            end
+                                    return out;
+                                end,
+                                get = function(info, name)
+                                    if ( tContains(A.db.profile.enabledSets.mounts, name) ) then
+                                        return 1;
+                                    end
 
-                                            A:SetGlobalMountsSets();
-                                        end,
-                                    },
-                                -- },
-                            -- },
+                                    return nil;
+                                end,
+                                set = function(info, name, val)
+                                    if ( val ) then
+                                        A.db.profile.enabledSets.mounts[#A.db.profile.enabledSets.mounts+1] = name;
+                                    else
+                                        A:TableRemove(A.db.profile.enabledSets.mounts, name);
+                                    end
+
+                                    A:SetGlobalMountsSets();
+                                end,
+                            },
                             save =
                             {
                                 order = 30,
