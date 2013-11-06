@@ -87,20 +87,24 @@ end
 function A:SummonPet(id)
     if ( InCombatLockdown() ) then
         A:DebugMessage("SummonPet() - In combat");
-        return;
+        return nil;
     end
 
     if ( C_PetJournal.PetIsSummonable(id) ) then
         A:DebugMessage("SummonPet() - Summon pet: "..A:GetPetNameByID(id));
 
         C_PetJournal.SummonPetByGUID(id);
+
+        return 1;
     else
         A:DebugMessage("SummonPet() - Pet is not summonable");
+        return nil;
     end
 end
 
 --- Revoke current pet
-function A:RevokePet()
+-- @param playerCall When called by the player, set a var disabling autopet
+function A:RevokePet(playerCall)
     if ( InCombatLockdown() ) then
         A:DebugMessage("RevokePet() - In combat");
         return;
@@ -111,6 +115,8 @@ function A:RevokePet()
     local currentPet = C_PetJournal.GetSummonedPetGUID();
 
     if ( not currentPet ) then return; end
+
+    if ( playerCall ) then A.playerRevokedPet = 1; end
 
     C_PetJournal.SummonPetByGUID(currentPet);
 end
@@ -190,7 +196,8 @@ function A:GotRandomPet(tbl)
 end
 
 --- Get a random pet from databases and summon it
-function A:RandomPet()
+-- @param playerCall When called by the player, unset the var disabling autopet
+function A:RandomPet(playerCall)
     -- DB init
     A:InitializeDB();
 
@@ -205,7 +212,9 @@ function A:RandomPet()
         return;
     end
 
-    A:SummonPet(id);
+    if ( A:SummonPet(id) ) then
+        if ( playerCall ) then A.playerRevokedPet = nil; end
+    end
 end
 
 --- Return if the pet summon should be filtered
@@ -417,7 +426,7 @@ function A:SetMountCat()
     -- [5] = {}, -- with passengers
     if ( A:IsSwimming() == 1 ) then -- Aquatic mount
         A:DebugMessage("SetMountCat() - Aquatic");
-        return 4;
+        return A.db.profile.isSwimmingMountCat;
     elseif ( A:IsFlyable() ) then -- Flyable mount
         A:DebugMessage("SetMountCat() - Flyable");
         return 2;

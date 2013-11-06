@@ -747,9 +747,15 @@ function A:AceConfig()
                                         end,
                                         get = function() return A.db.profile.vehicleExit; end,
                                     },
-                                    magicBroom =
+                                    specialMountsHeader =
                                     {
                                         order = 1000,
+                                        name = L["Special mounts"],
+                                        type = "header",
+                                    },
+                                    magicBroom =
+                                    {
+                                        order = 1001,
                                         name = L["Magic Broom"],
                                         desc = L["Summon the Magic Broom when it is in your bags."],
                                         type = "toggle",
@@ -758,12 +764,28 @@ function A:AceConfig()
                                     },
                                     shimmeringMoonstone =
                                     {
-                                        order = 1001,
+                                        order = 1002,
                                         name = L["Shimmering Moonstone"],
                                         desc = L["Summon Moonfang when the Shimmering Moonstone is in your bags."],
                                         type = "toggle",
                                         set = function() A.db.profile.shimmeringMoonstone = not A.db.profile.shimmeringMoonstone; end,
                                         get = function() return A.db.profile.shimmeringMoonstone; end,
+                                    },
+                                    swimmingOptionsHeader =
+                                    {
+                                        order = 2000,
+                                        name = L["Swimming options"],
+                                        type = "header",
+                                    },
+                                    isSwimminMountCat =
+                                    {
+                                        order = 2001,
+                                        name = L["Underwater mount category"],
+                                        desc = L["Choose which mount category to summon when under water. This do not impact druid forms."],
+                                        type = "select",
+                                        values = function() return A.mountCat; end,
+                                        set = function(info, val) A.db.profile.isSwimmingMountCat = val; end,
+                                        get = function() return A.db.profile.isSwimmingMountCat; end,
                                     },
                                 },
                             },
@@ -1008,6 +1030,22 @@ function A:AceConfig()
 
                                             A:SetButtons();
                                         end,
+                                    },
+                                    clickBehavior =
+                                    {
+                                        order = 100,
+                                        name = L["Click behavior"],
+                                        type = "header",
+                                    },
+                                    shiftClick =
+                                    {
+                                        order = 101,
+                                        name = L["Shift+Click"],
+                                        desc = L["Choose which mount category to summon when using %s"]:format(L["Shift+Click"]),
+                                        type = "select",
+                                        values = function() return A.mountCat; end,
+                                        set = function(info, val) A.db.profile.mountButtonshiftClickCat = val; end,
+                                        get = function() return A.db.profile.mountButtonshiftClickCat; end,
                                     },
                                 },
                             },

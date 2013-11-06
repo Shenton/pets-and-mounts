@@ -235,6 +235,13 @@ L["Custom name color"] = true;
 L["Pick a color for your companions custom names."] = true;
 L["Area companions"] = true;
 L["Area mounts"] = true;
+L["Click behavior"] = true;
+L["Shift+Click"] = true;
+L["Choose which mount category to summon when using %s"] = true;
+L["Special mounts"] = true;
+L["Swimming options"] = true;
+L["Underwater mount category"] = true;
+L["Choose which mount category to summon when under water. This do not impact druid forms."] = true;
 -- About
 L["Auto and random summon for your pets and mounts, highly customizable. With Data Broker support."] = true;
 L["A new version is available, version |cff33ff99%s|r revision |cff33ff99%s %s|r."] = true;
@@ -264,8 +271,8 @@ L["Forced hybrid mount: %s"] = true;
 L["Forced passenger mount: %s"] = true;
 L["Companions set in use: %s."] = true;
 L["Mounts set in use: %s."] = true;
-L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random pet.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Hide button.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."] = true;
-L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random mount.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Hide button.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."] = true;
+L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random companion.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Revoke current companion.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."] = true;
+L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random mount.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Summon a %s mount.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."] = true;
 L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random companion.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Revoke current companion.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open the configuration panel."] = true;
 -- Messages
 L["Cannot dock buttons together when at least one of them is hidden."] = true;

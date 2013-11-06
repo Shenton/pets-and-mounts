@@ -16,6 +16,8 @@
 -- TODO: Add a function to "copy" highlighted player's mounts (random companion has it. Really handy) - Makulatur on Curse comments
 -- TODO: Revoke pet on pet button ctrl+click - Makulatur on Curse comments
 
+-- TODO: move back red flying cloud to hybrid and prevent summoning it when under water
+
 -- Ace libs (<3)
 local A = LibStub("AceAddon-3.0"):NewAddon("PetsAndMounts", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0", "AceComm-3.0", "AceHook-3.0");
 local L = LibStub("AceLocale-3.0"):GetLocale("PetsAndMounts");
@@ -661,10 +663,11 @@ function A:GetMountCategory(bf)
     if ( ground and fly and surface and water and jump ) then -- hybrid - 31
         return 3;
     -- 4 Entries x 5
-    elseif ( (ground and fly and surface and water) or (ground and fly and water and jump) or (fly and surface and water and jump) ) then -- fly - 15 27 30
+    elseif ( (ground and fly and surface and water) or (ground and fly and water and jump) or (ground and fly and surface and jump) -- fly - 15 27
+    or (fly and surface and water and jump) ) then -- fly - 30
         return 2;
-    elseif ( (ground and fly and surface and jump) ) then -- hybrid - 23
-        return 3;
+    -- elseif ( (ground and fly and surface and jump) ) then -- hybrid - 23
+        -- return 3;
     elseif ( (ground and surface and water and jump) ) then -- ground - 29
         return 1;
     -- 3 Entries x 10
@@ -954,8 +957,6 @@ function A:BuildTempSetTable(cat, sets)
                 end
             end
         end
-    else
-        return nil;
     end
 
     return out;
@@ -1125,9 +1126,11 @@ function A:SetAutoSummonOverride(noSet)
     end
 end
 
---- Get auto pet summon option status according to global option or override
+--- Get auto pet summon option status according to global option, override or player called revoke
 function A:IsAutoPetEnabled()
-    if ( A.autoPetOverride ) then
+    if( A.playerRevokedPet ) then
+        return nil;
+    elseif ( A.autoPetOverride ) then
         if ( A.autoPetOverride == "1" ) then
             return 1;
         else
@@ -2032,6 +2035,8 @@ A.aceDefaultDB =
         },
         petsSummonFilters = {}, -- d
         mountsSummonFilters = {}, -- d
+        mountButtonshiftClickCat = 5, -- d
+        isSwimmingMountCat = 4,
     },
 };
 
@@ -2249,9 +2254,9 @@ function A:OnInitialize()
         OnClick = function(self, button)
             if (button == "LeftButton") then
                 if ( IsShiftKeyDown() ) then
-                    A:RevokePet();
+                    A:RevokePet(1);
                 else
-                    A:RandomPet();
+                    A:RandomPet(1);
                 end
             elseif ( button == "RightButton" ) then
                 UIDropDownMenu_SetAnchor(A.menuFrame, nil, nil, nil, nil, nil);

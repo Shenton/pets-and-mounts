@@ -239,12 +239,11 @@ function A:PreClickMount(button, clickedBy)
         if ( IsShiftKeyDown() ) then
             button:SetAttribute("type", "macro");
             button:SetAttribute("macrotext", nil);
-            A:ToggleButtonLock(button);
+            A:RandomMount(A.db.profile.mountButtonshiftClickCat);
         elseif ( IsControlKeyDown() ) then
             button:SetAttribute("type", "macro");
             button:SetAttribute("macrotext", nil);
-            A.db.profile[button:GetName()].hide = 1;
-            A:SetButtons();
+            A:ToggleButtonLock(button);
         else
             if ( A.db.profile.shimmeringMoonstone and GetItemCount(101675, nil, nil) > 0 and (A:IsSwimming() == 2 or not A:IsSwimming())
             and not A:IsFlyable() and not (A.db.profile.vehicleExit and A:IsPlayerInVehicle()) ) then -- 37011 - Shimmering Moonstone from Darkmoon fair (Moonfang drop)
@@ -327,12 +326,11 @@ function A:PreClickPet(button, clickedBy)
         if ( IsShiftKeyDown() ) then
             button:SetAttribute("type", "macro");
             button:SetAttribute("macrotext", nil);
-            A:ToggleButtonLock(button);
+            A:RevokePet(1);
         elseif ( IsControlKeyDown() ) then
             button:SetAttribute("type", "macro");
             button:SetAttribute("macrotext", nil);
-            A.db.profile[button:GetName()].hide = 1;
-            A:SetButtons();
+            A:ToggleButtonLock(button);
         else
             button:SetAttribute("type", "macro");
             button:SetAttribute("macrotext", "/run PetsAndMountsGlobal:RandomPet()");
@@ -617,7 +615,7 @@ function A:SetTooltip(frame)
     GameTooltip:AddLine(" ");
 
     if ( frame:GetName() == "PetsAndMountsSecureButtonPets" ) then
-        currentSet = A:GetCurrentSet("PET");
+        currentSet = A:GetSetsInUse("PETS");
 
         if ( currentSet == L["None"] ) then
             currentSet = A.color["RED"]..currentSet;
@@ -630,9 +628,9 @@ function A:SetTooltip(frame)
         GameTooltip:AddLine(L["Not when stealthed is %s."]:format(A:IsNotWhenStealthedEnabled() and A.color["GREEN"]..L["On"] or A.color["RED"]..L["Off"]));
         GameTooltip:AddLine(L["Forced companion: %s"]:format(A.db.profile.forceOne.pet and A.color["GREEN"]..A:GetPetNameByID(A.db.profile.forceOne.pet) or A.color["RED"]..L["None"]));
         GameTooltip:AddLine(" ");
-        GameTooltip:AddLine(L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random pet.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Hide button.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."]);
+        GameTooltip:AddLine(L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random companion.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Revoke current companion.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."]);
     elseif ( frame:GetName() == "PetsAndMountsSecureButtonMounts" ) then
-        currentSet = A:GetCurrentSet("MOUNT");
+        currentSet = A:GetSetsInUse("MOUNTS");
 
         if ( currentSet == L["None"] ) then
             currentSet = A.color["RED"]..currentSet;
@@ -653,7 +651,7 @@ function A:SetTooltip(frame)
             GameTooltip:AddLine(" ");
         end
 
-        GameTooltip:AddLine(L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random mount.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Hide button.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."]);
+        GameTooltip:AddLine(L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random mount.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Summon a %s mount.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."]:format(A.mountCat[A.db.profile.mountButtonshiftClickCat]));
     end
 
     GameTooltip:Show();
