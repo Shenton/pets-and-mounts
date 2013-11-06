@@ -233,6 +233,8 @@ L["Color custom name"] = true;
 L["When a companion got a custom name, it will be colored."] = true;
 L["Custom name color"] = true;
 L["Pick a color for your companions custom names."] = true;
+L["Area companions"] = true;
+L["Area mounts"] = true;
 -- About
 L["Auto and random summon for your pets and mounts, highly customizable. With Data Broker support."] = true;
 L["A new version is available, version |cff33ff99%s|r revision |cff33ff99%s %s|r."] = true;

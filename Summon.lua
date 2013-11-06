@@ -12,7 +12,6 @@ local L = A.L;
 -- Globals to locals
 local math = math;
 local tContains = tContains;
-local tostring = tostring;
 local ipairs = ipairs;
 
 -- GLOBALS: C_PetJournal, UnitIsFeignDeath, UnitCastingInfo, UnitChannelInfo
@@ -270,12 +269,12 @@ function A:AutoPet()
             A:DebugMessage("AutoPet() - Forced pet");
             A:SummonPet(A.db.profile.forceOne.pet);
         end
-    elseif ( A.db.profile.petByMapID[tostring(A.currentMapID)] ) then -- Area pet
-        if ( A.db.profile.petByMapID[tostring(A.currentMapID)] == currentPet ) then
+    elseif ( A.db.profile.petByMapID[A.currentMapID] ) then -- Area pet
+        if ( A.db.profile.petByMapID[A.currentMapID] == currentPet ) then
             A:DebugMessage("AutoPet() - Area override pet - Already got that pet");
         else
             A:DebugMessage("AutoPet() - Area override pet - summon");
-            A:SummonPet(A.db.profile.petByMapID[tostring(A.currentMapID)]);
+            A:SummonPet(A.db.profile.petByMapID[A.currentMapID]);
         end
     elseif ( A:GotRandomPet(A.db.profile.favoritePets) ) then -- Fav pets
         if ( currentPet and tContains(A.db.profile.favoritePets, currentPet) ) then
@@ -689,9 +688,9 @@ function A:RandomMount(cat)
             A:DebugMessage(("RandomMount() - No hybrid - Got forced - %i"):format(cat));
             id = A.db.profile.forceOne.mount[cat];
         -- Got area
-        elseif ( A.db.profile.mountByMapID[cat][tostring(A.currentMapID)] ) then
+        elseif ( A.db.profile.mountByMapID[cat][A.currentMapID] ) then
             A:DebugMessage(("RandomMount() - No hybrid - Got area - %i"):format(cat));
-            id = A.db.profile.mountByMapID[cat][tostring(A.currentMapID)];
+            id = A.db.profile.mountByMapID[cat][A.currentMapID];
         -- Got unique area
         elseif ( A.db.profile.areaMounts and A.uniqueAreaMounts[cat][A.currentMapID] ) then
             A:DebugMessage(("RandomMount() - No hybrid - Got unique area - %i"):format(cat));
@@ -731,24 +730,24 @@ function A:RandomMount(cat)
             id = A.db.profile.forceOne.mount[3];
         -- No forced going for area
         -- Got area ground/fly and hybrid
-        elseif ( A.db.profile.mountByMapID[cat][tostring(A.currentMapID)] and A.db.profile.mountByMapID[3][tostring(A.currentMapID)] ) then
+        elseif ( A.db.profile.mountByMapID[cat][A.currentMapID] and A.db.profile.mountByMapID[3][A.currentMapID] ) then
             -- hybrid
             if ( A:RandHybrid(1, 1) ) then
                 A:DebugMessage(("RandomMount() - With hybrid - Got area ground/fly - Got hybrid - Rand hybrid - %i"):format(cat));
-                id = A.db.profile.mountByMapID[3][tostring(A.currentMapID)];
+                id = A.db.profile.mountByMapID[3][A.currentMapID];
             -- ground/fly
             else
                 A:DebugMessage(("RandomMount() - With hybrid - Got area ground/fly - Got hybrid - Rand no hybrid - %i"):format(cat));
-                id = A.db.profile.mountByMapID[cat][tostring(A.currentMapID)];
+                id = A.db.profile.mountByMapID[cat][A.currentMapID];
             end
         -- Got area ground/fly
-        elseif ( A.db.profile.mountByMapID[cat][tostring(A.currentMapID)] ) then
+        elseif ( A.db.profile.mountByMapID[cat][A.currentMapID] ) then
             A:DebugMessage(("RandomMount() - With hybrid - Got area ground/fly - %i"):format(cat));
-            id = A.db.profile.mountByMapID[cat][tostring(A.currentMapID)];
+            id = A.db.profile.mountByMapID[cat][A.currentMapID];
         -- Got area hybrid
-        elseif ( A.db.profile.mountByMapID[3][tostring(A.currentMapID)] ) then
+        elseif ( A.db.profile.mountByMapID[3][A.currentMapID] ) then
             A:DebugMessage(("RandomMount() - With hybrid - Got area hybrid - %i"):format(cat));
-            id = A.db.profile.mountByMapID[3][tostring(A.currentMapID)];
+            id = A.db.profile.mountByMapID[3][A.currentMapID];
         -- No area going for unique area
         -- Got unique area ground/fly and hybrid
         elseif ( A.db.profile.areaMounts and A.uniqueAreaMounts[cat][A.currentMapID] and A.uniqueAreaMounts[3][A.currentMapID] ) then

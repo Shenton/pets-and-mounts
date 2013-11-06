@@ -12,7 +12,6 @@ local L = A.L;
 -- Globals to locals
 local pairs = pairs;
 local _G = _G;
-local tostring = tostring;
 
 -- GLOBALS: BINDING_HEADER_PETSANDMOUNTS, InCombatLockdown, GetBindingKey, SetOverrideBindingClick
 -- GLOBALS: IsFlyableArea, IsSpellKnown, GetSpellInfo, IsShiftKeyDown, IsControlKeyDown, GetSpellInfo
@@ -145,7 +144,7 @@ end
 --- Check if we got at least one mount for the given cat, check all tables after restriction
 function A:GotMountAllTable(cat)
     if ( A.db.profile.forceOne.mount[cat]
-    or A.db.profile.mountByMapID[cat][tostring(A.currentMapID)]
+    or A.db.profile.mountByMapID[cat][A.currentMapID]
     or A.db.profile.areaMounts and A.uniqueAreaMounts[cat][A.currentMapID]
     or A:GotRandomMount(A.db.profile.favoriteMounts[cat])
     or A:GotRandomMount(A.pamTable.mountsIds[cat]) ) then

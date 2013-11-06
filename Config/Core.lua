@@ -1100,6 +1100,7 @@ function A:AceConfig()
                 order = 30,
                 name = L["Sets options"],
                 type = "group",
+                childGroups = "tab",
                 args =
                 {
                     pets =
@@ -1107,7 +1108,7 @@ function A:AceConfig()
                         order = 0,
                         name = L["Companions"],
                         type = "group",
-                        inline = true,
+                        --inline = true,
                         args =
                         {
                             -- current =
@@ -1157,7 +1158,7 @@ function A:AceConfig()
                                                 A:TableRemove(A.db.profile.enabledSets.pets, name);
                                             end
 
-                                            A:SetPetsSetsGlobal();
+                                            A:SetGlobalPetsSets();
                                         end,
                                     },
                                 -- },
@@ -1249,10 +1250,10 @@ function A:AceConfig()
                     },
                     mounts =
                     {
-                        order = 0,
+                        order = 1,
                         name = L["Mounts"],
                         type = "group",
-                        inline = true,
+                        --inline = true,
                         args =
                         {
                             -- current =
@@ -1302,7 +1303,7 @@ function A:AceConfig()
                                                 A:TableRemove(A.db.profile.enabledSets.mounts, name);
                                             end
 
-                                            A:SetMountsSetsGlobal();
+                                            A:SetGlobalMountsSets();
                                         end,
                                     },
                                 -- },
@@ -1393,6 +1394,258 @@ function A:AceConfig()
                                         func = function()
                                             StaticPopup_Show("PetsAndMountsDeleteSet", A.deleteSetMounts);
                                         end,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    areaPets =
+                    {
+                        order = 2,
+                        name = L["Area companions"],
+                        type = "group",
+                        args =
+                        {
+                            zoneSelectGroup =
+                            {
+                                order = 0,
+                                name = L["Area selection"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
+                                    currentZone =
+                                    {
+                                        order = 0,
+                                        name = function()
+                                            local mapID;
+
+                                            if ( A.currentMapIDForPetsSets ) then
+                                                mapID = A.currentMapIDForPetsSets;
+                                            else
+                                                mapID = A.currentMapID;
+                                            end
+
+                                            return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)));
+                                        end,
+                                        type = "description",
+                                        fontSize = "medium",
+                                    },
+                                    zoneSelect =
+                                    {
+                                        order = 1,
+                                        name = L["Area selection"],
+                                        desc = L["Select the area you want to work with."],
+                                        type = "select",
+                                        dialogControl = "Dropdown-SortByValue",
+                                        values = function()
+                                            if ( A:TableCount(A.db.global.zonesIDsToName) > 0 ) then
+                                                return A.db.global.zonesIDsToName;
+                                            else
+                                                return {};
+                                            end
+                                        end,
+                                        get = function() return A.currentMapIDForPetsSets; end,
+                                        set = function(info, val) A.currentMapIDForPetsSets = val; end,
+                                    },
+                                },
+                            },
+                            select =
+                            {
+                                order = 1,
+                                name = L["Select"],
+                                type = "multiselect",
+                                values = function()
+                                    local out = {};
+
+                                    for k in pairs(A.db.global.savedSets.pets) do
+                                        out[k] = k;
+                                    end
+
+                                    return out;
+                                end,
+                                get = function(info, name)
+                                    local mapID;
+
+                                    if ( A.currentMapIDForPetsSets ) then
+                                        mapID = A.currentMapIDForPetsSets;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( A.db.profile.petsSetsByMapID[mapID] and tContains(A.db.profile.petsSetsByMapID[mapID], name) ) then
+                                        return 1;
+                                    end
+
+                                    return nil;
+                                end,
+                                set = function(info, name, val)
+                                    local mapID;
+
+                                    if ( A.currentMapIDForPetsSets ) then
+                                        mapID = A.currentMapIDForPetsSets;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( val ) then
+                                        if ( not A.db.profile.petsSetsByMapID[mapID] ) then
+                                            A.db.profile.petsSetsByMapID[mapID] = {};
+                                        end
+
+                                        A.db.profile.petsSetsByMapID[mapID][#A.db.profile.petsSetsByMapID[mapID]+1] = name;
+                                    else
+                                        if ( A.db.profile.petsSetsByMapID[mapID] ) then
+                                            A:TableRemove(A.db.profile.petsSetsByMapID[mapID], name);
+                                        end
+                                    end
+
+                                    if ( mapID == A.currentMapID ) then
+                                        A:SetZonePetsSets(1);
+                                    end
+                                end,
+                            },
+                            zoneResetGroup =
+                            {
+                                order = 3,
+                                name = L["Reset"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
+                                    zoneReset =
+                                    {
+                                        order = 0,
+                                        name = L["Reset"],
+                                        desc = L["Use this to reset the working area to the current area."],
+                                        type = "execute",
+                                        func = function() A.currentMapIDForPetsSets = nil; end,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    areaMounts =
+                    {
+                        order = 3,
+                        name = L["Area mounts"],
+                        type = "group",
+                        args =
+                        {
+                            zoneSelectGroup =
+                            {
+                                order = 0,
+                                name = L["Area selection"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
+                                    currentZone =
+                                    {
+                                        order = 0,
+                                        name = function()
+                                            local mapID;
+
+                                            if ( A.currentMapIDForMountsSets ) then
+                                                mapID = A.currentMapIDForMountsSets;
+                                            else
+                                                mapID = A.currentMapID;
+                                            end
+
+                                            return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)));
+                                        end,
+                                        type = "description",
+                                        fontSize = "medium",
+                                    },
+                                    zoneSelect =
+                                    {
+                                        order = 1,
+                                        name = L["Area selection"],
+                                        desc = L["Select the area you want to work with."],
+                                        type = "select",
+                                        dialogControl = "Dropdown-SortByValue",
+                                        values = function()
+                                            if ( A:TableCount(A.db.global.zonesIDsToName) > 0 ) then
+                                                return A.db.global.zonesIDsToName;
+                                            else
+                                                return {};
+                                            end
+                                        end,
+                                        get = function() return A.currentMapIDForMountsSets; end,
+                                        set = function(info, val) A.currentMapIDForMountsSets = val; end,
+                                    },
+                                },
+                            },
+                            select =
+                            {
+                                order = 1,
+                                name = L["Select"],
+                                type = "multiselect",
+                                values = function()
+                                    local out = {};
+
+                                    for k in pairs(A.db.global.savedSets.mounts) do
+                                        out[k] = k;
+                                    end
+
+                                    return out;
+                                end,
+                                get = function(info, name)
+                                    local mapID;
+
+                                    if ( A.currentMapIDForMountsSets ) then
+                                        mapID = A.currentMapIDForMountsSets;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( A.db.profile.mountsSetsByMapID[mapID] and tContains(A.db.profile.mountsSetsByMapID[mapID], name) ) then
+                                        return 1;
+                                    end
+
+                                    return nil;
+                                end,
+                                set = function(info, name, val)
+                                    local mapID;
+
+                                    if ( A.currentMapIDForMountsSets ) then
+                                        mapID = A.currentMapIDForMountsSets;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( val ) then
+                                        if ( not A.db.profile.mountsSetsByMapID[mapID] ) then
+                                            A.db.profile.mountsSetsByMapID[mapID] = {};
+                                        end
+
+                                        A.db.profile.mountsSetsByMapID[mapID][#A.db.profile.mountsSetsByMapID[mapID]+1] = name;
+                                    else
+                                        if ( A.db.profile.mountsSetsByMapID[mapID] ) then
+                                            A:TableRemove(A.db.profile.mountsSetsByMapID[mapID], name);
+                                        end
+                                    end
+
+                                    if ( mapID == A.currentMapID ) then
+                                        A:SetZoneMountsSets(1);
+                                    end
+                                end,
+                            },
+                            zoneResetGroup =
+                            {
+                                order = 2,
+                                name = L["Reset"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
+                                    zoneReset =
+                                    {
+                                        order = 0,
+                                        name = L["Reset"],
+                                        desc = L["Use this to reset the working area to the current area."],
+                                        type = "execute",
+                                        func = function() A.currentMapIDForPetsSets = nil; end,
                                     },
                                 },
                             },
@@ -1546,7 +1799,7 @@ function A:AceConfig()
                                                 mapID = A.currentMapID;
                                             end
 
-                                            return L["Currently working with: %s\n\n"]:format(GetMapNameByID(mapID));
+                                            return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)));
                                         end,
                                         type = "description",
                                         fontSize = "medium",
@@ -2329,7 +2582,7 @@ function A:AceConfig()
 
                 for kk,vv in A:PairsByKeys(A.pamTable.pets[k]) do
                     for kkk,vvv in ipairs(vv) do
-                        if ( A.db.profile.petByMapID[tostring(mapID)] == vvv.petID ) then
+                        if ( A.db.profile.petByMapID[mapID] == vvv.petID ) then
                             A.zonePetType = k;
                         end
 
@@ -2348,7 +2601,7 @@ function A:AceConfig()
                     mapID = A.currentMapID;
                 end
 
-                return A.db.profile.petByMapID[tostring(mapID)] or nil;
+                return A.db.profile.petByMapID[mapID] or nil;
             end,
             set = function(info, val)
                 local mapID;
@@ -2361,10 +2614,10 @@ function A:AceConfig()
 
                 if ( val == 0 ) then
                     if ( A.zonePetType == k ) then
-                        A.db.profile.petByMapID[tostring(mapID)] = nil;
+                        A.db.profile.petByMapID[mapID] = nil;
                     end
                 else
-                    A.db.profile.petByMapID[tostring(mapID)] = val;
+                    A.db.profile.petByMapID[mapID] = val;
                     A.zonePetType = k;
                 end
             end,
@@ -2403,7 +2656,7 @@ function A:AceConfig()
                     mapID = A.currentMapID;
                 end
 
-                return A.db.profile.mountByMapID[k][tostring(mapID)] or nil;
+                return A.db.profile.mountByMapID[k][mapID] or nil;
             end,
             set = function(info, val)
                 local mapID;
@@ -2415,9 +2668,9 @@ function A:AceConfig()
                 end
 
                 if ( val == 0 ) then
-                    A.db.profile.mountByMapID[k][tostring(mapID)] = nil;
+                    A.db.profile.mountByMapID[k][mapID] = nil;
                 else
-                    A.db.profile.mountByMapID[k][tostring(mapID)] = val;
+                    A.db.profile.mountByMapID[k][mapID] = val;
                 end
             end,
         };

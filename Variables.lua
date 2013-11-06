@@ -96,7 +96,7 @@ A.uniqueAreaMounts =
 {
     [1] = -- Ground
     {
-        [766] = -- Qiraji Battle Tanks in Temple of Ahn'Qiraj
+        ["766"] = -- Qiraji Battle Tanks in Temple of Ahn'Qiraj
         {
             25953, -- Blue Qiraji Battle Tank
             26056, -- Green Qiraji Battle Tank
@@ -109,10 +109,10 @@ A.uniqueAreaMounts =
     [4] = -- Aquatic
     {
         -- Abyssal Seahorse in Vashj'ir
-        [614] = 75207, -- Abyssal Depths
-        [610] = 75207, -- Kelp'thar Forest
-        [615] = 75207, -- Shimmering Expanse
-        [613] = 75207, -- Vashj'ir
+        ["614"] = 75207, -- Abyssal Depths
+        ["610"] = 75207, -- Kelp'thar Forest
+        ["615"] = 75207, -- Shimmering Expanse
+        ["613"] = 75207, -- Vashj'ir
     },
     [5] = {}, -- with passengers
     [6] = {}, -- Surface
@@ -263,27 +263,27 @@ A.restrictedMounts =
     [25953] = -- Blue Qiraji Battle Tank
     {
         type = "location",
-        args = 766,
+        args = "766",
     },
     [26056] = -- Green Qiraji Battle Tank
     {
         type = "location",
-        args = 766,
+        args = "766",
     },
     [26054] = -- Red Qiraji Battle Tank
     {
         type = "location",
-        args = 766,
+        args = "766",
     },
     [26055] = -- Yellow Qiraji Battle Tank
     {
         type = "location",
-        args = 766,
+        args = "766",
     },
     [75207] = -- Abyssal Seahorse
     {
         type = "location",
-        args = {614, 610, 615, 613},
+        args = {"614", "610", "615", "613"},
     },
     -- Spell needed mounts
     [127170] = -- Astral Cloud Serpent

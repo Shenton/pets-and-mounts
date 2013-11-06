@@ -103,10 +103,10 @@ function A:GetCurrentMapID()
 
     if ( not mapID ) then return; end
 
-    A.currentMapID = mapID;
+    A.currentMapID = tostring(mapID);
 
-    if ( not A.db.global.zonesIDsToName[tostring(mapID)] and GetMapNameByID(mapID) ) then
-        A.db.global.zonesIDsToName[tostring(mapID)] = GetMapNameByID(mapID);
+    if ( not A.db.global.zonesIDsToName[A.currentMapID] and GetMapNameByID(mapID) ) then
+        A.db.global.zonesIDsToName[A.currentMapID] = GetMapNameByID(mapID);
         if ( A.AceConfigDialog ) then A:NotifyChangeForAll(); end
         A:DebugMessage(("GetCurrentMapID() - Added %d - %s"):format(mapID, GetMapNameByID(mapID) or "Unavailable"));
     end

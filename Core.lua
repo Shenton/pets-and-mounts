@@ -6,16 +6,18 @@
     Core.lua
 -------------------------------------------------------------------------------]]--
 
+-- TODO: Sets in use display
+
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 -- TODO: Fix companion staying where you died
 
 -- TODO: Built in set for pets families
 -- TODO: search system for pets and mounts
 -- TODO: Area sets
--- TODO: Summon a selected category (option) mount with alt+click
+-- TODO: Summon a selected category (option) mount with ctrl+click
 
 -- TODO: Add a function to "copy" highlighted player's mounts (random companion has it. Really handy) - Makulatur on Curse comments
--- TODO: Revoke pet on pet button click - Makulatur on Curse comments
+-- TODO: Revoke pet on pet button ctrl+click - Makulatur on Curse comments
 
 -- Ace libs (<3)
 local A = LibStub("AceAddon-3.0"):NewAddon("PetsAndMounts", "AceConsole-3.0", "AceTimer-3.0", "AceEvent-3.0", "AceComm-3.0", "AceHook-3.0");
@@ -206,27 +208,27 @@ function A:CopyTable(src, dest)
 end
 
 --- Compare two tables
-function A:CompareTables(t1, t2)
-    if ( type(t1) ~= "table" or type(t2) ~= "table" ) then return nil; end
+-- function A:CompareTables(t1, t2)
+    -- if ( type(t1) ~= "table" or type(t2) ~= "table" ) then return nil; end
 
-    if ( #t1 ~= #t2 ) then return nil; end
+    -- if ( #t1 ~= #t2 ) then return nil; end
 
-    for k,v in pairs(t1) do
-        if ( type(v) == "table" ) then
-            if ( type(t2[k]) == "table" ) then
-                if ( not A:CompareTables(t2[k], v) ) then
-                    return nil;
-                end
-            else
-                return nil;
-            end
-        elseif ( t2[k] ~= v ) then
-            return nil;
-        end
-    end
+    -- for k,v in pairs(t1) do
+        -- if ( type(v) == "table" ) then
+            -- if ( type(t2[k]) == "table" ) then
+                -- if ( not A:CompareTables(t2[k], v) ) then
+                    -- return nil;
+                -- end
+            -- else
+                -- return nil;
+            -- end
+        -- elseif ( t2[k] ~= v ) then
+            -- return nil;
+        -- end
+    -- end
 
-    return 1;
-end
+    -- return 1;
+-- end
 
 --- Count table entries
 function A:TableCount(t)
@@ -342,27 +344,27 @@ function A:GetMountNameBySpellID(id)
 end
 
 --- Return the current set
-function A:GetCurrentSet(type)
-    local setsTable, favTable;
+-- function A:GetCurrentSet(type)
+    -- local setsTable, favTable;
 
-    if ( type == "PET" ) then
-        setsTable = A.db.global.savedSets.pets;
-        favTable = A.db.profile.favoritePets
-    elseif ( type == "MOUNT" ) then
-        setsTable = A.db.global.savedSets.mounts;
-        favTable = A.db.profile.favoriteMounts;
-    else
-        return L["None"];
-    end
+    -- if ( type == "PET" ) then
+        -- setsTable = A.db.global.savedSets.pets;
+        -- favTable = A.db.profile.favoritePets
+    -- elseif ( type == "MOUNT" ) then
+        -- setsTable = A.db.global.savedSets.mounts;
+        -- favTable = A.db.profile.favoriteMounts;
+    -- else
+        -- return L["None"];
+    -- end
 
-    for k,v in pairs(setsTable) do
-        if ( A:CompareTables(favTable, v) ) then
-            return k;
-        end
-    end
+    -- for k,v in pairs(setsTable) do
+        -- if ( A:CompareTables(favTable, v) ) then
+            -- return k;
+        -- end
+    -- end
 
-    return L["None"];
-end
+    -- return L["None"];
+-- end
 
 --- Check if it is a GUID
 function A:IsGUID(GUID)
@@ -959,7 +961,7 @@ function A:BuildTempSetTable(cat, sets)
 end
 
 --- Set the favorites pets with the selected sets (global)
-function A:SetPetsSetsGlobal()
+function A:SetGlobalPetsSets()
     local pets = A:BuildTempSetTable("PETS", A.db.profile.enabledSets.pets);
 
     if ( pets ) then
@@ -970,13 +972,80 @@ function A:SetPetsSetsGlobal()
 end
 
 --- Set the favorites mounts with the selected sets (global)
-function A:SetMountsSetsGlobal()
+function A:SetGlobalMountsSets()
     local mounts = A:BuildTempSetTable("MOUNTS", A.db.profile.enabledSets.mounts);
 
     if ( mounts ) then
         A.db.profile.favoriteMounts = {};
         A:CopyTable(mounts, A.db.profile.favoriteMounts);
         A.usableMountsCache = nil;
+    end
+end
+
+--- Set the favorites pets with the selected sets (zone)
+-- @param cfg When called by the configuration, override the last ~= current check
+function A:SetZonePetsSets(cfg)
+    if ( A.db.profile.petsSetsByMapID[A.currentMapID] ) then
+        if ( A.db.profile.lastZonePetsSetsDefined ~= A.currentMapID or cfg ) then
+            local pets = A:BuildTempSetTable("PETS", A.db.profile.petsSetsByMapID[A.currentMapID]);
+
+            if ( pets ) then
+                A.db.profile.favoritePets = {};
+                A:CopyTable(pets, A.db.profile.favoritePets);
+                A.usablePetsCache = nil;
+                A.db.profile.lastZonePetsSetsDefined = A.currentMapID;
+            end
+        end
+    else
+        if ( A.db.profile.lastZonePetsSetsDefined ) then
+            A:SetGlobalPetsSets();
+            A.db.profile.lastZonePetsSetsDefined = nil;
+        end
+    end
+end
+
+--- Set the favorites mounts with the selected sets (zone)
+-- @param cfg When called by the configuration, override the last ~= current check
+function A:SetZoneMountsSets(cfg)
+    if ( A.db.profile.mountsSetsByMapID[A.currentMapID] ) then
+        if ( A.db.profile.lastZoneMountsSetsDefined ~= A.currentMapID or cfg ) then
+            local mounts = A:BuildTempSetTable("MOUNTS", A.db.profile.mountsSetsByMapID[A.currentMapID]);
+
+            if ( mounts ) then
+                A.db.profile.favoriteMounts = {};
+                A:CopyTable(mounts, A.db.profile.favoriteMounts);
+                A.usablePetsCache = nil;
+                A.db.profile.lastZoneMountsSetsDefined = A.currentMapID;
+            end
+        end
+    else
+        if ( A.db.profile.lastZoneMountsSetsDefined ) then
+            A:SetGlobalMountsSets();
+            A.db.profile.lastZoneMountsSetsDefined = nil;
+        end
+    end
+end
+
+--- Return the sets in use
+function A:GetSetsInUse(cat)
+    if ( cat == "PETS" ) then
+        if ( A.db.profile.lastZonePetsSetsDefined ) then
+            return string.join(" ", unpack(A.db.profile.petsSetsByMapID[A.currentMapID]));
+        elseif ( #A.db.profile.enabledSets.pets > 0 ) then
+            return string.join(" ", unpack(A.db.profile.enabledSets.pets));
+        else
+            return L["None"];
+        end
+    elseif ( cat == "MOUNTS" ) then
+        if ( A.db.profile.lastZoneMountsSetsDefined ) then
+            return string.join(" ", unpack(A.db.profile.mountsSetsByMapID[A.currentMapID]));
+        elseif ( #A.db.profile.enabledSets.mounts > 0 ) then
+            return string.join(" ", unpack(A.db.profile.enabledSets.mounts));
+        else
+            return L["None"];
+        end
+    else
+        return L["None"];
     end
 end
 
@@ -1569,6 +1638,12 @@ function A:PLAYER_REGEN_ENABLED()
         A.delayedMountsTableUpdate = nil;
     end
 
+    if ( A.delayedZoneSets ) then
+        A:SetZonePetsSets();
+        A:SetZoneMountsSets();
+        A.delayedZoneSets = nil;
+    end
+
     A:AutoPetDelay();
 end
 
@@ -1641,9 +1716,14 @@ function A:ZONE_CHANGED_NEW_AREA()
     A:GetCurrentMapID();
     A:AutoPetDelay();
 
-    if ( A.configFrameFavOverride and A.configFrameFavOverride:IsVisible() ) then
-        A:NotifyChangeForAll();
+    if ( InCombatLockdown() ) then
+        A.delayedZoneSets = 1;
+    else
+        A:SetZonePetsSets();
+        A:SetZoneMountsSets();
     end
+
+    if ( A.NotifyChangeForAll ) then A:NotifyChangeForAll(); end
 end
 
 function A:PLAYER_LEVEL_UP(event, level, ...)
@@ -1892,6 +1972,12 @@ A.aceDefaultDB =
         {
             pets = {},
             mounts = {},
+        },
+        petsSetsByMapID =
+        {
+        },
+        mountsSetsByMapID =
+        {
         },
         enableAutoSummonOverride = nil, -- d
         autoSummonOverride = -- d
@@ -2180,7 +2266,7 @@ function A:OnInitialize()
             tooltip:AddDoubleLine(A.color["WHITE"]..L["Pets & Mounts"], A.color["GREEN"].."v"..A.version);
             tooltip:AddLine(" ");
 
-            currentSet = A:GetCurrentSet("PET");
+            currentSet = A:GetSetsInUse("PETS");
             if ( currentSet == L["None"] ) then
                 currentSet = A.color["RED"]..currentSet;
             else
@@ -2193,7 +2279,7 @@ function A:OnInitialize()
             tooltip:AddLine(L["Forced companion: %s"]:format(A.db.profile.forceOne.pet and A.color["GREEN"]..A:GetPetNameByID(A.db.profile.forceOne.pet) or A.color["RED"]..L["None"]));
             tooltip:AddLine(" ");
 
-            currentSet = A:GetCurrentSet("MOUNT");
+            currentSet = A:GetSetsInUse("MOUNTS");
             if ( currentSet == L["None"] ) then
                 currentSet = A.color["RED"]..currentSet;
             else
