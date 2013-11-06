@@ -26,8 +26,7 @@ Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 #@end-no-lib-strip@
 
-Buttons.xml
-ModelFrames.xml
+Frames.xml
 
 Localization\Locales-enUS.lua
 Localization\Locales-deDE.lua

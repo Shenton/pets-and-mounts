@@ -12,6 +12,8 @@
 -- TODO: Built in set for pets families
 -- TODO: search system for pets and mounts
 
+-- TODO: Add option to disable model frames
+
 -- TODO: move back red flying cloud to hybrid and prevent summoning it when under water
 
 -- Ace libs (<3)
