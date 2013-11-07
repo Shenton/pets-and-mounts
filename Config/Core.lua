@@ -172,1998 +172,1048 @@ StaticPopupDialogs["PetsAndMountsDeleteSet"] =
 };
 
 --[[-------------------------------------------------------------------------------
-    Config table
+    Methods
+-------------------------------------------------------------------------------]]--
+
+function A:SearchListCallback(searchType, searchText)
+    if ( searchType == "PETS" ) then
+        if ( not searchText or searchText == "" ) then
+            A.petsListSearchText = nil;
+        else
+            A.petsListSearchText = searchText;
+        end
+    elseif ( searchType == "MOUNTS" ) then
+        if ( not searchText or searchText == "" ) then
+            A.mountsListSearchText = nil;
+        else
+            A.mountsListSearchText = searchText;
+        end
+    else
+        A.petsListSearchText = nil;
+        A.mountsListSearchText = nil;
+    end
+
+    A:NotifyChangeForAll();
+end
+
+function A:GetPetsTable()
+    if ( A.petsListSearchText ) then
+        local out =
+        {
+            [1] = {}, -- Humanoid
+            [2] = {}, -- Dragonkin
+            [3] = {}, -- Flying
+            [4] = {}, -- Undead
+            [5] = {}, -- Critter
+            [6] = {}, -- Magic
+            [7] = {}, -- Elemental
+            [8] = {}, -- Beast
+            [9] = {}, -- Aquatic
+            [10] = {}, -- Mechanical
+            --[11] = {}, -- None
+        };
+
+        for k,v in ipairs(A.pamTable.pets) do
+            for kk,vv in pairs(v) do
+                for kkk,vvv in ipairs(vv) do
+                    if ( string.find(string.lower(vvv.name), string.lower(A.petsListSearchText)) or
+                    (vvv.defaultName and string.find(string.lower(vvv.defaultName), string.lower(A.petsListSearchText))) ) then
+                        if ( not out[k][kk] ) then out[k][kk] = {}; end
+                        out[k][kk][#out[k][kk]+1] = vvv;
+                    end
+                end
+            end
+        end
+
+        return out;
+    else
+        return A.pamTable.pets;
+    end
+end
+
+function A:GetMountsTable()
+    if ( A.mountsListSearchText ) then
+        local out =
+        {
+            [1] = {}, -- Ground
+            [2] = {}, -- Fly
+            [3] = {}, -- Hybrid (ground & fly)
+            [4] = {}, -- Aquatic
+            [5] = {}, -- with passengers
+            [6] = {}, -- Water walking
+            [7] = {}, -- Repair
+        };
+
+        for k,v in ipairs(A.pamTable.mounts) do
+            for kk,vv in pairs(v) do
+                for kkk,vvv in ipairs(vv) do
+                    if ( string.find(string.lower(vvv.name), string.lower(A.mountsListSearchText)) ) then
+                        if ( not out[k][kk] ) then out[k][kk] = {}; end
+                        out[k][kk][#out[k][kk]+1] = vvv;
+                    end
+                end
+            end
+        end
+
+        return out;
+    else
+        return A.pamTable.mounts;
+    end
+end
+
+--[[-------------------------------------------------------------------------------
+    Config table methods
 -------------------------------------------------------------------------------]]--
 
 local orderGroup, orderItem, petAutoSummonOverrideSelected;
 local optionsOverrideHeaderText = L["None"];
-function A:AceConfig()
-    local options =
+
+function A:OptionsRoot()
+    local root =
     {
-        name = L["Pets & Mounts"],
+        order = 0,
+        name = L["Options"],
         type = "group",
+        childGroups = "tab",
         args =
         {
             --
-            -- Main options tree
+            -- Main options tree - Common tab
             --
-            options =
+            miscellaneousOptions =
             {
                 order = 0,
-                name = L["Options"],
+                name = L["Miscellaneous"],
                 type = "group",
-                childGroups = "tab",
                 args =
                 {
-                    --
-                    -- Main options tree - Common tab
-                    --
-                    miscellaneousOptions =
+                    databaseOptions =
                     {
                         order = 0,
-                        name = L["Miscellaneous"],
+                        name = L["Database options"],
                         type = "group",
+                        inline = true,
                         args =
                         {
-                            databaseOptions =
+                            filterMultiple =
                             {
                                 order = 0,
-                                name = L["Database options"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    filterMultiple =
-                                    {
-                                        order = 0,
-                                        name = L["Filter multiple"],
-                                        desc = L["This will prevent adding to the list all the companions with same names."],
-                                        type = "toggle",
-                                        set = function()
-                                            A.db.profile.filterMultiple = not A.db.profile.filterMultiple;
-                                            A:BuildPetsTable(1);
-                                        end,
-                                        get = function() return A.db.profile.filterMultiple; end,
-                                    },
-                                    noFilterCustom =
-                                    {
-                                        order = 1,
-                                        name = L["Do not filter named companions"],
-                                        desc = L["If the companion got a custom name it will not be filtered."],
-                                        type = "toggle",
-                                        set = function()
-                                            A.db.profile.noFilterCustom = not A.db.profile.noFilterCustom;
-                                            A:BuildPetsTable(1);
-                                        end,
-                                        get = function() return A.db.profile.noFilterCustom; end,
-                                    },
-                                },
+                                name = L["Filter multiple"],
+                                desc = L["This will prevent adding to the list all the companions with same names."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.filterMultiple = not A.db.profile.filterMultiple;
+                                    A:BuildPetsTable(1);
+                                end,
+                                get = function() return A.db.profile.filterMultiple; end,
                             },
-                            model =
+                            noFilterCustom =
                             {
-                                order = 100,
-                                name = L["Model frames"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    configHeader =
-                                    {
-                                        order = 0,
-                                        name = L["Config frame"],
-                                        type = "header",
-                                    },
-                                    configRotation =
-                                    {
-                                        order = 1,
-                                        name = L["Model rotation"],
-                                        desc = L["Activate the model rotation in the frame."],
-                                        type = "toggle",
-                                        set = function()
-                                            A.db.profile.configModelRotation = not A.db.profile.configModelRotation;
-
-                                            if ( not A.db.profile.configModelRotation ) then
-                                                A.configModelFrame.rotation = 0;
-                                                A.configModelFrame:SetRotation(A.configModelFrame.rotation);
-                                            end
-                                        end,
-                                        get = function() return A.db.profile.configModelRotation; end,
-                                    },
-                                    configSize =
-                                    {
-                                        order = 2,
-                                        name = L["Size"],
-                                        desc = L["Select the model frame size."],
-                                        type = "select",
-                                        values = modelFrameSizeSelect,
-                                        get = function() return A.db.profile.configModelFrameWidth; end,
-                                        set = function(info, val)
-                                            A.db.profile.configModelFrameWidth = val;
-                                            A.db.profile.configModelFrameHeight = val;
-                                            A.configModelFrame:SetSize(A.db.profile.configModelFrameWidth, A.db.profile.configModelFrameHeight);
-                                        end
-                                    },
-                                    menuHeader =
-                                    {
-                                        order = 10,
-                                        name = L["Menu frame"],
-                                        type = "header",
-                                    },
-                                    menuRotation =
-                                    {
-                                        order = 11,
-                                        name = L["Model rotation"],
-                                        desc = L["Activate the model rotation in the frame."],
-                                        type = "toggle",
-                                        set = function() A.db.profile.modelRotation = not A.db.profile.modelRotation; end,
-                                        get = function() return A.db.profile.modelRotation; end,
-                                    },
-                                    menuSize =
-                                    {
-                                        order = 12,
-                                        name = L["Size"],
-                                        desc = L["Select the model frame size."],
-                                        type = "select",
-                                        values = modelFrameSizeSelect,
-                                        get = function() return A.db.profile.modelFrameWidth; end,
-                                        set = function(info, val)
-                                            A.db.profile.modelFrameWidth = val;
-                                            A.db.profile.modelFrameHeight = val;
-                                            A.configModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
-                                        end
-                                    },
-                                },
-                            },
-                            minimap =
-                            {
-                                order = 200,
-                                name = L["Minimap"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    hideIcon =
-                                    {
-                                        order = 0,
-                                        name = L["Show icon"],
-                                        desc = L["Display an icon on the minimap."],
-                                        type = "toggle",
-                                        set = function()
-                                            A.db.profile.ldbi.hide = not A.db.profile.ldbi.hide;
-                                            A:ShowHideMinimap();
-                                        end,
-                                        get = function() return not A.db.profile.ldbi.hide; end,
-                                    },
-                                },
-                            },
-                            debug =
-                            {
-                                order = 300,
-                                name = L["Debug"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    debug =
-                                    {
-                                        order = 0,
-                                        name = L["Debug"],
-                                        type = "toggle",
-                                        set = function()
-                                            A.db.profile.debug = not A.db.profile.debug;
-                                            A:SetDebugMessage();
-                                        end,
-                                        get = function() return A.db.profile.debug; end,
-                                    },
-                                },
+                                order = 1,
+                                name = L["Do not filter named companions"],
+                                desc = L["If the companion got a custom name it will not be filtered."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.noFilterCustom = not A.db.profile.noFilterCustom;
+                                    A:BuildPetsTable(1);
+                                end,
+                                get = function() return A.db.profile.noFilterCustom; end,
                             },
                         },
                     },
-                    --
-                    -- Main options tree - Pets tab
-                    --
-                    petsOptions =
+                    model =
                     {
                         order = 100,
-                        name = L["Companions"],
+                        name = L["Model frames"],
                         type = "group",
+                        inline = true,
                         args =
                         {
-                            petOptions =
+                            configHeader =
                             {
                                 order = 0,
-                                name = L["Auto companion options"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    summon =
-                                    {
-                                        order = 0,
-                                        name = L["Summon"],
-                                        type = "header",
-                                    },
-                                    autoSummon =
-                                    {
-                                        order = 1,
-                                        name = L["Auto summon"],
-                                        desc = L["Auto summon a random companion."],
-                                        type = "toggle",
-                                        set = function()
-                                            A.db.profile.autoPet = not A.db.profile.autoPet;
-                                            A:SetMainTimer();
-                                        end,
-                                        get = function() return A.db.profile.autoPet; end,
-                                    },
-                                    alreadyGotPet =
-                                    {
-                                        order = 2,
-                                        name = L["Not with a companion"],
-                                        desc = L["Auto summon will not work if you already have a companion, or it will summon a random favorite companion."],
-                                        type = "toggle",
-                                        set = function() A.db.profile.alreadyGotPet = not A.db.profile.alreadyGotPet; end,
-                                        get = function() return A.db.profile.alreadyGotPet; end,
-                                    },
-                                    notWhenStealthed =
-                                    {
-                                        order = 3,
-                                        name = L["Revoke when stealthed"],
-                                        desc = L["If you got a companion it will dismiss it when going stealthed."],
-                                        type = "toggle",
-                                        set = function()
-                                            A.db.profile.notWhenStealthed = not A.db.profile.notWhenStealthed;
-                                            A:SetStealthEvents();
-                                        end,
-                                        get = function() return A.db.profile.notWhenStealthed; end,
-                                    },
-                                    hauntedMemento =
-                                    {
-                                        order = 4,
-                                        name = L["Haunted Memento"],
-                                        desc = L["Do not automatically summon a pet when the Haunted Memento is in your bags."],
-                                        type = "toggle",
-                                        set = function() A.db.profile.hauntedMemento = not A.db.profile.hauntedMemento; end,
-                                        get = function() return A.db.profile.hauntedMemento; end,
-                                    },
-                                    timers =
-                                    {
-                                        order = 20,
-                                        name = L["Timers"],
-                                        type = "header",
-                                    },
-                                    mainTimer =
-                                    {
-                                        order = 21,
-                                        name = L["Auto summon timer"],
-                                        desc = L["Select how often the addon will check if you got a companion."],
-                                        type = "range",
-                                        min = 1,
-                                        max = 120,
-                                        step = 1,
-                                        width = "full",
-                                        set = function(info, val)
-                                            A.db.profile.mainTimer = val;
-                                            A:SetMainTimer();
-                                        end,
-                                        get = function() return A.db.profile.mainTimer; end,
-                                    },
-                                    shiftTimer =
-                                    {
-                                        order = 22,
-                                        name = L["Shift timer"],
-                                        desc = L["Select the shift timer, this is the time before summoning a random companion after reviving, porting, unstealthing, etc."],
-                                        type = "range",
-                                        min = 1,
-                                        max = 60,
-                                        step = 1,
-                                        width = "full",
-                                        set = function(info, val) A.db.profile.shiftTimer = val; end,
-                                        get = function() return A.db.profile.shiftTimer; end,
-                                    },
-                                },
+                                name = L["Config frame"],
+                                type = "header",
                             },
-                            petAutoSummonOverride =
+                            configRotation =
                             {
-                                order = 100,
-                                name = L["Auto companion options override"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    enableHeader =
-                                    {
-                                        order = 0,
-                                        name = L["Enable"],
-                                        type = "header",
-                                    },
-                                    enableToggle =
-                                    {
-                                        order = 1,
-                                        name = L["Enable"],
-                                        desc = L["Enable auto pet options override."],
-                                        type = "toggle",
-                                        set = function()
-                                            A.db.profile.enableAutoSummonOverride = not A.db.profile.enableAutoSummonOverride;
-                                        end,
-                                        get = function() return A.db.profile.enableAutoSummonOverride; end,
-                                    },
-                                    areaSelectHeader =
-                                    {
-                                        order = 10,
-                                        name = L["Area type"],
-                                        type = "header",
-                                    },
-                                    areaSelect =
-                                    {
-                                        order = 11,
-                                        name = L["Area type"],
-                                        desc = L["Select witch type of area to work with."],
-                                        type = "select",
-                                        disabled = function() return not A.db.profile.enableAutoSummonOverride; end,
-                                        values = function()
-                                            local out = {};
+                                order = 1,
+                                name = L["Model rotation"],
+                                desc = L["Activate the model rotation in the frame."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.configModelRotation = not A.db.profile.configModelRotation;
 
-                                            for k,v in ipairs(A.areaTypes) do
-                                                out[v] = A.areaTypesLocales[v];
-                                            end
-
-                                            return out;
-                                        end,
-                                        set = function(info, val)
-                                            petAutoSummonOverrideSelected = val;
-
-                                            optionsOverrideHeaderText = A.areaTypesLocales[val];
-                                        end,
-                                        get = function()
-                                            return petAutoSummonOverrideSelected;
-                                        end,
-                                    },
-                                    optionsHeader =
-                                    {
-                                        order = 20,
-                                        name = L["Override options for %s"]:format(optionsOverrideHeaderText),
-                                        type = "header",
-                                    },
-                                    autoSummon =
-                                    {
-                                        order = 21,
-                                        name = L["Auto summon"],
-                                        desc = L["Auto summon a random companion."],
-                                        type = "toggle",
-                                        disabled = function()
-                                            if ( not A.db.profile.enableAutoSummonOverride ) then
-                                                return 1;
-                                            end
-
-                                            if ( not petAutoSummonOverrideSelected ) then
-                                                return 1;
-                                            end
-
-                                            return nil;
-                                        end,
-                                        set = function()
-                                            if ( not petAutoSummonOverrideSelected ) then return; end
-
-                                            if ( not A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] ) then
-                                                A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] = {};
-                                            end
-
-                                            A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].autoPet = not A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].autoPet;
-                                        end,
-                                        get = function()
-                                            if ( A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] ) then
-                                                return A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].autoPet;
-                                            else
-                                                return nil;
-                                            end
-                                        end,
-                                    },
-                                    notWhenStealthed =
-                                    {
-                                        order = 22,
-                                        name = L["Revoke when stealthed"],
-                                        desc = L["If you got a companion it will dismiss it when going stealthed."],
-                                        type = "toggle",
-                                        disabled = function()
-                                            if ( not A.db.profile.enableAutoSummonOverride ) then
-                                                return 1;
-                                            end
-
-                                            if ( not petAutoSummonOverrideSelected ) then
-                                                return 1;
-                                            end
-
-                                            return nil;
-                                        end,
-                                        set = function()
-                                            if ( not petAutoSummonOverrideSelected ) then return; end
-
-                                            if ( not A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] ) then
-                                                A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] = {};
-                                            end
-
-                                            A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].notWhenStealthed = not A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].notWhenStealthed;
-                                        end,
-                                        get = function()
-                                            if ( A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] ) then
-                                                return A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].notWhenStealthed;
-                                            else
-                                                return nil;
-                                            end
-                                        end,
-                                    },
-                                },
+                                    if ( not A.db.profile.configModelRotation ) then
+                                        A.configModelFrame.rotation = 0;
+                                        A.configModelFrame:SetRotation(A.configModelFrame.rotation);
+                                    end
+                                end,
+                                get = function() return A.db.profile.configModelRotation; end,
                             },
-                            petsSummonFilters =
+                            configSize =
                             {
-                                order = 200,
-                                name = L["Companions auto summon filters"],
-                                type = "group",
-                                inline = true,
-                                args = {},
+                                order = 2,
+                                name = L["Size"],
+                                desc = L["Select the model frame size."],
+                                type = "select",
+                                values = modelFrameSizeSelect,
+                                get = function() return A.db.profile.configModelFrameWidth; end,
+                                set = function(info, val)
+                                    A.db.profile.configModelFrameWidth = val;
+                                    A.db.profile.configModelFrameHeight = val;
+                                    A.configModelFrame:SetSize(A.db.profile.configModelFrameWidth, A.db.profile.configModelFrameHeight);
+                                end
                             },
-                            petListOptions =
+                            menuHeader =
                             {
-                                order = 300,
-                                name = L["Companions list options"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    appendDefaultName =
-                                    {
-                                        order = 0,
-                                        name = L["Append default name"],
-                                        desc = L["When a companion got a custom name, it will append its default name."],
-                                        type = "toggle",
-                                        set = function() A.db.profile.appendPetDefaultName = not A.db.profile.appendPetDefaultName; end,
-                                        get = function() return A.db.profile.appendPetDefaultName; end,
-                                    },
-                                    colorCustomName =
-                                    {
-                                        order = 1,
-                                        name = L["Color custom name"],
-                                        desc = L["When a companion got a custom name, it will be colored."],
-                                        type = "toggle",
-                                        set = function() A.db.profile.colorPetWithCustomName = not A.db.profile.colorPetWithCustomName; end,
-                                        get = function() return A.db.profile.colorPetWithCustomName; end,
-                                    },
-                                    customNameColorPicker =
-                                    {
-                                        order = 2,
-                                        name = L["Custom name color"],
-                                        desc = L["Pick a color for your companions custom names."],
-                                        type = "color",
-                                        hasAlpha = true,
-                                        set = function(info, r, g, b, a)
-                                            A.db.profile.petWithCustomNameColor.r = r;
-                                            A.db.profile.petWithCustomNameColor.g = g;
-                                            A.db.profile.petWithCustomNameColor.b = b;
-                                            A.db.profile.petWithCustomNameColor.a = a;
-                                            A.db.profile.petWithCustomNameColor.hexa = "|c"..A:PercentToHex(r, g, b, a);
-                                        end,
-                                        get = function()
-                                            return A.db.profile.petWithCustomNameColor.r,
-                                            A.db.profile.petWithCustomNameColor.g,
-                                            A.db.profile.petWithCustomNameColor.b,
-                                            A.db.profile.petWithCustomNameColor.a;
-                                        end,
-                                    },
-                                },
+                                order = 10,
+                                name = L["Menu frame"],
+                                type = "header",
+                            },
+                            menuRotation =
+                            {
+                                order = 11,
+                                name = L["Model rotation"],
+                                desc = L["Activate the model rotation in the frame."],
+                                type = "toggle",
+                                set = function() A.db.profile.modelRotation = not A.db.profile.modelRotation; end,
+                                get = function() return A.db.profile.modelRotation; end,
+                            },
+                            menuSize =
+                            {
+                                order = 12,
+                                name = L["Size"],
+                                desc = L["Select the model frame size."],
+                                type = "select",
+                                values = modelFrameSizeSelect,
+                                get = function() return A.db.profile.modelFrameWidth; end,
+                                set = function(info, val)
+                                    A.db.profile.modelFrameWidth = val;
+                                    A.db.profile.modelFrameHeight = val;
+                                    A.configModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
+                                end
                             },
                         },
                     },
-                    --
-                    -- Main options tree - Mounts tab
-                    --
-                    mountsOptions =
+                    minimap =
+                    {
+                        order = 200,
+                        name = L["Minimap"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            hideIcon =
+                            {
+                                order = 0,
+                                name = L["Show icon"],
+                                desc = L["Display an icon on the minimap."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.ldbi.hide = not A.db.profile.ldbi.hide;
+                                    A:ShowHideMinimap();
+                                end,
+                                get = function() return not A.db.profile.ldbi.hide; end,
+                            },
+                        },
+                    },
+                    debug =
                     {
                         order = 300,
-                        name = L["Mounts"],
+                        name = L["Debug"],
                         type = "group",
+                        inline = true,
                         args =
                         {
-                            mountOptions =
+                            debug =
                             {
                                 order = 0,
-                                name = L["Random mount options"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    noHybridWhenGround =
-                                    {
-                                        order = 0,
-                                        name = L["No hybrid (Ground)"],
-                                        desc = L["Do not summon an hybrid mount in a ground only area."],
-                                        type = "toggle",
-                                        set = function() A.db.profile.noHybridWhenGround = not A.db.profile.noHybridWhenGround; end,
-                                        get = function() return A.db.profile.noHybridWhenGround; end,
-                                    },
-                                    noHybridWhenFly =
-                                    {
-                                        order = 1,
-                                        name = L["No hybrid (Fly)"],
-                                        desc = L["Do not summon an hybrid mount in a flyable area."],
-                                        type = "toggle",
-                                        set = function() A.db.profile.noHybridWhenFly = not A.db.profile.noHybridWhenFly; end,
-                                        get = function() return A.db.profile.noHybridWhenFly; end,
-                                    },
-                                    dismountFlying =
-                                    {
-                                        order = 2,
-                                        name = L["Flying dismount"],
-                                        desc = L["Using the random mount bind when flying will dismount you."],
-                                        type = "toggle",
-                                        set = function() A.db.profile.dismountFlying = not A.db.profile.dismountFlying; end,
-                                        get = function() return A.db.profile.dismountFlying; end,
-                                    },
-                                    areaMounts =
-                                    {
-                                        order = 3,
-                                        name = L["Area mounts"],
-                                        desc = L["With this enabled it will summon a specific mount according to your current area. Example: the Abyssal Seahorse in Vashj'ir."],
-                                        type = "toggle",
-                                        set = function() A.db.profile.areaMounts = not A.db.profile.areaMounts; end,
-                                        get = function() return A.db.profile.areaMounts; end,
-                                    },
-                                    classesMacrosEnabled =
-                                    {
-                                        order = 4,
-                                        name = L["Class specific"],
-                                        desc = L["With this enabled it will use flying forms for druids (Only class with specific \"mount\" atm)."],
-                                        type = "toggle",
-                                        set = function() A.db.profile.classesMacrosEnabled = not A.db.profile.classesMacrosEnabled; end,
-                                        get = function() return A.db.profile.classesMacrosEnabled; end,
-                                    },
-                                    surfaceMount =
-                                    {
-                                        order = 6,
-                                        name = L["Surface mount"],
-                                        desc = L["If you are in a non flyable area and at the water surface, it will summon a mount able to walk on water. Support Death Knights Path of Frost, Shamans Water Walking and Warlocks glyph."],
-                                        type = "toggle",
-                                        set = function() A.db.profile.surfaceMount = not A.db.profile.surfaceMount; end,
-                                        get = function() return A.db.profile.surfaceMount; end,
-                                    },
-                                    preferSurfaceSpell =
-                                    {
-                                        order = 7,
-                                        name = L["Prefer surface spell"],
-                                        desc = L["If surface mount options is enabled, it will prefer using your water walking spell other the mount. This only works for Death Knights and Shamans."],
-                                        type = "toggle",
-                                        set = function() A.db.profile.preferSurfaceSpell = not A.db.profile.preferSurfaceSpell; end,
-                                        get = function() return A.db.profile.preferSurfaceSpell; end,
-                                    },
-                                    vehicleExit =
-                                    {
-                                        order = 8,
-                                        name = L["Vehicle exit"],
-                                        desc = L["If you are in a vehicle using the random mount will make you leave the vehicle."],
-                                        type = "toggle",
-                                        set = function()
-                                            A.db.profile.vehicleExit = not A.db.profile.vehicleExit;
-                                            A:SetMacroDismountString();
-                                            A:SetPostClickMacro();
-                                        end,
-                                        get = function() return A.db.profile.vehicleExit; end,
-                                    },
-                                    copyTargetMount =
-                                    {
-                                        order = 9,
-                                        name = L["Copy target mount"],
-                                        desc = L["If you target someone and he/she is on a mount, it will summon it if you have it. This have priority other copy mouse hover."],
-                                        type = "toggle",
-                                        set = function() A.db.profile.copyTargetMount = not A.db.profile.copyTargetMount; end,
-                                        get = function() return A.db.profile.copyTargetMount; end,
-                                    },
-                                    copyMouseoverMount =
-                                    {
-                                        order = 10,
-                                        name = L["Copy mouse hover mount"],
-                                        desc = L["If you mouse hover someone and he/she is on a mount, it will summon it if you have it. Target copy have priority other this."],
-                                        type = "toggle",
-                                        set = function() A.db.profile.copyMouseoverMount = not A.db.profile.copyMouseoverMount; end,
-                                        get = function() return A.db.profile.copyMouseoverMount; end,
-                                    },
-                                    specialMountsHeader =
-                                    {
-                                        order = 1000,
-                                        name = L["Special mounts"],
-                                        type = "header",
-                                    },
-                                    magicBroom =
-                                    {
-                                        order = 1001,
-                                        name = L["Magic Broom"],
-                                        desc = L["Summon the Magic Broom when it is in your bags."],
-                                        type = "toggle",
-                                        set = function() A.db.profile.magicBroom = not A.db.profile.magicBroom; end,
-                                        get = function() return A.db.profile.magicBroom; end,
-                                    },
-                                    shimmeringMoonstone =
-                                    {
-                                        order = 1002,
-                                        name = L["Shimmering Moonstone"],
-                                        desc = L["Summon Moonfang when the Shimmering Moonstone is in your bags."],
-                                        type = "toggle",
-                                        set = function() A.db.profile.shimmeringMoonstone = not A.db.profile.shimmeringMoonstone; end,
-                                        get = function() return A.db.profile.shimmeringMoonstone; end,
-                                    },
-                                    swimmingOptionsHeader =
-                                    {
-                                        order = 2000,
-                                        name = L["Swimming options"],
-                                        type = "header",
-                                    },
-                                    isSwimminMountCat =
-                                    {
-                                        order = 2001,
-                                        name = L["Underwater mount category"],
-                                        desc = L["Choose which mount category to summon when under water. This do not impact druid forms."],
-                                        type = "select",
-                                        values = function() return A.mountCat; end,
-                                        set = function(info, val) A.db.profile.isSwimmingMountCat = val; end,
-                                        get = function() return A.db.profile.isSwimmingMountCat; end,
-                                    },
-                                },
-                            },
-                            mountsSummonFilters =
-                            {
-                                order = 100,
-                                name = L["Random mount summon filters"],
-                                type = "group",
-                                inline = true,
-                                args = {},
-                            },
-                        },
-                    },
-                    --
-                    -- Main options tree - Bindings tab
-                    --
-                    bindings =
-                    {
-                        order = 400,
-                        name = L["Bindings"],
-                        type = "group",
-                        args = {},
-                    },
-                    --
-                    -- Main options tree - Buttons tab
-                    --
-                    buttons =
-                    {
-                        order = 400,
-                        name = L["Buttons"],
-                        type = "group",
-                        args =
-                        {
-                            petsButton =
-                            {
-                                order = 0,
-                                name = L["Companions button"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    petHide =
-                                    {
-                                        order = 0,
-                                        name = L["Hide"],
-                                        desc = L["Hide the companions button."],
-                                        type = "toggle",
-                                        set = function()
-                                            if ( InCombatLockdown() ) then
-                                                A:Message(L["Unable to edit buttons while in combat."], 1);
-                                                return;
-                                            end
-
-                                            A.db.profile.PetsAndMountsSecureButtonPets.hide = not A.db.profile.PetsAndMountsSecureButtonPets.hide;
-                                            A:SetButtons();
-                                        end,
-                                        get = function() return A.db.profile.PetsAndMountsSecureButtonPets.hide; end,
-                                    },
-                                    petLock =
-                                    {
-                                        order = 1,
-                                        name = L["Lock"],
-                                        desc = L["Lock the companions button."],
-                                        type = "toggle",
-                                        set = function()
-                                            if ( InCombatLockdown() ) then
-                                                A:Message(L["Unable to edit buttons while in combat."], 1);
-                                                return;
-                                            end
-
-                                            if ( A.db.profile.dockButton ) then
-                                                return;
-                                            end
-
-                                            A.db.profile.PetsAndMountsSecureButtonPets.lock = not A.db.profile.PetsAndMountsSecureButtonPets.lock;
-                                            A:SetButtons();
-                                        end,
-                                        get = function() return A.db.profile.PetsAndMountsSecureButtonPets.lock; end,
-                                    },
-                                    petTooltip =
-                                    {
-                                        order = 2,
-                                        name = L["Tooltip"],
-                                        desc = L["Enable the tooltip of the companions button."],
-                                        type = "toggle",
-                                        set = function() A.db.profile.PetsAndMountsSecureButtonPets.tooltip = not A.db.profile.PetsAndMountsSecureButtonPets.tooltip; end,
-                                        get = function() return A.db.profile.PetsAndMountsSecureButtonPets.tooltip; end,
-                                    },
-                                    petScale =
-                                    {
-                                        order = 3,
-                                        name = L["Scale"],
-                                        desc = L["Set the scale of the companions button."],
-                                        type = "range",
-                                        width = "full",
-                                        min = 0.1,
-                                        max = 5,
-                                        step = 0.1,
-                                        set = function(info, val)
-                                            if ( InCombatLockdown() ) then
-                                                A:Message(L["Unable to edit buttons while in combat."], 1);
-                                                return;
-                                            end
-
-                                            A.db.profile.PetsAndMountsSecureButtonPets.scale = val;
-                                            A:SetButtons();
-                                        end,
-                                        get = function() return A.db.profile.PetsAndMountsSecureButtonPets.scale; end,
-                                    },
-                                    petReset =
-                                    {
-                                        order = 4,
-                                        name = L["Reset"],
-                                        desc = L["Reset the companions button configuration."],
-                                        type = "execute",
-                                        func = function()
-                                            if ( InCombatLockdown() ) then
-                                                A:Message(L["Unable to edit buttons while in combat."], 1);
-                                                return;
-                                            end
-
-                                            A.db.profile.PetsAndMountsSecureButtonPets =
-                                            {
-                                                hide = nil,
-                                                lock = nil,
-                                                tooltip = 1,
-                                                scale = 1,
-                                                anchor =
-                                                {
-                                                    point = "CENTER",
-                                                    relativeTo = "UIParent",
-                                                    relativePoint = "CENTER",
-                                                    offX = 0,
-                                                    offY = 0,
-                                                },
-                                            };
-
-                                            A:SetButtons();
-                                        end,
-                                    },
-                                },
-                            },
-                            mountsButton =
-                            {
-                                order = 1,
-                                name = L["Mounts button"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    mountHide =
-                                    {
-                                        order = 0,
-                                        name = L["Hide"],
-                                        desc = L["Hide the mounts button."],
-                                        type = "toggle",
-                                        set = function()
-                                            if ( InCombatLockdown() ) then
-                                                A:Message(L["Unable to edit buttons while in combat."], 1);
-                                                return;
-                                            end
-
-                                            A.db.profile.PetsAndMountsSecureButtonMounts.hide = not A.db.profile.PetsAndMountsSecureButtonMounts.hide;
-                                            A:SetButtons();
-                                        end,
-                                        get = function() return A.db.profile.PetsAndMountsSecureButtonMounts.hide; end,
-                                    },
-                                    mountLock =
-                                    {
-                                        order = 1,
-                                        name = L["Lock"],
-                                        desc = L["Lock the mounts button."],
-                                        type = "toggle",
-                                        set = function()
-                                            if ( InCombatLockdown() ) then
-                                                A:Message(L["Unable to edit buttons while in combat."], 1);
-                                                return;
-                                            end
-
-                                            A.db.profile.PetsAndMountsSecureButtonMounts.lock = not A.db.profile.PetsAndMountsSecureButtonMounts.lock;
-                                            A:SetButtons();
-                                        end,
-                                        get = function() return A.db.profile.PetsAndMountsSecureButtonMounts.lock; end,
-                                    },
-                                    mountTooltip =
-                                    {
-                                        order = 2,
-                                        name = L["Tooltip"],
-                                        desc = L["Enable the tooltip of the mounts button."],
-                                        type = "toggle",
-                                        set = function() A.db.profile.PetsAndMountsSecureButtonMounts.tooltip = not A.db.profile.PetsAndMountsSecureButtonMounts.tooltip; end,
-                                        get = function() return A.db.profile.PetsAndMountsSecureButtonMounts.tooltip; end,
-                                    },
-                                    mountScale =
-                                    {
-                                        order = 3,
-                                        name = L["Scale"],
-                                        desc = L["Set the scale of the mounts button."],
-                                        type = "range",
-                                        width = "full",
-                                        min = 0.1,
-                                        max = 5,
-                                        step = 0.1,
-                                        set = function(info, val)
-                                            if ( InCombatLockdown() ) then
-                                                A:Message(L["Unable to edit buttons while in combat."], 1);
-                                                return;
-                                            end
-
-                                            A.db.profile.PetsAndMountsSecureButtonMounts.scale = val;
-                                            A:SetButtons();
-                                        end,
-                                        get = function() return A.db.profile.PetsAndMountsSecureButtonMounts.scale; end,
-                                    },
-                                    mountReset =
-                                    {
-                                        order = 4,
-                                        name = L["Reset"],
-                                        desc = L["Reset the mounts button configuration."],
-                                        type = "execute",
-                                        func = function()
-                                            if ( InCombatLockdown() ) then
-                                                A:Message(L["Unable to edit buttons while in combat."], 1);
-                                                return;
-                                            end
-
-                                            A.db.profile.PetsAndMountsSecureButtonMounts =
-                                            {
-                                                hide = nil,
-                                                lock = nil,
-                                                tooltip = 1,
-                                                scale = 1,
-                                                anchor =
-                                                {
-                                                    point = "CENTER",
-                                                    relativeTo = "UIParent",
-                                                    relativePoint = "CENTER",
-                                                    offX = 0,
-                                                    offY = 0,
-                                                },
-                                            };
-
-                                            A:SetButtons();
-                                        end,
-                                    },
-                                    clickBehavior =
-                                    {
-                                        order = 100,
-                                        name = L["Click behavior"],
-                                        type = "header",
-                                    },
-                                    shiftClick =
-                                    {
-                                        order = 101,
-                                        name = L["Shift+Click"],
-                                        desc = L["Choose which mount category to summon when using %s"]:format(L["Shift+Click"]),
-                                        type = "select",
-                                        values = function() return A.mountCat; end,
-                                        set = function(info, val) A.db.profile.mountButtonshiftClickCat = val; end,
-                                        get = function() return A.db.profile.mountButtonshiftClickCat; end,
-                                    },
-                                },
-                            },
-                            dock =
-                            {
-                                order = 2,
-                                name = L["Dock options"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    dock =
-                                    {
-                                        order = 0,
-                                        name = L["Dock"],
-                                        desc = L["Dock companion button to the mount button."],
-                                        type = "toggle",
-                                        set = function()
-                                            if ( InCombatLockdown() ) then
-                                                A:Message(L["Unable to edit buttons while in combat."], 1);
-                                                return;
-                                            end
-
-                                            if ( A.db.profile.PetsAndMountsSecureButtonMounts.hide or A.db.profile.PetsAndMountsSecureButtonPets.hide ) then
-                                                A:Message(L["Cannot dock buttons together when at least one of them is hidden."], 1);
-                                                return;
-                                            end
-
-                                            A.db.profile.dockButton = not A.db.profile.dockButton;
-
-                                            if ( A.db.profile.dockButton ) then
-                                                A:DockButton();
-                                            else
-                                                A:UnDockButton();
-                                            end
-                                        end,
-                                        get = function() return A.db.profile.dockButton; end,
-                                    },
-                                    dockAnchor =
-                                    {
-                                        order = 1,
-                                        name = L["Dock anchor"],
-                                        desc = L["Select on which side of the mounts button the companions button should dock."],
-                                        type = "select",
-                                        values = dockAnchorsSelect,
-                                        set = function(info, val)
-                                            if ( InCombatLockdown() ) then
-                                                A:Message(L["Unable to edit buttons while in combat."], 1);
-                                                return;
-                                            end
-
-                                            A.db.profile.dockAnchor = val;
-                                            A:DockButton();
-                                        end,
-                                        get = function() return A.db.profile.dockAnchor; end,
-                                    },
-                                },
+                                name = L["Debug"],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.debug = not A.db.profile.debug;
+                                    A:SetDebugMessage();
+                                end,
+                                get = function() return A.db.profile.debug; end,
                             },
                         },
                     },
                 },
             },
             --
-            -- Pets list tree
+            -- Main options tree - Pets tab
             --
-            pets =
+            petsOptions =
             {
-                order = 10,
-                name = L["Companions list"],
+                order = 100,
+                name = L["Companions"],
                 type = "group",
-                childGroups = "tab",
-                args = {},
-            },
-            --
-            -- Mounts list tree
-            --
-            mounts =
-            {
-                order = 20,
-                name = L["Mounts list"],
-                type = "group",
-                childGroups = "tab",
-                args = {},
-            },
-            --
-            -- Sets tree
-            --
-            sets =
-            {
-                order = 30,
-                name = L["Sets options"],
-                type = "group",
-                childGroups = "tab",
                 args =
                 {
-                    pets =
+                    petOptions =
                     {
                         order = 0,
-                        name = L["Companions"],
+                        name = L["Auto companion options"],
                         type = "group",
-                        --inline = true,
+                        inline = true,
                         args =
                         {
-                            selectedFav =
+                            summon =
                             {
                                 order = 0,
-                                name = function()
-                                    local count = #A.db.profile.favoritePets;
-
-                                    return L["You currently have %d selected favorites.\n\n"]:format(count);
-                                end,
-                                type = "description",
-                                fontSize = "medium",
+                                name = L["Summon"],
+                                type = "header",
                             },
-                            select =
-                            {
-                                order = 10,
-                                name = L["Select"],
-                                type = "multiselect",
-                                values = function()
-                                    local out = {};
-
-                                    for k in pairs(A.db.global.savedSets.pets) do
-                                        out[k] = k;
-                                    end
-
-                                    return out;
-                                end,
-                                get = function(info, name)
-                                    if ( tContains(A.db.profile.enabledSets.pets, name) ) then
-                                        return 1;
-                                    end
-
-                                    return nil;
-                                end,
-                                set = function(info, name, val)
-                                    if ( val ) then
-                                        A.db.profile.enabledSets.pets[#A.db.profile.enabledSets.pets+1] = name;
-                                    else
-                                        A:TableRemove(A.db.profile.enabledSets.pets, name);
-                                    end
-
-                                    A:SetGlobalPetsSets();
-                                end,
-                            },
-                            save =
-                            {
-                                order = 20,
-                                name = L["Save"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    input =
-                                    {
-                                        order = 0,
-                                        name = L["Name"],
-                                        type = "input",
-                                        set = function(info, val) A.newPetSetName = val; end,
-                                        get = function() return A.newPetSetName; end,
-                                    },
-                                    exec =
-                                    {
-                                        order = 1,
-                                        name = L["Save"],
-                                        type = "execute",
-                                        disabled = function()
-                                            if ( A.newPetSetName ) then
-                                                return nil;
-                                            end
-
-                                            return 1;
-                                        end,
-                                        func = function()
-                                            if ( #A.db.profile.favoritePets == 0 ) then
-                                                A:Message(L["You have no favorite selected."], 1);
-                                                A.newPetSetName = nil;
-                                            elseif ( A.db.global.savedSets.pets[A.newPetSetName] ) then
-                                                StaticPopup_Show("PetsAndMountsOverwriteOrChangeNameSet", A.newPetSetName);
-                                            else
-                                                A.db.global.savedSets.pets[A.newPetSetName] = A:CopyTable(A.db.profile.favoritePets);
-                                                A:Message(L["New companions set %s added."]:format(A.newPetSetName));
-                                                A.newPetSetName = nil;
-                                            end
-                                        end,
-                                    },
-                                },
-                            },
-                            delete =
-                            {
-                                order = 30,
-                                name = L["Delete"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    select =
-                                    {
-                                        order = 0,
-                                        name = L["Choose"],
-                                        type = "select",
-                                        values = function()
-                                            local out = {};
-
-                                            for k in pairs(A.db.global.savedSets.pets) do
-                                                out[k] = k;
-                                            end
-
-                                            return out;
-                                        end;
-                                        get = function() return A.deleteSetPets; end,
-                                        set = function(info, val)
-                                            A.deleteSetMounts = nil;
-                                            A.deleteSetPets = val;
-                                        end,
-                                    },
-                                    exec =
-                                    {
-                                        order = 1,
-                                        name = L["Delete"],
-                                        type = "execute",
-                                        disabled = function() return not A.deleteSetPets; end,
-                                        func = function()
-                                            StaticPopup_Show("PetsAndMountsDeleteSet", A.deleteSetPets);
-                                        end,
-                                    },
-                                },
-                            },
-                        },
-                    },
-                    mounts =
-                    {
-                        order = 1,
-                        name = L["Mounts"],
-                        type = "group",
-                        args =
-                        {
-                            selectedFav =
-                            {
-                                order = 0,
-                                name = function()
-                                    local count = 0;
-
-                                    for k,v in ipairs(A.db.profile.favoriteMounts) do
-                                        count = count + #v;
-                                    end
-
-                                    return L["You currently have %d selected favorites.\n\n"]:format(count);
-                                end,
-                                type = "description",
-                                fontSize = "medium",
-                            },
-                            select =
-                            {
-                                order = 10,
-                                name = L["Select"],
-                                type = "multiselect",
-                                values = function()
-                                    local out = {};
-
-                                    for k in pairs(A.db.global.savedSets.mounts) do
-                                        out[k] = k;
-                                    end
-
-                                    return out;
-                                end,
-                                get = function(info, name)
-                                    if ( tContains(A.db.profile.enabledSets.mounts, name) ) then
-                                        return 1;
-                                    end
-
-                                    return nil;
-                                end,
-                                set = function(info, name, val)
-                                    if ( val ) then
-                                        A.db.profile.enabledSets.mounts[#A.db.profile.enabledSets.mounts+1] = name;
-                                    else
-                                        A:TableRemove(A.db.profile.enabledSets.mounts, name);
-                                    end
-
-                                    A:SetGlobalMountsSets();
-                                end,
-                            },
-                            save =
-                            {
-                                order = 30,
-                                name = L["Save"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    input =
-                                    {
-                                        order = 0,
-                                        name = L["Name"],
-                                        type = "input",
-                                        set = function(info, val) A.newMountSetName = val; end,
-                                        get = function() return A.newMountSetName; end,
-                                    },
-                                    exec =
-                                    {
-                                        order = 1,
-                                        name = L["Save"],
-                                        type = "execute",
-                                        disabled = function() 
-                                            if ( A.newMountSetName ) then
-                                                return nil;
-                                            end
-
-                                            return 1;
-                                        end,
-                                        func = function()
-                                            local gotOne;
-
-                                            for k,v in ipairs(A.db.profile.favoriteMounts) do
-                                                if ( #v > 0 ) then gotOne = 1; end
-                                            end
-
-                                            if ( not gotOne ) then
-                                                A:Message(L["You have no favorite selected."], 1);
-                                                A.newMountSetName = nil;
-                                            elseif ( A.db.global.savedSets.mounts[A.newMountSetName] ) then
-                                                StaticPopup_Show("PetsAndMountsOverwriteOrChangeNameSet", A.newMountSetName);
-                                            else
-                                                A.db.global.savedSets.mounts[A.newMountSetName] = A:CopyTable(A.db.profile.favoriteMounts);
-                                                A:Message(L["New mounts set %s added."]:format(A.newMountSetName));
-                                                A.newMountSetName = nil;
-                                            end
-                                        end,
-                                    },
-                                },
-                            },
-                            delete =
-                            {
-                                order = 40,
-                                name = L["Delete"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    select =
-                                    {
-                                        order = 0,
-                                        name = L["Choose"],
-                                        type = "select",
-                                        values = function()
-                                            local out = {};
-
-                                            for k in pairs(A.db.global.savedSets.mounts) do
-                                                out[k] = k;
-                                            end
-
-                                            return out;
-                                        end;
-                                        get = function() return A.deleteSetMounts; end,
-                                        set = function(info, val)
-                                            A.deleteSetPets = nil;
-                                            A.deleteSetMounts = val;
-                                        end,
-                                    },
-                                    exec =
-                                    {
-                                        order = 1,
-                                        name = L["Delete"],
-                                        type = "execute",
-                                        disabled = function() return not A.deleteSetMounts; end,
-                                        func = function()
-                                            StaticPopup_Show("PetsAndMountsDeleteSet", A.deleteSetMounts);
-                                        end,
-                                    },
-                                },
-                            },
-                        },
-                    },
-                    areaPets =
-                    {
-                        order = 2,
-                        name = L["Area companions"],
-                        type = "group",
-                        args =
-                        {
-                            zoneSelectGroup =
-                            {
-                                order = 0,
-                                name = L["Area selection"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    currentZone =
-                                    {
-                                        order = 0,
-                                        name = function()
-                                            local mapID;
-
-                                            if ( A.currentMapIDForPetsSets ) then
-                                                mapID = A.currentMapIDForPetsSets;
-                                            else
-                                                mapID = A.currentMapID;
-                                            end
-
-                                            return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)));
-                                        end,
-                                        type = "description",
-                                        fontSize = "medium",
-                                    },
-                                    zoneSelect =
-                                    {
-                                        order = 1,
-                                        name = L["Area selection"],
-                                        desc = L["Select the area you want to work with."],
-                                        type = "select",
-                                        dialogControl = "Dropdown-SortByValue",
-                                        values = function()
-                                            if ( A:TableCount(A.db.global.zonesIDsToName) > 0 ) then
-                                                return A.db.global.zonesIDsToName;
-                                            else
-                                                return {};
-                                            end
-                                        end,
-                                        get = function() return A.currentMapIDForPetsSets; end,
-                                        set = function(info, val) A.currentMapIDForPetsSets = val; end,
-                                    },
-                                },
-                            },
-                            select =
+                            autoSummon =
                             {
                                 order = 1,
-                                name = L["Select"],
-                                type = "multiselect",
-                                values = function()
-                                    local out = {};
-
-                                    for k in pairs(A.db.global.savedSets.pets) do
-                                        out[k] = k;
-                                    end
-
-                                    return out;
+                                name = L["Auto summon"],
+                                desc = L["Auto summon a random companion."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.autoPet = not A.db.profile.autoPet;
+                                    A:SetMainTimer();
                                 end,
-                                get = function(info, name)
-                                    local mapID;
-
-                                    if ( A.currentMapIDForPetsSets ) then
-                                        mapID = A.currentMapIDForPetsSets;
-                                    else
-                                        mapID = A.currentMapID;
-                                    end
-
-                                    if ( A.db.profile.petsSetsByMapID[mapID] and tContains(A.db.profile.petsSetsByMapID[mapID], name) ) then
-                                        return 1;
-                                    end
-
-                                    return nil;
-                                end,
-                                set = function(info, name, val)
-                                    local mapID;
-
-                                    if ( A.currentMapIDForPetsSets ) then
-                                        mapID = A.currentMapIDForPetsSets;
-                                    else
-                                        mapID = A.currentMapID;
-                                    end
-
-                                    if ( val ) then
-                                        if ( not A.db.profile.petsSetsByMapID[mapID] ) then
-                                            A.db.profile.petsSetsByMapID[mapID] = {};
-                                        end
-
-                                        A.db.profile.petsSetsByMapID[mapID][#A.db.profile.petsSetsByMapID[mapID]+1] = name;
-                                    else
-                                        if ( A.db.profile.petsSetsByMapID[mapID] ) then
-                                            A:TableRemove(A.db.profile.petsSetsByMapID[mapID], name);
-                                        end
-                                    end
-
-                                    if ( mapID == A.currentMapID ) then
-                                        A:SetZonePetsSets(1);
-                                    end
-                                end,
+                                get = function() return A.db.profile.autoPet; end,
                             },
-                            zoneResetGroup =
+                            alreadyGotPet =
+                            {
+                                order = 2,
+                                name = L["Not with a companion"],
+                                desc = L["Auto summon will not work if you already have a companion, or it will summon a random favorite companion."],
+                                type = "toggle",
+                                set = function() A.db.profile.alreadyGotPet = not A.db.profile.alreadyGotPet; end,
+                                get = function() return A.db.profile.alreadyGotPet; end,
+                            },
+                            notWhenStealthed =
                             {
                                 order = 3,
-                                name = L["Reset"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    zoneReset =
-                                    {
-                                        order = 0,
-                                        name = L["Reset"],
-                                        desc = L["Use this to reset the working area to the current area."],
-                                        type = "execute",
-                                        func = function() A.currentMapIDForPetsSets = nil; end,
-                                    },
-                                },
+                                name = L["Revoke when stealthed"],
+                                desc = L["If you got a companion it will dismiss it when going stealthed."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.notWhenStealthed = not A.db.profile.notWhenStealthed;
+                                    A:SetStealthEvents();
+                                end,
+                                get = function() return A.db.profile.notWhenStealthed; end,
+                            },
+                            hauntedMemento =
+                            {
+                                order = 4,
+                                name = L["Haunted Memento"],
+                                desc = L["Do not automatically summon a pet when the Haunted Memento is in your bags."],
+                                type = "toggle",
+                                set = function() A.db.profile.hauntedMemento = not A.db.profile.hauntedMemento; end,
+                                get = function() return A.db.profile.hauntedMemento; end,
+                            },
+                            timers =
+                            {
+                                order = 20,
+                                name = L["Timers"],
+                                type = "header",
+                            },
+                            mainTimer =
+                            {
+                                order = 21,
+                                name = L["Auto summon timer"],
+                                desc = L["Select how often the addon will check if you got a companion."],
+                                type = "range",
+                                min = 1,
+                                max = 120,
+                                step = 1,
+                                width = "full",
+                                set = function(info, val)
+                                    A.db.profile.mainTimer = val;
+                                    A:SetMainTimer();
+                                end,
+                                get = function() return A.db.profile.mainTimer; end,
+                            },
+                            shiftTimer =
+                            {
+                                order = 22,
+                                name = L["Shift timer"],
+                                desc = L["Select the shift timer, this is the time before summoning a random companion after reviving, porting, unstealthing, etc."],
+                                type = "range",
+                                min = 1,
+                                max = 60,
+                                step = 1,
+                                width = "full",
+                                set = function(info, val) A.db.profile.shiftTimer = val; end,
+                                get = function() return A.db.profile.shiftTimer; end,
                             },
                         },
                     },
-                    areaMounts =
+                    petAutoSummonOverride =
                     {
-                        order = 3,
-                        name = L["Area mounts"],
+                        order = 100,
+                        name = L["Auto companion options override"],
                         type = "group",
+                        inline = true,
                         args =
                         {
-                            zoneSelectGroup =
+                            enableHeader =
                             {
                                 order = 0,
-                                name = L["Area selection"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    currentZone =
-                                    {
-                                        order = 0,
-                                        name = function()
-                                            local mapID;
-
-                                            if ( A.currentMapIDForMountsSets ) then
-                                                mapID = A.currentMapIDForMountsSets;
-                                            else
-                                                mapID = A.currentMapID;
-                                            end
-
-                                            return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)));
-                                        end,
-                                        type = "description",
-                                        fontSize = "medium",
-                                    },
-                                    zoneSelect =
-                                    {
-                                        order = 1,
-                                        name = L["Area selection"],
-                                        desc = L["Select the area you want to work with."],
-                                        type = "select",
-                                        dialogControl = "Dropdown-SortByValue",
-                                        values = function()
-                                            if ( A:TableCount(A.db.global.zonesIDsToName) > 0 ) then
-                                                return A.db.global.zonesIDsToName;
-                                            else
-                                                return {};
-                                            end
-                                        end,
-                                        get = function() return A.currentMapIDForMountsSets; end,
-                                        set = function(info, val) A.currentMapIDForMountsSets = val; end,
-                                    },
-                                },
+                                name = L["Enable"],
+                                type = "header",
                             },
-                            select =
+                            enableToggle =
                             {
                                 order = 1,
-                                name = L["Select"],
-                                type = "multiselect",
+                                name = L["Enable"],
+                                desc = L["Enable auto pet options override."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.enableAutoSummonOverride = not A.db.profile.enableAutoSummonOverride;
+                                end,
+                                get = function() return A.db.profile.enableAutoSummonOverride; end,
+                            },
+                            areaSelectHeader =
+                            {
+                                order = 10,
+                                name = L["Area type"],
+                                type = "header",
+                            },
+                            areaSelect =
+                            {
+                                order = 11,
+                                name = L["Area type"],
+                                desc = L["Select witch type of area to work with."],
+                                type = "select",
+                                disabled = function() return not A.db.profile.enableAutoSummonOverride; end,
                                 values = function()
                                     local out = {};
 
-                                    for k in pairs(A.db.global.savedSets.mounts) do
-                                        out[k] = k;
+                                    for k,v in ipairs(A.areaTypes) do
+                                        out[v] = A.areaTypesLocales[v];
                                     end
 
                                     return out;
                                 end,
-                                get = function(info, name)
-                                    local mapID;
+                                set = function(info, val)
+                                    petAutoSummonOverrideSelected = val;
 
-                                    if ( A.currentMapIDForMountsSets ) then
-                                        mapID = A.currentMapIDForMountsSets;
-                                    else
-                                        mapID = A.currentMapID;
+                                    optionsOverrideHeaderText = A.areaTypesLocales[val];
+                                end,
+                                get = function()
+                                    return petAutoSummonOverrideSelected;
+                                end,
+                            },
+                            optionsHeader =
+                            {
+                                order = 20,
+                                name = L["Override options for %s"]:format(optionsOverrideHeaderText),
+                                type = "header",
+                            },
+                            autoSummon =
+                            {
+                                order = 21,
+                                name = L["Auto summon"],
+                                desc = L["Auto summon a random companion."],
+                                type = "toggle",
+                                disabled = function()
+                                    if ( not A.db.profile.enableAutoSummonOverride ) then
+                                        return 1;
                                     end
 
-                                    if ( A.db.profile.mountsSetsByMapID[mapID] and tContains(A.db.profile.mountsSetsByMapID[mapID], name) ) then
+                                    if ( not petAutoSummonOverrideSelected ) then
                                         return 1;
                                     end
 
                                     return nil;
                                 end,
-                                set = function(info, name, val)
-                                    local mapID;
+                                set = function()
+                                    if ( not petAutoSummonOverrideSelected ) then return; end
 
-                                    if ( A.currentMapIDForMountsSets ) then
-                                        mapID = A.currentMapIDForMountsSets;
-                                    else
-                                        mapID = A.currentMapID;
+                                    if ( not A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] ) then
+                                        A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] = {};
                                     end
 
-                                    if ( val ) then
-                                        if ( not A.db.profile.mountsSetsByMapID[mapID] ) then
-                                            A.db.profile.mountsSetsByMapID[mapID] = {};
-                                        end
-
-                                        A.db.profile.mountsSetsByMapID[mapID][#A.db.profile.mountsSetsByMapID[mapID]+1] = name;
+                                    A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].autoPet = not A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].autoPet;
+                                end,
+                                get = function()
+                                    if ( A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] ) then
+                                        return A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].autoPet;
                                     else
-                                        if ( A.db.profile.mountsSetsByMapID[mapID] ) then
-                                            A:TableRemove(A.db.profile.mountsSetsByMapID[mapID], name);
-                                        end
-                                    end
-
-                                    if ( mapID == A.currentMapID ) then
-                                        A:SetZoneMountsSets(1);
+                                        return nil;
                                     end
                                 end,
                             },
-                            zoneResetGroup =
+                            notWhenStealthed =
+                            {
+                                order = 22,
+                                name = L["Revoke when stealthed"],
+                                desc = L["If you got a companion it will dismiss it when going stealthed."],
+                                type = "toggle",
+                                disabled = function()
+                                    if ( not A.db.profile.enableAutoSummonOverride ) then
+                                        return 1;
+                                    end
+
+                                    if ( not petAutoSummonOverrideSelected ) then
+                                        return 1;
+                                    end
+
+                                    return nil;
+                                end,
+                                set = function()
+                                    if ( not petAutoSummonOverrideSelected ) then return; end
+
+                                    if ( not A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] ) then
+                                        A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] = {};
+                                    end
+
+                                    A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].notWhenStealthed = not A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].notWhenStealthed;
+                                end,
+                                get = function()
+                                    if ( A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] ) then
+                                        return A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].notWhenStealthed;
+                                    else
+                                        return nil;
+                                    end
+                                end,
+                            },
+                        },
+                    },
+                    petsSummonFilters =
+                    {
+                        order = 200,
+                        name = L["Companions auto summon filters"],
+                        type = "group",
+                        inline = true,
+                        args = {},
+                    },
+                    petListOptions =
+                    {
+                        order = 300,
+                        name = L["Companions list options"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            appendDefaultName =
+                            {
+                                order = 0,
+                                name = L["Append default name"],
+                                desc = L["When a companion got a custom name, it will append its default name."],
+                                type = "toggle",
+                                set = function() A.db.profile.appendPetDefaultName = not A.db.profile.appendPetDefaultName; end,
+                                get = function() return A.db.profile.appendPetDefaultName; end,
+                            },
+                            colorCustomName =
+                            {
+                                order = 1,
+                                name = L["Color custom name"],
+                                desc = L["When a companion got a custom name, it will be colored."],
+                                type = "toggle",
+                                set = function() A.db.profile.colorPetWithCustomName = not A.db.profile.colorPetWithCustomName; end,
+                                get = function() return A.db.profile.colorPetWithCustomName; end,
+                            },
+                            customNameColorPicker =
                             {
                                 order = 2,
-                                name = L["Reset"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    zoneReset =
-                                    {
-                                        order = 0,
-                                        name = L["Reset"],
-                                        desc = L["Use this to reset the working area to the current area."],
-                                        type = "execute",
-                                        func = function() A.currentMapIDForPetsSets = nil; end,
-                                    },
-                                },
+                                name = L["Custom name color"],
+                                desc = L["Pick a color for your companions custom names."],
+                                type = "color",
+                                hasAlpha = true,
+                                set = function(info, r, g, b, a)
+                                    A.db.profile.petWithCustomNameColor.r = r;
+                                    A.db.profile.petWithCustomNameColor.g = g;
+                                    A.db.profile.petWithCustomNameColor.b = b;
+                                    A.db.profile.petWithCustomNameColor.a = a;
+                                    A.db.profile.petWithCustomNameColor.hexa = "|c"..A:PercentToHex(r, g, b, a);
+                                end,
+                                get = function()
+                                    return A.db.profile.petWithCustomNameColor.r,
+                                    A.db.profile.petWithCustomNameColor.g,
+                                    A.db.profile.petWithCustomNameColor.b,
+                                    A.db.profile.petWithCustomNameColor.a;
+                                end,
                             },
                         },
                     },
                 },
             },
             --
-            -- Favorites override options tree
+            -- Main options tree - Mounts tab
             --
-            favOverride =
+            mountsOptions =
             {
-                order = 40,
-                name = L["Favorites override"],
+                order = 300,
+                name = L["Mounts"],
                 type = "group",
-                childGroups = "tab",
                 args =
                 {
-                    --
-                    -- Favorites override options tree - Force one tab
-                    --
-                    forceOne =
+                    mountOptions =
                     {
                         order = 0,
-                        name = L["Force One"],
+                        name = L["Random mount options"],
                         type = "group",
+                        inline = true,
                         args =
                         {
-                            pets =
+                            noHybridWhenGround =
                             {
                                 order = 0,
-                                name = L["Companions"],
-                                type = "group",
-                                inline = true,
-                                args = {},
+                                name = L["No hybrid (Ground)"],
+                                desc = L["Do not summon an hybrid mount in a ground only area."],
+                                type = "toggle",
+                                set = function() A.db.profile.noHybridWhenGround = not A.db.profile.noHybridWhenGround; end,
+                                get = function() return A.db.profile.noHybridWhenGround; end,
                             },
-                            mounts =
+                            noHybridWhenFly =
+                            {
+                                order = 1,
+                                name = L["No hybrid (Fly)"],
+                                desc = L["Do not summon an hybrid mount in a flyable area."],
+                                type = "toggle",
+                                set = function() A.db.profile.noHybridWhenFly = not A.db.profile.noHybridWhenFly; end,
+                                get = function() return A.db.profile.noHybridWhenFly; end,
+                            },
+                            dismountFlying =
+                            {
+                                order = 2,
+                                name = L["Flying dismount"],
+                                desc = L["Using the random mount bind when flying will dismount you."],
+                                type = "toggle",
+                                set = function() A.db.profile.dismountFlying = not A.db.profile.dismountFlying; end,
+                                get = function() return A.db.profile.dismountFlying; end,
+                            },
+                            areaMounts =
+                            {
+                                order = 3,
+                                name = L["Area mounts"],
+                                desc = L["With this enabled it will summon a specific mount according to your current area. Example: the Abyssal Seahorse in Vashj'ir."],
+                                type = "toggle",
+                                set = function() A.db.profile.areaMounts = not A.db.profile.areaMounts; end,
+                                get = function() return A.db.profile.areaMounts; end,
+                            },
+                            classesMacrosEnabled =
+                            {
+                                order = 4,
+                                name = L["Class specific"],
+                                desc = L["With this enabled it will use flying forms for druids (Only class with specific \"mount\" atm)."],
+                                type = "toggle",
+                                set = function() A.db.profile.classesMacrosEnabled = not A.db.profile.classesMacrosEnabled; end,
+                                get = function() return A.db.profile.classesMacrosEnabled; end,
+                            },
+                            surfaceMount =
+                            {
+                                order = 6,
+                                name = L["Surface mount"],
+                                desc = L["If you are in a non flyable area and at the water surface, it will summon a mount able to walk on water. Support Death Knights Path of Frost, Shamans Water Walking and Warlocks glyph."],
+                                type = "toggle",
+                                set = function() A.db.profile.surfaceMount = not A.db.profile.surfaceMount; end,
+                                get = function() return A.db.profile.surfaceMount; end,
+                            },
+                            preferSurfaceSpell =
+                            {
+                                order = 7,
+                                name = L["Prefer surface spell"],
+                                desc = L["If surface mount options is enabled, it will prefer using your water walking spell other the mount. This only works for Death Knights and Shamans."],
+                                type = "toggle",
+                                set = function() A.db.profile.preferSurfaceSpell = not A.db.profile.preferSurfaceSpell; end,
+                                get = function() return A.db.profile.preferSurfaceSpell; end,
+                            },
+                            vehicleExit =
+                            {
+                                order = 8,
+                                name = L["Vehicle exit"],
+                                desc = L["If you are in a vehicle using the random mount will make you leave the vehicle."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.vehicleExit = not A.db.profile.vehicleExit;
+                                    A:SetMacroDismountString();
+                                    A:SetPostClickMacro();
+                                end,
+                                get = function() return A.db.profile.vehicleExit; end,
+                            },
+                            copyTargetMount =
+                            {
+                                order = 9,
+                                name = L["Copy target mount"],
+                                desc = L["If you target someone and he/she is on a mount, it will summon it if you have it. This have priority other copy mouse hover."],
+                                type = "toggle",
+                                set = function() A.db.profile.copyTargetMount = not A.db.profile.copyTargetMount; end,
+                                get = function() return A.db.profile.copyTargetMount; end,
+                            },
+                            copyMouseoverMount =
                             {
                                 order = 10,
-                                name = L["Mounts"],
-                                type = "group",
-                                inline = true,
-                                args = {},
+                                name = L["Copy mouse hover mount"],
+                                desc = L["If you mouse hover someone and he/she is on a mount, it will summon it if you have it. Target copy have priority other this."],
+                                type = "toggle",
+                                set = function() A.db.profile.copyMouseoverMount = not A.db.profile.copyMouseoverMount; end,
+                                get = function() return A.db.profile.copyMouseoverMount; end,
+                            },
+                            specialMountsHeader =
+                            {
+                                order = 1000,
+                                name = L["Special mounts"],
+                                type = "header",
+                            },
+                            magicBroom =
+                            {
+                                order = 1001,
+                                name = L["Magic Broom"],
+                                desc = L["Summon the Magic Broom when it is in your bags."],
+                                type = "toggle",
+                                set = function() A.db.profile.magicBroom = not A.db.profile.magicBroom; end,
+                                get = function() return A.db.profile.magicBroom; end,
+                            },
+                            shimmeringMoonstone =
+                            {
+                                order = 1002,
+                                name = L["Shimmering Moonstone"],
+                                desc = L["Summon Moonfang when the Shimmering Moonstone is in your bags."],
+                                type = "toggle",
+                                set = function() A.db.profile.shimmeringMoonstone = not A.db.profile.shimmeringMoonstone; end,
+                                get = function() return A.db.profile.shimmeringMoonstone; end,
+                            },
+                            swimmingOptionsHeader =
+                            {
+                                order = 2000,
+                                name = L["Swimming options"],
+                                type = "header",
+                            },
+                            isSwimminMountCat =
+                            {
+                                order = 2001,
+                                name = L["Underwater mount category"],
+                                desc = L["Choose which mount category to summon when under water. This do not impact druid forms."],
+                                type = "select",
+                                values = function() return A.mountCat; end,
+                                set = function(info, val) A.db.profile.isSwimmingMountCat = val; end,
+                                get = function() return A.db.profile.isSwimmingMountCat; end,
                             },
                         },
                     },
-                    --
-                    -- Favorites override options tree - Zone override tab
-                    --
-                    zoneOverride =
+                    mountsSummonFilters =
                     {
                         order = 100,
-                        name = L["Area override"],
+                        name = L["Random mount summon filters"],
                         type = "group",
-                        args =
-                        {
-                            pets =
-                            {
-                                order = 0,
-                                name = L["Companions"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    zoneSelectHeader =
-                                    {
-                                        order = 0,
-                                        name = L["Area selection"],
-                                        type = "header",
-                                    },
-                                    currentZone =
-                                    {
-                                        order = 1,
-                                        name = function()
-                                            local mapID;
-
-                                            if ( A.currentMapIDForPets ) then
-                                                mapID = A.currentMapIDForPets;
-                                            else
-                                                mapID = A.currentMapID;
-                                            end
-
-                                            return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)));
-                                        end,
-                                        type = "description",
-                                        fontSize = "medium",
-                                    },
-                                    zoneSelect =
-                                    {
-                                        order = 10,
-                                        name = L["Area selection"],
-                                        desc = L["Select the area you want to work with."],
-                                        type = "select",
-                                        dialogControl = "Dropdown-SortByValue",
-                                        values = function()
-                                            if ( A:TableCount(A.db.global.zonesIDsToName) > 0 ) then
-                                                return A.db.global.zonesIDsToName;
-                                            else
-                                                return {};
-                                            end
-                                        end,
-                                        get = function() return A.currentMapIDForPets; end,
-                                        set = function(info, val) A.currentMapIDForPets = val; end,
-                                    },
-                                    zoneSelectPet =
-                                    {
-                                        order = 100,
-                                        name = L["Companions"],
-                                        type = "header",
-                                    },
-                                    -- Pets dropdowns goes here
-                                    zoneSelectReset =
-                                    {
-                                        order = 200,
-                                        name = L["Reset"],
-                                        type = "header",
-                                    },
-                                    zoneReset =
-                                    {
-                                        order = 201,
-                                        name = L["Reset"],
-                                        desc = L["Use this to reset the working area to the current area."],
-                                        type = "execute",
-                                        func = function() A.currentMapIDForPets = nil; end,
-                                    },
-                                },
-                            },
-                            mounts =
-                            {
-                                order = 100,
-                                name = L["Mounts"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    zoneSelectHeader =
-                                    {
-                                        order = 0,
-                                        name = L["Area selection"],
-                                        type = "header",
-                                    },
-                                    currentZone =
-                                    {
-                                        order = 1,
-                                        name = function()
-                                            local mapID;
-
-                                            if ( A.currentMapIDForMounts ) then
-                                                mapID = A.currentMapIDForMounts;
-                                            else
-                                                mapID = A.currentMapID;
-                                            end
-
-                                            return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)));
-                                        end,
-                                        type = "description",
-                                        fontSize = "medium",
-                                    },
-                                    zoneSelect =
-                                    {
-                                        order = 10,
-                                        name = L["Area selection"],
-                                        desc = L["Select the area you want to work with."],
-                                        type = "select",
-                                        dialogControl = "Dropdown-SortByValue",
-                                        values = function()
-                                            if ( A:TableCount(A.db.global.zonesIDsToName) > 0 ) then
-                                                return A.db.global.zonesIDsToName;
-                                            else
-                                                return {};
-                                            end
-                                        end,
-                                        get = function() return A.currentMapIDForMounts; end,
-                                        set = function(info, val) A.currentMapIDForMounts = val; end,
-                                    },
-                                    zoneSelectMounts =
-                                    {
-                                        order = 100,
-                                        name = L["Mounts"],
-                                        type = "header",
-                                    },
-                                    -- Mounts dropdowns goes here
-                                    zoneSelectReset =
-                                    {
-                                        order = 200,
-                                        name = L["Reset"],
-                                        type = "header",
-                                    },
-                                    zoneReset =
-                                    {
-                                        order = 201,
-                                        name = L["Reset"],
-                                        desc = L["Use this to reset the working area to the current area."],
-                                        type = "execute",
-                                        func = function() A.currentMapIDForMounts = nil; end,
-                                    },
-                                },
-                            },
-                            common =
-                            {
-                                order = 200,
-                                name = L["Zones database"],
-                                type = "group",
-                                inline = true,
-                                args =
-                                {
-                                    knownZonesCount =
-                                    {
-                                        order = 0,
-                                        name = function()
-                                            local count = A:TableCount(A.db.global.zonesIDsToName);
-
-                                            if ( count > 1 ) then
-                                                return L["The add-on currently knows %d areas\n\n"]:format(count);
-                                            else
-                                                return L["The add-on currently knows %d area\n\n"]:format(count);
-                                            end
-                                        end,
-                                        type = "description",
-                                        fontSize = "medium",
-                                    },
-                                    debugInfo =
-                                    {
-                                        order = 1,
-                                        name = A.color.RED..L["Debug is enabled. Building the areas database will reset it first."],
-                                        hidden = function() return not A.db.profile.debug; end,
-                                        width = "full",
-                                        type = "description",
-                                        fontSize = "large",
-                                    },
-                                    blankLine =
-                                    {
-                                        order = 2,
-                                        name = " ",
-                                        hidden = function() return not A.db.profile.debug; end,
-                                        width = "full",
-                                        type = "description",
-                                        fontSize = "large",
-                                    },
-                                    buildDB =
-                                    {
-                                        order = 10,
-                                        name = L["Build areas database"],
-                                        desc = L["Build the areas database, this is not needed for the addon to work, but it will know the areas without discovering them first."],
-                                        type = "execute",
-                                        func = function() A:BuildMapIDsDB(); end,
-                                    },
-                                },
-                            },
-                        },
+                        inline = true,
+                        args = {},
                     },
                 },
             },
-            about =
+            --
+            -- Main options tree - Bindings tab
+            --
+            bindings =
             {
-                order = 50,
-                name = L["About"],
+                order = 400,
+                name = L["Bindings"],
+                type = "group",
+                args = {},
+            },
+            --
+            -- Main options tree - Buttons tab
+            --
+            buttons =
+            {
+                order = 400,
+                name = L["Buttons"],
                 type = "group",
                 args =
                 {
-                    name =
+                    petsButton =
                     {
                         order = 0,
-                        name = A.color.WARRIOR..L["Pets & Mounts"],
-                        width = "full",
-                        type = "description",
-                        fontSize = "large",
+                        name = L["Companions button"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            petHide =
+                            {
+                                order = 0,
+                                name = L["Hide"],
+                                desc = L["Hide the companions button."],
+                                type = "toggle",
+                                set = function()
+                                    if ( InCombatLockdown() ) then
+                                        A:Message(L["Unable to edit buttons while in combat."], 1);
+                                        return;
+                                    end
+
+                                    A.db.profile.PetsAndMountsSecureButtonPets.hide = not A.db.profile.PetsAndMountsSecureButtonPets.hide;
+                                    A:SetButtons();
+                                end,
+                                get = function() return A.db.profile.PetsAndMountsSecureButtonPets.hide; end,
+                            },
+                            petLock =
+                            {
+                                order = 1,
+                                name = L["Lock"],
+                                desc = L["Lock the companions button."],
+                                type = "toggle",
+                                set = function()
+                                    if ( InCombatLockdown() ) then
+                                        A:Message(L["Unable to edit buttons while in combat."], 1);
+                                        return;
+                                    end
+
+                                    if ( A.db.profile.dockButton ) then
+                                        return;
+                                    end
+
+                                    A.db.profile.PetsAndMountsSecureButtonPets.lock = not A.db.profile.PetsAndMountsSecureButtonPets.lock;
+                                    A:SetButtons();
+                                end,
+                                get = function() return A.db.profile.PetsAndMountsSecureButtonPets.lock; end,
+                            },
+                            petTooltip =
+                            {
+                                order = 2,
+                                name = L["Tooltip"],
+                                desc = L["Enable the tooltip of the companions button."],
+                                type = "toggle",
+                                set = function() A.db.profile.PetsAndMountsSecureButtonPets.tooltip = not A.db.profile.PetsAndMountsSecureButtonPets.tooltip; end,
+                                get = function() return A.db.profile.PetsAndMountsSecureButtonPets.tooltip; end,
+                            },
+                            petScale =
+                            {
+                                order = 3,
+                                name = L["Scale"],
+                                desc = L["Set the scale of the companions button."],
+                                type = "range",
+                                width = "full",
+                                min = 0.1,
+                                max = 5,
+                                step = 0.1,
+                                set = function(info, val)
+                                    if ( InCombatLockdown() ) then
+                                        A:Message(L["Unable to edit buttons while in combat."], 1);
+                                        return;
+                                    end
+
+                                    A.db.profile.PetsAndMountsSecureButtonPets.scale = val;
+                                    A:SetButtons();
+                                end,
+                                get = function() return A.db.profile.PetsAndMountsSecureButtonPets.scale; end,
+                            },
+                            petReset =
+                            {
+                                order = 4,
+                                name = L["Reset"],
+                                desc = L["Reset the companions button configuration."],
+                                type = "execute",
+                                func = function()
+                                    if ( InCombatLockdown() ) then
+                                        A:Message(L["Unable to edit buttons while in combat."], 1);
+                                        return;
+                                    end
+
+                                    A.db.profile.PetsAndMountsSecureButtonPets =
+                                    {
+                                        hide = nil,
+                                        lock = nil,
+                                        tooltip = 1,
+                                        scale = 1,
+                                        anchor =
+                                        {
+                                            point = "CENTER",
+                                            relativeTo = "UIParent",
+                                            relativePoint = "CENTER",
+                                            offX = 0,
+                                            offY = 0,
+                                        },
+                                    };
+
+                                    A:SetButtons();
+                                end,
+                            },
+                        },
                     },
-                    emptyLine1 =
+                    mountsButton =
                     {
                         order = 1,
-                        name = " ",
-                        width = "full",
-                        type = "description",
-                        fontSize = "medium",
+                        name = L["Mounts button"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            mountHide =
+                            {
+                                order = 0,
+                                name = L["Hide"],
+                                desc = L["Hide the mounts button."],
+                                type = "toggle",
+                                set = function()
+                                    if ( InCombatLockdown() ) then
+                                        A:Message(L["Unable to edit buttons while in combat."], 1);
+                                        return;
+                                    end
+
+                                    A.db.profile.PetsAndMountsSecureButtonMounts.hide = not A.db.profile.PetsAndMountsSecureButtonMounts.hide;
+                                    A:SetButtons();
+                                end,
+                                get = function() return A.db.profile.PetsAndMountsSecureButtonMounts.hide; end,
+                            },
+                            mountLock =
+                            {
+                                order = 1,
+                                name = L["Lock"],
+                                desc = L["Lock the mounts button."],
+                                type = "toggle",
+                                set = function()
+                                    if ( InCombatLockdown() ) then
+                                        A:Message(L["Unable to edit buttons while in combat."], 1);
+                                        return;
+                                    end
+
+                                    A.db.profile.PetsAndMountsSecureButtonMounts.lock = not A.db.profile.PetsAndMountsSecureButtonMounts.lock;
+                                    A:SetButtons();
+                                end,
+                                get = function() return A.db.profile.PetsAndMountsSecureButtonMounts.lock; end,
+                            },
+                            mountTooltip =
+                            {
+                                order = 2,
+                                name = L["Tooltip"],
+                                desc = L["Enable the tooltip of the mounts button."],
+                                type = "toggle",
+                                set = function() A.db.profile.PetsAndMountsSecureButtonMounts.tooltip = not A.db.profile.PetsAndMountsSecureButtonMounts.tooltip; end,
+                                get = function() return A.db.profile.PetsAndMountsSecureButtonMounts.tooltip; end,
+                            },
+                            mountScale =
+                            {
+                                order = 3,
+                                name = L["Scale"],
+                                desc = L["Set the scale of the mounts button."],
+                                type = "range",
+                                width = "full",
+                                min = 0.1,
+                                max = 5,
+                                step = 0.1,
+                                set = function(info, val)
+                                    if ( InCombatLockdown() ) then
+                                        A:Message(L["Unable to edit buttons while in combat."], 1);
+                                        return;
+                                    end
+
+                                    A.db.profile.PetsAndMountsSecureButtonMounts.scale = val;
+                                    A:SetButtons();
+                                end,
+                                get = function() return A.db.profile.PetsAndMountsSecureButtonMounts.scale; end,
+                            },
+                            mountReset =
+                            {
+                                order = 4,
+                                name = L["Reset"],
+                                desc = L["Reset the mounts button configuration."],
+                                type = "execute",
+                                func = function()
+                                    if ( InCombatLockdown() ) then
+                                        A:Message(L["Unable to edit buttons while in combat."], 1);
+                                        return;
+                                    end
+
+                                    A.db.profile.PetsAndMountsSecureButtonMounts =
+                                    {
+                                        hide = nil,
+                                        lock = nil,
+                                        tooltip = 1,
+                                        scale = 1,
+                                        anchor =
+                                        {
+                                            point = "CENTER",
+                                            relativeTo = "UIParent",
+                                            relativePoint = "CENTER",
+                                            offX = 0,
+                                            offY = 0,
+                                        },
+                                    };
+
+                                    A:SetButtons();
+                                end,
+                            },
+                            clickBehavior =
+                            {
+                                order = 100,
+                                name = L["Click behavior"],
+                                type = "header",
+                            },
+                            shiftClick =
+                            {
+                                order = 101,
+                                name = L["Shift+Click"],
+                                desc = L["Choose which mount category to summon when using %s"]:format(L["Shift+Click"]),
+                                type = "select",
+                                values = function() return A.mountCat; end,
+                                set = function(info, val) A.db.profile.mountButtonshiftClickCat = val; end,
+                                get = function() return A.db.profile.mountButtonshiftClickCat; end,
+                            },
+                        },
                     },
-                    desc =
+                    dock =
                     {
                         order = 2,
-                        name = L["Auto and random summon for your pets and mounts, highly customizable. With Data Broker support."],
-                        width = "full",
-                        type = "description",
-                        fontSize = "medium",
-                    },
-                    emptyLine2 =
-                    {
-                        order = 3,
-                        name = " ",
-                        width = "full",
-                        type = "description",
-                        fontSize = "medium",
-                    },
-                    author =
-                    {
-                        order = 4,
-                        name = A.color.BLUE..L["Author"]..A.color.RESET..": "..GetAddOnMetadata("PetsAndMounts", "Author"),
-                        width = "full",
-                        type = "description",
-                        fontSize = "medium",
-                    },
-                    licence =
-                    {
-                        order = 5,
-                        name = A.color.BLUE..L["Licence"]..A.color.RESET..": BSD",
-                        width = "full",
-                        type = "description",
-                        fontSize = "medium",
-                    },
-                    version =
-                    {
-                        order = 6,
-                        name = function()
-                            local version, revision = A:GetAddonVersion(A.version);
-                            local color;
+                        name = L["Dock options"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            dock =
+                            {
+                                order = 0,
+                                name = L["Dock"],
+                                desc = L["Dock companion button to the mount button."],
+                                type = "toggle",
+                                set = function()
+                                    if ( InCombatLockdown() ) then
+                                        A:Message(L["Unable to edit buttons while in combat."], 1);
+                                        return;
+                                    end
 
-                            if ( A.addonUpdateMessageInfo ) then
-                                color = A.color.RED;
-                            else
-                                color = A.color.GREEN;
-                            end
+                                    if ( A.db.profile.PetsAndMountsSecureButtonMounts.hide or A.db.profile.PetsAndMountsSecureButtonPets.hide ) then
+                                        A:Message(L["Cannot dock buttons together when at least one of them is hidden."], 1);
+                                        return;
+                                    end
 
-                            return A.color.BLUE..L["Version"]..A.color.RESET..": "..L["You are running Pets & Mounts version %s revision %s %s."]
-                            :format(color..tostring(version)..A.color.RESET, color..tostring(revision), L[A.versionStage]..A.color.RESET);
-                        end,
-                        width = "full",
-                        type = "description",
-                        fontSize = "medium",
-                    },
-                    newVersion =
-                    {
-                        order = 7,
-                        name = function()
-                            if ( A.addonUpdateMessageInfo ) then
-                                return A.color.BLUE..L["New version"]..A.color.RESET..": "..L["A new version is available, version |cff33ff99%s|r revision |cff33ff99%s %s|r."]
-                                :format(tostring(A.addonUpdateMessageInfo[1]), tostring(A.addonUpdateMessageInfo[2]), L[A.addonUpdateMessageInfo[3]]);
-                            end
-                            return " ";
-                        end,
-                        width = "full",
-                        hidden = function()
-                            if ( A.addonUpdateMessageInfo ) then
-                                return nil;
-                            end
-                            return 1;
-                        end,
-                        type = "description",
-                        fontSize = "medium",
-                    },
-                    emptyLine3 =
-                    {
-                        order = 8,
-                        name = " ",
-                        width = "full",
-                        type = "description",
-                        fontSize = "medium",
-                    },
-                    webSiteInput =
-                    {
-                        order = 9,
-                        name = L["Web site"],
-                        width = "full",
-                        type = "input",
-                        set = function() return; end,
-                        get = function() return A.addonURL; end,
-                    },
-                    emptyLine4 =
-                    {
-                        order = 100,
-                        name = " \n",
-                        width = "full",
-                        type = "description",
-                        fontSize = "medium",
-                    },
-                    credits =
-                    {
-                        order = 101,
-                        name = A.color.WARRIOR..L["Credits"],
-                        width = "full",
-                        type = "description",
-                        fontSize = "large",
-                    },
-                    emptyLine5 =
-                    {
-                        order = 102,
-                        name = " ",
-                        width = "full",
-                        type = "description",
-                        fontSize = "medium",
-                    },
-                    warcraftMounts =
-                    {
-                        order = 110,
-                        name = " ",
-                        width = "full",
-                        type = "description",
-                        fontSize = "medium",
-                        image = function() return "Interface\\AddOns\\PetsAndMounts\\Media\\warcraftmounts", 256, 105; end,
-                        imageCoords = {0, 1, 0, 0.82},
-                    },
-                    warcraftMountsWebSite =
-                    {
-                        order = 111,
-                        name = "Warcraft Mounts",
-                        width = "full",
-                        type = "input",
-                        set = function() return; end,
-                        get = function() return "http://www.warcraftmounts.com"; end,
-                    },
-                    emptyLine6 =
-                    {
-                        order = 112,
-                        name = " ",
-                        width = "full",
-                        type = "description",
-                        fontSize = "medium",
-                    },
-                    warcraftPets =
-                    {
-                        order = 120,
-                        name = " ",
-                        width = "full",
-                        type = "description",
-                        fontSize = "medium",
-                        image = function() return "Interface\\AddOns\\PetsAndMounts\\Media\\warcraftpets", 256, 256; end,
-                    },
-                    warcraftPetsWebSite =
-                    {
-                        order = 121,
-                        name = "Warcraft Pets",
-                        width = "full",
-                        type = "input",
-                        set = function() return; end,
-                        get = function() return "http://www.warcraftpets.com"; end,
-                    },
-                    emptyLine7 =
-                    {
-                        order = 122,
-                        name = " ",
-                        width = "full",
-                        type = "description",
-                        fontSize = "medium",
-                    },
-                    wowhead =
-                    {
-                        order = 130,
-                        name = " ",
-                        width = "full",
-                        type = "description",
-                        fontSize = "medium",
-                        image = function() return "Interface\\AddOns\\PetsAndMounts\\Media\\wowhead", 256, 116; end,
-                        imageCoords = {0, 1, 0, 0.9},
-                    },
-                    wowheadWebSite =
-                    {
-                        order = 131,
-                        name = "Wowhead",
-                        width = "full",
-                        type = "input",
-                        set = function() return; end,
-                        get = function() return "http://www.wowhead.com"; end,
-                    },
-                    emptyLine8 =
-                    {
-                        order = 132,
-                        name = " ",
-                        width = "full",
-                        type = "description",
-                        fontSize = "medium",
+                                    A.db.profile.dockButton = not A.db.profile.dockButton;
+
+                                    if ( A.db.profile.dockButton ) then
+                                        A:DockButton();
+                                    else
+                                        A:UnDockButton();
+                                    end
+                                end,
+                                get = function() return A.db.profile.dockButton; end,
+                            },
+                            dockAnchor =
+                            {
+                                order = 1,
+                                name = L["Dock anchor"],
+                                desc = L["Select on which side of the mounts button the companions button should dock."],
+                                type = "select",
+                                values = dockAnchorsSelect,
+                                set = function(info, val)
+                                    if ( InCombatLockdown() ) then
+                                        A:Message(L["Unable to edit buttons while in combat."], 1);
+                                        return;
+                                    end
+
+                                    A.db.profile.dockAnchor = val;
+                                    A:DockButton();
+                                end,
+                                get = function() return A.db.profile.dockAnchor; end,
+                            },
+                        },
                     },
                 },
             },
         },
-    };
+    }; -- / root table
 
     -- Pets summon filters
     orderItem = 0;
     for k,v in ipairs(A.petsSummonFilters) do
         if ( v.option ) then
-            options.args.options.args.petsOptions.args.petsSummonFilters.args[v.name] =
+            root.args.petsOptions.args.petsSummonFilters.args[v.name] =
             {
                 order = orderItem,
                 name = v.name,
@@ -2189,7 +1239,7 @@ function A:AceConfig()
     orderItem = 0;
     for k,v in ipairs(A.mountsSummonFilters) do
         if ( v.option ) then
-            options.args.options.args.mountsOptions.args.mountsSummonFilters.args[v.name] =
+            root.args.mountsOptions.args.mountsSummonFilters.args[v.name] =
             {
                 order = orderItem,
                 name = v.name,
@@ -2214,7 +1264,7 @@ function A:AceConfig()
     -- Bindings
     orderGroup = 0;
     for k,v in ipairs(A.bindingsTable) do
-        options.args.options.args.bindings.args[tostring(k)] =
+        root.args.bindings.args[tostring(k)] =
         {
             order = orderGroup,
             name = v.localized,
@@ -2285,98 +1335,117 @@ function A:AceConfig()
         orderGroup = orderGroup + 1;
     end
 
+    -- Profiles
+    root.args.profilesOptions = LibStub("AceDBOptions-3.0"):GetOptionsTable(A.db);
+    root.args.profilesOptions.order = 10000;
+
+    return root;
+end
+
+function A:OptionsPetsList()
+    local pets =
+    {
+        order = 0,
+        name = L["Companions list"],
+        type = "group",
+        childGroups = "tab",
+        args = {},
+    };
+
     -- Pets list
     orderGroup = 0;
     orderItem = 0;
-    for k,v in ipairs(A.pamTable.pets) do
-        options.args.pets.args[A.petTypes[k]] =
-        {
-            order = k,
-            name = L[A.petTypes[k]],
-            type = "group",
-            args = {},
-        };
-
-        for kk,vv in A:PairsByKeys(v) do
-            options.args.pets.args[A.petTypes[k]].args[kk] =
+    for k,v in ipairs(A:GetPetsTable()) do
+        if ( A:TableCount(v) > 0 )then
+            pets.args[A.petTypes[k]] =
             {
-                order = orderGroup,
-                name = kk,
+                order = k,
+                name = L[A.petTypes[k]],
                 type = "group",
-                inline = true,
                 args = {},
             };
 
-            orderGroup = orderGroup + 1;
-
-            for kkk,vvv in ipairs(vv) do
-                options.args.pets.args[A.petTypes[k]].args[kk].args[vvv.name..vvv.petID] =
+            for kk,vv in A:PairsByKeys(v) do
+                pets.args[A.petTypes[k]].args[kk] =
                 {
-                    order = orderItem,
-                    name = function()
-                        local petName;
+                    order = orderGroup,
+                    name = kk,
+                    type = "group",
+                    inline = true,
+                    args = {},
+                };
 
-                        if ( vvv.defaultName ) then
-                            if ( A.db.profile.appendPetDefaultName ) then
-                                petName = vvv.name.." ("..vvv.defaultName..")";
+                orderGroup = orderGroup + 1;
+
+                for kkk,vvv in ipairs(vv) do
+                    pets.args[A.petTypes[k]].args[kk].args[vvv.name..vvv.petID] =
+                    {
+                        order = orderItem,
+                        name = function()
+                            local petName;
+
+                            if ( vvv.defaultName ) then
+                                if ( A.db.profile.appendPetDefaultName ) then
+                                    petName = vvv.name.." ("..vvv.defaultName..")";
+                                else
+                                    petName = vvv.name;
+                                end
+
+                                if ( A.db.profile.colorPetWithCustomName ) then
+                                    petName = A.db.profile.petWithCustomNameColor.hexa..petName;
+                                end
                             else
                                 petName = vvv.name;
                             end
 
-                            if ( A.db.profile.colorPetWithCustomName ) then
-                                petName = A.db.profile.petWithCustomNameColor.hexa..petName;
+                            return petName;
+                        end,
+                        desc = function()
+                            -- Model
+                            A.configModelFrame.rotation = 0;
+                            A.configModelFrame:SetCreature(vvv.creatureID);
+
+                            -- Frame pos
+                            A.configModelFrame:ClearAllPoints()
+                            A.configModelFrame:SetPoint("TOPLEFT", A.configFocusFrame, "TOPRIGHT", 0, 0);
+                            A.configModelFrame:Show();
+
+                            if ( A.db.profile.debug ) then
+                                return L["Add %s to favorite."]:format(vvv.name).."\n\n"
+                                .."ID: "..vvv.petID.."\n"
+                                .."CreatureID: "..vvv.creatureID
+                            else
+                                return L["Add %s to favorite."]:format(vvv.name);
                             end
-                        else
-                            petName = vvv.name;
-                        end
+                        end,
+                        image = vvv.icon,
+                        type = "toggle",
+                        set = function()
+                            if ( tContains(A.db.profile.favoritePets, vvv.petID) ) then
+                                A:TableRemove(A.db.profile.favoritePets, vvv.petID);
+                            else
+                                A.db.profile.favoritePets[#A.db.profile.favoritePets+1] = vvv.petID;
+                            end
 
-                        return petName;
-                    end,
-                    desc = function()
-                        -- Model
-                        A.configModelFrame.rotation = 0;
-                        A.configModelFrame:SetCreature(vvv.creatureID);
+                            A.usablePetsCache = nil;
+                        end,
+                        get = function()
+                            if ( tContains(A.db.profile.favoritePets, vvv.petID) ) then
+                                return 1;
+                            else
+                                return nil;
+                            end
+                        end,
+                    };
 
-                        -- Frame pos
-                        A.configModelFrame:ClearAllPoints()
-                        A.configModelFrame:SetPoint("TOPLEFT", A.configFocusFrame, "TOPRIGHT", 0, 0);
-                        A.configModelFrame:Show();
-
-                        if ( A.db.profile.debug ) then
-                            return L["Add %s to favorite."]:format(vvv.name).."\n\n"
-                            .."ID: "..vvv.petID.."\n"
-                            .."CreatureID: "..vvv.creatureID
-                        else
-                            return L["Add %s to favorite."]:format(vvv.name);
-                        end
-                    end,
-                    image = vvv.icon,
-                    type = "toggle",
-                    set = function()
-                        if ( tContains(A.db.profile.favoritePets, vvv.petID) ) then
-                            A:TableRemove(A.db.profile.favoritePets, vvv.petID);
-                        else
-                            A.db.profile.favoritePets[#A.db.profile.favoritePets+1] = vvv.petID;
-                        end
-
-                        A.usablePetsCache = nil;
-                    end,
-                    get = function()
-                        if ( tContains(A.db.profile.favoritePets, vvv.petID) ) then
-                            return 1;
-                        else
-                            return nil;
-                        end
-                    end,
-                };
-
-                orderItem = orderItem + 1;
+                    orderItem = orderItem + 1;
+                end
             end
         end
     end
 
     -- Pets reset fav button
-    options.args.pets.args.reset =
+    pets.args.reset =
     {
         order = 1000,
         name = L["Reset"],
@@ -2407,12 +1476,25 @@ function A:AceConfig()
         },
     };
 
+    return pets;
+end
+
+function A:OptionsMountsList()
+    local mounts =
+    {
+        order = 0,
+        name = L["Mounts list"],
+        type = "group",
+        childGroups = "tab",
+        args = {},
+    };
+
     -- Mounts list
     orderGroup = 0;
     orderItem = 0;
-    for k,v in ipairs(A.pamTable.mounts) do
-        if ( A:TableNotEmpty(v) ) then
-            options.args.mounts.args[A.mountCat[k]] =
+    for k,v in ipairs(A:GetMountsTable()) do
+        if ( A:TableCount(v) > 0 ) then
+            mounts.args[A.mountCat[k]] =
             {
                 order = k,
                 name = A.mountCat[k],
@@ -2421,7 +1503,7 @@ function A:AceConfig()
             };
 
             for kk,vv in A:PairsByKeys(v) do
-                options.args.mounts.args[A.mountCat[k]].args[kk] =
+                mounts.args[A.mountCat[k]].args[kk] =
                 {
                     order = orderGroup,
                     name = kk,
@@ -2433,7 +1515,7 @@ function A:AceConfig()
                 orderGroup = orderGroup + 1;
 
                 for kkk,vvv in ipairs(vv) do
-                    options.args.mounts.args[A.mountCat[k]].args[kk].args[vvv.name..vvv.id] =
+                    mounts.args[A.mountCat[k]].args[kk].args[vvv.name..vvv.id] =
                     {
                         order = orderItem,
                         name = vvv.name,
@@ -2484,7 +1566,7 @@ function A:AceConfig()
     end
 
     -- Mounts reset fav button
-    options.args.mounts.args.reset =
+    mounts.args.reset =
     {
         order = 1000,
         name = L["Reset"],
@@ -2525,10 +1607,804 @@ function A:AceConfig()
         },
     };
 
+    return mounts;
+end
+
+function A:OptionsSets()
+    local sets =
+    {
+        order = 0,
+        name = L["Sets options"],
+        type = "group",
+        childGroups = "tab",
+        args =
+        {
+            pets =
+            {
+                order = 0,
+                name = L["Companions"],
+                type = "group",
+                --inline = true,
+                args =
+                {
+                    selectedFav =
+                    {
+                        order = 0,
+                        name = function()
+                            local count = #A.db.profile.favoritePets;
+
+                            return L["You currently have %d selected favorites.\n\n"]:format(count);
+                        end,
+                        type = "description",
+                        fontSize = "medium",
+                    },
+                    select =
+                    {
+                        order = 10,
+                        name = L["Select"],
+                        type = "multiselect",
+                        values = function()
+                            local out = {};
+
+                            for k in pairs(A.db.global.savedSets.pets) do
+                                out[k] = k;
+                            end
+
+                            return out;
+                        end,
+                        get = function(info, name)
+                            if ( tContains(A.db.profile.enabledSets.pets, name) ) then
+                                return 1;
+                            end
+
+                            return nil;
+                        end,
+                        set = function(info, name, val)
+                            if ( val ) then
+                                A.db.profile.enabledSets.pets[#A.db.profile.enabledSets.pets+1] = name;
+                            else
+                                A:TableRemove(A.db.profile.enabledSets.pets, name);
+                            end
+
+                            A:SetGlobalPetsSets();
+                        end,
+                    },
+                    save =
+                    {
+                        order = 20,
+                        name = L["Save"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            input =
+                            {
+                                order = 0,
+                                name = L["Name"],
+                                type = "input",
+                                set = function(info, val) A.newPetSetName = val; end,
+                                get = function() return A.newPetSetName; end,
+                            },
+                            exec =
+                            {
+                                order = 1,
+                                name = L["Save"],
+                                type = "execute",
+                                disabled = function()
+                                    if ( A.newPetSetName ) then
+                                        return nil;
+                                    end
+
+                                    return 1;
+                                end,
+                                func = function()
+                                    if ( #A.db.profile.favoritePets == 0 ) then
+                                        A:Message(L["You have no favorite selected."], 1);
+                                        A.newPetSetName = nil;
+                                    elseif ( A.db.global.savedSets.pets[A.newPetSetName] ) then
+                                        StaticPopup_Show("PetsAndMountsOverwriteOrChangeNameSet", A.newPetSetName);
+                                    else
+                                        A.db.global.savedSets.pets[A.newPetSetName] = A:CopyTable(A.db.profile.favoritePets);
+                                        A:Message(L["New companions set %s added."]:format(A.newPetSetName));
+                                        A.newPetSetName = nil;
+                                    end
+                                end,
+                            },
+                        },
+                    },
+                    delete =
+                    {
+                        order = 30,
+                        name = L["Delete"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            select =
+                            {
+                                order = 0,
+                                name = L["Choose"],
+                                type = "select",
+                                values = function()
+                                    local out = {};
+
+                                    for k in pairs(A.db.global.savedSets.pets) do
+                                        out[k] = k;
+                                    end
+
+                                    return out;
+                                end;
+                                get = function() return A.deleteSetPets; end,
+                                set = function(info, val)
+                                    A.deleteSetMounts = nil;
+                                    A.deleteSetPets = val;
+                                end,
+                            },
+                            exec =
+                            {
+                                order = 1,
+                                name = L["Delete"],
+                                type = "execute",
+                                disabled = function() return not A.deleteSetPets; end,
+                                func = function()
+                                    StaticPopup_Show("PetsAndMountsDeleteSet", A.deleteSetPets);
+                                end,
+                            },
+                        },
+                    },
+                },
+            },
+            mounts =
+            {
+                order = 1,
+                name = L["Mounts"],
+                type = "group",
+                args =
+                {
+                    selectedFav =
+                    {
+                        order = 0,
+                        name = function()
+                            local count = 0;
+
+                            for k,v in ipairs(A.db.profile.favoriteMounts) do
+                                count = count + #v;
+                            end
+
+                            return L["You currently have %d selected favorites.\n\n"]:format(count);
+                        end,
+                        type = "description",
+                        fontSize = "medium",
+                    },
+                    select =
+                    {
+                        order = 10,
+                        name = L["Select"],
+                        type = "multiselect",
+                        values = function()
+                            local out = {};
+
+                            for k in pairs(A.db.global.savedSets.mounts) do
+                                out[k] = k;
+                            end
+
+                            return out;
+                        end,
+                        get = function(info, name)
+                            if ( tContains(A.db.profile.enabledSets.mounts, name) ) then
+                                return 1;
+                            end
+
+                            return nil;
+                        end,
+                        set = function(info, name, val)
+                            if ( val ) then
+                                A.db.profile.enabledSets.mounts[#A.db.profile.enabledSets.mounts+1] = name;
+                            else
+                                A:TableRemove(A.db.profile.enabledSets.mounts, name);
+                            end
+
+                            A:SetGlobalMountsSets();
+                        end,
+                    },
+                    save =
+                    {
+                        order = 30,
+                        name = L["Save"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            input =
+                            {
+                                order = 0,
+                                name = L["Name"],
+                                type = "input",
+                                set = function(info, val) A.newMountSetName = val; end,
+                                get = function() return A.newMountSetName; end,
+                            },
+                            exec =
+                            {
+                                order = 1,
+                                name = L["Save"],
+                                type = "execute",
+                                disabled = function() 
+                                    if ( A.newMountSetName ) then
+                                        return nil;
+                                    end
+
+                                    return 1;
+                                end,
+                                func = function()
+                                    local gotOne;
+
+                                    for k,v in ipairs(A.db.profile.favoriteMounts) do
+                                        if ( #v > 0 ) then gotOne = 1; end
+                                    end
+
+                                    if ( not gotOne ) then
+                                        A:Message(L["You have no favorite selected."], 1);
+                                        A.newMountSetName = nil;
+                                    elseif ( A.db.global.savedSets.mounts[A.newMountSetName] ) then
+                                        StaticPopup_Show("PetsAndMountsOverwriteOrChangeNameSet", A.newMountSetName);
+                                    else
+                                        A.db.global.savedSets.mounts[A.newMountSetName] = A:CopyTable(A.db.profile.favoriteMounts);
+                                        A:Message(L["New mounts set %s added."]:format(A.newMountSetName));
+                                        A.newMountSetName = nil;
+                                    end
+                                end,
+                            },
+                        },
+                    },
+                    delete =
+                    {
+                        order = 40,
+                        name = L["Delete"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            select =
+                            {
+                                order = 0,
+                                name = L["Choose"],
+                                type = "select",
+                                values = function()
+                                    local out = {};
+
+                                    for k in pairs(A.db.global.savedSets.mounts) do
+                                        out[k] = k;
+                                    end
+
+                                    return out;
+                                end;
+                                get = function() return A.deleteSetMounts; end,
+                                set = function(info, val)
+                                    A.deleteSetPets = nil;
+                                    A.deleteSetMounts = val;
+                                end,
+                            },
+                            exec =
+                            {
+                                order = 1,
+                                name = L["Delete"],
+                                type = "execute",
+                                disabled = function() return not A.deleteSetMounts; end,
+                                func = function()
+                                    StaticPopup_Show("PetsAndMountsDeleteSet", A.deleteSetMounts);
+                                end,
+                            },
+                        },
+                    },
+                },
+            },
+            areaPets =
+            {
+                order = 2,
+                name = L["Area companions"],
+                type = "group",
+                args =
+                {
+                    zoneSelectGroup =
+                    {
+                        order = 0,
+                        name = L["Area selection"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            currentZone =
+                            {
+                                order = 0,
+                                name = function()
+                                    local mapID;
+
+                                    if ( A.currentMapIDForPetsSets ) then
+                                        mapID = A.currentMapIDForPetsSets;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)));
+                                end,
+                                type = "description",
+                                fontSize = "medium",
+                            },
+                            zoneSelect =
+                            {
+                                order = 1,
+                                name = L["Area selection"],
+                                desc = L["Select the area you want to work with."],
+                                type = "select",
+                                dialogControl = "Dropdown-SortByValue",
+                                values = function()
+                                    if ( A:TableCount(A.db.global.zonesIDsToName) > 0 ) then
+                                        return A.db.global.zonesIDsToName;
+                                    else
+                                        return {};
+                                    end
+                                end,
+                                get = function() return A.currentMapIDForPetsSets; end,
+                                set = function(info, val) A.currentMapIDForPetsSets = val; end,
+                            },
+                        },
+                    },
+                    select =
+                    {
+                        order = 1,
+                        name = L["Select"],
+                        type = "multiselect",
+                        values = function()
+                            local out = {};
+
+                            for k in pairs(A.db.global.savedSets.pets) do
+                                out[k] = k;
+                            end
+
+                            return out;
+                        end,
+                        get = function(info, name)
+                            local mapID;
+
+                            if ( A.currentMapIDForPetsSets ) then
+                                mapID = A.currentMapIDForPetsSets;
+                            else
+                                mapID = A.currentMapID;
+                            end
+
+                            if ( A.db.profile.petsSetsByMapID[mapID] and tContains(A.db.profile.petsSetsByMapID[mapID], name) ) then
+                                return 1;
+                            end
+
+                            return nil;
+                        end,
+                        set = function(info, name, val)
+                            local mapID;
+
+                            if ( A.currentMapIDForPetsSets ) then
+                                mapID = A.currentMapIDForPetsSets;
+                            else
+                                mapID = A.currentMapID;
+                            end
+
+                            if ( val ) then
+                                if ( not A.db.profile.petsSetsByMapID[mapID] ) then
+                                    A.db.profile.petsSetsByMapID[mapID] = {};
+                                end
+
+                                A.db.profile.petsSetsByMapID[mapID][#A.db.profile.petsSetsByMapID[mapID]+1] = name;
+                            else
+                                if ( A.db.profile.petsSetsByMapID[mapID] ) then
+                                    A:TableRemove(A.db.profile.petsSetsByMapID[mapID], name);
+                                end
+                            end
+
+                            if ( mapID == A.currentMapID ) then
+                                A:SetZonePetsSets(1);
+                            end
+                        end,
+                    },
+                    zoneResetGroup =
+                    {
+                        order = 3,
+                        name = L["Reset"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            zoneReset =
+                            {
+                                order = 0,
+                                name = L["Reset"],
+                                desc = L["Use this to reset the working area to the current area."],
+                                type = "execute",
+                                func = function() A.currentMapIDForPetsSets = nil; end,
+                            },
+                        },
+                    },
+                },
+            },
+            areaMounts =
+            {
+                order = 3,
+                name = L["Area mounts"],
+                type = "group",
+                args =
+                {
+                    zoneSelectGroup =
+                    {
+                        order = 0,
+                        name = L["Area selection"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            currentZone =
+                            {
+                                order = 0,
+                                name = function()
+                                    local mapID;
+
+                                    if ( A.currentMapIDForMountsSets ) then
+                                        mapID = A.currentMapIDForMountsSets;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)));
+                                end,
+                                type = "description",
+                                fontSize = "medium",
+                            },
+                            zoneSelect =
+                            {
+                                order = 1,
+                                name = L["Area selection"],
+                                desc = L["Select the area you want to work with."],
+                                type = "select",
+                                dialogControl = "Dropdown-SortByValue",
+                                values = function()
+                                    if ( A:TableCount(A.db.global.zonesIDsToName) > 0 ) then
+                                        return A.db.global.zonesIDsToName;
+                                    else
+                                        return {};
+                                    end
+                                end,
+                                get = function() return A.currentMapIDForMountsSets; end,
+                                set = function(info, val) A.currentMapIDForMountsSets = val; end,
+                            },
+                        },
+                    },
+                    select =
+                    {
+                        order = 1,
+                        name = L["Select"],
+                        type = "multiselect",
+                        values = function()
+                            local out = {};
+
+                            for k in pairs(A.db.global.savedSets.mounts) do
+                                out[k] = k;
+                            end
+
+                            return out;
+                        end,
+                        get = function(info, name)
+                            local mapID;
+
+                            if ( A.currentMapIDForMountsSets ) then
+                                mapID = A.currentMapIDForMountsSets;
+                            else
+                                mapID = A.currentMapID;
+                            end
+
+                            if ( A.db.profile.mountsSetsByMapID[mapID] and tContains(A.db.profile.mountsSetsByMapID[mapID], name) ) then
+                                return 1;
+                            end
+
+                            return nil;
+                        end,
+                        set = function(info, name, val)
+                            local mapID;
+
+                            if ( A.currentMapIDForMountsSets ) then
+                                mapID = A.currentMapIDForMountsSets;
+                            else
+                                mapID = A.currentMapID;
+                            end
+
+                            if ( val ) then
+                                if ( not A.db.profile.mountsSetsByMapID[mapID] ) then
+                                    A.db.profile.mountsSetsByMapID[mapID] = {};
+                                end
+
+                                A.db.profile.mountsSetsByMapID[mapID][#A.db.profile.mountsSetsByMapID[mapID]+1] = name;
+                            else
+                                if ( A.db.profile.mountsSetsByMapID[mapID] ) then
+                                    A:TableRemove(A.db.profile.mountsSetsByMapID[mapID], name);
+                                end
+                            end
+
+                            if ( mapID == A.currentMapID ) then
+                                A:SetZoneMountsSets(1);
+                            end
+                        end,
+                    },
+                    zoneResetGroup =
+                    {
+                        order = 2,
+                        name = L["Reset"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            zoneReset =
+                            {
+                                order = 0,
+                                name = L["Reset"],
+                                desc = L["Use this to reset the working area to the current area."],
+                                type = "execute",
+                                func = function() A.currentMapIDForPetsSets = nil; end,
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    };
+
+    return sets;
+end
+
+function A:OptionsFavOverride()
+    local favOverride =
+    {
+        order = 0,
+        name = L["Favorites override"],
+        type = "group",
+        childGroups = "tab",
+        args =
+        {
+            --
+            -- Favorites override options tree - Force one tab
+            --
+            forceOne =
+            {
+                order = 0,
+                name = L["Force One"],
+                type = "group",
+                args =
+                {
+                    pets =
+                    {
+                        order = 0,
+                        name = L["Companions"],
+                        type = "group",
+                        inline = true,
+                        args = {},
+                    },
+                    mounts =
+                    {
+                        order = 10,
+                        name = L["Mounts"],
+                        type = "group",
+                        inline = true,
+                        args = {},
+                    },
+                },
+            },
+            --
+            -- Favorites override options tree - Zone override tab
+            --
+            zoneOverride =
+            {
+                order = 100,
+                name = L["Area override"],
+                type = "group",
+                args =
+                {
+                    pets =
+                    {
+                        order = 0,
+                        name = L["Companions"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            zoneSelectHeader =
+                            {
+                                order = 0,
+                                name = L["Area selection"],
+                                type = "header",
+                            },
+                            currentZone =
+                            {
+                                order = 1,
+                                name = function()
+                                    local mapID;
+
+                                    if ( A.currentMapIDForPets ) then
+                                        mapID = A.currentMapIDForPets;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)));
+                                end,
+                                type = "description",
+                                fontSize = "medium",
+                            },
+                            zoneSelect =
+                            {
+                                order = 10,
+                                name = L["Area selection"],
+                                desc = L["Select the area you want to work with."],
+                                type = "select",
+                                dialogControl = "Dropdown-SortByValue",
+                                values = function()
+                                    if ( A:TableCount(A.db.global.zonesIDsToName) > 0 ) then
+                                        return A.db.global.zonesIDsToName;
+                                    else
+                                        return {};
+                                    end
+                                end,
+                                get = function() return A.currentMapIDForPets; end,
+                                set = function(info, val) A.currentMapIDForPets = val; end,
+                            },
+                            zoneSelectPet =
+                            {
+                                order = 100,
+                                name = L["Companions"],
+                                type = "header",
+                            },
+                            -- Pets dropdowns goes here
+                            zoneSelectReset =
+                            {
+                                order = 200,
+                                name = L["Reset"],
+                                type = "header",
+                            },
+                            zoneReset =
+                            {
+                                order = 201,
+                                name = L["Reset"],
+                                desc = L["Use this to reset the working area to the current area."],
+                                type = "execute",
+                                func = function() A.currentMapIDForPets = nil; end,
+                            },
+                        },
+                    },
+                    mounts =
+                    {
+                        order = 100,
+                        name = L["Mounts"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            zoneSelectHeader =
+                            {
+                                order = 0,
+                                name = L["Area selection"],
+                                type = "header",
+                            },
+                            currentZone =
+                            {
+                                order = 1,
+                                name = function()
+                                    local mapID;
+
+                                    if ( A.currentMapIDForMounts ) then
+                                        mapID = A.currentMapIDForMounts;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)));
+                                end,
+                                type = "description",
+                                fontSize = "medium",
+                            },
+                            zoneSelect =
+                            {
+                                order = 10,
+                                name = L["Area selection"],
+                                desc = L["Select the area you want to work with."],
+                                type = "select",
+                                dialogControl = "Dropdown-SortByValue",
+                                values = function()
+                                    if ( A:TableCount(A.db.global.zonesIDsToName) > 0 ) then
+                                        return A.db.global.zonesIDsToName;
+                                    else
+                                        return {};
+                                    end
+                                end,
+                                get = function() return A.currentMapIDForMounts; end,
+                                set = function(info, val) A.currentMapIDForMounts = val; end,
+                            },
+                            zoneSelectMounts =
+                            {
+                                order = 100,
+                                name = L["Mounts"],
+                                type = "header",
+                            },
+                            -- Mounts dropdowns goes here
+                            zoneSelectReset =
+                            {
+                                order = 200,
+                                name = L["Reset"],
+                                type = "header",
+                            },
+                            zoneReset =
+                            {
+                                order = 201,
+                                name = L["Reset"],
+                                desc = L["Use this to reset the working area to the current area."],
+                                type = "execute",
+                                func = function() A.currentMapIDForMounts = nil; end,
+                            },
+                        },
+                    },
+                    common =
+                    {
+                        order = 200,
+                        name = L["Zones database"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            knownZonesCount =
+                            {
+                                order = 0,
+                                name = function()
+                                    local count = A:TableCount(A.db.global.zonesIDsToName);
+
+                                    if ( count > 1 ) then
+                                        return L["The add-on currently knows %d areas\n\n"]:format(count);
+                                    else
+                                        return L["The add-on currently knows %d area\n\n"]:format(count);
+                                    end
+                                end,
+                                type = "description",
+                                fontSize = "medium",
+                            },
+                            debugInfo =
+                            {
+                                order = 1,
+                                name = A.color.RED..L["Debug is enabled. Building the areas database will reset it first."],
+                                hidden = function() return not A.db.profile.debug; end,
+                                width = "full",
+                                type = "description",
+                                fontSize = "large",
+                            },
+                            blankLine =
+                            {
+                                order = 2,
+                                name = " ",
+                                hidden = function() return not A.db.profile.debug; end,
+                                width = "full",
+                                type = "description",
+                                fontSize = "large",
+                            },
+                            buildDB =
+                            {
+                                order = 10,
+                                name = L["Build areas database"],
+                                desc = L["Build the areas database, this is not needed for the addon to work, but it will know the areas without discovering them first."],
+                                type = "execute",
+                                func = function() A:BuildMapIDsDB(); end,
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    };
+
     -- Force one pets
     orderItem = 0;
     for k,v in ipairs(A.pamTable.pets) do
-        options.args.favOverride.args.forceOne.args.pets.args[A.petTypes[k]] =
+        favOverride.args.forceOne.args.pets.args[A.petTypes[k]] =
         {
             order = orderItem,
             name = L[A.petTypes[k]],
@@ -2569,7 +2445,7 @@ function A:AceConfig()
     -- Force one mounts
     orderItem = 0;
     for k,v in ipairs(A.pamTable.mounts) do
-        options.args.favOverride.args.forceOne.args.mounts.args[A.mountCat[k]] =
+        favOverride.args.forceOne.args.mounts.args[A.mountCat[k]] =
         {
             order = orderItem,
             name = A.mountCat[k],
@@ -2603,7 +2479,7 @@ function A:AceConfig()
     -- Area override pets
     orderItem = 110;
     for k,v in ipairs(A.pamTable.pets) do
-        options.args.favOverride.args.zoneOverride.args.pets.args[A.petTypes[k]] =
+        favOverride.args.zoneOverride.args.pets.args[A.petTypes[k]] =
         {
             order = orderItem,
             name = L[A.petTypes[k]],
@@ -2668,7 +2544,7 @@ function A:AceConfig()
      -- Area override mounts
     orderItem = 110;
     for k,v in ipairs(A.pamTable.mounts) do
-        options.args.favOverride.args.zoneOverride.args.mounts.args[A.mountCat[k]] =
+        favOverride.args.zoneOverride.args.mounts.args[A.mountCat[k]] =
         {
             order = orderItem,
             name = A.mountCat[k],
@@ -2717,57 +2593,348 @@ function A:AceConfig()
         orderItem = orderItem + 1;
     end
 
-    -- Profiles
-    options.args.options.args.profilesOptions = LibStub("AceDBOptions-3.0"):GetOptionsTable(A.db);
-    options.args.options.args.profilesOptions.order = 10000;
-
-    return options;
+    return favOverride;
 end
 
-local options = A:AceConfig();
+function A:OptionsAbout()
+    local about =
+    {
+        order = 0,
+        name = L["About"],
+        type = "group",
+        args =
+        {
+            name =
+            {
+                order = 0,
+                name = A.color.WARRIOR..L["Pets & Mounts"],
+                width = "full",
+                type = "description",
+                fontSize = "large",
+            },
+            emptyLine1 =
+            {
+                order = 1,
+                name = " ",
+                width = "full",
+                type = "description",
+                fontSize = "medium",
+            },
+            desc =
+            {
+                order = 2,
+                name = L["Auto and random summon for your pets and mounts, highly customizable. With Data Broker support."],
+                width = "full",
+                type = "description",
+                fontSize = "medium",
+            },
+            emptyLine2 =
+            {
+                order = 3,
+                name = " ",
+                width = "full",
+                type = "description",
+                fontSize = "medium",
+            },
+            author =
+            {
+                order = 4,
+                name = A.color.BLUE..L["Author"]..A.color.RESET..": "..GetAddOnMetadata("PetsAndMounts", "Author"),
+                width = "full",
+                type = "description",
+                fontSize = "medium",
+            },
+            licence =
+            {
+                order = 5,
+                name = A.color.BLUE..L["Licence"]..A.color.RESET..": BSD",
+                width = "full",
+                type = "description",
+                fontSize = "medium",
+            },
+            version =
+            {
+                order = 6,
+                name = function()
+                    local version, revision = A:GetAddonVersion(A.version);
+                    local color;
+
+                    if ( A.addonUpdateMessageInfo ) then
+                        color = A.color.RED;
+                    else
+                        color = A.color.GREEN;
+                    end
+
+                    return A.color.BLUE..L["Version"]..A.color.RESET..": "..L["You are running Pets & Mounts version %s revision %s %s."]
+                    :format(color..tostring(version)..A.color.RESET, color..tostring(revision), L[A.versionStage]..A.color.RESET);
+                end,
+                width = "full",
+                type = "description",
+                fontSize = "medium",
+            },
+            newVersion =
+            {
+                order = 7,
+                name = function()
+                    if ( A.addonUpdateMessageInfo ) then
+                        return A.color.BLUE..L["New version"]..A.color.RESET..": "..L["A new version is available, version |cff33ff99%s|r revision |cff33ff99%s %s|r."]
+                        :format(tostring(A.addonUpdateMessageInfo[1]), tostring(A.addonUpdateMessageInfo[2]), L[A.addonUpdateMessageInfo[3]]);
+                    end
+                    return " ";
+                end,
+                width = "full",
+                hidden = function()
+                    if ( A.addonUpdateMessageInfo ) then
+                        return nil;
+                    end
+                    return 1;
+                end,
+                type = "description",
+                fontSize = "medium",
+            },
+            emptyLine3 =
+            {
+                order = 8,
+                name = " ",
+                width = "full",
+                type = "description",
+                fontSize = "medium",
+            },
+            webSiteInput =
+            {
+                order = 9,
+                name = L["Web site"],
+                width = "full",
+                type = "input",
+                set = function() return; end,
+                get = function() return A.addonURL; end,
+            },
+            emptyLine4 =
+            {
+                order = 100,
+                name = " \n",
+                width = "full",
+                type = "description",
+                fontSize = "medium",
+            },
+            credits =
+            {
+                order = 101,
+                name = A.color.WARRIOR..L["Credits"],
+                width = "full",
+                type = "description",
+                fontSize = "large",
+            },
+            emptyLine5 =
+            {
+                order = 110,
+                name = " ",
+                width = "full",
+                type = "description",
+                fontSize = "medium",
+            },
+            curse =
+            {
+                order = 111,
+                name = " ",
+                width = "full",
+                type = "description",
+                fontSize = "medium",
+                image = function() return "Interface\\AddOns\\PetsAndMounts\\Media\\curse", 256, 106; end,
+                imageCoords = {0, 1, 0, 0.82},
+            },
+            curseWebSite =
+            {
+                order = 112,
+                name = "Curse",
+                width = "full",
+                type = "input",
+                set = function() return; end,
+                get = function() return "http://www.curse.com"; end,
+            },
+            emptyLine6 =
+            {
+                order = 120,
+                name = " ",
+                width = "full",
+                type = "description",
+                fontSize = "medium",
+            },
+            warcraftMounts =
+            {
+                order = 121,
+                name = " ",
+                width = "full",
+                type = "description",
+                fontSize = "medium",
+                image = function() return "Interface\\AddOns\\PetsAndMounts\\Media\\warcraftmounts", 256, 105; end,
+                imageCoords = {0, 1, 0, 0.82},
+            },
+            warcraftMountsWebSite =
+            {
+                order = 122,
+                name = "Warcraft Mounts",
+                width = "full",
+                type = "input",
+                set = function() return; end,
+                get = function() return "http://www.warcraftmounts.com"; end,
+            },
+            emptyLine7 =
+            {
+                order = 130,
+                name = " ",
+                width = "full",
+                type = "description",
+                fontSize = "medium",
+            },
+            warcraftPets =
+            {
+                order = 131,
+                name = " ",
+                width = "full",
+                type = "description",
+                fontSize = "medium",
+                image = function() return "Interface\\AddOns\\PetsAndMounts\\Media\\warcraftpets", 256, 256; end,
+            },
+            warcraftPetsWebSite =
+            {
+                order = 132,
+                name = "Warcraft Pets",
+                width = "full",
+                type = "input",
+                set = function() return; end,
+                get = function() return "http://www.warcraftpets.com"; end,
+            },
+            emptyLine8 =
+            {
+                order = 140,
+                name = " ",
+                width = "full",
+                type = "description",
+                fontSize = "medium",
+            },
+            wowAce =
+            {
+                order = 141,
+                name = " ",
+                width = "full",
+                type = "description",
+                fontSize = "medium",
+                image = function() return "Interface\\AddOns\\PetsAndMounts\\Media\\wowace", 256, 51; end,
+                imageCoords = {0, 1, 0, 0.39},
+            },
+            wowAceWebSite =
+            {
+                order = 142,
+                name = "WowAce",
+                width = "full",
+                type = "input",
+                set = function() return; end,
+                get = function() return "http://www.wowace.com"; end,
+            },
+            emptyLine9 =
+            {
+                order = 150,
+                name = " ",
+                width = "full",
+                type = "description",
+                fontSize = "medium",
+            },
+            wowhead =
+            {
+                order = 151,
+                name = " ",
+                width = "full",
+                type = "description",
+                fontSize = "medium",
+                image = function() return "Interface\\AddOns\\PetsAndMounts\\Media\\wowhead", 256, 116; end,
+                imageCoords = {0, 1, 0, 0.9},
+            },
+            wowheadWebSite =
+            {
+                order = 152,
+                name = "Wowhead",
+                width = "full",
+                type = "input",
+                set = function() return; end,
+                get = function() return "http://www.wowhead.com"; end,
+            },
+            emptyLine10 =
+            {
+                order = 160,
+                name = " ",
+                width = "full",
+                type = "description",
+                fontSize = "medium",
+            },
+        },
+    };
+
+    return about;
+end
 
 -- Register with AceConfig
-LibStub("AceConfig-3.0"):RegisterOptionsTable(L["Pets & Mounts"], options.args.options);
-LibStub("AceConfig-3.0"):RegisterOptionsTable(L["Pets & Mounts"]..": "..options.args.pets.name, options.args.pets);
-LibStub("AceConfig-3.0"):RegisterOptionsTable(L["Pets & Mounts"]..": "..options.args.mounts.name, options.args.mounts);
-LibStub("AceConfig-3.0"):RegisterOptionsTable(L["Pets & Mounts"]..": "..options.args.sets.name, options.args.sets);
-LibStub("AceConfig-3.0"):RegisterOptionsTable(L["Pets & Mounts"]..": "..options.args.favOverride.name, options.args.favOverride);
-LibStub("AceConfig-3.0"):RegisterOptionsTable(L["Pets & Mounts"]..": "..options.args.about.name, options.args.about);
+LibStub("AceConfig-3.0"):RegisterOptionsTable("PAMOptionsRoot", A.OptionsRoot);
+LibStub("AceConfig-3.0"):RegisterOptionsTable("PAMOptionsPetsList", A.OptionsPetsList);
+LibStub("AceConfig-3.0"):RegisterOptionsTable("PAMOptionsMountsList", A.OptionsMountsList);
+LibStub("AceConfig-3.0"):RegisterOptionsTable("PAMOptionsSets", A.OptionsSets);
+LibStub("AceConfig-3.0"):RegisterOptionsTable("PAMOptionsFavOverride", A.OptionsFavOverride);
+LibStub("AceConfig-3.0"):RegisterOptionsTable("PAMOptionsAbout", A.OptionsAbout);
 
 -- Adding addon options to Blizzard UI
-A.configFrameOptions = A.AceConfigDialog:AddToBlizOptions(L["Pets & Mounts"],  L["Pets & Mounts"]);
-A.configFramePets = A.AceConfigDialog:AddToBlizOptions(L["Pets & Mounts"]..": "..options.args.pets.name, options.args.pets.name, L["Pets & Mounts"]);
-A.configFrameMounts = A.AceConfigDialog:AddToBlizOptions(L["Pets & Mounts"]..": "..options.args.mounts.name, options.args.mounts.name, L["Pets & Mounts"]);
-A.configFrameSets = A.AceConfigDialog:AddToBlizOptions(L["Pets & Mounts"]..": "..options.args.sets.name, options.args.sets.name, L["Pets & Mounts"]);
-A.configFrameFavOverride = A.AceConfigDialog:AddToBlizOptions(L["Pets & Mounts"]..": "..options.args.favOverride.name, options.args.favOverride.name, L["Pets & Mounts"]);
-A.configFrameAbout = A.AceConfigDialog:AddToBlizOptions(L["Pets & Mounts"]..": "..options.args.about.name, options.args.about.name, L["Pets & Mounts"]);
+A.configFrameOptions = A.AceConfigDialog:AddToBlizOptions("PAMOptionsRoot",  L["Pets & Mounts"]);
+A.configFramePets = A.AceConfigDialog:AddToBlizOptions("PAMOptionsPetsList", L["Companions list"], L["Pets & Mounts"]);
+A.configFrameMounts = A.AceConfigDialog:AddToBlizOptions("PAMOptionsMountsList", L["Mounts list"], L["Pets & Mounts"]);
+A.configFrameSets = A.AceConfigDialog:AddToBlizOptions("PAMOptionsSets", L["Sets options"], L["Pets & Mounts"]);
+A.configFrameFavOverride = A.AceConfigDialog:AddToBlizOptions("PAMOptionsFavOverride", L["Favorites override"], L["Pets & Mounts"]);
+A.configFrameAbout = A.AceConfigDialog:AddToBlizOptions("PAMOptionsAbout", L["About"], L["Pets & Mounts"]);
 
--- Assign a var to the current config frame on focus
+-- Config frames OnShow
 A.configFrameOptions:HookScript("OnShow", function(self) A.configFocusFrame = self; end);
-A.configFramePets:HookScript("OnShow", function(self) A.configFocusFrame = self; end);
-A.configFrameMounts:HookScript("OnShow", function(self) A.configFocusFrame = self; end);
+A.configFramePets:HookScript("OnShow", function(self)
+    A.configFocusFrame = self;
+
+    A.searchFrame.searchBox.searchType = "PETS";
+    A.searchFrame:ClearAllPoints();
+    A.searchFrame:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 0, 0);
+    A.searchFrame:Show();
+end);
+A.configFrameMounts:HookScript("OnShow", function(self)
+    A.configFocusFrame = self;
+
+    A.searchFrame.searchBox.searchType = "MOUNTS";
+    A.searchFrame:ClearAllPoints();
+    A.searchFrame:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 0, 0);
+    A.searchFrame:Show();
+end);
 A.configFrameSets:HookScript("OnShow", function(self) A.configFocusFrame = self; end);
 A.configFrameFavOverride:HookScript("OnShow", function(self) A.configFocusFrame = self; end);
 A.configFrameAbout:HookScript("OnShow", function(self) A.configFocusFrame = self; end);
 
--- Hide model frame hooks
-A.configFramePets:HookScript("OnHide", function() A.configModelFrame:Hide(); end);
-A.configFrameMounts:HookScript("OnHide", function() A.configModelFrame:Hide(); end);
+-- Config frames OnHide
+A.configFramePets:HookScript("OnHide", function()
+    A.configModelFrame:Hide();
+    A.searchFrame:Hide();
+end);
+A.configFrameMounts:HookScript("OnHide", function()
+    A.configModelFrame:Hide();
+    A.searchFrame:Hide();
+end);
 A.configFrameFavOverride:HookScript("OnHide", function() A.configModelFrame:Hide(); end);
 
 -- NotifyChange method
 function A:NotifyChangeForAll()
     if ( A.configFrameOptions:IsVisible() ) then
-        A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"], options.args.options);
+        A.AceConfigRegistry:NotifyChange("PAMOptionsRoot", A.OptionsRoot);
     elseif ( A.configFramePets:IsVisible() ) then
-        A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"]..": "..options.args.pets.name, options.args.pets);
+        A.AceConfigRegistry:NotifyChange("PAMOptionsPetsList", A.OptionsPetsList);
     elseif ( A.configFrameMounts:IsVisible() ) then
-        A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"]..": "..options.args.mounts.name, options.args.mounts);
+        A.AceConfigRegistry:NotifyChange("PAMOptionsMountsList", A.OptionsMountsList);
     elseif ( A.configFrameSets:IsVisible() ) then
-        A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"]..": "..options.args.sets.name, options.args.sets);
+        A.AceConfigRegistry:NotifyChange("PAMOptionsSets", A.OptionsSets);
     elseif ( A.configFrameFavOverride:IsVisible() ) then
-        A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"]..": "..options.args.favOverride.name, options.args.favOverride);
+        A.AceConfigRegistry:NotifyChange("PAMOptionsFavOverride", A.OptionsFavOverride);
     elseif ( A.configFrameAbout:IsVisible() ) then
-        A.AceConfigRegistry:NotifyChange(L["Pets & Mounts"]..": "..options.args.about.name, options.args.about);
+        A.AceConfigRegistry:NotifyChange("PAMOptionsAbout", A.OptionsAbout);
     end
 end

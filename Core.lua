@@ -10,8 +10,6 @@
 -- TODO: Fix companion staying where you died
 
 -- TODO: Built in set for pets families
--- TODO: search system for pets and mounts
-
 -- TODO: Add option to disable model frames
 
 -- TODO: move back red flying cloud to hybrid and prevent summoning it when under water
@@ -93,6 +91,10 @@ end
 
 A.DebugMessage = A.DebugMessageDummy;
 
+--- Fake refresh config method
+function A:NotifyChangeForAll()
+end
+
 --- Handle the slash command
 -- @param input The string returned after the command
 function A:SlashCommand(input)
@@ -172,17 +174,6 @@ function A:TableRemove(tbl, item)
             return;
         end
     end
-end
-
---- Will check if a table got a least one entry
--- Dunno why but in Config.lua I use a for loop "for k,v in ipairs(A.pamTable.mounts) do"
--- #v always return 0, even if the table is not empty
-function A:TableNotEmpty(tbl)
-    for k,v in pairs(tbl) do
-        if ( k ) then return 1; end
-    end
-
-    return nil;
 end
 
 --- Simple shallow copy for copying specialization profiles
@@ -1263,7 +1254,7 @@ local function PAMMenu(self, level)
 
             -- Pets families menu
             for k,v in A:PairsByKeys(A.pamTable.pets) do
-                if ( A:TableNotEmpty(v) ) then
+                if ( A:TableCount(v) > 0 ) then
                     self.info.text = "   "..L[A.petTypes[k]];
                     self.info.value = "PETS"..A.petTypes[k];
                     self.info.icon = nil;
@@ -1290,7 +1281,7 @@ local function PAMMenu(self, level)
 
             -- Mounts categories menu
             for k,v in A:PairsByKeys(A.pamTable.mounts) do
-                if ( A:TableNotEmpty(v) ) then
+                if ( A:TableCount(v) > 0 ) then
                     self.info.text = "   "..A.mountCat[k];
                     self.info.value = "MOUNTS"..A.mountCat[k];
                     self.info.icon = nil;
@@ -1364,7 +1355,7 @@ local function PAMMenu(self, level)
 
         -- Pets leading letters menu
         for k,v in ipairs(A.pamTable.pets) do
-            if ( A:TableNotEmpty(v) ) then
+            if ( A:TableCount(v) > 0 ) then
                 if ( UIDROPDOWNMENU_MENU_VALUE == "PETS"..A.petTypes[k] ) then
                     for kk,vv in A:PairsByKeys(v) do
                         self.info.text = "   "..kk;
@@ -1379,7 +1370,7 @@ local function PAMMenu(self, level)
 
         -- Mounts leading letters menu
         for k,v in ipairs(A.pamTable.mounts) do
-            if ( A:TableNotEmpty(v) ) then
+            if ( A:TableCount(v) > 0 ) then
                 if ( UIDROPDOWNMENU_MENU_VALUE == "MOUNTS"..A.mountCat[k] ) then
                     for kk,vv in A:PairsByKeys(v) do
                         self.info.text = "   "..kk;
@@ -1522,7 +1513,7 @@ local function PAMMenu(self, level)
 
         -- Pets list
         for k,v in ipairs(A.pamTable.pets) do
-            if ( A:TableNotEmpty(v) ) then
+            if ( A:TableCount(v) > 0 ) then
                 buttonIndex = 1;
 
                 for kk,vv in A:PairsByKeys(v) do
@@ -1573,7 +1564,7 @@ local function PAMMenu(self, level)
 
         -- Mounts list
         for k,v in ipairs(A.pamTable.mounts) do
-            if ( A:TableNotEmpty(v) ) then
+            if ( A:TableCount(v) > 0 ) then
                 buttonIndex = 1;
 
                 for kk,vv in A:PairsByKeys(v) do
@@ -1725,7 +1716,7 @@ function A:ZONE_CHANGED_NEW_AREA()
         A:SetZoneMountsSets();
     end
 
-    if ( A.NotifyChangeForAll ) then A:NotifyChangeForAll(); end
+    A:NotifyChangeForAll();
 end
 
 function A:PLAYER_LEVEL_UP(event, level, ...)
@@ -1841,6 +1832,7 @@ function A:OnCommReceived(...)
     if ( remoteStage == A.versionStage or (remoteStage == "Release" and A.versionStage == "Alpha") ) then
         if ( A:IsRemoteNewer(localVersion, remoteVersion, localRevision, remoteRevision) ) then
             A.addonUpdateMessageInfo = {remoteVersion, remoteRevision, remoteStage};
+            A:NotifyChangeForAll();
             A:Message(L["A newer version of Pets & Mounts is available. You have version %s revision %s %s, %s got version %s revision %s %s. Get it on Curse at %s or with the Curse client."]
             :format(tostring(localVersion), tostring(localRevision), L[A.versionStage], who, tostring(remoteVersion), tostring(remoteRevision), L[remoteStage], A.color.BLUE.."|HPAM:config:About|h[Link]|h|r"));
         end
@@ -2243,6 +2235,9 @@ function A:OnInitialize()
     -- Config model frame
     A.configModelFrame = PetsAndMountsConfigModelFrame;
     A.configModelFrame:SetSize(A.db.profile.configModelFrameWidth, A.db.profile.configModelFrameHeight);
+
+    -- Search frame
+    A.searchFrame = PetsAndMountsSearchFrame;
 
     -- LDB
     A.ldbObject = LibStub("LibDataBroker-1.1"):NewDataObject("PetsAndMountsLDB", {
