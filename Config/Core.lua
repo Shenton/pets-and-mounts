@@ -175,6 +175,10 @@ StaticPopupDialogs["PetsAndMountsDeleteSet"] =
     Methods
 -------------------------------------------------------------------------------]]--
 
+--- Called by the search frame OnTextChanged
+-- Set the correct var and refresh the config
+-- @param searchType PETS or MOUNTS
+-- @param searchText The string to search for
 function A:SearchListCallback(searchType, searchText)
     if ( searchType == "PETS" ) then
         if ( not searchText or searchText == "" ) then
@@ -196,6 +200,7 @@ function A:SearchListCallback(searchType, searchText)
     A:NotifyChangeForAll();
 end
 
+--- Return the pets list according to search string
 function A:GetPetsTable()
     if ( A.petsListSearchText ) then
         local out =
@@ -231,6 +236,7 @@ function A:GetPetsTable()
     end
 end
 
+--- Return the mounts list according to search string
 function A:GetMountsTable()
     if ( A.mountsListSearchText ) then
         local out =
@@ -1472,37 +1478,166 @@ function A:OptionsPetsList()
         end
     end
 
-    -- Pets reset fav button
-    pets.args.reset =
+    -- Pets mass actions tab
+    pets.args.massActions =
     {
         order = 1000,
-        name = L["Reset"],
+        name = L["Mass actions"],
         type = "group",
         args =
         {
-            toggle =
+            selectedFav =
             {
                 order = 0,
-                name = L["Enable"],
-                type = "toggle",
-                get = function() return A.enablePetResetButton; end,
-                set = function() A.enablePetResetButton = not A.enablePetResetButton; end,
-            },
-            exec =
-            {
-                order = 1,
-                name = L["Reset"],
-                type = "execute",
-                disabled = function() return not A.enablePetResetButton; end,
-                func = function()
-                    A.db.profile.favoritePets = {};
-                    --A.db.profile.enabledSets.pets = {};
-                    A.usablePetsCache = nil;
-                    A.enablePetResetButton = nil;
+                name = function()
+                    local count = #A.db.profile.favoritePets;
+
+                    return L["You currently have %d selected favorites.\n\n"]:format(count);
                 end,
+                type = "description",
+                fontSize = "medium",
+            },
+            selectAllByCat =
+            {
+                order = 100,
+                name = L["Select all by category"],
+                type = "group",
+                inline = true,
+                args = {},
+            },
+            selectNoneByCat =
+            {
+                order = 200,
+                name = L["Select none by category"],
+                type = "group",
+                inline = true,
+                args = {},
+            },
+            selectAll =
+            {
+                order = 1000,
+                name = L["Select all"],
+                type = "group",
+                inline = true,
+                args =
+                {
+                    toggle =
+                    {
+                        order = 0,
+                        name = L["Enable"],
+                        type = "toggle",
+                        get = function() return A.enablePetSelectAllButton; end,
+                        set = function() A.enablePetSelectAllButton = not A.enablePetSelectAllButton; end,
+                    },
+                    exec =
+                    {
+                        order = 1,
+                        name = L["Select all"],
+                        type = "execute",
+                        disabled = function() return not A.enablePetSelectAllButton; end,
+                        func = function()
+                            A.db.profile.favoritePets = {};
+
+                            for k,v in ipairs(A.pamTable.pets) do
+                                for kk,vv in pairs(v) do
+                                    for kkk,vvv in ipairs(vv) do
+                                        A.db.profile.favoritePets[#A.db.profile.favoritePets+1] = vvv.petID;
+                                    end
+                                end
+                            end
+
+                            A.usablePetsCache = nil;
+                            A.enablePetSelectAllButton = nil;
+                        end,
+                    },
+                },
+            },
+            selectNone =
+            {
+                order = 1001,
+                name = L["Select none"],
+                type = "group",
+                inline = true,
+                args =
+                {
+                    toggle =
+                    {
+                        order = 0,
+                        name = L["Enable"],
+                        type = "toggle",
+                        get = function() return A.enablePetSelectNoneButton; end,
+                        set = function() A.enablePetSelectNoneButton = not A.enablePetSelectNoneButton; end,
+                    },
+                    exec =
+                    {
+                        order = 1,
+                        name = L["Select none"],
+                        type = "execute",
+                        disabled = function() return not A.enablePetSelectNoneButton; end,
+                        func = function()
+                            A.db.profile.favoritePets = {};
+                            A.usablePetsCache = nil;
+                            A.enablePetSelectNoneButton = nil;
+                        end,
+                    },
+                },
             },
         },
     };
+
+    orderItem = 0;
+    for k,v in ipairs(A.pamTable.pets) do
+        pets.args.massActions.args.selectAllByCat.args[A.petTypes[k]] =
+        {
+            order = orderItem,
+            name = L["Select all: %s"]:format(L[A.petTypes[k]]),
+            type = "execute",
+            func = function()
+                local count = 0;
+
+                for kk,vv in pairs(v) do
+                    for kkk,vvv in ipairs(vv) do
+                        if ( not tContains(A.db.profile.favoritePets, vvv.petID) ) then
+                            A.db.profile.favoritePets[#A.db.profile.favoritePets+1] = vvv.petID;
+                            count = count + 1;
+                        end
+                    end
+                end
+
+                if ( count > 1 ) then
+                    A:Message(L["Added %d entries."]:format(count));
+                else
+                    A:Message(L["Added %d entry."]:format(count));
+                end
+            end,
+        };
+
+        pets.args.massActions.args.selectNoneByCat.args[A.petTypes[k]] =
+        {
+            order = orderItem,
+            name = L["Select none: %s"]:format(L[A.petTypes[k]]),
+            type = "execute",
+            func = function()
+                local count = 0;
+
+                for kk,vv in pairs(v) do
+                    for kkk,vvv in ipairs(vv) do
+                        if ( A:TableRemove(A.db.profile.favoritePets, vvv.petID) ) then
+                            count = count + 1;
+                        end
+                    end
+                end
+
+                if ( count > 1 ) then
+                    A:Message(L["Removed %d entries."]:format(count));
+                else
+                    A:Message(L["Removed %d entry."]:format(count));
+                end
+            end,
+        };
+
+        orderItem = orderItem + 1;
+    end
 
     return pets;
 end
@@ -1597,47 +1732,179 @@ function A:OptionsMountsList()
         end
     end
 
-    -- Mounts reset fav button
-    mounts.args.reset =
+    -- Mounts mass actions tab
+    mounts.args.massActions =
     {
         order = 1000,
-        name = L["Reset"],
+        name = L["Mass actions"],
         type = "group",
         args =
         {
-            toggle =
+            selectedFav =
             {
                 order = 0,
-                name = L["Enable"],
-                type = "toggle",
-                get = function() return A.enableMountResetButton; end,
-                set = function() A.enableMountResetButton = not A.enableMountResetButton; end,
-            },
-            exec =
-            {
-                order = 1,
-                name = L["Reset"],
-                type = "execute",
-                disabled = function() return not A.enableMountResetButton; end,
-                func = function()
-                    A.db.profile.favoriteMounts =
-                    {
-                        [1] = {}, -- Ground
-                        [2] = {}, -- Fly
-                        [3] = {}, -- Hybrid (ground & fly)
-                        [4] = {}, -- Aquatic
-                        [5] = {}, -- with passengers
-                        [6] = {}, -- Water walking
-                        [7] = {}, -- Repair
-                    };
+                name = function()
+                    local count = 0;
 
-                    -- Fav mounts reset, deleting cache
-                    A.usableMountsCache = nil;
-                    A.enableMountResetButton = nil;
+                    for k,v in ipairs(A.db.profile.favoriteMounts) do
+                        count = count + #v;
+                    end
+
+                    return L["You currently have %d selected favorites.\n\n"]:format(count);
                 end,
+                type = "description",
+                fontSize = "medium",
+            },
+            selectAllByCat =
+            {
+                order = 100,
+                name = L["Select all by category"],
+                type = "group",
+                inline = true,
+                args = {},
+            },
+            selectNoneByCat =
+            {
+                order = 200,
+                name = L["Select none by category"],
+                type = "group",
+                inline = true,
+                args = {},
+            },
+            selectAll =
+            {
+                order = 1000,
+                name = L["Select all"],
+                type = "group",
+                inline = true,
+                args =
+                {
+                    toggle =
+                    {
+                        order = 0,
+                        name = L["Enable"],
+                        type = "toggle",
+                        get = function() return A.enableMountSelectAllButton; end,
+                        set = function() A.enableMountSelectAllButton = not A.enableMountSelectAllButton; end,
+                    },
+                    exec =
+                    {
+                        order = 1,
+                        name = L["Select all"],
+                        type = "execute",
+                        disabled = function() return not A.enableMountSelectAllButton; end,
+                        func = function()
+                            A.db.profile.favoriteMounts = {};
+
+                            for k,v in ipairs(A.pamTable.mounts) do
+                                for kk,vv in pairs(v) do
+                                    for kkk,vvv in ipairs(vv) do
+                                        A.db.profile.favoriteMounts[k][#A.db.profile.favoriteMounts[k]+1] = vvv.spellID;
+                                    end
+                                end
+                            end
+
+                            A.usableMountsCache = nil;
+                            A.enableMountSelectAllButton = nil;
+                        end,
+                    },
+                },
+            },
+            selectNone =
+            {
+                order = 1001,
+                name = L["Select none"],
+                type = "group",
+                inline = true,
+                args =
+                {
+                    toggle =
+                    {
+                        order = 0,
+                        name = L["Enable"],
+                        type = "toggle",
+                        get = function() return A.enableMountSelectNoneButton; end,
+                        set = function() A.enableMountSelectNoneButton = not A.enableMountSelectNoneButton; end,
+                    },
+                    exec =
+                    {
+                        order = 1,
+                        name = L["Select none"],
+                        type = "execute",
+                        disabled = function() return not A.enableMountSelectNoneButton; end,
+                        func = function()
+                            A.db.profile.favoriteMounts =
+                            {
+                                [1] = {}, -- Ground
+                                [2] = {}, -- Fly
+                                [3] = {}, -- Hybrid (ground & fly)
+                                [4] = {}, -- Aquatic
+                                [5] = {}, -- with passengers
+                                [6] = {}, -- Water walking
+                                [7] = {}, -- Repair
+                            };
+                            A.usableMountsCache = nil;
+                            A.enableMountSelectNoneButton = nil;
+                        end,
+                    },
+                },
             },
         },
     };
+
+    orderItem = 0;
+    for k,v in ipairs(A.pamTable.mounts) do
+        mounts.args.massActions.args.selectAllByCat.args[A.mountCat[k]] =
+        {
+            order = orderItem,
+            name = L["Select all: %s"]:format(A.mountCat[k]),
+            type = "execute",
+            func = function()
+                local count = 0;
+
+                for kk,vv in pairs(A.pamTable.mounts[k]) do
+                    for kkk,vvv in ipairs(vv) do
+                        if ( not tContains(A.db.profile.favoriteMounts[k], vvv.spellID) ) then
+                            A.db.profile.favoriteMounts[k][#A.db.profile.favoriteMounts[k]+1] = vvv.spellID;
+                            count = count + 1;
+                        end
+                    end
+                end
+
+                if ( count > 1 ) then
+                    A:Message(L["Added %d entries."]:format(count));
+                else
+                    A:Message(L["Added %d entry."]:format(count));
+                end
+            end,
+        };
+
+        mounts.args.massActions.args.selectNoneByCat.args[A.mountCat[k]] =
+        {
+            order = orderItem,
+            name = L["Select none: %s"]:format(A.mountCat[k]),
+            type = "execute",
+            func = function()
+                local count = 0;
+
+                for kk,vv in pairs(A.pamTable.mounts[k]) do
+                    for kkk,vvv in ipairs(vv) do
+                        if ( A:TableRemove(A.db.profile.favoriteMounts[k], vvv.spellID) ) then
+                            count = count + 1;
+                        end
+                    end
+                end
+
+                if ( count > 1 ) then
+                    A:Message(L["Removed %d entries."]:format(count));
+                else
+                    A:Message(L["Removed %d entry."]:format(count));
+                end
+            end,
+        };
+
+        orderItem = orderItem + 1;
+    end
 
     return mounts;
 end
@@ -2176,7 +2443,7 @@ function A:OptionsSets()
                                 name = L["Reset"],
                                 desc = L["Use this to reset the working area to the current area."],
                                 type = "execute",
-                                func = function() A.currentMapIDForPetsSets = nil; end,
+                                func = function() A.currentMapIDForMountsSets = nil; end,
                             },
                         },
                     },

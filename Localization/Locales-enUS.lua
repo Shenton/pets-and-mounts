@@ -248,6 +248,17 @@ L["Copy mouse hover mount"] = true;
 L["If you mouse hover someone and he/she is on a mount, it will summon it if you have it. Target copy have priority other this."] = true;
 L["Enable the model frame on the menu."] = true;
 L["Enable the model frame on the configuration panel."] = true;
+L["Select none"] = true;
+L["Mass actions"] = true;
+L["Select all"] = true;
+L["Select all by category"] = true;
+L["Select none by category"] = true;
+L["Added %d entries."] = true;
+L["Added %d entry."] = true;
+L["Select all: %s"] = true;
+L["Select none: %s"] = true;
+L["Removed %d entries."] = true;
+L["Removed %d entry."] = true;
 -- About
 L["Auto and random summon for your pets and mounts, highly customizable. With Data Broker support."] = true;
 L["A new version is available, version |cff33ff99%s|r revision |cff33ff99%s %s|r."] = true;

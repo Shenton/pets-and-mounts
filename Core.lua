@@ -6,11 +6,10 @@
     Core.lua
 -------------------------------------------------------------------------------]]--
 
+-- TODO: add an option to disable area sets
+
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 -- TODO: Fix companion staying where you died
-
--- TODO: Built in set for pets families
--- TODO: Add option to disable model frames
 
 -- TODO: move back red flying cloud to hybrid and prevent summoning it when under water
 
@@ -168,12 +167,16 @@ end
 
 --- Remove the given item from the given table
 function A:TableRemove(tbl, item)
-    for i=1,#tbl do
-        if ( tbl[i] == item ) then
-            table.remove(tbl, i);
-            return;
+    if ( type(tbl) == "table" ) then
+        for i=1,#tbl do
+            if ( tbl[i] == item ) then
+                table.remove(tbl, i);
+                return 1;
+            end
         end
     end
+
+    return nil;
 end
 
 --- Simple shallow copy for copying specialization profiles
@@ -953,6 +956,8 @@ end
 
 --- Set the favorites pets with the selected sets (global)
 function A:SetGlobalPetsSets()
+    A:DebugMessage("SetGlobalPetsSets()");
+
     local pets = A:BuildTempSetTable("PETS", A.db.profile.enabledSets.pets);
 
     if ( pets ) then
@@ -964,6 +969,8 @@ end
 
 --- Set the favorites mounts with the selected sets (global)
 function A:SetGlobalMountsSets()
+    A:DebugMessage("SetGlobalMountsSets()");
+
     local mounts = A:BuildTempSetTable("MOUNTS", A.db.profile.enabledSets.mounts);
 
     if ( mounts ) then
@@ -976,6 +983,8 @@ end
 --- Set the favorites pets with the selected sets (zone)
 -- @param cfg When called by the configuration, override the last ~= current check
 function A:SetZonePetsSets(cfg)
+    A:DebugMessage(("SetZonePetsSets() - cfg: %s"):format(cfg and "true" or "false"));
+
     if ( A.db.profile.petsSetsByMapID[A.currentMapID] ) then
         if ( A.db.profile.lastZonePetsSetsDefined ~= A.currentMapID or cfg ) then
             local pets = A:BuildTempSetTable("PETS", A.db.profile.petsSetsByMapID[A.currentMapID]);
@@ -998,6 +1007,8 @@ end
 --- Set the favorites mounts with the selected sets (zone)
 -- @param cfg When called by the configuration, override the last ~= current check
 function A:SetZoneMountsSets(cfg)
+    A:DebugMessage(("SetZoneMountsSets() - cfg: %s"):format(cfg and "true" or "false"));
+
     if ( A.db.profile.mountsSetsByMapID[A.currentMapID] ) then
         if ( A.db.profile.lastZoneMountsSetsDefined ~= A.currentMapID or cfg ) then
             local mounts = A:BuildTempSetTable("MOUNTS", A.db.profile.mountsSetsByMapID[A.currentMapID]);
