@@ -1539,7 +1539,7 @@ local function PAMMenu(self, level)
                             UIDropDownMenu_AddButton(self.info, level);
 
                             _G["DropDownList4Button"..buttonIndex]:HookScript("OnEnter", function()
-                                if ( not A.isPetsAndMountsMenu ) then
+                                if ( not A.isPetsAndMountsMenu or not A.db.profile.showMenuModelFrame ) then
                                     A.menuModelFrame:Hide();
 
                                     return;
@@ -1578,7 +1578,7 @@ local function PAMMenu(self, level)
                             UIDropDownMenu_AddButton(self.info, level);
 
                             _G["DropDownList4Button"..buttonIndex]:HookScript("OnEnter", function()
-                                if ( not A.isPetsAndMountsMenu ) then
+                                if ( not A.isPetsAndMountsMenu or not A.db.profile.showMenuModelFrame ) then
                                     A.menuModelFrame:Hide();
 
                                     return;
@@ -1882,16 +1882,17 @@ end
     Ace DB and database revision methods
 -------------------------------------------------------------------------------]]--
 
+-- -- d = added to config frame ok
 A.aceDefaultDB =
 {
     global =
     {
-        savedSets =
+        savedSets = -- d
         {
             pets = {},
             mounts = {},
         },
-        zonesIDsToName =
+        zonesIDsToName = -- d
         {
         },
     },
@@ -1967,10 +1968,10 @@ A.aceDefaultDB =
             pets = {},
             mounts = {},
         },
-        petsSetsByMapID =
+        petsSetsByMapID = -- d
         {
         },
-        mountsSetsByMapID =
+        mountsSetsByMapID = -- d
         {
         },
         enableAutoSummonOverride = nil, -- d
@@ -2027,8 +2028,10 @@ A.aceDefaultDB =
         mountsSummonFilters = {}, -- d
         mountButtonshiftClickCat = 5, -- d
         isSwimmingMountCat = 4, -- d
-        copyTargetMount = nil,
-        copyMouseoverMount = nil,
+        copyTargetMount = 1, -- d
+        copyMouseoverMount = nil, -- d
+        showMenuModelFrame = 1, -- d
+        showConfigModelFrame = 1, -- d
     },
 };
 

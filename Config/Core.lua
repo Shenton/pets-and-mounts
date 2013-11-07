@@ -335,11 +335,22 @@ function A:OptionsRoot()
                                 name = L["Config frame"],
                                 type = "header",
                             },
-                            configRotation =
+                            configEnable =
                             {
                                 order = 1,
+                                name = L["Enable"],
+                                desc = L["Enable the model frame on the configuration panel."],
+                                width = "full",
+                                type = "toggle",
+                                set = function() A.db.profile.showConfigModelFrame = not A.db.profile.showConfigModelFrame; end,
+                                get = function() return A.db.profile.showConfigModelFrame; end,
+                            },
+                            configRotation =
+                            {
+                                order = 2,
                                 name = L["Model rotation"],
                                 desc = L["Activate the model rotation in the frame."],
+                                disabled = function() return not A.db.profile.showConfigModelFrame; end,
                                 type = "toggle",
                                 set = function()
                                     A.db.profile.configModelRotation = not A.db.profile.configModelRotation;
@@ -353,9 +364,10 @@ function A:OptionsRoot()
                             },
                             configSize =
                             {
-                                order = 2,
+                                order = 3,
                                 name = L["Size"],
                                 desc = L["Select the model frame size."],
+                                disabled = function() return not A.db.profile.showConfigModelFrame; end,
                                 type = "select",
                                 values = modelFrameSizeSelect,
                                 get = function() return A.db.profile.configModelFrameWidth; end,
@@ -371,20 +383,32 @@ function A:OptionsRoot()
                                 name = L["Menu frame"],
                                 type = "header",
                             },
-                            menuRotation =
+                            menuEnable =
                             {
                                 order = 11,
+                                name = L["Enable"],
+                                desc = L["Enable the model frame on the menu."],
+                                width = "full",
+                                type = "toggle",
+                                set = function() A.db.profile.showMenuModelFrame = not A.db.profile.showMenuModelFrame; end,
+                                get = function() return A.db.profile.showMenuModelFrame; end,
+                            },
+                            menuRotation =
+                            {
+                                order = 12,
                                 name = L["Model rotation"],
                                 desc = L["Activate the model rotation in the frame."],
+                                disabled = function() return not A.db.profile.showMenuModelFrame; end,
                                 type = "toggle",
                                 set = function() A.db.profile.modelRotation = not A.db.profile.modelRotation; end,
                                 get = function() return A.db.profile.modelRotation; end,
                             },
                             menuSize =
                             {
-                                order = 12,
+                                order = 13,
                                 name = L["Size"],
                                 desc = L["Select the model frame size."],
+                                disabled = function() return not A.db.profile.showMenuModelFrame; end,
                                 type = "select",
                                 values = modelFrameSizeSelect,
                                 get = function() return A.db.profile.modelFrameWidth; end,
@@ -820,7 +844,7 @@ function A:OptionsRoot()
                             {
                                 order = 8,
                                 name = L["Vehicle exit"],
-                                desc = L["If you are in a vehicle using the random mount will make you leave the vehicle."],
+                                desc = L["If you are in a vehicle, using the random mount will make you leave the vehicle."],
                                 type = "toggle",
                                 set = function()
                                     A.db.profile.vehicleExit = not A.db.profile.vehicleExit;
@@ -1402,13 +1426,17 @@ function A:OptionsPetsList()
                         end,
                         desc = function()
                             -- Model
-                            A.configModelFrame.rotation = 0;
-                            A.configModelFrame:SetCreature(vvv.creatureID);
+                            if ( A.db.profile.showConfigModelFrame ) then
+                                A.configModelFrame.rotation = 0;
+                                A.configModelFrame:SetCreature(vvv.creatureID);
 
-                            -- Frame pos
-                            A.configModelFrame:ClearAllPoints()
-                            A.configModelFrame:SetPoint("TOPLEFT", A.configFocusFrame, "TOPRIGHT", 0, 0);
-                            A.configModelFrame:Show();
+                                -- Frame pos
+                                A.configModelFrame:ClearAllPoints()
+                                A.configModelFrame:SetPoint("TOPLEFT", A.configFocusFrame, "TOPRIGHT", 0, 0);
+                                A.configModelFrame:Show();
+                            else
+                                A.configModelFrame:Hide();
+                            end
 
                             if ( A.db.profile.debug ) then
                                 return L["Add %s to favorite."]:format(vvv.name).."\n\n"
@@ -1521,13 +1549,17 @@ function A:OptionsMountsList()
                         name = vvv.name,
                         desc = function()
                             -- Model
-                            A.configModelFrame.rotation = 0;
-                            A.configModelFrame:SetCreature(vvv.creatureID);
+                            if ( A.db.profile.showConfigModelFrame ) then
+                                A.configModelFrame.rotation = 0;
+                                A.configModelFrame:SetCreature(vvv.creatureID);
 
-                            -- Frame pos
-                            A.configModelFrame:ClearAllPoints()
-                            A.configModelFrame:SetPoint("TOPLEFT", A.configFocusFrame, "TOPRIGHT", 0, 0);
-                            A.configModelFrame:Show();
+                                -- Frame pos
+                                A.configModelFrame:ClearAllPoints()
+                                A.configModelFrame:SetPoint("TOPLEFT", A.configFocusFrame, "TOPRIGHT", 0, 0);
+                                A.configModelFrame:Show();
+                            else
+                                A.configModelFrame:Hide();
+                            end
 
                             if ( A.db.profile.debug ) then
                                 return L["Add %s to favorite."]:format(vvv.name).."\n\n"

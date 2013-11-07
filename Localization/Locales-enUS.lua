@@ -209,7 +209,7 @@ L["Random surface mount"] = true;
 L["Dock anchor"] = true;
 L["Select on which side of the mounts button the companions button should dock."] = true;
 L["Vehicle exit"] = true;
-L["If you are in a vehicle using the random mount will make you leave the vehicle."] = true;
+L["If you are in a vehicle, using the random mount will make you leave the vehicle."] = true;
 L["Random repair mount"] = true;
 L["Companions list"] = true;
 L["Mounts list"] = true;
@@ -246,6 +246,8 @@ L["Copy target mount"] = true;
 L["If you target someone and he/she is on a mount, it will summon it if you have it. This have priority other copy mouse hover."] = true;
 L["Copy mouse hover mount"] = true;
 L["If you mouse hover someone and he/she is on a mount, it will summon it if you have it. Target copy have priority other this."] = true;
+L["Enable the model frame on the menu."] = true;
+L["Enable the model frame on the configuration panel."] = true;
 -- About
 L["Auto and random summon for your pets and mounts, highly customizable. With Data Broker support."] = true;
 L["A new version is available, version |cff33ff99%s|r revision |cff33ff99%s %s|r."] = true;
