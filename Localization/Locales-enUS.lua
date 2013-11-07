@@ -259,6 +259,8 @@ L["Select all: %s"] = true;
 L["Select none: %s"] = true;
 L["Removed %d entries."] = true;
 L["Removed %d entry."] = true;
+L["Areas in use"] = true;
+L["List of the areas you are currently using:"] = true;
 -- About
 L["Auto and random summon for your pets and mounts, highly customizable. With Data Broker support."] = true;
 L["A new version is available, version |cff33ff99%s|r revision |cff33ff99%s %s|r."] = true;

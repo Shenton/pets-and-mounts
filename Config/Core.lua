@@ -1923,7 +1923,6 @@ function A:OptionsSets()
                 order = 0,
                 name = L["Companions"],
                 type = "group",
-                --inline = true,
                 args =
                 {
                     selectedFav =
@@ -2204,12 +2203,21 @@ function A:OptionsSets()
                 type = "group",
                 args =
                 {
-                    zoneSelectGroup =
+                    enabled =
                     {
                         order = 0,
+                        name = L["Enable"],
+                        type = "toggle",
+                        set = function() A.db.profile.petsZoneSets = not A.db.profile.petsZoneSets; end,
+                        get = function() return A.db.profile.petsZoneSets; end,
+                    },
+                    zoneSelectGroup =
+                    {
+                        order = 100,
                         name = L["Area selection"],
                         type = "group",
                         inline = true,
+                        disabled = function() return not A.db.profile.petsZoneSets; end,
                         args =
                         {
                             currentZone =
@@ -2250,9 +2258,10 @@ function A:OptionsSets()
                     },
                     select =
                     {
-                        order = 1,
+                        order = 200,
                         name = L["Select"],
                         type = "multiselect",
+                        disabled = function() return not A.db.profile.petsZoneSets; end,
                         values = function()
                             local out = {};
 
@@ -2305,10 +2314,11 @@ function A:OptionsSets()
                     },
                     zoneResetGroup =
                     {
-                        order = 3,
+                        order = 300,
                         name = L["Reset"],
                         type = "group",
                         inline = true,
+                        disabled = function() return not A.db.profile.petsZoneSets; end,
                         args =
                         {
                             zoneReset =
@@ -2321,6 +2331,41 @@ function A:OptionsSets()
                             },
                         },
                     },
+                    zoneInUse =
+                    {
+                        order = 400,
+                        name = L["Areas in use"],
+                        type = "group",
+                        inline = true,
+                        disabled = function() return not A.db.profile.petsZoneSets; end,
+                        args =
+                        {
+                            desc =
+                            {
+                                order = 0,
+                                name = L["List of the areas you are currently using:"],
+                                width = "full",
+                                type = "description",
+                            },
+                            list =
+                            {
+                                order = 1,
+                                name = function()
+                                    local list = "";
+
+                                    for k in pairs(A.db.profile.petsSetsByMapID) do
+                                        list = list..", "..GetMapNameByID(tonumber(k));
+                                    end
+
+                                    if ( list == "" ) then list = L["None"]; end
+
+                                    return A:StringTrim(list, "%s,");
+                                end,
+                                width = "full",
+                                type = "description",
+                            }
+                        },
+                    },
                 },
             },
             areaMounts =
@@ -2330,12 +2375,21 @@ function A:OptionsSets()
                 type = "group",
                 args =
                 {
-                    zoneSelectGroup =
+                    enabled =
                     {
                         order = 0,
+                        name = L["Enable"],
+                        type = "toggle",
+                        set = function() A.db.profile.mountsZoneSets = not A.db.profile.mountsZoneSets; end,
+                        get = function() return A.db.profile.mountsZoneSets; end,
+                    },
+                    zoneSelectGroup =
+                    {
+                        order = 100,
                         name = L["Area selection"],
                         type = "group",
                         inline = true,
+                        disabled = function() return not A.db.profile.mountsZoneSets; end,
                         args =
                         {
                             currentZone =
@@ -2376,9 +2430,10 @@ function A:OptionsSets()
                     },
                     select =
                     {
-                        order = 1,
+                        order = 200,
                         name = L["Select"],
                         type = "multiselect",
+                        disabled = function() return not A.db.profile.mountsZoneSets; end,
                         values = function()
                             local out = {};
 
@@ -2431,10 +2486,11 @@ function A:OptionsSets()
                     },
                     zoneResetGroup =
                     {
-                        order = 2,
+                        order = 300,
                         name = L["Reset"],
                         type = "group",
                         inline = true,
+                        disabled = function() return not A.db.profile.mountsZoneSets; end,
                         args =
                         {
                             zoneReset =
@@ -2445,6 +2501,42 @@ function A:OptionsSets()
                                 type = "execute",
                                 func = function() A.currentMapIDForMountsSets = nil; end,
                             },
+                        },
+                    },
+                    zoneInUse =
+                    {
+                        order = 400,
+                        name = L["Areas in use"],
+                        type = "group",
+                        inline = true,
+                        disabled = function() return not A.db.profile.mountsZoneSets; end,
+                        args =
+                        {
+                            desc =
+                            {
+                                order = 0,
+                                name = L["List of the areas you are currently using:"],
+                                width = "full",
+                                type = "description",
+                            },
+                            list =
+                            {
+                                order = 1,
+                                name = function()
+                                    local list = "";
+
+                                    for k in pairs(A.db.profile.mountsSetsByMapID) do
+                                        list = list..", "..GetMapNameByID(tonumber(k));
+                                    end
+
+                                    if ( list == "" ) then list = L["None"]; end
+
+                                    return A:StringTrim(list, "%s,");
+                                end,
+
+                                width = "full",
+                                type = "description",
+                            }
                         },
                     },
                 },

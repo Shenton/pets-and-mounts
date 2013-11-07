@@ -6,8 +6,6 @@
     Core.lua
 -------------------------------------------------------------------------------]]--
 
--- TODO: add an option to disable area sets
-
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 -- TODO: Fix companion staying where you died
 
@@ -427,6 +425,18 @@ function A:PercentToHex(r, g, b, a)
     a = b16[math.floor(a / 16)]..b16[a % 16];
 
     return a..r..g..b;
+end
+
+--- strtrim, Blizzard's one is a little to.. "efficiency", derp.
+-- @param str The string to trim
+-- @param wat What to trim (optional)
+function A:StringTrim(str, wat)
+    if ( type(str) ~= "string" ) then return; end
+    if ( not wat ) then
+        wat = "%s\t\r\n";
+    end
+
+    return str:match("^["..wat.."]*(.-)["..wat.."]*$");
 end
 
 --[[-------------------------------------------------------------------------------
@@ -983,6 +993,8 @@ end
 --- Set the favorites pets with the selected sets (zone)
 -- @param cfg When called by the configuration, override the last ~= current check
 function A:SetZonePetsSets(cfg)
+    if ( not A.db.profile.petsZoneSets ) then return; end
+
     A:DebugMessage(("SetZonePetsSets() - cfg: %s"):format(cfg and "true" or "false"));
 
     if ( A.db.profile.petsSetsByMapID[A.currentMapID] ) then
@@ -1007,6 +1019,8 @@ end
 --- Set the favorites mounts with the selected sets (zone)
 -- @param cfg When called by the configuration, override the last ~= current check
 function A:SetZoneMountsSets(cfg)
+    if ( not A.db.profile.mountsZoneSets ) then return; end
+
     A:DebugMessage(("SetZoneMountsSets() - cfg: %s"):format(cfg and "true" or "false"));
 
     if ( A.db.profile.mountsSetsByMapID[A.currentMapID] ) then
@@ -1979,12 +1993,8 @@ A.aceDefaultDB =
             pets = {},
             mounts = {},
         },
-        petsSetsByMapID = -- d
-        {
-        },
-        mountsSetsByMapID = -- d
-        {
-        },
+        petsSetsByMapID = {}, -- d
+        mountsSetsByMapID = {}, -- d
         enableAutoSummonOverride = nil, -- d
         autoSummonOverride = -- d
         {
@@ -2043,6 +2053,8 @@ A.aceDefaultDB =
         copyMouseoverMount = nil, -- d
         showMenuModelFrame = 1, -- d
         showConfigModelFrame = 1, -- d
+        petsZoneSets = 1,
+        mountsZoneSets = 1,
     },
 };
 
