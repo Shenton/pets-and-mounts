@@ -95,6 +95,14 @@ function A:SummonPet(id)
 
         C_PetJournal.SummonPetByGUID(id);
 
+        local time = GetTime();
+
+        A.lastPetSummoned =
+        {
+            id = id,
+            time = time,
+        };
+
         return 1;
     else
         A:DebugMessage("SummonPet() - Pet is not summonable");

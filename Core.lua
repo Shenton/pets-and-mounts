@@ -6,6 +6,9 @@
     Core.lua
 -------------------------------------------------------------------------------]]--
 
+-- TODO: Resummon a pet after x time
+-- TODO: Session, timed force one and area
+
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 -- TODO: Fix companion staying where you died
 
@@ -59,35 +62,6 @@ local tonumber = tonumber;
     Common methods
 -------------------------------------------------------------------------------]]--
 
---- Send a message to the chat frame with the addon name colored
--- @param text The message to display
--- @param color Bool, if true will color in red
-function A:Message(text, color, silent)
-    if ( color == "debug" ) then
-        color = A.color["BLUE"];
-    elseif ( color ) then
-        color = A.color["RED"];
-    else
-        color = A.color["GREEN"]
-    end
-
-    if ( not silent ) then
-        PlaySound("TellMessage");
-    end
-
-    DEFAULT_CHAT_FRAME:AddMessage(color..L["Pets & Mounts"]..": "..A.color["RESET"]..text);
-end
-
---- Debug message methods
-function A:DebugMessageDummy()
-end
-
-function A:DebugMessageActiv(text)
-    A:Message(text, "debug", 1);
-end
-
-A.DebugMessage = A.DebugMessageDummy;
-
 --- Fake refresh config method
 function A:NotifyChangeForAll()
 end
@@ -101,7 +75,9 @@ function A:SlashCommand(input)
         A:OpenConfigPanel();
     --@debug@
     elseif ( arg1 == "test" ) then
-        --
+        A:PopMessageFrame("newBindingsSystemv150");
+        A:PopMessageFrame("test", {"test", "1", "2", "3", "4", "5"});
+        A:PopMessageFrame("info");
     --@end-debug@
     elseif ( arg1 == "refresh" ) then
         A:BuildBothTables(1);
@@ -951,7 +927,7 @@ function A:BuildTempSetTable(cat, sets)
                 for kk,vv in ipairs(A.db.global.savedSets.mounts[v]) do
                     if ( #vv > 0 ) then
                         for kkk,vvv in ipairs(vv) do
-                            if ( not tContains(out, vvv) ) then
+                            if ( not tContains(out[kk], vvv) ) then
                                 out[kk][#out[kk]+1] = vvv;
                             end
                         end
@@ -1006,6 +982,7 @@ function A:SetZonePetsSets(cfg)
                 A:CopyTable(pets, A.db.profile.favoritePets);
                 A.usablePetsCache = nil;
                 A.db.profile.lastZonePetsSetsDefined = A.currentMapID;
+                return 1;
             end
         end
     else
@@ -1014,6 +991,8 @@ function A:SetZonePetsSets(cfg)
             A.db.profile.lastZonePetsSetsDefined = nil;
         end
     end
+
+    return nil;
 end
 
 --- Set the favorites mounts with the selected sets (zone)
@@ -1032,6 +1011,7 @@ function A:SetZoneMountsSets(cfg)
                 A:CopyTable(mounts, A.db.profile.favoriteMounts);
                 A.usableMountsCache = nil;
                 A.db.profile.lastZoneMountsSetsDefined = A.currentMapID;
+                return 1;
             end
         end
     else
@@ -1040,6 +1020,8 @@ function A:SetZoneMountsSets(cfg)
             A.db.profile.lastZoneMountsSetsDefined = nil;
         end
     end
+
+    return nil;
 end
 
 --- Return the sets in use
@@ -1064,6 +1046,156 @@ function A:GetSetsInUse(cat)
         return L["None"];
     end
 end
+
+--- Update sets (forced)
+function A:ForceSetsUpdate()
+    if ( not A:SetZonePetsSets(1) ) then
+        A:SetGlobalPetsSets();
+    end
+
+    if ( not A:SetZoneMountsSets(1) ) then
+        A:SetGlobalMountsSets();
+    end
+end
+
+--[[-------------------------------------------------------------------------------
+    Zones methods
+-------------------------------------------------------------------------------]]--
+
+-- MapIDs with the same name, scenarios, quest in instance (legendary, green fire, etc), special events, etc
+A.zonesIDsOverride =
+{
+    [539] = "JUSTIGNOREME", -- Gilneas
+    [678] = "JUSTIGNOREME", -- Gilneas
+    [679] = "JUSTIGNOREME", -- Gilneas
+    [751] = "JUSTIGNOREME", -- The Maelstrom
+    [737] = "JUSTIGNOREME", -- The Maelstrom
+    [681] = "JUSTIGNOREME", -- The Lost Isles
+    [682] = "JUSTIGNOREME", -- The Lost Isles
+    [683] = "JUSTIGNOREME", -- Mount Hyjal
+    [748] = "JUSTIGNOREME", -- Uldum
+    [770] = "JUSTIGNOREME", -- Twilight Highlands
+    [697] = "JUSTIGNOREME", -- Zul'Gurub
+    [803] = "JUSTIGNOREME", -- The Nexus
+    [813] = "JUSTIGNOREME", -- Eye of the Storm
+    [762] = "JUSTIGNOREME", -- Scarlet Monastery
+    [879] = "JUSTIGNOREME", -- Kun-Lai Summit
+    [881] = "JUSTIGNOREME", -- Temple of Kotmogu
+    [907] = "JUSTIGNOREME", -- Dustwallow Marsh
+    [910] = "JUSTIGNOREME", -- Krasarang Wilds
+    [919] = "JUSTIGNOREME", -- Black Temple
+    [924] = "JUSTIGNOREME", -- Dalaran
+    [933] = "JUSTIGNOREME", -- Isle of Thunder
+    [939] = L["Blood in the Snow"],
+    [937] = L["Dark Heart of Pandaria"],
+    [920] = L["Domination Point (H)"],
+    [880] = L["Greenstone Village"],
+    [911] = L["Lion's Landing (A)"],
+    [906] = L["Theramore's Fall (A)"],
+    [851] = L["Theramore's Fall (H)"],
+};
+
+-- Build the mapIDs DB
+function A:BuildMapIDsDB()
+    if ( A.db.profile.debug ) then
+        A.db.global.zonesIDsToName = {};
+    end
+
+    for i=1,2000 do -- Yes, there is no mapIDs > 9xx, but just in case one pop up
+        if ( A.zonesIDsOverride[i] ) then
+            if ( A.zonesIDsOverride[i] == "JUSTIGNOREME" ) then
+                A.db.global.zonesIDsToName[tostring(i)] = nil;
+            else
+                A.db.global.zonesIDsToName[tostring(i)] = A.zonesIDsOverride[i];
+            end
+        else
+            local name = GetMapNameByID(i);
+
+            if ( name ) then
+                if ( A.db.profile.debug ) then
+                    if ( A:TableValueToKey(A.db.global.zonesIDsToName, name) ) then
+                        A:DebugMessage(("BuildMapIDsDB() - %d %s already stored - with ID %s"):format(i, name, A:TableValueToKey(A.db.global.zonesIDsToName, name)));
+                    end
+                end
+
+                A.db.global.zonesIDsToName[tostring(i)] = name;
+            else
+                A.db.global.zonesIDsToName[tostring(i)] = nil;
+            end
+        end
+    end
+end
+
+-- Hook a script on hide of the worldmap frame
+-- used to update the current mapID without
+-- switching it while the player got his map open
+WorldMapFrame:HookScript("OnHide", function()
+    if ( A.getCurrentMapIDDelayed ) then
+        A.getCurrentMapIDDelayed = nil;
+        A:GetCurrentMapID();
+    end
+end);
+
+-- Get the current mapID
+-- Postponed it if the map is open
+function A:GetCurrentMapID()
+    if ( WorldMapFrame:IsVisible() ) then
+        A.getCurrentMapIDDelayed = 1;
+        return;
+    end
+
+    SetMapToCurrentZone();
+
+    local mapID = GetCurrentMapAreaID();
+
+    if ( not mapID ) then return; end
+
+    A.currentMapID = tostring(mapID);
+
+    if ( not A.db.global.zonesIDsToName[A.currentMapID] and GetMapNameByID(mapID) ) then
+        A.db.global.zonesIDsToName[A.currentMapID] = GetMapNameByID(mapID);
+        if ( A.AceConfigDialog ) then A:NotifyChangeForAll(); end
+        A:DebugMessage(("GetCurrentMapID() - Added %d - %s"):format(mapID, GetMapNameByID(mapID) or "Unavailable"));
+    end
+end
+
+--@debug@
+-- Dump zones with the same name in a AceGUI dialog
+function A:CreateMapIDFrame()
+    if ( not A.mapIDFrame ) then
+        if ( not A.AceConfigDialog ) then
+            local loaded = A:LoadAddonConfig();
+            if ( not loaded ) then return; end
+        end
+        if( not A.AceGUI ) then A.AceGUI = LibStub("AceGUI-3.0"); end
+        A.mapIDFrame = A.AceGUI:Create("Frame");
+        A.mapIDFrame:SetTitle("MapID Frame");
+        A.mapIDFrame:SetLayout("FLow");
+        A.mapIDFrame.editBox = A.AceGUI:Create("MultiLineEditBox");
+        A.mapIDFrame.editBox:SetNumLines(20);
+        A.mapIDFrame.editBox:SetFullWidth(1);
+        A.mapIDFrame:AddChild(A.mapIDFrame.editBox);
+    end
+end
+function A:ProcessMapID()
+    A:CreateMapIDFrame();
+    local maps = {};
+    local count = 0;
+    local result = "";
+    for i=1,2000 do
+        local name = GetMapNameByID(i);
+        if ( name ) then
+            if ( maps[name] ) then
+                result = result..name.." - "..i.." - "..maps[name].."\n";
+            end
+            maps[name] = i;
+            count = count + 1;
+            A.mapIDFrame.editBox:SetText(result);
+            A.mapIDFrame:SetStatusText(count);
+        end
+    end
+end
+--@end-debug@
 
 --[[-------------------------------------------------------------------------------
     Config methods
@@ -1634,6 +1766,7 @@ end
 
 function A:PLAYER_REGEN_DISABLED()
     A:DebugMessage("PLAYER_REGEN_DISABLED() - +Combat");
+    A:PopMessageEnteringCombat();
     A:CancelTimer(A.shiftTimer, 1);
     A.noAutoPet = 1;
 end
@@ -1663,6 +1796,7 @@ function A:PLAYER_REGEN_ENABLED()
     end
 
     A:AutoPetDelay();
+    A:PopMessageLeavingCombat();
 end
 
 function A:AutoPetDelay()
@@ -1720,6 +1854,7 @@ function A:PLAYER_ENTERING_WORLD()
         A:RegisterEvent("PLAYER_ALIVE", "AutoPetDelay"); -- It's alive!! (Res, also fire when releasing)
         A:RegisterEvent("PLAYER_LOSES_VEHICLE_DATA", "AutoPetDelay"); -- Quitting a vehicle or a multi mount you control.
         A:RegisterEvent("UNIT_EXITED_VEHICLE", "AutoPetDelay"); -- Exiting a vehicle.
+        A:LoginModificationsFixes();
         A.onFirstLoadActions = nil;
         return;
     end
@@ -1917,9 +2052,8 @@ A.aceDefaultDB =
             pets = {},
             mounts = {},
         },
-        zonesIDsToName = -- d
-        {
-        },
+        zonesIDsToName = {}, -- d
+        popLoginMessages = {}, -- no cfg
     },
     profile =
     {
@@ -2228,6 +2362,72 @@ function A:OpenConfigPanel(cat)
 end
 
 --[[-------------------------------------------------------------------------------
+    Add-on modifications on login fixes
+-------------------------------------------------------------------------------]]--
+
+--- Called upon PLAYER_ENTERING_WORLD
+-- Do some check/edit and display messages if necessary
+function A:LoginModificationsFixes()
+    local mod; -- If true something was modified
+
+    -- Old bindings, check if still present, update them, display message
+    local key1, key2;
+    local set = GetCurrentBindingSet();
+    local oldBindings =
+    {
+        "PETSANDMOUNTSPET",
+        "PETSANDMOUNTSMOUNT",
+        "PETSANDMOUNTSMOUNTPASSENGERS",
+        "PETSANDMOUNTSMOUNTFLYING",
+        "PETSANDMOUNTSMOUNTGROUND",
+        "PETSANDMOUNTSMOUNTAQUATIC",
+        "PETSANDMOUNTSMOUNTSURFACE",
+        "PETSANDMOUNTSMOUNTREPAIR",
+        "PETSANDMOUNTSMOUNTHYBRID"
+    };
+    local newBindings =
+    {
+        "CLICK PetsAndMountsSecureButtonPets:LeftButton",
+        "CLICK PetsAndMountsSecureButtonMounts:LeftButton",
+        "CLICK PetsAndMountsSecureButtonPassengers:LeftButton",
+        "CLICK PetsAndMountsSecureButtonFlying:LeftButton",
+        "CLICK PetsAndMountsSecureButtonGround:LeftButton",
+        "CLICK PetsAndMountsSecureButtonAquatic:LeftButton",
+        "CLICK PetsAndMountsSecureButtonSurface:LeftButton",
+        "CLICK PetsAndMountsSecureButtonRepair:LeftButton",
+        "CLICK PetsAndMountsSecureButtonHybrid:LeftButton",
+    };
+
+    for k,v in ipairs(oldBindings) do
+        key1, key2 = GetBindingKey(v, set);
+        if ( key1 )then
+            SetBinding(key1, nil, set);
+            mod = 1;
+        end
+        if ( key2 )then
+            SetBinding(key2, nil, set);
+            mod = 1;
+        end
+        if ( key1 ) then
+            SetBinding(key1, newBindings[k], set);
+            mod = 1;
+        end
+        if ( key2 ) then
+            SetBinding(key2, newBindings[k], set);
+            mod = 1;
+        end
+    end
+
+    if ( mod ) then
+        SaveBindings(set);
+        A:PopMessageFrame("newBindingsSystemv150");
+        mod = nil;
+    end
+    oldBindings, newBindings, key1, key2, set = nil, nil, nil, nil, nil;
+    -- / Old bindings
+end
+
+--[[-------------------------------------------------------------------------------
     Main
 -------------------------------------------------------------------------------]]--
 
@@ -2264,6 +2464,10 @@ function A:OnInitialize()
 
     -- Search frame
     A.searchFrame = PetsAndMountsSearchFrame;
+
+    -- Messages frame
+    A.popupMessageFrame = PetsAndMountsPopupMessageFrame;
+    A.popupMessageFrame.addon = A;
 
     -- LDB
     A.ldbObject = LibStub("LibDataBroker-1.1"):NewDataObject("PetsAndMountsLDB", {

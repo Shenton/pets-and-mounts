@@ -61,6 +61,7 @@ L["Mounts"] = true;
 
 L["Name"] = true;
 L["New"] = true;
+L["No"] = true;
 L["None"] = true;
 
 L["Off"] = true;
@@ -89,6 +90,8 @@ L["Top"] = true;
 
 L["Vehicle"] = true;
 L["Version"] = true;
+
+L["Yes"] = true;
 
 -- Pet types
 L["Humanoid"] = true;
@@ -303,4 +306,6 @@ L["A newer version of Pets & Mounts is available. You have version %s revision %
 L["New companions set %s added."] = true;
 L["New mounts set %s added."] = true;
 L["You have no favorite selected."] = true;
+-- Popup messages
+L["The bindings system have been entirely redone.\n\nThe add-on tried to update them, but just in case you should check if everything is in place.\n\nDo you want to open the configuration panel?"] = true;
 end

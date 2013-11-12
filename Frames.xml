@@ -9,29 +9,17 @@
             </Layer>
             <Layer level="OVERLAY">
                 <Texture name="$parentBorder" file="Interface\Buttons\UI-ActionButton-Border" hidden="true" alphaMode="ADD">
-                    <Size>
-                        <AbsDimension x="62" y="62"/>
-                    </Size>
+                    <Size x="62" y="62"/>
                     <Anchors>
-                        <Anchor point="CENTER">
-                            <Offset>
-                                <AbsDimension x="0" y="0"/>
-                            </Offset>
-                        </Anchor>
+                        <Anchor point="CENTER" x="0" y="0"/>
                     </Anchors>
                 </Texture>
             </Layer>
             <Layer level="ARTWORK" textureSubLevel="2">
                 <FontString name="$parentHotKey" inherits="NumberFontNormalSmallGray" justifyH="RIGHT">
-                    <Size>
-                        <AbsDimension x="36" y="10"/>
-                    </Size>
+                    <Size x="36" y="10"/>
                     <Anchors>
-                        <Anchor point="TOPLEFT">
-                            <Offset>
-                                <AbsDimension x="1" y="-3"/>
-                            </Offset>
-                        </Anchor>
+                        <Anchor point="TOPLEFT" x="1" y="-3"/>
                     </Anchors>
                 </FontString>
             </Layer>
@@ -73,29 +61,17 @@
             </Layer>
             <Layer level="OVERLAY">
                 <Texture name="$parentBorder" file="Interface\Buttons\UI-ActionButton-Border" hidden="true" alphaMode="ADD">
-                    <Size>
-                        <AbsDimension x="62" y="62"/>
-                    </Size>
+                    <Size x="62" y="62"/>
                     <Anchors>
-                        <Anchor point="CENTER">
-                            <Offset>
-                                <AbsDimension x="0" y="0"/>
-                            </Offset>
-                        </Anchor>
+                        <Anchor point="CENTER" x="0" y="0"/>
                     </Anchors>
                 </Texture>
             </Layer>
             <Layer level="ARTWORK" textureSubLevel="2">
                 <FontString name="$parentHotKey" inherits="NumberFontNormalSmallGray" justifyH="RIGHT">
-                    <Size>
-                        <AbsDimension x="36" y="10"/>
-                    </Size>
+                    <Size x="36" y="10"/>
                     <Anchors>
-                        <Anchor point="TOPLEFT">
-                            <Offset>
-                                <AbsDimension x="1" y="-3"/>
-                            </Offset>
-                        </Anchor>
+                        <Anchor point="TOPLEFT" x="1" y="-3"/>
                     </Anchors>
                 </FontString>
             </Layer>
@@ -278,6 +254,222 @@
             <OnLoad>
                 self:SetBackdropBorderColor(.6, .6, .6, 1);
             </OnLoad>
+        </Scripts>
+    </Frame>
+
+    <!-- Message frame -->
+    <Button name="PetsAndMountsPopupMessageFrameButtonTemplate" virtual="true">
+        <Size x="128" y="21"/>
+        <ButtonText name="$parentText" parentKey="text">
+            <Anchors>
+                <Anchor point="CENTER" x="0" y="1"/>
+            </Anchors>
+        </ButtonText>
+        <NormalTexture file="Interface\Buttons\UI-DialogBox-Button-Up">
+            <TexCoords left="0.0" right="1.0" top="0.0" bottom="0.71875"/>
+        </NormalTexture>
+        <PushedTexture file="Interface\Buttons\UI-DialogBox-Button-Down">
+            <TexCoords left="0.0" right="1.0" top="0.0" bottom="0.71875"/>
+        </PushedTexture>
+        <DisabledTexture file="Interface\Buttons\UI-DialogBox-Button-Disabled">
+            <TexCoords left="0.0" right="1.0" top="0.0" bottom="0.71875"/>
+        </DisabledTexture>
+        <HighlightTexture file="Interface\Buttons\UI-DialogBox-Button-Highlight" alphaMode="ADD">
+            <TexCoords left="0.0" right="1.0" top="0.0" bottom="0.71875"/>
+        </HighlightTexture>
+        <NormalFont style="GameFontNormal"/>
+        <DisabledFont style="GameFontDisable"/>
+        <HighlightFont style="GameFontHighlight"/>
+    </Button>
+
+    <Frame name="PetsAndMountsPopupMessageFrame" parent="UIParent" toplevel="true" enableKeyboard="true" frameStrata="TOOLTIP" hidden="true">
+        <Size x="320" y="120"/>
+        <Anchors>
+            <Anchor point="CENTER"/>
+        </Anchors>
+        <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+            <BackgroundInsets>
+                <AbsInset left="12" right="12" top="12" bottom="12"/>
+            </BackgroundInsets>
+            <TileSize>
+                <AbsValue val="32"/>
+            </TileSize>
+            <EdgeSize>
+                <AbsValue val="32"/>
+            </EdgeSize>
+        </Backdrop>
+        <Layers>
+            <Layer level="ARTWORK">
+                <Texture name="$parentHeader" file="Interface\DialogFrame\UI-DialogBox-Header">
+                    <Size>
+                        <AbsDimension x="300" y="68"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOP">
+                            <Offset>
+                                <AbsDimension x="0" y="12"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
+                <FontString name="$parentHeaderText" parentKey="headerText" inherits="GameFontNormal">
+                    <Anchors>
+                        <Anchor point="TOP" relativeTo="$parentHeader">
+                            <Offset>
+                                <AbsDimension x="0" y="-14"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <FontString name="$parentText" parentKey="text" inherits="GameFontHighlight">
+                    <Size x="280" y="0"/>
+                    <Anchors>
+                        <Anchor point="TOP">
+                            <Offset>
+                                <AbsDimension x="0" y="-32"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <Texture name="$parentIcon" parentKey="icon">
+                    <Size>
+                        <AbsDimension x="40" y="40"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOPLEFT" x="24" y="-24"/>
+                    </Anchors>
+                </Texture>
+            </Layer>
+        </Layers>
+        <Frames>
+            <EditBox name="$parentEditBox" historyLines="1" parentKey="input" hidden="true" inherits="AutoCompleteEditBoxTemplate">
+                <Size x="130" y="32"/>
+                <Anchors>
+                    <Anchor point="BOTTOM" >
+                        <Offset>
+                            <AbsDimension x="0" y="45"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Layers>
+                    <Layer level="BACKGROUND">
+                        <Texture name="$parentLeft" file="Interface\ChatFrame\UI-ChatInputBorder-Left2">
+                            <Size x="32" y="32"/>
+                            <Anchors>
+                                <Anchor point="LEFT" x="-10" y="0"/>
+                            </Anchors>
+                        </Texture>
+                        <Texture name="$parentRight" file="Interface\ChatFrame\UI-ChatInputBorder-Right2">
+                            <Size x="32" y="32"/>
+                            <Anchors>
+                                <Anchor point="RIGHT" x="10" y="0"/>
+                            </Anchors>
+                        </Texture>
+                        <Texture name="$parentMid" file="Interface\ChatFrame\UI-ChatInputBorder-Mid2" horizTile="true">
+                            <Size x="0" y="32"/>
+                            <Anchors>
+                                <Anchor point="TOPLEFT" relativeTo="$parentLeft" relativePoint="TOPRIGHT" x="0" y="0"/>
+                                <Anchor point="TOPRIGHT" relativeTo="$parentRight" relativePoint="TOPLEFT" x="0" y="0"/>
+                            </Anchors>
+                        </Texture>
+                    </Layer>
+                </Layers>
+                <Scripts>
+                    <OnEnterPressed>
+                        if ( self:GetParent().cfg.enterOK ) then
+                            self:GetParent().cfg.LeftButtonScript(self:GetParent());
+                        end
+                    </OnEnterPressed>
+                    <OnEscapePressed>
+                        if ( self:GetParent().cfg.escapeClose ) then
+                            self:GetParent():Hide();
+                        end
+                    </OnEscapePressed>
+                    <OnTextChanged>
+                        if ( self:GetParent().cfg.InputCallback ) then
+                            self:GetParent().cfg.InputCallback(self:GetParent(), self:GetText());
+                        end
+                    </OnTextChanged>
+                </Scripts>
+                <FontString inherits="ChatFontNormal"/>
+            </EditBox>
+            <Button name="$parentLeftButton" parentKey="leftbutton" inherits="PetsAndMountsPopupMessageFrameButtonTemplate"></Button>
+            <Button name="$parentRightButton" parentKey="rightbutton" inherits="PetsAndMountsPopupMessageFrameButtonTemplate" hidden="true">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentLeftButton" relativePoint="RIGHT" x="20" y="0"/>
+                </Anchors>
+            </Button>
+        </Frames>
+        <Scripts>
+            <OnShow>
+                if ( not self.cfg ) then return; end
+
+                self.headerText:SetText(self.cfg.headerText);
+
+                if ( self.cfg.icon ) then
+                    self.icon:SetTexture(self.cfg.icon);
+                    self.text:SetJustifyH("LEFT");
+                    self.text:SetSize(220, 0);
+                    self.text:ClearAllPoints();
+                    self.text:SetPoint("TOPRIGHT", self, "TOPRIGHT", -16, -32);
+                else
+                    self.icon:SetTexture(nil);
+                    self.text:SetJustifyH("CENTER");
+                    self.text:SetSize(280, 0);
+                    self.text:ClearAllPoints();
+                    self.text:SetPoint("TOP", self, "TOP", 0, -32);
+                end
+
+                self.text:SetText(self.cfg.text);
+
+                if ( self.cfg.type == "question" or self.cfg.type == "inputQuestion" ) then
+                    self.leftbutton:ClearAllPoints();
+                    self.leftbutton:SetPoint("BOTTOM", self, "BOTTOM", -74, 16);
+                    self.leftbutton.text:SetText(self.cfg.leftButtonText);
+                    self.leftbutton:SetScript("OnClick", function(self) self:GetParent().cfg.LeftButtonScript(self:GetParent()); end);
+                    self.rightbutton.text:SetText(self.cfg.rightButtonText);
+                    self.rightbutton:SetScript("OnClick", function(self) self:GetParent():Hide(); end);
+                    self.rightbutton:Show();
+                else
+                    self.leftbutton:ClearAllPoints();
+                    self.leftbutton:SetPoint("BOTTOM", self, "BOTTOM", 0, 16);
+                    self.leftbutton:SetText(self.cfg.leftButtonText);
+                    self.leftbutton:SetScript("OnClick", function(self) self:GetParent():Hide(); end);
+                    self.rightbutton.text:SetText("");
+                    self.rightbutton:SetScript("OnClick", nil);
+                    self.rightbutton:Hide();
+                end
+
+                local height = 48 + self.text:GetHeight() + 8 + self.leftbutton:GetHeight();
+
+                if ( self.cfg.type == "inputQuestion" ) then
+                    self.input:Show();
+                    height = height + 8 + self.input:GetHeight();
+                else
+                    self.input:Hide();
+                end
+
+                if ( height > 120 ) then
+                    self:SetHeight(height);
+                else
+                    self:SetHeight(120);
+                end
+            </OnShow>
+            <OnKeyUp>
+                if ( self.cfg.enterOK and key == "ENTER" and not GetCurrentKeyBoardFocus() ) then
+                    self.cfg.LeftButtonScript(self);
+                elseif ( self.cfg.escapeClose and key == "ESCAPE" and not GetCurrentKeyBoardFocus() ) then
+                    self:Hide();
+                end
+            </OnKeyUp>
+            <OnHide>
+                if ( self.cfg.OnHide ) then
+                    self.cfg.OnHide();
+                end
+
+                self.cfg = nil;
+                self.addon:PopMessageFrameOnHide();
+            </OnHide>
         </Scripts>
     </Frame>
 </Ui>

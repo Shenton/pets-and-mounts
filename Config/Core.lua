@@ -48,130 +48,6 @@ local dockAnchorsSelect =
 A:InitializeDB();
 
 --[[-------------------------------------------------------------------------------
-    Staticpopups
--------------------------------------------------------------------------------]]--
-
--- Set overwrite or dif name popup dialog
-StaticPopupDialogs["PetsAndMountsOverwriteOrChangeNameSet"] =
-{
-    text = L["You already got a set named %s.\n\nEnter a new name or leave it blank to overwrite."],
-    button1 = L["Accept"],
-    button2 = L["Cancel"],
-    hasEditBox = true,
-    timeout = 0,
-    whileDead = true,
-    hideOnEscape = true,
-    enterClicksFirstButton = true,
-    OnShow = function(self) self.button1:Disable(); end,
-    OnHide = function()
-        A.newPetSetName = nil;
-        A.newMountSetName = nil;
-        A:NotifyChangeForAll();
-    end,
-    EditBoxOnTextChanged = function (self) self:GetParent().button1:Enable(); end,
-    EditBoxOnEnterPressed = function(self)
-        local name = strtrim(self:GetParent().editBox:GetText());
-
-        if ( not name or name == "" ) then
-            if ( A.newPetSetName ) then
-                A.db.global.savedSets.pets[A.newPetSetName] = A:CopyTable(A.db.profile.favoritePets);
-                A.newPetSetName = nil;
-            elseif ( A.newMountSetName ) then
-                A.db.global.savedSets.mounts[A.newMountSetName] = A:CopyTable(A.db.profile.favoriteMounts);
-                A.newMountSetName = nil;
-            end
-
-            A:NotifyChangeForAll();
-            return;
-        end
-
-        if ( A.newPetSetName ) then
-            if ( A.db.global.savedSets.pets[name] ) then
-                A:Message(L["Set %s already exists."]:format(name), 1);
-            else
-                A.db.global.savedSets.pets[name] = A:CopyTable(A.db.profile.favoritePets);
-                A.newPetSetName = nil;
-                self:GetParent():Hide();
-            end
-        elseif ( A.newMountSetName ) then
-            if ( A.db.global.savedSets.mounts[name] ) then
-                A:Message(L["Set %s already exists."]:format(name), 1);
-            else
-                A.db.global.savedSets.mounts[name] = A:CopyTable(A.db.profile.favoriteMounts);
-                A.newPetSetName = nil;
-                self:GetParent():Hide();
-            end
-
-            A:NotifyChangeForAll();
-        end
-    end,
-    EditBoxOnEscapePressed = function(self) self:GetParent():Hide(); end,
-    OnAccept = function(self)
-        local name = strtrim(self.editBox:GetText());
-
-        if ( not name or name == "" ) then
-            if ( A.newPetSetName ) then
-                A.db.global.savedSets.pets[A.newPetSetName] = A:CopyTable(A.db.profile.favoritePets);
-                A.newPetSetName = nil;
-            elseif ( A.newMountSetName ) then
-                A.db.global.savedSets.mounts[A.newMountSetName] = A:CopyTable(A.db.profile.favoriteMounts);
-                A.newMountSetName = nil;
-            end
-
-            A:NotifyChangeForAll();
-            return;
-        end
-
-        if ( A.newPetSetName ) then
-            if ( A.db.global.savedSets.pets[name] ) then
-                A:Message(L["Set %s already exists."]:format(name), 1);
-            else
-                A.db.global.savedSets.pets[name] = A:CopyTable(A.db.profile.favoritePets);
-                A.newPetSetName = nil;
-            end
-        elseif ( A.newMountSetName ) then
-            if ( A.db.global.savedSets.mounts[name] ) then
-                A:Message(L["Set %s already exists."]:format(name), 1);
-            else
-                A.db.global.savedSets.mounts[name] = A:CopyTable(A.db.profile.favoriteMounts);
-                A.newPetSetName = nil;
-            end
-
-            A:NotifyChangeForAll();
-        end
-    end,
-    preferredIndex = 3,
-};
-
--- Confirm delete set popup dialog
-StaticPopupDialogs["PetsAndMountsDeleteSet"] =
-{
-    text = L["Delete set %s?"],
-    button1 = L["Accept"],
-    button2 = L["Cancel"],
-    timeout = 0,
-    whileDead = true,
-    hideOnEscape = true,
-    enterClicksFirstButton = true,
-    OnHide = function()
-        A.deleteSetPets = nil;
-        A.deleteSetMounts = nil;
-        A:NotifyChangeForAll();
-    end,
-    EditBoxOnEscapePressed = function(self) self:GetParent():Hide(); end,
-    OnAccept = function(self)
-        if ( A.deleteSetPets ) then
-            A.db.global.savedSets.pets[A.deleteSetPets] = nil;
-        elseif ( A.deleteSetMounts ) then
-            A.db.global.savedSets.mounts[A.deleteSetMounts] = nil;
-        end
-
-        A:NotifyChangeForAll();
-    end,
-    preferredIndex = 3,
-};
-
---[[-------------------------------------------------------------------------------
     Methods
 -------------------------------------------------------------------------------]]--
 
@@ -2000,7 +1876,8 @@ function A:OptionsSets()
                                         A:Message(L["You have no favorite selected."], 1);
                                         A.newPetSetName = nil;
                                     elseif ( A.db.global.savedSets.pets[A.newPetSetName] ) then
-                                        StaticPopup_Show("PetsAndMountsOverwriteOrChangeNameSet", A.newPetSetName);
+                                        --StaticPopup_Show("PetsAndMountsOverwriteOrChangeNameSet", A.newPetSetName);
+                                        A:PopMessageFrame("overwriteOrChangeNameSet", A.newPetSetName);
                                     else
                                         A.db.global.savedSets.pets[A.newPetSetName] = A:CopyTable(A.db.profile.favoritePets);
                                         A:Message(L["New companions set %s added."]:format(A.newPetSetName));
@@ -2045,7 +1922,8 @@ function A:OptionsSets()
                                 type = "execute",
                                 disabled = function() return not A.deleteSetPets; end,
                                 func = function()
-                                    StaticPopup_Show("PetsAndMountsDeleteSet", A.deleteSetPets);
+                                    --StaticPopup_Show("PetsAndMountsDeleteSet", A.deleteSetPets);
+                                    A:PopMessageFrame("deleteSet", A.deleteSetPets);
                                 end,
                             },
                         },
@@ -2144,7 +2022,8 @@ function A:OptionsSets()
                                         A:Message(L["You have no favorite selected."], 1);
                                         A.newMountSetName = nil;
                                     elseif ( A.db.global.savedSets.mounts[A.newMountSetName] ) then
-                                        StaticPopup_Show("PetsAndMountsOverwriteOrChangeNameSet", A.newMountSetName);
+                                        --StaticPopup_Show("PetsAndMountsOverwriteOrChangeNameSet", A.newMountSetName);
+                                        A:PopMessageFrame("overwriteOrChangeNameSet", A.newMountSetName);
                                     else
                                         A.db.global.savedSets.mounts[A.newMountSetName] = A:CopyTable(A.db.profile.favoriteMounts);
                                         A:Message(L["New mounts set %s added."]:format(A.newMountSetName));
@@ -2189,7 +2068,8 @@ function A:OptionsSets()
                                 type = "execute",
                                 disabled = function() return not A.deleteSetMounts; end,
                                 func = function()
-                                    StaticPopup_Show("PetsAndMountsDeleteSet", A.deleteSetMounts);
+                                    --StaticPopup_Show("PetsAndMountsDeleteSet", A.deleteSetMounts);
+                                    A:PopMessageFrame("deleteSet", A.deleteSetMounts);
                                 end,
                             },
                         },
