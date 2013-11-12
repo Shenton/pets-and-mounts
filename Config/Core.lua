@@ -44,6 +44,20 @@ local dockAnchorsSelect =
     ["Left"] = L["Left"],
 };
 
+local reSummonValues =
+{
+    --@debug@
+    [10] = "10s",
+    --@end-debug@
+    [600] = L["10m"],
+    [1800] = L["30m"],
+    [3600] = L["1h"],
+    [5400] = L["1h30m"],
+    [7200] = L["2h"],
+    [10800] = L["3h"],
+    [18000] = L["5h"],
+};
+
 -- Init addon databases
 A:InitializeDB();
 
@@ -413,15 +427,40 @@ function A:OptionsRoot()
                                 set = function() A.db.profile.hauntedMemento = not A.db.profile.hauntedMemento; end,
                                 get = function() return A.db.profile.hauntedMemento; end,
                             },
-                            timers =
+                            reSummon =
                             {
                                 order = 20,
+                                name = L["Re-Summon"],
+                                type = "header",
+                            },
+                            reSummonEnable =
+                            {
+                                order = 21,
+                                name = L["Enable"],
+                                desc = L["With this enabled, the add-on will summon another pet after a defined time. See next option to define the time."],
+                                type = "toggle",
+                                set = function() A.db.profile.petReSummon = not A.db.profile.petReSummon; end,
+                                get = function() return A.db.profile.petReSummon; end,
+                            },
+                            reSummonTime =
+                            {
+                                order = 22,
+                                name = L["Time"],
+                                desc = L["Define re-summon time."],
+                                type = "select",
+                                values = reSummonValues,
+                                set = function(info, val) A.db.profile.petReSummonTime = val; end,
+                                get = function() return A.db.profile.petReSummonTime; end,
+                            },
+                            timers =
+                            {
+                                order = 30,
                                 name = L["Timers"],
                                 type = "header",
                             },
                             mainTimer =
                             {
-                                order = 21,
+                                order = 31,
                                 name = L["Auto summon timer"],
                                 desc = L["Select how often the addon will check if you got a companion."],
                                 type = "range",
@@ -437,7 +476,7 @@ function A:OptionsRoot()
                             },
                             shiftTimer =
                             {
-                                order = 22,
+                                order = 32,
                                 name = L["Shift timer"],
                                 desc = L["Select the shift timer, this is the time before summoning a random companion after reviving, porting, unstealthing, etc."],
                                 type = "range",
@@ -1100,6 +1139,11 @@ function A:OptionsRoot()
                                 set = function(info, val)
                                     if ( InCombatLockdown() ) then
                                         A:Message(L["Unable to edit buttons while in combat."], 1);
+                                        return;
+                                    end
+
+                                    if ( not A.db.profile.dockButton ) then
+                                        A:Message(L["Cannot modify buttons anchors when they are not docked."], 1);
                                         return;
                                     end
 
@@ -1876,7 +1920,6 @@ function A:OptionsSets()
                                         A:Message(L["You have no favorite selected."], 1);
                                         A.newPetSetName = nil;
                                     elseif ( A.db.global.savedSets.pets[A.newPetSetName] ) then
-                                        --StaticPopup_Show("PetsAndMountsOverwriteOrChangeNameSet", A.newPetSetName);
                                         A:PopMessageFrame("overwriteOrChangeNameSet", A.newPetSetName);
                                     else
                                         A.db.global.savedSets.pets[A.newPetSetName] = A:CopyTable(A.db.profile.favoritePets);
@@ -1922,7 +1965,6 @@ function A:OptionsSets()
                                 type = "execute",
                                 disabled = function() return not A.deleteSetPets; end,
                                 func = function()
-                                    --StaticPopup_Show("PetsAndMountsDeleteSet", A.deleteSetPets);
                                     A:PopMessageFrame("deleteSet", A.deleteSetPets);
                                 end,
                             },
@@ -2022,7 +2064,6 @@ function A:OptionsSets()
                                         A:Message(L["You have no favorite selected."], 1);
                                         A.newMountSetName = nil;
                                     elseif ( A.db.global.savedSets.mounts[A.newMountSetName] ) then
-                                        --StaticPopup_Show("PetsAndMountsOverwriteOrChangeNameSet", A.newMountSetName);
                                         A:PopMessageFrame("overwriteOrChangeNameSet", A.newMountSetName);
                                     else
                                         A.db.global.savedSets.mounts[A.newMountSetName] = A:CopyTable(A.db.profile.favoriteMounts);
@@ -2068,7 +2109,6 @@ function A:OptionsSets()
                                 type = "execute",
                                 disabled = function() return not A.deleteSetMounts; end,
                                 func = function()
-                                    --StaticPopup_Show("PetsAndMountsDeleteSet", A.deleteSetMounts);
                                     A:PopMessageFrame("deleteSet", A.deleteSetMounts);
                                 end,
                             },

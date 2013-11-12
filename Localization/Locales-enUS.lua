@@ -84,6 +84,7 @@ L["Stealthed"] = true
 L["Summon"] = true;
 L["Surface"] = true;
 
+L["Time"] = true;
 L["Timers"] = true;
 L["Tooltip"] = true;
 L["Top"] = true;
@@ -264,6 +265,17 @@ L["Removed %d entries."] = true;
 L["Removed %d entry."] = true;
 L["Areas in use"] = true;
 L["List of the areas you are currently using:"] = true;
+L["With this enabled, the add-on will summon another pet after a defined time. See next option to define the time."] = true;
+L["Define re-summon time."] = true;
+L["Re-Summon"] = true;
+L["30s"] = true;
+L["10m"] = true;
+L["30m"] = true;
+L["1h"] = true;
+L["1h30m"] = true;
+L["2h"] = true;
+L["3h"] = true;
+L["5h"] = true;
 -- About
 L["Auto and random summon for your pets and mounts, highly customizable. With Data Broker support."] = true;
 L["A new version is available, version |cff33ff99%s|r revision |cff33ff99%s %s|r."] = true;
@@ -306,6 +318,7 @@ L["A newer version of Pets & Mounts is available. You have version %s revision %
 L["New companions set %s added."] = true;
 L["New mounts set %s added."] = true;
 L["You have no favorite selected."] = true;
+L["Cannot modify buttons anchors when they are not docked."] = true;
 -- Popup messages
 L["The bindings system have been entirely redone.\n\nThe add-on tried to update them, but just in case you should check if everything is in place.\n\nDo you want to open the configuration panel?"] = true;
 end

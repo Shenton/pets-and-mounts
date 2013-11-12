@@ -6,7 +6,6 @@
     Core.lua
 -------------------------------------------------------------------------------]]--
 
--- TODO: Resummon a pet after x time
 -- TODO: Session, timed force one and area
 
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
@@ -2189,6 +2188,8 @@ A.aceDefaultDB =
         showConfigModelFrame = 1, -- d
         petsZoneSets = 1,
         mountsZoneSets = 1,
+        petReSummon = nil,
+        petReSummonTime = 3600,
     },
 };
 

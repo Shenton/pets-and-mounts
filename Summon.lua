@@ -237,6 +237,28 @@ function A:IsPetSummonFiltered()
     return nil;
 end
 
+--- Return if a resummon is needed
+function A:CheckReSummon(id)
+    if ( id and A.db.profile.petReSummon ) then
+        if ( A.lastPetSummoned ) then
+            if ( A.lastPetSummoned.id == id and (time() - A.lastPetSummoned.time) >= A.db.profile.petReSummonTime ) then
+                return 1;
+            end
+        else
+            local id = C_PetJournal.GetSummonedPetGUID();
+            local time = GetTime();
+
+            A.lastPetSummoned =
+            {
+                id = id,
+                time = time,
+            };
+        end
+    end
+
+    return nil;
+end
+
 --- Check if a pet can be summoned
 function A:AutoPet()
     -- DB init
@@ -287,20 +309,20 @@ function A:AutoPet()
             A:SummonPet(A.db.profile.petByMapID[A.currentMapID]);
         end
     elseif ( A:GotRandomPet(A.db.profile.favoritePets) ) then -- Fav pets
-        if ( currentPet and tContains(A.db.profile.favoritePets, currentPet) ) then
+        if ( currentPet and tContains(A.db.profile.favoritePets, currentPet) and not A:CheckReSummon(currentPet) ) then
             A:DebugMessage("AutoPet() - Already got a fav pet");
         else
             A:DebugMessage("AutoPet() - Summon fav pet");
             local id = A:GetRandomPet(A.db.profile.favoritePets);
             A:SummonPet(id);
         end
-    elseif ( not currentPet and A:GotRandomPet(A.pamTable.petsIds) ) then -- All pets
+    elseif ( (not currentPet and A:GotRandomPet(A.pamTable.petsIds)) or (A:CheckReSummon(currentPet) and A:GotRandomPet(A.pamTable.petsIds)) ) then -- All pets
         A:DebugMessage("AutoPet() - Summon random pet global");
         local id = A:GetRandomPet(A.pamTable.petsIds);
         A:SummonPet(id);
+    else
+        A:DebugMessage("AutoPet() - No summon");
     end
-
-    A:DebugMessage("AutoPet() - No summon");
 end
 
 --[[-------------------------------------------------------------------------------
