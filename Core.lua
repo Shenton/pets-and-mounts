@@ -22,40 +22,33 @@ A.L = L;
 _G["PetsAndMountsGlobal"] = A;
 
 -- Globals to locals
-local pairs = pairs;
-local ipairs = ipairs;
-local string = string;
-local table = table;
-local tostring = tostring;
-local type = type;
-local time = time;
-local _G = _G;
-local select = select;
 local strsplit = strsplit;
-local tContains = tContains;
-local bit = bit;
+local pairs = pairs;
+local table = table;
+local type = type;
+local ipairs = ipairs;
+local select = select;
+local string = string;
 local tonumber = tonumber;
+local math = math;
+local bit = bit;
+local tContains = tContains;
+local unpack = unpack;
+local tostring = tostring;
+local _G = _G;
 
--- GLOBALS: PlaySound, DEFAULT_CHAT_FRAME, GetScreenWidth, GetNumCompanions
--- GLOBALS: GetCursorPosition, UIParent, GetInstanceInfo, UnitGUID, UnitLevel
--- GLOBALS: C_PetJournal, LE_PET_JOURNAL_FLAG_COLLECTED, LE_PET_JOURNAL_FLAG_FAVORITES
--- GLOBALS: LE_PET_JOURNAL_FLAG_NOT_COLLECTED, PetJournalSearchBox
--- GLOBALS: GetCompanionInfo, InCombatLockdown, GetBindingKey, SetOverrideBindingClick
--- GLOBALS: UIDropDownMenu_AddButton, UIDROPDOWNMENU_MENU_VALUE, CloseDropDownMenus
--- GLOBALS: DropDownList2Button1, DropDownList3, CallCompanion, DropDownList4
--- GLOBALS: LoadAddOn, INTERFACEOPTIONS_ADDONCATEGORIES, CreateFrame
--- GLOBALS: InterfaceOptions_AddCategory, InterfaceAddOnsList_Update
--- GLOBALS: InterfaceOptionsFrame_OpenToCategory, DropDownList1, LibStub
--- GLOBALS: TOOLTIP_DEFAULT_COLOR, TOOLTIP_DEFAULT_BACKGROUND_COLOR
--- GLOBALS: hooksecurefunc, GetTime, MODELFRAME_DRAG_ROTATION_CONSTANT
--- GLOBALS: PI, UnitClass, IsShiftKeyDown, ToggleDropDownMenu, GameTooltip
--- GLOBALS: BINDING_HEADER_PETSANDMOUNTS, BINDING_NAME_PETSANDMOUNTSMOUNT
--- GLOBALS: BINDING_NAME_PETSANDMOUNTSMOUNTPASSENGERS, BINDING_NAME_PETSANDMOUNTSMOUNTFLYING
--- GLOBALS: BINDING_NAME_PETSANDMOUNTSMOUNTGROUND, BINDING_NAME_PETSANDMOUNTSMOUNTAQUATIC
--- GLOBALS: PetsAndMountsMenuModelFrame, PetsAndMountsConfigModelFrame
--- GLOBALS: UnitFactionGroup, UnitRace, UIDropDownMenu_SetAnchor
--- GLOBALS: NUM_GLYPH_SLOTS, GetGlyphSocketInfo, SetItemRef, UnitInVehicle
--- GLOBALS: UnitHasVehicleUI, SEARCH, UnitName, IsInGuild, GetNumGroupMembers, IsInRaid
+-- GLOBALS: LibStub, GetScreenWidth, GetCursorPosition, UIParent, C_PetJournal, GetCompanionInfo
+-- GLOBALS: UnitInVehicle, UnitHasVehicleUI, GetTime, MODELFRAME_DRAG_ROTATION_CONSTANT, PI
+-- GLOBALS: LE_PET_JOURNAL_FLAG_COLLECTED, LE_PET_JOURNAL_FLAG_FAVORITES, LE_PET_JOURNAL_FLAG_NOT_COLLECTED
+-- GLOBALS: PetJournalSearchBox, SEARCH, NUM_GLYPH_SLOTS, GetGlyphSocketInfo, GetNumCompanions
+-- GLOBALS: GetMapNameByID, WorldMapFrame, SetMapToCurrentZone, GetCurrentMapAreaID, GetInstanceInfo
+-- GLOBALS: UnitClass, UnitGUID, UnitLevel, UnitFactionGroup, UnitRace, UnitName, UIDropDownMenu_AddButton
+-- GLOBALS: UIDROPDOWNMENU_MENU_VALUE, CloseDropDownMenus, DropDownList4, CallCompanion, InCombatLockdown
+-- GLOBALS: IsInGuild, GetNumGroupMembers, IsInRaid, LoadAddOn, INTERFACEOPTIONS_ADDONCATEGORIES, CreateFrame
+-- GLOBALS: InterfaceOptions_AddCategory, InterfaceAddOnsList_Update, InterfaceOptionsFrame_OpenToCategory
+-- GLOBALS: GetCurrentBindingSet, GetBindingKey, SetBinding, SaveBindings, DropDownList1, IsShiftKeyDown
+-- GLOBALS: PetsAndMountsMenuModelFrame, PetsAndMountsConfigModelFrame, PetsAndMountsSearchFrame, GameTooltip
+-- GLOBALS: PetsAndMountsPopupMessageFrame, UIDropDownMenu_SetAnchor, ToggleDropDownMenu
 
 --[[-------------------------------------------------------------------------------
     Common methods

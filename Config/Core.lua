@@ -12,14 +12,13 @@ local L = A.L;
 -- Globals to locals
 local ipairs = ipairs;
 local pairs = pairs;
-local type = type;
-local tContains = tContains;
-local strtrim = strtrim;
+local string = string;
 local tostring = tostring;
+local tContains = tContains;
 local tonumber = tonumber;
 
--- GLOBALS: GetCurrentBindingSet, SetBinding, SaveBindings, GetBindingKey, StaticPopup_Show
--- GLOBALS: InCombatLockdown, GetAddOnMetadata, LibStub, GetMapNameByID
+-- GLOBALS: LibStub, InCombatLockdown, GetCurrentBindingSet, GetBindingKey, SetBinding, SaveBindings
+-- GLOBALS: GetMapNameByID, GetAddOnMetadata
 
 -- Ace3 libs <3
 A.AceConfigDialog = LibStub("AceConfigDialog-3.0");
@@ -2799,6 +2798,7 @@ function A:OptionsFavOverride()
             dialogControl = "Dropdown-SortByValue",
             values = function()
                 local out = { [0] = L["None"] };
+                local mapID;
 
                 if ( A.currentMapIDForPets ) then
                     mapID = A.currentMapIDForPets;

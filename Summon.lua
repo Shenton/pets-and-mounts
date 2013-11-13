@@ -10,19 +10,18 @@ local A = _G["PetsAndMountsGlobal"];
 local L = A.L;
 
 -- Globals to locals
-local math = math;
-local tContains = tContains;
 local ipairs = ipairs;
+local time = time;
+local type = type;
+local tContains = tContains;
+local math = math;
+local select = select;
 
--- GLOBALS: C_PetJournal, UnitIsFeignDeath, UnitCastingInfo, UnitChannelInfo
--- GLOBALS: UnitIsDeadOrGhost, InCombatLockdown, IsMounted, IsFlying, IsFalling
--- GLOBALS: UnitHasVehicleUI, UnitOnTaxi, HasFullControl, IsSwimming, IsSubmerged
--- GLOBALS: IsFlyableArea, GetNumCompanions, GetCompanionInfo, UnitBuff
--- GLOBALS: CallCompanion, Dismount, IsIndoors, LibStub, IsStealthed
--- GLOBALS: GetSpellInfo, IsSpellKnown, SetMapToCurrentZone, GetItemCount
--- GLOBALS: GetCurrentMapAreaID, select, GetSpellInfo, GetNumLootItems
--- GLOBALS: GetBarberShopStyleInfo, IsUsableSpell, type, GetProfessions
--- GLOBALS: GetProfessionInfo, GetMirrorTimerInfo, VehicleExit
+-- GLOBALS: IsStealthed, UnitBuff, GetSpellInfo, UnitBuff, GetItemCount, InCombatLockdown
+-- GLOBALS: C_PetJournal, IsFlyableArea, IsSpellKnown, IsUsableSpell, GetMirrorTimerInfo
+-- GLOBALS: IsSwimming, IsSubmerged, GetNumCompanions, GetCompanionInfo, CallCompanion
+-- GLOBALS: GetProfessions, GetProfessionInfo, GetAchievementInfo, IsMounted, IsFlying
+-- GLOBALS: Dismount, VehicleExit, UnitExists, UnitIsPlayer, UnitIsUnit
 
 --[[-------------------------------------------------------------------------------
     Pets methods
@@ -95,12 +94,12 @@ function A:SummonPet(id)
 
         C_PetJournal.SummonPetByGUID(id);
 
-        local time = GetTime();
+        local t = time();
 
         A.lastPetSummoned =
         {
             id = id,
-            time = time,
+            t = t,
         };
 
         return 1;
@@ -241,17 +240,17 @@ end
 function A:CheckReSummon(id)
     if ( id and A.db.profile.petReSummon ) then
         if ( A.lastPetSummoned ) then
-            if ( A.lastPetSummoned.id == id and (time() - A.lastPetSummoned.time) >= A.db.profile.petReSummonTime ) then
+            if ( A.lastPetSummoned.id == id and (time() - A.lastPetSummoned.t) >= A.db.profile.petReSummonTime ) then
                 return 1;
             end
         else
             local id = C_PetJournal.GetSummonedPetGUID();
-            local time = GetTime();
+            local t = time();
 
             A.lastPetSummoned =
             {
                 id = id,
-                time = time,
+                t = t,
             };
         end
     end

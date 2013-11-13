@@ -11,7 +11,7 @@ local L = A.L;
 
 -- GLOBALS: UnitIsFeignDeath, UnitCastingInfo, UnitChannelInfo, UnitIsDeadOrGhost, InCombatLockdown
 -- GLOBALS: GetNumLootItems, IsMounted, IsFlying, IsFalling, UnitHasVehicleUI, UnitOnTaxi
--- GLOBALS: HasFullControl, GetBarberShopStyleInfo, UnitIsFeignDeath, IsIndoors
+-- GLOBALS: HasFullControl, GetBarberShopStyleInfo, IsIndoors
 
 -- Used in PLAYER_ENTERING_WORLD event
 -- When it is still true it will permit actions we only want when entering world

@@ -12,11 +12,12 @@ local L = A.L;
 -- Globals to locals
 local pairs = pairs;
 local _G = _G;
+local type = type;
 
--- GLOBALS: BINDING_HEADER_PETSANDMOUNTS, InCombatLockdown, GetBindingKey, SetOverrideBindingClick
--- GLOBALS: IsFlyableArea, IsSpellKnown, GetSpellInfo, IsShiftKeyDown, IsControlKeyDown, GetSpellInfo
--- GLOBALS: PetsAndMountsSecureButtonMounts, PetsAndMountsSecureButtonPets, GetScreenWidth, type, UnitBuff
--- GLOBALS: GameTooltip, GetItemCount, GetItemInfo, UIDropDownMenu_SetAnchor, ToggleDropDownMenu
+-- GLOBALS: BINDING_HEADER_PETSANDMOUNTS, InCombatLockdown, GetSpellInfo, IsFlyableArea, IsSpellKnown
+-- GLOBALS: IsShiftKeyDown, IsControlKeyDown, GetItemCount, GetItemInfo, UnitBuff, UIDropDownMenu_SetAnchor
+-- GLOBALS: ToggleDropDownMenu, GameTooltip, PetsAndMountsSecureButtonMounts, PetsAndMountsSecureButtonPets
+-- GLOBALS: GetScreenWidth
 
 --[[-------------------------------------------------------------------------------
     Bindings

@@ -10,6 +10,12 @@ local A = _G["PetsAndMountsGlobal"];
 local L = A.L;
 
 -- Globals to locals
+local type = type;
+local table = table;
+local strtrim = strtrim;
+local unpack = unpack;
+
+-- GLOBALS: PlaySound, DEFAULT_CHAT_FRAME, InCombatLockdown, GetCurrentKeyBoardFocus
 
 --[[-------------------------------------------------------------------------------
     Variables
