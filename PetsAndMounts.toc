@@ -3,7 +3,7 @@
 ## Notes: Auto and random summon highly customizable for your pets and mounts, with Data Broker support.
 ## Author: Shenton
 ## SavedVariables: petsAndMountsDB
-## Version: 1.5.3
+## Version: 1.6.0
 ## Dependencies: Blizzard_PetJournal
 ## OptionalDeps: Ace3, Masque
 

@@ -9,6 +9,9 @@
 local A = _G["PetsAndMountsGlobal"];
 local L = A.L;
 
+-- Init addon databases
+A:InitializeDB();
+
 -- Globals to locals
 local ipairs = ipairs;
 local pairs = pairs;
@@ -23,6 +26,16 @@ local tonumber = tonumber;
 -- Ace3 libs <3
 A.AceConfigDialog = LibStub("AceConfigDialog-3.0");
 A.AceConfigRegistry = LibStub("AceConfigRegistry-3.0");
+
+-- Config model frame
+A.configModelFrame = PetsAndMountsConfigModelFrame;
+A.configModelFrame:SetSize(A.db.profile.configModelFrameWidth, A.db.profile.configModelFrameHeight);
+
+-- Search frame
+A.searchFrame = PetsAndMountsSearchFrame;
+
+-- Icon list frame
+A.iconFrame = PetsAndMountsSelectIconFrame;
 
 local modelFrameSizeSelect =
 {
@@ -57,11 +70,112 @@ local reSummonValues =
     [18000] = L["5h"],
 };
 
--- Init addon databases
-A:InitializeDB();
+-- Icon list table
+A.iconList = {};
 
 --[[-------------------------------------------------------------------------------
-    Methods
+    Icons frame methods
+-------------------------------------------------------------------------------]]--
+
+--- Reset and add icons filename to the icons list table
+function A:GetIconsList()
+    A.iconsList = {};
+    A.iconsList[1] = "INV_MISC_QUESTIONMARK";
+    GetMacroItemIcons(A.iconsList);
+    GetMacroIcons(A.iconsList);
+end
+
+--- Scroll frame update method
+function A:IconsFrameScrollUpdate()
+    local icons, icon, button, index, texture;
+    local popupOffset = FauxScrollFrame_GetOffset(A.iconFrame.scrollFrame);
+
+    if ( A.iconsListSearch ) then
+        icons = A.iconsListSearch;
+    else
+        icons = A.iconsList;
+    end
+
+    for i=1,64 do
+        icon = _G["PetsAndMountsSelectIconFrameButton"..i.."Icon"];
+        button = _G["PetsAndMountsSelectIconFrameButton"..i];
+        index = (popupOffset * 8) + i;
+
+        if ( index ) then
+            texture = icons[index];
+        else
+            texture = nil;
+        end
+
+        if ( texture ) then
+            icon:SetTexture("INTERFACE\\ICONS\\"..texture);
+            button.textureName = texture;
+            button:Show();
+        else
+            icon:SetTexture("");
+            button.textureName = nil;
+            button:Hide();
+        end
+
+        if ( A.iconFrame.selectedTexture == texture ) then
+            button:SetChecked(1);
+        else
+            button:SetChecked(nil);
+        end
+    end
+
+    FauxScrollFrame_Update(A.iconFrame.scrollFrame, ceil(#icons / 8) , 8, 36);
+end
+
+--- OnCLick callback
+function A.IconsFrameButtonOnClick(_, self)
+    A.iconFrame.selectedTexture = self.textureName;
+    A.iconFrame.selectedIcon:SetText(L["Selected: %s"]:format("|TINTERFACE\\ICONS\\"..self.textureName..":32|t "..self.textureName));
+    A.iconFrame.acceptButton:Enable();
+    A:IconsFrameScrollUpdate();
+end
+
+--- OnTextChanged callback
+function A:IconsFrameTextChanged(self)
+    if ( self.clearButton:IsVisible() and self:GetText() ~= "" ) then
+        A:IconSearch(self:GetText());
+    else
+        A:IconSearch(nil);
+    end
+end
+
+--- Icon search method
+function A:IconSearch(text)
+    if ( not text or text == "" ) then
+        A.iconsListSearch = nil;
+        A.iconFrame.searchCount:SetText("");
+        A:IconsFrameScrollUpdate();
+        return;
+    end
+
+    A.iconsListSearch = {};
+
+    text = string.lower(text);
+
+    for k,v in pairs(A.iconsList) do
+        if ( string.find(string.lower(v), text) ) then
+            A.iconsListSearch[#A.iconsListSearch+1] = v;
+        end
+    end
+
+    if ( #A.iconsListSearch == 0 ) then
+        A.iconFrame.searchCount:SetText(L["Found %d icon"]:format(0));
+    elseif ( #A.iconsListSearch == 1 ) then
+        A.iconFrame.searchCount:SetText(L["Found %d icon"]:format(1));
+    else
+        A.iconFrame.searchCount:SetText(L["Found %d icons"]:format(#A.iconsListSearch));
+    end
+
+    A:IconsFrameScrollUpdate();
+end
+
+--[[-------------------------------------------------------------------------------
+    Pets and mounts list search methods
 -------------------------------------------------------------------------------]]--
 
 --- Called by the search frame OnTextChanged
@@ -216,9 +330,146 @@ function A:OptionsRoot()
                             },
                         },
                     },
-                    model =
+                    dataBroker =
                     {
                         order = 100,
+                        name = L["Data Broker"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            icon =
+                            {
+                                order = 0,
+                                name = L["Icon"],
+                                type = "header",
+                            },
+                            iconMode =
+                            {
+                                order = 1,
+                                name = L["Mode"],
+                                desc = L["Select the main icon mode. None will use the default one or the one you selected. Companion will use your current companion one. Mount will use your current mount one."],
+                                type = "select",
+                                values = {["none"] = L["None"], ["CURRENT_PET"] = L["Companion"], ["CURRENT_MOUNT"] = L["Mount"]},
+                                set = function(info, val)
+                                    A.db.profile.dataBrokerIconMode = val;
+                                    A:SetDataBroker();
+                                end,
+                                get = function() return A.db.profile.dataBrokerIconMode; end,
+                            },
+                            selectIcon =
+                            {
+                                order = 2,
+                                name = L["Select Icon"],
+                                desc = L["Select the Data Broker icon."],
+                                type = "execute",
+                                image = function() return "Interface\\ICONS\\"..A.db.profile.dataBrokerIcon, 36, 36; end,
+                                func = function()
+                                    if ( A.iconFrame:IsVisible() ) then
+                                        A.iconFrame:Hide();
+                                    else
+                                        A.iconFrame:ClearAllPoints();
+                                        A.iconFrame:SetPoint("TOPLEFT", A.configFocusFrame, "TOPRIGHT", 0, 0);
+                                        A.iconFrame.currentTexture = A.db.profile.dataBrokerIcon;
+                                        A.iconFrame:Show();
+                                    end
+                                end
+                            },
+                            pet =
+                            {
+                                order = 100,
+                                name = L["Companion"],
+                                type = "header",
+                            },
+                            petEnable =
+                            {
+                                order = 101,
+                                name = L["Enable"],
+                                desc = L["Enable the current companion on the Data Broker display."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.dataBrokerTextPet = not A.db.profile.dataBrokerTextPet;
+                                    A:SetDataBroker();
+                                end,
+                                get = function() return A.db.profile.dataBrokerTextPet; end,
+                            },
+                            petIcon =
+                            {
+                                order = 102,
+                                name = L["Icon"],
+                                desc = L["Add the current companion icon before the name."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.dataBrokerTextPetIcon = not A.db.profile.dataBrokerTextPetIcon;
+                                    A:SetDataBroker();
+                                end,
+                                get = function() return A.db.profile.dataBrokerTextPetIcon; end,
+                            },
+                            mount = 
+                            {
+                                order = 200,
+                                name = L["Mount"],
+                                type = "header",
+                            },
+                            mountEnable =
+                            {
+                                order = 201,
+                                name = L["Enable"],
+                                desc = L["Enable the current mount on the Data Broker display."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.dataBrokerTextMount = not A.db.profile.dataBrokerTextMount;
+                                    A:SetDataBroker();
+                                end,
+                                get = function() return A.db.profile.dataBrokerTextMount; end,
+                            },
+                            mountIcon =
+                            {
+                                order = 202,
+                                name = L["Icon"],
+                                desc = L["Add the current mount icon before the name."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.dataBrokerTextMountIcon = not A.db.profile.dataBrokerTextMountIcon;
+                                    A:SetDataBroker();
+                                end,
+                                get = function() return A.db.profile.dataBrokerTextMountIcon; end,
+                            },
+                            miscHeader =
+                            {
+                                order = 300,
+                                name = L["Miscellaneous"],
+                                type = "header",
+                            },
+                            hideIcon =
+                            {
+                                order = 301,
+                                name = L["Minimap icon"],
+                                desc = L["Display the minimap icon."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.ldbi.hide = not A.db.profile.ldbi.hide;
+                                    A:ShowHideMinimap();
+                                end,
+                                get = function() return not A.db.profile.ldbi.hide; end,
+                            },
+                            separator =
+                            {
+                                order = 302,
+                                name = L["Separator"],
+                                desc = L["Define the separator between current companion and mount."],
+                                type = "input",
+                                set = function(info, val)
+                                    A.db.profile.dataBrokerTextSeparator = val;
+                                    A:SetDataBroker();
+                                end,
+                                get = function() return A.db.profile.dataBrokerTextSeparator; end,
+                            },
+                        },
+                    },
+                    model =
+                    {
+                        order = 200,
                         name = L["Model frames"],
                         type = "group",
                         inline = true,
@@ -312,28 +563,6 @@ function A:OptionsRoot()
                                     A.db.profile.modelFrameHeight = val;
                                     A.configModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
                                 end
-                            },
-                        },
-                    },
-                    minimap =
-                    {
-                        order = 200,
-                        name = L["Minimap"],
-                        type = "group",
-                        inline = true,
-                        args =
-                        {
-                            hideIcon =
-                            {
-                                order = 0,
-                                name = L["Show icon"],
-                                desc = L["Display an icon on the minimap."],
-                                type = "toggle",
-                                set = function()
-                                    A.db.profile.ldbi.hide = not A.db.profile.ldbi.hide;
-                                    A:ShowHideMinimap();
-                                end,
-                                get = function() return not A.db.profile.ldbi.hide; end,
                             },
                         },
                     },
@@ -733,15 +962,6 @@ function A:OptionsRoot()
                                 set = function() A.db.profile.areaMounts = not A.db.profile.areaMounts; end,
                                 get = function() return A.db.profile.areaMounts; end,
                             },
-                            classesMacrosEnabled =
-                            {
-                                order = 4,
-                                name = L["Class specific"],
-                                desc = L["With this enabled it will use flying forms for druids (Only class with specific \"mount\" atm)."],
-                                type = "toggle",
-                                set = function() A.db.profile.classesMacrosEnabled = not A.db.profile.classesMacrosEnabled; end,
-                                get = function() return A.db.profile.classesMacrosEnabled; end,
-                            },
                             surfaceMount =
                             {
                                 order = 6,
@@ -833,9 +1053,83 @@ function A:OptionsRoot()
                             },
                         },
                     },
-                    mountsSummonFilters =
+                    classSpecific =
                     {
                         order = 100,
+                        name = L["Class specific"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            enable =
+                            {
+                                order = 0,
+                                name = L["Enable"],
+                                desc = L["Enable class specific pre-click macros.\n|cffff7d0aDruid: |r Handle flight forms.\n|cffabd473Hunter: |rHandle cheetah and pack aspects."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.classesMacrosEnabled = not A.db.profile.classesMacrosEnabled;
+                                    A:SetPostClickMacro();
+                                end,
+                                get = function() return A.db.profile.classesMacrosEnabled; end,
+                            },
+                            hunterHeader =
+                            {
+                                order = 100,
+                                name = A.color.HUNTER..L["Hunter"],
+                                type = "header",
+                            },
+                            hunterPreferPack =
+                            {
+                                order = 101,
+                                name = L["Prefer Aspect of the Pack"],
+                                desc = L["Prioritise Aspect of the Pack other Aspect of the Cheetah."],
+                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.hunterPreferPack = not A.db.profile.hunterPreferPack;
+                                    A:SetPostClickMacro();
+                                end,
+                                get = function() return A.db.profile.hunterPreferPack; end,
+                            },
+                            hunterWantModifier =
+                            {
+                                order = 102,
+                                name = L["Use a modifier"],
+                                desc = L["Use a modifier to disable the aspect, this will also prevent the spell toggle.\n Be aware that if a bind is set to the modifier plus the button bind this will not work."],
+                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.hunterWantModifier = not A.db.profile.hunterWantModifier;
+                                    A:SetPostClickMacro();
+                                end,
+                                get = function() return A.db.profile.hunterWantModifier; end,
+                            },
+                            hunterModifier =
+                            {
+                                order = 103,
+                                name = L["Modifier"],
+                                desc = L["Select which modifier to use for cancelling aspect."],
+                                disabled = function()
+                                    if ( not A.db.profile.classesMacrosEnabled or not A.db.profile.hunterWantModifier ) then
+                                        return 1;
+                                    else
+                                        return nil;
+                                    end
+                                end,
+                                type = "select",
+                                values = A.modifiersList,
+                                set = function(info, val)
+                                    A.db.profile.hunterModifier = val;
+                                    A:SetPostClickMacro();
+                                end,
+                                get = function() return A.db.profile.hunterModifier; end,
+                            },
+                        },
+                    },
+                    mountsSummonFilters =
+                    {
+                        order = 200,
                         name = L["Random mount summon filters"],
                         type = "group",
                         inline = true,
@@ -3223,6 +3517,7 @@ A.configFrameFavOverride:HookScript("OnShow", function(self) A.configFocusFrame 
 A.configFrameAbout:HookScript("OnShow", function(self) A.configFocusFrame = self; end);
 
 -- Config frames OnHide
+A.configFrameOptions:HookScript("OnHide", function(self) A.iconFrame:Hide(); end);
 A.configFramePets:HookScript("OnHide", function()
     A.configModelFrame:Hide();
     A.searchFrame:Hide();

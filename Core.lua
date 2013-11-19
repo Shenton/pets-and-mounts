@@ -18,6 +18,9 @@ local A = LibStub("AceAddon-3.0"):NewAddon("PetsAndMounts", "AceConsole-3.0", "A
 local L = LibStub("AceLocale-3.0"):GetLocale("PetsAndMounts");
 A.L = L;
 
+-- LibDBIcon
+A.LDBIcon = LibStub("LibDBIcon-1.0");
+
 -- Addon's global
 _G["PetsAndMountsGlobal"] = A;
 
@@ -67,9 +70,7 @@ function A:SlashCommand(input)
         A:OpenConfigPanel();
     --@debug@
     elseif ( arg1 == "test" ) then
-        A:PopMessageFrame("newBindingsSystemv150");
-        A:PopMessageFrame("test", {"test", "1", "2", "3", "4", "5"});
-        A:PopMessageFrame("info");
+        A:SetDataBroker();
     --@end-debug@
     elseif ( arg1 == "refresh" ) then
         A:BuildBothTables(1);
@@ -262,6 +263,19 @@ function A:GetCreatureIDFromSpellID(spellID)
     return nil;
 end
 
+--- Return pet name
+function A:GetPetNameByID(id)
+    if ( not id ) then return nil; end
+
+    local _, customName, _, _, _, _, _,creatureName = C_PetJournal.GetPetInfoByPetID(id);
+
+    if ( customName ) then
+        return customName;
+    end
+
+    return creatureName;
+end
+
 --- Return mount ID from spell ID
 function A:GetMountIDFromSpellID(spellID)
     -- Init addon databases
@@ -280,48 +294,12 @@ function A:GetMountIDFromSpellID(spellID)
     return nil;
 end
 
---- Return pet name
-function A:GetPetNameByID(id)
-    if ( not id ) then return nil; end
-
-    local _, customName, _, _, _, _, _,creatureName = C_PetJournal.GetPetInfoByPetID(id);
-
-    if ( customName ) then
-        return customName;
-    end
-
-    return creatureName;
-end
-
 --- Return mount name
 function A:GetMountNameBySpellID(id)
     if ( not id ) then return nil; end
 
     return select(2, GetCompanionInfo("MOUNT", A:GetMountIDFromSpellID(id)));
 end
-
---- Return the current set
--- function A:GetCurrentSet(type)
-    -- local setsTable, favTable;
-
-    -- if ( type == "PET" ) then
-        -- setsTable = A.db.global.savedSets.pets;
-        -- favTable = A.db.profile.favoritePets
-    -- elseif ( type == "MOUNT" ) then
-        -- setsTable = A.db.global.savedSets.mounts;
-        -- favTable = A.db.profile.favoriteMounts;
-    -- else
-        -- return L["None"];
-    -- end
-
-    -- for k,v in pairs(setsTable) do
-        -- if ( A:CompareTables(favTable, v) ) then
-            -- return k;
-        -- end
-    -- end
-
-    -- return L["None"];
--- end
 
 --- Check if it is a GUID
 function A:IsGUID(GUID)
@@ -405,6 +383,49 @@ function A:StringTrim(str, wat)
     end
 
     return str:match("^["..wat.."]*(.-)["..wat.."]*$");
+end
+
+--- Return the current summoned pet infos
+function A:GetCurrentPetInfos()
+    local id = C_PetJournal.GetSummonedPetGUID();
+
+    if ( id ) then
+        local _, customName, _, _, _, _, _,creatureName, icon = C_PetJournal.GetPetInfoByPetID(id);
+
+        if ( customName ) then
+            return customName, icon;
+        end
+
+        return creatureName, icon;
+    end
+
+    return nil;
+end
+
+--- Return the current summoned mount infos
+function A:GetCurrentMountInfos()
+    -- Init addon databases
+    A:InitializeDB();
+
+    local index = 1;
+    local name, _, icon, _, _, _, _, _, _, _, id = UnitBuff("player", index);
+
+    -- One shot, woot!
+    for k,v in ipairs(A.pamTable.mountsIds) do
+        if ( tContains(v, id) ) then return name, icon; end
+    end
+
+    -- Continue checking
+    while id do
+        index = index + 1;
+        name, _, icon, _, _, _, _, _, _, _, id = UnitBuff("player", index);
+
+        for k,v in ipairs(A.pamTable.mountsIds) do
+            if ( tContains(v, id) ) then return name, icon; end
+        end
+    end
+
+    return nil;
 end
 
 --[[-------------------------------------------------------------------------------
@@ -839,11 +860,11 @@ end
 
 --- Initialize the databases
 function A:InitializeDB()
-    if ( A.initialized ) then return; end
+    if ( not A.initialized ) then return; end
 
     A:DebugMessage("Initializing databases");
+    A.initialized = nil;
     A:BuildBothTables();
-    A.initialized = 1;
 
     -- Registering database update events here
     -- I do not know if something change for me but I was able to get pets and mount info when login in
@@ -853,6 +874,17 @@ function A:InitializeDB()
     A:RegisterEvent("PET_JOURNAL_PET_DELETED");
     A:RegisterEvent("PET_JOURNAL_LIST_UPDATE");
     A:RegisterEvent("COMPANION_UPDATE");
+
+    -- This event is used to update Data Broker
+    -- It call the DB so setting it here
+    A:RegisterEvent("UNIT_AURA");
+
+    -- Same
+    A:Hook(C_PetJournal, "SummonPetByGUID", true);
+
+    -- Setting here the Data Broker infos the first time
+    -- Doing this too soon can cause nil error with strings manipulation when creating the DB
+    A:SetDataBroker();
 end
 
 --- Remove unknown pets from favorites
@@ -868,12 +900,12 @@ end
 --- Add summon filters to the database
 function A:AddSummonFilters()
     for k,v in ipairs(A.petsSummonFilters) do
-        if ( not A.db.profile.petsSummonFilters[k] ) then
+        if ( A.db.profile.petsSummonFilters[k] == nil ) then
             A.db.profile.petsSummonFilters[k] = 1;
         end
     end
     for k,v in ipairs(A.mountsSummonFilters) do
-        if ( not A.db.profile.mountsSummonFilters[k] ) then
+        if ( A.db.profile.mountsSummonFilters[k] == nil ) then
             A.db.profile.mountsSummonFilters[k] = 1;
         end
     end
@@ -1298,6 +1330,74 @@ function A:SetDebugMessage()
         A.DebugMessage = A.DebugMessageActiv;
     else
         A.DebugMessage = A.DebugMessageDummy;
+    end
+end
+
+--- Set the Data Broker text and icon
+function A:SetDataBroker()
+    if ( InCombatLockdown() ) then
+        A.delayedBroker = 1;
+        return;
+    end
+
+    local petName, petIcon, mountName, mountIcon;
+    local text = "";
+
+    if ( A.db.profile.dataBrokerTextPet or A.db.profile.dataBrokerIcon == "CURRENT_PET" ) then
+        petName, petIcon = A:GetCurrentPetInfos(id);
+    end
+
+    if ( A.db.profile.dataBrokerTextMount or A.db.profile.dataBrokerIcon == "CURRENT_MOUNT" ) then
+        mountName, mountIcon = A:GetCurrentMountInfos();
+    end
+
+    if ( A.db.profile.dataBrokerTextPet ) then
+        if ( petName ) then
+            if ( A.db.profile.dataBrokerTextPetIcon ) then
+                text = "|T"..petIcon..":16|t "..petName;
+            else
+                text = petName;
+            end
+        end
+    end
+
+    if ( A.db.profile.dataBrokerTextMount ) then
+        if ( mountName ) then
+            if ( text == "" ) then
+                if ( A.db.profile.dataBrokerTextMountIcon ) then
+                    text = "|T"..mountIcon..":16|t "..mountName;
+                else
+                    text = mountName;
+                end
+            else
+                if ( A.db.profile.dataBrokerTextMountIcon ) then
+                    text = text..A.db.profile.dataBrokerTextSeparator.."|T"..mountIcon..":16|t "..mountName;
+                else
+                    text = text..A.db.profile.dataBrokerTextSeparator..mountName;
+                end
+            end
+        end
+    end
+
+    if ( text == "" ) then
+        A.ldbObject.text = L["None"];
+    else
+        A.ldbObject.text = text;
+    end
+
+    if ( A.db.profile.dataBrokerIconMode == "CURRENT_PET" and petIcon ) then
+        A.ldbObject.icon = petIcon;
+        A.LDBIcon:IconCallback(nil, "PetsAndMountsLDBI", "icon", petIcon);
+    elseif ( A.db.profile.dataBrokerIconMode == "CURRENT_MOUNT" and mountIcon ) then
+        A.ldbObject.icon = mountIcon;
+        A.LDBIcon:IconCallback(nil, "PetsAndMountsLDBI", "icon", mountIcon);
+    else
+        if ( not A.db.profile.dataBrokerIcon or A.db.profile.dataBrokerIcon == "" ) then
+            A.db.profile.dataBrokerIcon = A.defaultDataBrokerIcon;
+        end
+
+        A.ldbObject.icon = "Interface\\ICONS\\"..A.db.profile.dataBrokerIcon;
+        A.LDBIcon:IconCallback(nil, "PetsAndMountsLDBI", "icon", "Interface\\ICONS\\"..A.db.profile.dataBrokerIcon);
     end
 end
 
@@ -1787,6 +1887,11 @@ function A:PLAYER_REGEN_ENABLED()
         A.delayedZoneSets = nil;
     end
 
+    if ( A.delayedBroker ) then
+        A:SetDataBroker();
+        A.delayedBroker = nil;
+    end
+
     A:AutoPetDelay();
     A:PopMessageLeavingCombat();
 end
@@ -1804,8 +1909,6 @@ function A:AutoPetDelayCallback()
     A:AutoPet();
 end
 
--- Using this because it is a little faster than event UPDATE_STEALTH
--- And it prevent using UNIT_AURA
 A.stealthSpellsIDs =
 {
     5215, -- Druid's Prowl
@@ -1847,14 +1950,16 @@ function A:PLAYER_ENTERING_WORLD()
         A:RegisterEvent("PLAYER_LOSES_VEHICLE_DATA", "AutoPetDelay"); -- Quitting a vehicle or a multi mount you control.
         A:RegisterEvent("UNIT_EXITED_VEHICLE", "AutoPetDelay"); -- Exiting a vehicle.
         A:LoginModificationsFixes();
+        A:ScheduleTimer("InitializeDB", 5);
         A.onFirstLoadActions = nil;
         return;
     end
 
     -- No delay for you on fist loading
-    -- I think there is an issue with AceTimer. If A:AutoPetDelay() is called on first loading
-    -- ScheduleTimer will call A:AutoPetDelayCallback() after 2 seconds while it is set to 20
     A:AutoPetDelay();
+
+    -- No Data Broker update on first login too
+    A:SetDataBroker();
 end
 
 function A:ZONE_CHANGED_NEW_AREA()
@@ -1945,6 +2050,16 @@ function A:PET_JOURNAL_LIST_UPDATE()
     end
 
     A:BuildPetsTable();
+end
+
+function A:UNIT_AURA(event, unit)
+    if ( unit == "player" ) then
+        A:SetDataBroker();
+    end
+end
+
+function A:SummonPetByGUID()
+    A:ScheduleTimer("SetDataBroker", 3);
 end
 
 --[[-------------------------------------------------------------------------------
@@ -2179,10 +2294,20 @@ A.aceDefaultDB =
         copyMouseoverMount = nil, -- d
         showMenuModelFrame = 1, -- d
         showConfigModelFrame = 1, -- d
-        petsZoneSets = 1,
-        mountsZoneSets = 1,
-        petReSummon = nil,
-        petReSummonTime = 3600,
+        petsZoneSets = 1, -- d
+        mountsZoneSets = 1, -- d
+        petReSummon = nil, -- d
+        petReSummonTime = 3600, -- d
+        hunterPreferPack = nil, -- d
+        hunterWantModifier = nil, -- d
+        hunterModifier = "shift", -- d
+        dataBrokerTextPet = 1,
+        dataBrokerTextPetIcon = 1,
+        dataBrokerTextMount = 1,
+        dataBrokerTextMountIcon = 1,
+        dataBrokerTextSeparator = " - ", -- d
+        dataBrokerIcon = A.defaultDataBrokerIcon, -- d
+        dataBrokerIconMode = "none", -- d
     },
 };
 
@@ -2452,13 +2577,6 @@ function A:OnInitialize()
     A.menuModelFrame = PetsAndMountsMenuModelFrame;
     A.menuModelFrame:SetSize(A.db.profile.modelFrameWidth, A.db.profile.modelFrameHeight);
 
-    -- Config model frame
-    A.configModelFrame = PetsAndMountsConfigModelFrame;
-    A.configModelFrame:SetSize(A.db.profile.configModelFrameWidth, A.db.profile.configModelFrameHeight);
-
-    -- Search frame
-    A.searchFrame = PetsAndMountsSearchFrame;
-
     -- Messages frame
     A.popupMessageFrame = PetsAndMountsPopupMessageFrame;
     A.popupMessageFrame.addon = A;
@@ -2466,7 +2584,7 @@ function A:OnInitialize()
     -- LDB
     A.ldbObject = LibStub("LibDataBroker-1.1"):NewDataObject("PetsAndMountsLDB", {
         type = "data source",
-        text = L["Pets & Mounts"],
+        text = L["None"],
         label = L["Pets & Mounts"],
         icon = "Interface\\ICONS\\Achievement_WorldEvent_Brewmaster",
         tocname = "PetsAndMounts",
@@ -2524,12 +2642,12 @@ function A:OnInitialize()
     });
 
     -- LDBIcon
-    LibStub("LibDBIcon-1.0"):Register("PetsAndMountsLDBI", A.ldbObject, A.db.profile.ldbi);
+    A.LDBIcon:Register("PetsAndMountsLDBI", A.ldbObject, A.db.profile.ldbi);
 
     -- Addon communication
     A:RegisterComm("PAMCommPrefix");
 
-    -- Raw hook
+    -- Raw hook on chat link
     A:RawHook("SetItemRef", true);
 
     -- Add the config loader to blizzard addon configuration panel

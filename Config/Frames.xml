@@ -1,0 +1,594 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+..\FrameXML\UI.xsd">
+    <!-- Models frame -->
+    <PlayerModel name="PetsAndMountsConfigModelFrame" parent="UIParent" framestrata="TOOLTIP" hidden="true">
+        <Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+            <EdgeSize>
+                <AbsValue val="12"/>
+            </EdgeSize>
+            <TileSize>
+                <AbsValue val="12"/>
+            </TileSize>
+            <BackgroundInsets>
+                <AbsInset left="4" right="4" top="4" bottom="4"/>
+            </BackgroundInsets>
+        </Backdrop>
+        <Scripts>
+            <OnLoad>
+                self:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b);
+                self:SetBackdropColor(0.09, 0.09, 0.09);
+                self:EnableMouse(1);
+            </OnLoad>
+            <OnShow>
+                self.rotation = 0;
+                self.rotationTime = GetTime();
+            </OnShow>
+            <OnHide>
+                self.manualRotation = nil;
+                self.isRotating = nil;
+                self.rotation = nil;
+                self.rotationTime = nil;
+                self:ClearModel();
+            </OnHide>
+            <OnEnter>
+                self.mouseOver = 1;
+            </OnEnter>
+            <OnLeave>
+                self.mouseOver = nil;
+                self.manualRotation = nil;
+                self.isRotating = nil;
+            </OnLeave>
+            <OnMouseDown>
+                self.manualRotation = 1;
+                self.isRotating = 1;
+                self.rotation = self.rotation or 0;
+                self.xOrigin = GetCursorPosition();
+            </OnMouseDown>
+            <OnMouseUp>
+                self.isRotating = nil;
+            </OnMouseUp>
+            <OnUpdate>
+                PetsAndMountsGlobal:ConfigModelFrameOnUpdate(self);
+            </OnUpdate>
+        </Scripts>
+    </PlayerModel>
+
+    <!-- Search frame -->
+    <Frame name="PetsAndMountsSearchFrame" parent="UIParent" frameStrata="DIALOG" hidden="true">
+        <Size x="300" y="30"/>
+        <Frames>
+            <EditBox name="$parentSearchBox" inherits="SearchBoxTemplate" parentKey="searchBox" letters="40">
+                <Size x="256" y="20"/>
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parent" x="7" y="0"/>
+                </Anchors>
+                <Scripts>
+                    <OnShow>
+                        if ( self.searchType == "PETS" ) then
+                            if ( PetsAndMountsGlobal.petsListSearchText ) then
+                                self:SetText(PetsAndMountsGlobal.petsListSearchText);
+                            else
+                                self:SetText(SEARCH);
+                            end
+                        elseif ( self.searchType == "MOUNTS" ) then
+                            if ( PetsAndMountsGlobal.mountsListSearchText ) then
+                                self:SetText(PetsAndMountsGlobal.mountsListSearchText);
+                            else
+                                self:SetText(SEARCH);
+                            end
+                        else
+                            self:SetText(SEARCH);
+                            self:Hide();
+                        end
+                    </OnShow>
+                    <OnTextChanged>
+                        if ( self:GetText() == SEARCH ) then
+                            PetsAndMountsGlobal:SearchListCallback(self.searchType);
+                        else
+                            PetsAndMountsGlobal:SearchListCallback(self.searchType, self:GetText());
+                        end
+                    </OnTextChanged>
+                </Scripts>
+            </EditBox>
+        </Frames>
+        <Scripts>
+            <OnLoad>
+                self:SetBackdropBorderColor(.6, .6, .6, 1);
+            </OnLoad>
+        </Scripts>
+    </Frame>
+
+    <!-- Icons frame -->
+    <CheckButton name="PetsAndMountsSelectIconFrameButtonTemplate" inherits="PopupButtonTemplate" virtual="true">
+        <Scripts>
+            <OnClick>
+                PetsAndMountsGlobal:IconsFrameButtonOnClick(self);
+            </OnClick>
+            <OnEnter>
+                if ( self:GetRight() >= ( GetScreenWidth() / 2 ) ) then
+                    GameTooltip:SetOwner(self, "ANCHOR_LEFT");
+                else
+                    GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+                end
+
+                GameTooltip:AddLine(self.textureName);
+                GameTooltip:Show();
+            </OnEnter>
+            <OnLeave>
+                GameTooltip:Hide();
+            </OnLeave>
+        </Scripts>
+    </CheckButton>
+
+    <Frame name="PetsAndMountsSelectIconFrame" parent="UIParent" framestrata="DIALOG" hidden="true">
+        <Size x="416" y="500"/>
+        <Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+            <EdgeSize>
+                <AbsValue val="12"/>
+            </EdgeSize>
+            <TileSize>
+                <AbsValue val="12"/>
+            </TileSize>
+            <BackgroundInsets>
+                <AbsInset left="4" right="4" top="4" bottom="4"/>
+            </BackgroundInsets>
+        </Backdrop>
+        <Layers>
+            <Layer level="ARTWORK">
+                <FontString name="$parentSearchCount" parentKey="searchCount" inherits="GameFontNormalLeft">
+                    <Size x="128" y="16"/>
+                    <Anchors>
+                        <Anchor point="TOPLEFT" relativeTo="$parent">
+                            <Offset>
+                                <AbsDimension x="280" y="-22"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <FontString name="$parentCurrentIcon" parentKey="currentIcon" inherits="GameFontNormalLeft">
+                    <Size x="380" y="16"/>
+                    <Anchors>
+                        <Anchor point="TOPLEFT" relativeTo="$parent">
+                            <Offset>
+                                <AbsDimension x="16" y="-48"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <FontString name="$parentSelectedIcon" parentKey="selectedIcon" inherits="GameFontNormalLeft">
+                    <Size x="380" y="16"/>
+                    <Anchors>
+                        <Anchor point="TOPLEFT" relativeTo="$parent">
+                            <Offset>
+                                <AbsDimension x="16" y="-80"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+            </Layer>
+        </Layers>
+        <Frames>
+            <EditBox name="$parentSearchBox" inherits="SearchBoxTemplate" parentKey="searchBox" letters="80">
+                <Size x="256" y="20"/>
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="$parent" x="16" y="-16"/>
+                </Anchors>
+                <Scripts>
+                    <OnTextChanged>
+                        PetsAndMountsGlobal:IconsFrameTextChanged(self);
+                    </OnTextChanged>
+                </Scripts>
+            </EditBox>
+            <!--<ScrollFrame name="$parentScrollFrame" inherits="ListScrollFrameTemplate" parentKey="scrollFrame">-->
+            <ScrollFrame name="$parentScrollFrame" inherits="FauxScrollFrameTemplate" parentKey="scrollFrame">
+                <Size x="370" y="350"/>
+                <Anchors>
+                    <Anchor point="RIGHT" relativeTo="$parent" x="-34" y="-34"/>
+                </Anchors>
+                <Scripts>
+                    <OnLoad>
+                        ScrollFrame_OnLoad(self);
+                    </OnLoad>
+                    <OnVerticalScroll>
+                        FauxScrollFrame_OnVerticalScroll(self, offset, 36, PetsAndMountsGlobal.IconsFrameScrollUpdate);
+                    </OnVerticalScroll>
+                </Scripts>
+            </ScrollFrame>
+            <!-- Buttons -->
+            <!-- Row 1 -->
+            <CheckButton name="$parentButton1" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="1">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="$parent" x="16" y="-110"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton2" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="2">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton1" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton3" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="3">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton2" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton4" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="4">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton3" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton5" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="5">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton4" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton6" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="6">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton5" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton7" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="7">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton6" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton8" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="8">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton7" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <!-- Row 2 -->
+            <CheckButton name="$parentButton9" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="9">
+                <Anchors>
+                    <Anchor point="TOP" relativeTo="$parentButton1" relativePoint="BOTTOM" x="0" y="-8"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton10" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="10">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton9" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton11" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="11">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton10" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton12" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="12">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton11" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton13" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="13">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton12" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton14" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="14">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton13" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton15" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="15">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton14" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton16" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="16">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton15" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <!-- Row 3 -->
+            <CheckButton name="$parentButton17" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="17">
+                <Anchors>
+                    <Anchor point="TOP" relativeTo="$parentButton9" relativePoint="BOTTOM" x="0" y="-8"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton18" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="18">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton17" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton19" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="19">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton18" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton20" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="20">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton19" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton21" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="21">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton20" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton22" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="22">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton21" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton23" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="23">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton22" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton24" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="24">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton23" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <!-- Row 4 -->
+            <CheckButton name="$parentButton25" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="25">
+                <Anchors>
+                    <Anchor point="TOP" relativeTo="$parentButton17" relativePoint="BOTTOM" x="0" y="-8"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton26" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="26">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton25" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton27" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="27">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton26" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton28" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="28">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton27" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton29" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="29">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton28" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton30" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="30">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton29" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton31" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="31">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton30" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton32" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="32">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton31" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <!-- Row 5 -->
+            <CheckButton name="$parentButton33" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="33">
+                <Anchors>
+                    <Anchor point="TOP" relativeTo="$parentButton25" relativePoint="BOTTOM" x="0" y="-8"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton34" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="34">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton33" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton35" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="35">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton34" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton36" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="36">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton35" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton37" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="37">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton36" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton38" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="38">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton37" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton39" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="39">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton38" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton40" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="40">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton39" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <!-- Row 6 -->
+            <CheckButton name="$parentButton41" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="41">
+                <Anchors>
+                    <Anchor point="TOP" relativeTo="$parentButton33" relativePoint="BOTTOM" x="0" y="-8"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton42" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="42">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton41" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton43" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="43">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton42" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton44" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="44">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton43" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton45" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="45">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton44" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton46" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="46">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton45" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton47" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="47">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton46" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton48" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="48">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton47" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <!-- Row 7 -->
+            <CheckButton name="$parentButton49" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="49">
+                <Anchors>
+                    <Anchor point="TOP" relativeTo="$parentButton41" relativePoint="BOTTOM" x="0" y="-8"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton50" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="50">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton49" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton51" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="51">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton50" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton52" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="52">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton51" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton53" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="53">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton52" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton54" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="54">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton53" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton55" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="55">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton54" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton56" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="56">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton55" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <!-- Row 8 -->
+            <CheckButton name="$parentButton57" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="57">
+                <Anchors>
+                    <Anchor point="TOP" relativeTo="$parentButton49" relativePoint="BOTTOM" x="0" y="-8"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton58" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="58">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton57" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton59" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="59">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton58" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton60" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="60">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton59" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton61" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="61">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton60" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton62" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="62">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton61" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton63" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="63">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton62" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <CheckButton name="$parentButton64" inherits="PetsAndMountsSelectIconFrameButtonTemplate" id="64">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentButton63" relativePoint="RIGHT" x="10" y="0"/>
+                </Anchors>
+            </CheckButton>
+            <!-- Cancel Close Default button -->
+            <Button name="$parentCancelButton" inherits="UIPanelButtonTemplate">
+                <Size x="80" y="22"/>
+                <Anchors>
+                    <Anchor point="BOTTOMRIGHT" relativeTo="$parent" x="-16" y="16"/>
+                </Anchors>
+                <Scripts>
+                    <OnShow>
+                        self:SetText(PetsAndMountsGlobal.L["Cancel"]);
+                    </OnShow>
+                    <OnClick>
+                        self:GetParent():Hide();
+                    </OnClick>
+                </Scripts>
+            </Button>
+            <Button name="$parentAcceptButton" parentKey="acceptButton" inherits="UIPanelButtonTemplate">
+                <Size x="80" y="22"/>
+                <Anchors>
+                    <Anchor point="RIGHT" relativeTo="$parentCancelButton" relativePoint="LEFT" x="-2" y="0"/>
+                </Anchors>
+                <Scripts>
+                    <OnShow>
+                        self:SetText(PetsAndMountsGlobal.L["Accept"]);
+                        self:Disable();
+                    </OnShow>
+                    <OnClick>
+                        PetsAndMountsGlobal.db.profile.dataBrokerIcon = self:GetParent().selectedTexture;
+                        PetsAndMountsGlobal:NotifyChangeForAll();
+                        PetsAndMountsGlobal:SetDataBroker();
+                        self:GetParent():Hide();
+                    </OnClick>
+                </Scripts>
+            </Button>
+            <Button name="$parentDefaultButton" inherits="UIPanelButtonTemplate">
+                <Size x="80" y="22"/>
+                <Anchors>
+                    <Anchor point="RIGHT" relativeTo="$parentAcceptButton" relativePoint="LEFT" x="-2" y="0"/>
+                </Anchors>
+                <Scripts>
+                    <OnShow>
+                        self:SetText(PetsAndMountsGlobal.L["Default"]);
+                    </OnShow>
+                    <OnClick>
+                        PetsAndMountsGlobal.db.profile.dataBrokerIcon = PetsAndMountsGlobal.defaultDataBrokerIcon;
+                        PetsAndMountsGlobal:NotifyChangeForAll();
+                        PetsAndMountsGlobal:SetDataBroker();
+                        self:GetParent():Hide();
+                    </OnClick>
+                </Scripts>
+            </Button>
+        </Frames>
+        <Scripts>
+            <OnLoad>
+                self:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b);
+                self:SetBackdropColor(0.09, 0.09, 0.09);
+            </OnLoad>
+            <OnShow>
+                self.selectedIcon:SetText("");
+                PetsAndMountsGlobal:GetIconsList();
+                PetsAndMountsGlobal:IconsFrameScrollUpdate();
+                self.currentIcon:SetText(PetsAndMountsGlobal.L["Current: %s"]:format("|TINTERFACE\\ICONS\\"..self.currentTexture..":32|t "..self.currentTexture));
+            </OnShow>
+            <OnHide>
+                self.selectedTexture = nil;
+                self.currentTexture = nil;
+            </OnHide>
+        </Scripts>
+    </Frame>
+</Ui>

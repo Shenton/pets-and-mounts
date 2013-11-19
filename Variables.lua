@@ -17,6 +17,9 @@ local L = A.L;
 -- When it is still true it will permit actions we only want when entering world
 A.onFirstLoadActions = 1;
 
+-- If true will init the DB
+A.initialized = 1;
+
 -- AddOn version
 A.version = GetAddOnMetadata("PetsAndMounts", "Version");
 A.versionStage = "Release";
@@ -35,6 +38,7 @@ A.color =
     BLUE = "|cff3399ff",
     WHITE = "|cffffffff",
     WARRIOR = "|cffc79c6e",
+    HUNTER = "|cffabd473",
     RESET = "|r",
 };
 
@@ -174,6 +178,17 @@ A.petTypes =
     "Mechanical",
     --"None";
 };
+
+-- Modifiers list
+A.modifiersList =
+{
+    ["shift"] = L["Shift"],
+    ["ctrl"] = L["Control"],
+    ["alt"] = L["Alt"],
+};
+
+-- Default data broker icon
+A.defaultDataBrokerIcon = "Achievement_WorldEvent_Brewmaster";
 
 -- Pets with restrictions, faction mostly, and some useless (winter helpers)
 --[[
