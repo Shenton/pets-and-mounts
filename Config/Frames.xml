@@ -549,10 +549,7 @@
                         self:Disable();
                     </OnShow>
                     <OnClick>
-                        PetsAndMountsGlobal.db.profile.dataBrokerIcon = self:GetParent().selectedTexture;
-                        PetsAndMountsGlobal:NotifyChangeForAll();
-                        PetsAndMountsGlobal:SetDataBroker();
-                        self:GetParent():Hide();
+                        PetsAndMountsGlobal:OnClickAccept(self);
                     </OnClick>
                 </Scripts>
             </Button>
@@ -566,10 +563,7 @@
                         self:SetText(PetsAndMountsGlobal.L["Default"]);
                     </OnShow>
                     <OnClick>
-                        PetsAndMountsGlobal.db.profile.dataBrokerIcon = PetsAndMountsGlobal.defaultDataBrokerIcon;
-                        PetsAndMountsGlobal:NotifyChangeForAll();
-                        PetsAndMountsGlobal:SetDataBroker();
-                        self:GetParent():Hide();
+                        PetsAndMountsGlobal:OnClickDefault(self);
                     </OnClick>
                 </Scripts>
             </Button>
@@ -586,6 +580,7 @@
                 self.currentIcon:SetText(PetsAndMountsGlobal.L["Current: %s"]:format("|TINTERFACE\\ICONS\\"..self.currentTexture..":32|t "..self.currentTexture));
             </OnShow>
             <OnHide>
+                self.type = nil;
                 self.selectedTexture = nil;
                 self.currentTexture = nil;
             </OnHide>

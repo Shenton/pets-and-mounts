@@ -93,6 +93,10 @@ function A:PopMessageFrame(message, strings)
             if ( A.popupMessageFrame.cfg.name ~= message ) then
                 table.insert(A.popupStack, 1, cfg);
             end
+        elseif ( InCombatLockdown() ) then
+            if ( not A.popMessageCombat ) then
+                A.popMessageCombat = cfg;
+            end
         else
             A.popupMessageFrame.cfg = cfg;
             A.popupMessageFrame:Show();
@@ -221,31 +225,3 @@ A.popupMessages["newBindingsSystemv150"] =
         self:Hide();
     end,
 };
-
---@debug@
-A.popupMessages["test"] =
-{
-    type = "inputQuestion",
-    icon = "Interface\\DialogFrame\\UI-Dialog-Icon-AlertOther",
-    text = "%s %s %s %s %s %s",
-    leftButtonText = "Yes",
-    rightButtonText = "No",
-    escapeClose = 1,
-    LeftButtonScript = function(self)
-        print("test click "..self:GetName());
-        print(GetCurrentKeyBoardFocus());
-    end,
-    InputCallback = function(text)
-        print(text)
-    end,
-};
-
-A.popupMessages["info"] =
-{
-    type = "info",
-    text = "Info!\nDoh?\n\n",
-    leftButtonText = "Ok",
-    escapeClose = 1,
-    enterOK = 1,
-};
---@end-debug@

@@ -40,9 +40,10 @@ Localization\Locales-ruRU.lua
 Localization\Locales-zhCN.lua
 Localization\Locales-zhTW.lua
 
-Core.lua
+Addon.lua
 
+Variables.lua
+Core.lua
 Buttons.lua
 Messages.lua
 Summon.lua
-Variables.lua

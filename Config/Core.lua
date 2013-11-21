@@ -174,6 +174,46 @@ function A:IconSearch(text)
     A:IconsFrameScrollUpdate();
 end
 
+function A:OnClickAccept(self)
+    if ( self:GetParent().type == "databroker" ) then
+        A.db.profile.dataBrokerIcon = self:GetParent().selectedTexture;
+        A:SetDataBroker();
+    elseif ( self:GetParent().type == "petbutton" ) then
+        A.db.profile.petButtonIcon = self:GetParent().selectedTexture;
+        A:SetCurrentPetInfos();
+        A:SetButtonsIcons();
+    elseif ( self:GetParent().type == "mountbutton" ) then
+        A.db.profile.mountButtonIcon = self:GetParent().selectedTexture;
+        A:SetCurrentMountInfos();
+        A:SetButtonsIcons();
+    else
+        return;
+    end
+
+    A:NotifyChangeForAll();
+    self:GetParent():Hide();
+end
+
+function A:OnClickDefault(self)
+    if ( self:GetParent().type == "databroker" ) then
+        A.db.profile.dataBrokerIcon = A.defaultDataBrokerIcon;
+        A:SetDataBroker();
+    elseif ( self:GetParent().type == "petbutton" ) then
+        A.db.profile.petButtonIcon = A.defaultPetButtonIcon;
+        A:SetCurrentPetInfos();
+        A:SetButtonsIcons();
+    elseif ( self:GetParent().type == "mountbutton" ) then
+        A.db.profile.mountButtonIcon = A.defaultMountButtonIcon;
+        A:SetCurrentMountInfos();
+        A:SetButtonsIcons();
+    else
+        return;
+    end
+
+    A:NotifyChangeForAll();
+    self:GetParent():Hide();
+end
+
 --[[-------------------------------------------------------------------------------
     Pets and mounts list search methods
 -------------------------------------------------------------------------------]]--
@@ -338,17 +378,49 @@ function A:OptionsRoot()
                         inline = true,
                         args =
                         {
-                            icon =
+                            advice =
                             {
                                 order = 0,
-                                name = L["Icon"],
+                                name = L["The main icon and the label should be disabled within your Data Broker display options. If you are not given the choice to disable both of them, you should consider using another Data Broker display.\n\nThose two options are here just in case. If it mess things up /reload is your friend.\n\n"],
+                                type = "description",
+                                fontSize = "medium",
+                            },
+                            mainIconEnable =
+                            {
+                                order = 1,
+                                name = L["Main icon"],
+                                desc = L["Enable the main icon."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.dataBrokerDisplayIcon = not A.db.profile.dataBrokerDisplayIcon;
+                                    A:SetDataBroker();
+                                end,
+                                get = function() return A.db.profile.dataBrokerDisplayIcon; end,
+                            },
+                            label =
+                            {
+                                order = 2,
+                                name = L["Label"],
+                                desc = L["Display the label. Which is: %s"]:format(L["Pets & Mounts"]),
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.dataBrokerDisplayLabel = not A.db.profile.dataBrokerDisplayLabel;
+                                    A:SetDataBroker();
+                                end,
+                                get = function() return A.db.profile.dataBrokerDisplayLabel; end,
+                            },
+                            mainIconHeader =
+                            {
+                                order = 100,
+                                name = L["Main icon"],
                                 type = "header",
                             },
                             iconMode =
                             {
-                                order = 1,
+                                order = 101,
                                 name = L["Mode"],
                                 desc = L["Select the main icon mode. None will use the default one or the one you selected. Companion will use your current companion one. Mount will use your current mount one."],
+                                disabled = function() return not A.db.profile.dataBrokerDisplayIcon; end,
                                 type = "select",
                                 values = {["none"] = L["None"], ["CURRENT_PET"] = L["Companion"], ["CURRENT_MOUNT"] = L["Mount"]},
                                 set = function(info, val)
@@ -359,15 +431,16 @@ function A:OptionsRoot()
                             },
                             selectIcon =
                             {
-                                order = 2,
+                                order = 102,
                                 name = L["Select Icon"],
-                                desc = L["Select the Data Broker icon."],
+                                desc = L["Select the Data Broker main icon. This also set the minimap icon."],
                                 type = "execute",
                                 image = function() return "Interface\\ICONS\\"..A.db.profile.dataBrokerIcon, 36, 36; end,
                                 func = function()
                                     if ( A.iconFrame:IsVisible() ) then
                                         A.iconFrame:Hide();
                                     else
+                                        A.iconFrame.type = "databroker";
                                         A.iconFrame:ClearAllPoints();
                                         A.iconFrame:SetPoint("TOPLEFT", A.configFocusFrame, "TOPRIGHT", 0, 0);
                                         A.iconFrame.currentTexture = A.db.profile.dataBrokerIcon;
@@ -375,17 +448,17 @@ function A:OptionsRoot()
                                     end
                                 end
                             },
-                            pet =
+                            textHeader =
                             {
-                                order = 100,
-                                name = L["Companion"],
+                                order = 200,
+                                name = L["Text options"],
                                 type = "header",
                             },
-                            petEnable =
+                            petName =
                             {
-                                order = 101,
-                                name = L["Enable"],
-                                desc = L["Enable the current companion on the Data Broker display."],
+                                order = 201,
+                                name = L["Companion name"],
+                                desc = L["Enable the current companion name on the Data Broker display."],
                                 type = "toggle",
                                 set = function()
                                     A.db.profile.dataBrokerTextPet = not A.db.profile.dataBrokerTextPet;
@@ -395,9 +468,10 @@ function A:OptionsRoot()
                             },
                             petIcon =
                             {
-                                order = 102,
-                                name = L["Icon"],
+                                order = 202,
+                                name = L["Companion icon"],
                                 desc = L["Add the current companion icon before the name."],
+                                disabled = function() return not A.db.profile.dataBrokerTextPet; end,
                                 type = "toggle",
                                 set = function()
                                     A.db.profile.dataBrokerTextPetIcon = not A.db.profile.dataBrokerTextPetIcon;
@@ -405,17 +479,17 @@ function A:OptionsRoot()
                                 end,
                                 get = function() return A.db.profile.dataBrokerTextPetIcon; end,
                             },
-                            mount = 
+                            blankLine1 = 
                             {
-                                order = 200,
-                                name = L["Mount"],
-                                type = "header",
+                                order = 300,
+                                name = " ",
+                                type = "description",
                             },
-                            mountEnable =
+                            mountName =
                             {
-                                order = 201,
-                                name = L["Enable"],
-                                desc = L["Enable the current mount on the Data Broker display."],
+                                order = 301,
+                                name = L["Mount name"],
+                                desc = L["Enable the current mount name on the Data Broker display."],
                                 type = "toggle",
                                 set = function()
                                     A.db.profile.dataBrokerTextMount = not A.db.profile.dataBrokerTextMount;
@@ -425,9 +499,10 @@ function A:OptionsRoot()
                             },
                             mountIcon =
                             {
-                                order = 202,
-                                name = L["Icon"],
+                                order = 302,
+                                name = L["Mount icon"],
                                 desc = L["Add the current mount icon before the name."],
+                                disabled = function() return not A.db.profile.dataBrokerTextMount; end,
                                 type = "toggle",
                                 set = function()
                                     A.db.profile.dataBrokerTextMountIcon = not A.db.profile.dataBrokerTextMountIcon;
@@ -435,27 +510,15 @@ function A:OptionsRoot()
                                 end,
                                 get = function() return A.db.profile.dataBrokerTextMountIcon; end,
                             },
-                            miscHeader =
+                            blankLine2 = 
                             {
-                                order = 300,
-                                name = L["Miscellaneous"],
-                                type = "header",
-                            },
-                            hideIcon =
-                            {
-                                order = 301,
-                                name = L["Minimap icon"],
-                                desc = L["Display the minimap icon."],
-                                type = "toggle",
-                                set = function()
-                                    A.db.profile.ldbi.hide = not A.db.profile.ldbi.hide;
-                                    A:ShowHideMinimap();
-                                end,
-                                get = function() return not A.db.profile.ldbi.hide; end,
+                                order = 350,
+                                name = " ",
+                                type = "description",
                             },
                             separator =
                             {
-                                order = 302,
+                                order = 351,
                                 name = L["Separator"],
                                 desc = L["Define the separator between current companion and mount."],
                                 type = "input",
@@ -464,6 +527,24 @@ function A:OptionsRoot()
                                     A:SetDataBroker();
                                 end,
                                 get = function() return A.db.profile.dataBrokerTextSeparator; end,
+                            },
+                            miscHeader =
+                            {
+                                order = 400,
+                                name = L["Miscellaneous"],
+                                type = "header",
+                            },
+                            minimapIcon =
+                            {
+                                order = 401,
+                                name = L["Minimap icon"],
+                                desc = L["Display the minimap icon."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.ldbi.hide = not A.db.profile.ldbi.hide;
+                                    A:ShowHideMinimap();
+                                end,
+                                get = function() return not A.db.profile.ldbi.hide; end,
                             },
                         },
                     },
@@ -1237,7 +1318,7 @@ function A:OptionsRoot()
                             {
                                 order = 4,
                                 name = L["Reset"],
-                                desc = L["Reset the companions button configuration."],
+                                desc = L["Reset the companions button position."],
                                 type = "execute",
                                 func = function()
                                     if ( InCombatLockdown() ) then
@@ -1263,6 +1344,43 @@ function A:OptionsRoot()
 
                                     A:SetButtons();
                                 end,
+                            },
+                            iconHeader =
+                            {
+                                order = 100,
+                                name = L["Icon"],
+                                type = "header",
+                            },
+                            useCurrent =
+                            {
+                                order = 101,
+                                name = L["Use current"],
+                                desc = L["The companion button will use the current summoned companion icon."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.petButtonIconCurrent = not A.db.profile.petButtonIconCurrent;
+                                    A:ApplyCurrentPetInfos();
+                                end,
+                                get = function() return A.db.profile.petButtonIconCurrent; end,
+                            },
+                            selectIcon =
+                            {
+                                order = 102,
+                                name = L["Select Icon"],
+                                desc = L["Select the companion button main icon."],
+                                type = "execute",
+                                image = function() return "Interface\\ICONS\\"..A.db.profile.petButtonIcon, 36, 36; end,
+                                func = function()
+                                    if ( A.iconFrame:IsVisible() ) then
+                                        A.iconFrame:Hide();
+                                    else
+                                        A.iconFrame.type = "petbutton";
+                                        A.iconFrame:ClearAllPoints();
+                                        A.iconFrame:SetPoint("TOPLEFT", A.configFocusFrame, "TOPRIGHT", 0, 0);
+                                        A.iconFrame.currentTexture = A.db.profile.petButtonIcon;
+                                        A.iconFrame:Show();
+                                    end
+                                end
                             },
                         },
                     },
@@ -1342,7 +1460,7 @@ function A:OptionsRoot()
                             {
                                 order = 4,
                                 name = L["Reset"],
-                                desc = L["Reset the mounts button configuration."],
+                                desc = L["Reset the mounts button position."],
                                 type = "execute",
                                 func = function()
                                     if ( InCombatLockdown() ) then
@@ -1369,15 +1487,52 @@ function A:OptionsRoot()
                                     A:SetButtons();
                                 end,
                             },
-                            clickBehavior =
+                            iconHeader =
                             {
                                 order = 100,
+                                name = L["Icon"],
+                                type = "header",
+                            },
+                            useCurrent =
+                            {
+                                order = 101,
+                                name = L["Use current"],
+                                desc = L["The mount button will use the current summoned mount icon."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.mountButtonIconCurrent = not A.db.profile.mountButtonIconCurrent;
+                                    A:ApplyCurrentMountInfos();
+                                end,
+                                get = function() return A.db.profile.mountButtonIconCurrent; end,
+                            },
+                            selectIcon =
+                            {
+                                order = 102,
+                                name = L["Select Icon"],
+                                desc = L["Select the mount button main icon."],
+                                type = "execute",
+                                image = function() return "Interface\\ICONS\\"..A.db.profile.mountButtonIcon, 36, 36; end,
+                                func = function()
+                                    if ( A.iconFrame:IsVisible() ) then
+                                        A.iconFrame:Hide();
+                                    else
+                                        A.iconFrame.type = "mountbutton";
+                                        A.iconFrame:ClearAllPoints();
+                                        A.iconFrame:SetPoint("TOPLEFT", A.configFocusFrame, "TOPRIGHT", 0, 0);
+                                        A.iconFrame.currentTexture = A.db.profile.mountButtonIcon;
+                                        A.iconFrame:Show();
+                                    end
+                                end
+                            },
+                            clickBehavior =
+                            {
+                                order = 200,
                                 name = L["Click behavior"],
                                 type = "header",
                             },
                             shiftClick =
                             {
-                                order = 101,
+                                order = 201,
                                 name = L["Shift+Click"],
                                 desc = L["Choose which mount category to summon when using %s"]:format(L["Shift+Click"]),
                                 type = "select",

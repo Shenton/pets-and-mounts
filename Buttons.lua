@@ -584,6 +584,20 @@ function A:ResetButton(button)
     A:SetButtons();
 end
 
+function A:SetButtonsIcons()
+    if ( A.db.profile.petButtonIconCurrent and A.currentPetIcon ) then
+        PetsAndMountsSecureButtonPets.icon:SetTexture(A.currentPetIcon);
+    else
+        PetsAndMountsSecureButtonPets.icon:SetTexture("Interface\\ICONS\\"..A.db.profile.petButtonIcon);
+    end
+
+    if ( A.db.profile.mountButtonIconCurrent and A.currentMountIcon ) then
+        PetsAndMountsSecureButtonMounts.icon:SetTexture(A.currentMountIcon);
+    else
+        PetsAndMountsSecureButtonMounts.icon:SetTexture("Interface\\ICONS\\"..A.db.profile.mountButtonIcon);
+    end
+end
+
 --- Set buttons on login
 function A:SetButtons()
     if ( InCombatLockdown() ) then
@@ -641,10 +655,11 @@ function A:SetButtons()
         A:UnlockButton("PetsAndMountsSecureButtonMounts");
     end
 
+    -- Icon
+    
+
     -- Refresh config panel
-    if ( A.AceConfigRegistry ) then
-        A:NotifyChangeForAll();
-    end
+    A:NotifyChangeForAll();
 end
 
 --[[-------------------------------------------------------------------------------

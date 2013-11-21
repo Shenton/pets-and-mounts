@@ -187,8 +187,10 @@ A.modifiersList =
     ["alt"] = L["Alt"],
 };
 
--- Default data broker icon
+-- Default icons
 A.defaultDataBrokerIcon = "Achievement_WorldEvent_Brewmaster";
+A.defaultPetButtonIcon = "INV_Pet_Mouse";
+A.defaultMountButtonIcon = "ABILITY_MOUNT_ONYXPANTHER";
 
 -- Pets with restrictions, faction mostly, and some useless (winter helpers)
 --[[
