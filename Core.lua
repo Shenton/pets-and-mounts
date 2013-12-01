@@ -1464,6 +1464,7 @@ function A:SetEverything()
     A:SetAutoSummonOverride(1);
     A:SetStealthEvents();
 
+    A:SetClassSpells();
     A:SetMacroDismountString();
     A:SetPostClickMacro();
     A:SetButtonsMacro();

@@ -112,6 +112,7 @@ local buttonsMacro =
         ["PetsAndMountsSecureButtonHybrid"] = "/run PetsAndMountsGlobal:RandomMount(3)",
     },
 };
+
 function A:SetButtonsMacro()
     if ( InCombatLockdown() ) then
         A.delayedButtonsMacro = 1;
@@ -134,6 +135,7 @@ end
     Mounts smart button pre & post clicks
 -------------------------------------------------------------------------------]]--
 
+-- Global macro dismount string
 function A:SetMacroDismountString()
     if ( A.db.profile.vehicleExit ) then
         A.macroDismountString = "/dismount [mounted]\n/leavevehicle [vehicleui]";
@@ -161,7 +163,7 @@ end
     Master Riding 90265
 --]]
 
--- Druid macros and spellIDs
+-- Druid spellIDs
 --[[
     Travel Form - 783 - lvl 16
     Aquatic Form - 1066 - lvl 18
@@ -174,20 +176,6 @@ function A:SetDruidSpells()
     A.druidAquaticForm = GetSpellInfo(1066);
     A.druidFlightForm = GetSpellInfo(33943);
     A.druidSwiftFlightForm = GetSpellInfo(40120);
-end
-
-function A:SetDruidPreClickMacro()
-    if ( IsFlyableArea() and IsSpellKnown(40120) ) then
-        A.druidPreClickMacro = ("/cast %s\n%s"):format(A.druidSwiftFlightForm, A.macroDismountString);
-    elseif ( A.playerLevel >= 58 and A:IsFlyable() ) then
-        A.druidPreClickMacro = ("/cast %s\n%s"):format(A.druidFlightForm, A.macroDismountString);
-    elseif ( A.playerLevel >= 20 and A:CanRide() ) then
-        A.druidPreClickMacro = "/cancelform\n/run PetsAndMountsGlobal:RandomMount()";
-    elseif ( A.playerLevel >= 16 ) then
-        A.druidPreClickMacro = ("/cast %s\n%s"):format(A.druidTravelForm, A.macroDismountString);
-    else
-        A.druidPreClickMacro = A.macroDismountString;
-    end
 end
 
 -- Shaman spellIDs
@@ -212,7 +200,35 @@ function A:SetHunterSPells()
     A.hunterAspectPack = GetSpellInfo(13159);
 end
 
--- hunterWantModifier
+--- Set the spell name for the player class
+function A:SetClassSpells()
+    if ( A.playerClass == "DRUID" ) then
+        A:SetDruidSpells()
+    elseif ( A.playerClass == "SHAMAN" ) then
+        A:SetShamanSpells();
+    elseif ( A.playerClass == "DEATHKNIGHT" ) then
+        A:SetDeathKnightSpells();
+    elseif ( A.playerClass == "HUNTER" ) then
+        A:SetHunterSPells();
+    end
+end
+
+-- Druide preclick macro
+function A:SetDruidPreClickMacro()
+    if ( IsFlyableArea() and IsSpellKnown(40120) ) then
+        A.druidPreClickMacro = ("/cast %s\n%s"):format(A.druidSwiftFlightForm, A.macroDismountString);
+    elseif ( A.playerLevel >= 58 and A:IsFlyable() ) then
+        A.druidPreClickMacro = ("/cast %s\n%s"):format(A.druidFlightForm, A.macroDismountString);
+    elseif ( A.playerLevel >= 20 and A:CanRide() ) then
+        A.druidPreClickMacro = "/cancelform\n/run PetsAndMountsGlobal:RandomMount()";
+    elseif ( A.playerLevel >= 16 ) then
+        A.druidPreClickMacro = ("/cast %s\n%s"):format(A.druidTravelForm, A.macroDismountString);
+    else
+        A.druidPreClickMacro = A.macroDismountString;
+    end
+end
+
+-- Hunter preclick macro
 function A:SetHunterPreClickMacro()
     local spell;
 
@@ -230,18 +246,16 @@ function A:SetHunterPreClickMacro()
         end
     else
         if ( A.db.profile.hunterWantModifier ) then
-            A.hunterPreClickMacro = ("/cancelaura [mod:%s] %s\n/run PetsAndMountsGlobal:RandomMount()"):format(A.db.profile.hunterModifier, spell);
+            A.hunterPreClickMacro = ("/cancelaura [mod:%s] %s\n/stopmacro [mod:%s]\n/run PetsAndMountsGlobal:RandomMount()"):format(A.db.profile.hunterModifier, spell, A.db.profile.hunterModifier);
         else
             A.hunterPreClickMacro = ("/cancelaura %s\n/run PetsAndMountsGlobal:RandomMount()"):format(spell);
         end
     end
 end
 
--- Other classes macros and post click macros
+-- Post click macro
 function A:SetPostClickMacro()
-    if ( A.playerClass == "DRUID" ) then
-        A:SetDruidSpells();
-
+    if ( A.db.profile.classesMacrosEnabled and A.playerClass == "DRUID" ) then
         if ( A.playerLevel >= 18 ) then
             A.postClickMacro = ("/cast [swimming] %s; %s\n%s"):format(A.druidAquaticForm, A.druidTravelForm, A.macroDismountString);
         elseif ( A.playerLevel >= 16 ) then
@@ -249,20 +263,15 @@ function A:SetPostClickMacro()
         else
             A.postClickMacro = A.macroDismountString;
         end
-    elseif ( A.playerClass == "SHAMAN" ) then
-        A:SetShamanSpells();
-
+    elseif ( A.db.profile.classesMacrosEnabled and A.playerClass == "SHAMAN" ) then
         if ( A.playerLevel >= 16 ) then
             A.postClickMacro = ("/cast %s\n%s"):format(A.shamanGhostWolf, A.macroDismountString);
         else
             A.postClickMacro = A.macroDismountString;
         end
-    elseif ( A.playerClass == "DEATHKNIGHT" ) then -- No specific post macro for DK, but this is a good place to set their spells
-        A:SetDeathKnightSpells();
-        A.postClickMacro = A.macroDismountString;
+    --elseif ( A.playerClass == "DEATHKNIGHT" ) then
+    --    A.postClickMacro = A.macroDismountString;
     elseif ( A.db.profile.classesMacrosEnabled and A.playerClass == "HUNTER" ) then
-        A:SetHunterSPells();
-
         local spell;
 
         if ( A.db.profile.hunterPreferPack ) then
@@ -279,9 +288,12 @@ function A:SetPostClickMacro()
     else
         A.postClickMacro = A.macroDismountString;
     end
+
+    -- Fire the Post Click callback to update the button macro
+    A:PostClickMount(PetsAndMountsSecureButtonMounts);
 end
 
---- PreClick
+--- PreClick callback
 function A:PreClickMount(button, clickedBy)
     if ( InCombatLockdown() ) then return; end
 
@@ -359,7 +371,7 @@ function A:PreClickMount(button, clickedBy)
     end
 end
 
---- PostClick
+--- PostClick callback
 function A:PostClickMount(button, clickedBy)
     if ( InCombatLockdown() ) then return; end
 
@@ -371,7 +383,7 @@ end
     Pets button pre & post clicks
 -------------------------------------------------------------------------------]]--
 
---- PreClick
+--- PreClick callback
 function A:PreClickPet(button, clickedBy)
     if ( InCombatLockdown() ) then return; end
 

@@ -1146,7 +1146,7 @@ function A:OptionsRoot()
                             {
                                 order = 0,
                                 name = L["Enable"],
-                                desc = L["Enable class specific pre-click macros.\n|cffff7d0aDruid: |r Handle flight forms.\n|cffabd473Hunter: |rHandle cheetah and pack aspects."],
+                                desc = L["Enable class specific macros.\n\n|cffff7d0aDruid: |r Handle flight forms.\n\n|cffabd473Hunter: |rHandle cheetah and pack aspects."],
                                 type = "toggle",
                                 set = function()
                                     A.db.profile.classesMacrosEnabled = not A.db.profile.classesMacrosEnabled;
