@@ -37,8 +37,17 @@ A.color =
     GREEN = "|cff33ff99",
     BLUE = "|cff3399ff",
     WHITE = "|cffffffff",
-    WARRIOR = "|cffc79c6e",
+    DRUID = "|cffff7d0a",
+    DEATHKNIGHT = "|cffc41f3b",
     HUNTER = "|cffabd473",
+    MAGE = "|cff69ccf0",
+    MONK = "|cff00ff96",
+    PALADIN = "|cfff58cba",
+    PRIEST = "|cffffffff",
+    ROGUE = "|cfffff569",
+    SHAMAN = "|cff0070de",
+    WARLOCK = "|cff9482c9",
+    WARRIOR = "|cffc79c6e",
     RESET = "|r",
 };
 

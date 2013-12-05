@@ -702,8 +702,8 @@ end
 
 --- Summon a random mount
 -- If mounted dismount
--- If not choose a random from databases
--- @param cat Mount category set by A:SetMountCat()
+-- If not choose a random mount from databases
+-- @param cat Mount category, if nil set by A:SetMountCat()
 function A:RandomMount(cat)
     A:InitializeDB();
 

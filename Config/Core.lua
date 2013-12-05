@@ -1146,7 +1146,7 @@ function A:OptionsRoot()
                             {
                                 order = 0,
                                 name = L["Enable"],
-                                desc = L["Enable class specific macros.\n\n|cffff7d0aDruid: |r Handle flight forms.\n\n|cffabd473Hunter: |rHandle cheetah and pack aspects."],
+                                desc = L["Enable class specific mount button options."],
                                 type = "toggle",
                                 set = function()
                                     A.db.profile.classesMacrosEnabled = not A.db.profile.classesMacrosEnabled;
@@ -1154,57 +1154,651 @@ function A:OptionsRoot()
                                 end,
                                 get = function() return A.db.profile.classesMacrosEnabled; end,
                             },
-                            hunterHeader =
+                            hideOthers =
                             {
-                                order = 100,
-                                name = A.color.HUNTER..L["Hunter"],
+                                order = 1,
+                                name = L["Hide other classes"],
+                                desc = L["Only show options for your current class."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.hideOtherClasses = not A.db.profile.hideOtherClasses;
+                                    A:SetPostClickMacro();
+                                end,
+                                get = function() return A.db.profile.hideOtherClasses; end,
+                            },
+                            aWordHeader =
+                            {
+                                order = 10,
+                                name = L["A word"],
                                 type = "header",
                             },
-                            hunterPreferPack =
+                            aWord =
                             {
-                                order = 101,
-                                name = L["Prefer Aspect of the Pack"],
-                                desc = L["Prioritise Aspect of the Pack other Aspect of the Cheetah."],
-                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
-                                type = "toggle",
-                                set = function()
-                                    A.db.profile.hunterPreferPack = not A.db.profile.hunterPreferPack;
-                                    A:SetPostClickMacro();
-                                end,
-                                get = function() return A.db.profile.hunterPreferPack; end,
+                                order = 11,
+                                name = L["Out of combat: standing still will summon a random mount, moving will cast a spell for you class.\nIn combat: if you are mounted it will dismount you first, then it will cast a spell for your class, moving or not."],
+                                type = "description",
+                                fontSize = "medium",
                             },
-                            hunterWantModifier =
+                            aWordBlankLine =
                             {
-                                order = 102,
-                                name = L["Use a modifier"],
-                                desc = L["Use a modifier to disable the aspect, this will also prevent the spell toggle.\n Be aware that if a bind is set to the modifier plus the button bind this will not work."],
-                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
-                                type = "toggle",
-                                set = function()
-                                    A.db.profile.hunterWantModifier = not A.db.profile.hunterWantModifier;
-                                    A:SetPostClickMacro();
-                                end,
-                                get = function() return A.db.profile.hunterWantModifier; end,
+                                order = 12,
+                                name = " ",
+                                type = "description",
                             },
-                            hunterModifier =
+                            -- Death Knight 1xx
+                            deathKnight =
                             {
-                                order = 103,
-                                name = L["Modifier"],
-                                desc = L["Select which modifier to use for cancelling aspect."],
-                                disabled = function()
-                                    if ( not A.db.profile.classesMacrosEnabled or not A.db.profile.hunterWantModifier ) then
-                                        return 1;
-                                    else
+                                order = 100,
+                                name = A.color.DEATHKNIGHT..L["Death Knight"],
+                                type = "group",
+                                inline = true,
+                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                hidden = function()
+                                    if ( A.playerClass == "DEATHKNIGHT" or not A.db.profile.hideOtherClasses ) then
                                         return nil;
                                     end
+
+                                    return 1;
                                 end,
-                                type = "select",
-                                values = A.modifiersList,
-                                set = function(info, val)
-                                    A.db.profile.hunterModifier = val;
-                                    A:SetPostClickMacro();
+                                args =
+                                {
+                                    deathKnightDescription =
+                                    {
+                                        order = 1,
+                                        name = L["For Death Knights it handles Death's Advance and Unholy Presence when moving."],
+                                        type = "description",
+                                        fontSize = "medium",
+                                    },
+                                    deathKnightBlankLine =
+                                    {
+                                        order = 2,
+                                        name = " ",
+                                        width = "full",
+                                        type = "description",
+                                    },
+                                    deathKnightHeader =
+                                    {
+                                        order = 10,
+                                        name = L["Options"],
+                                        type = "header",
+                                    },
+                                    deathKnightPreferUnholy =
+                                    {
+                                        order = 20,
+                                        name = L["Prefer Unholy Presence"],
+                                        desc = L["Prioritise Unholy Presence other Death's Advance. If Death's Advance is not selected and this option either, it will still use Unholy Presence."],
+                                        type = "toggle",
+                                        set = function()
+                                            A.db.profile.deathKnightPreferUnholy = not A.db.profile.deathKnightPreferUnholy;
+                                            A:SetPostClickMacro();
+                                        end,
+                                        get = function() return A.db.profile.deathKnightPreferUnholy; end,
+                                    },
+                                },
+                            },
+                            -- Druid 2xx
+                            druid =
+                            {
+                                order = 200,
+                                name = A.color.DRUID..L["Druid"],
+                                type = "group",
+                                inline = true,
+                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                hidden = function()
+                                    if ( A.playerClass == "DRUID" or not A.db.profile.hideOtherClasses ) then
+                                        return nil;
+                                    end
+
+                                    return 1;
                                 end,
-                                get = function() return A.db.profile.hunterModifier; end,
+                                args =
+                                {
+                                    druidDescription =
+                                    {
+                                        order = 1,
+                                        name = L["For Druids it handles aquatic, travel and both flight forms."],
+                                        type = "description",
+                                        fontSize = "medium",
+                                    },
+                                    druidBlankLine =
+                                    {
+                                        order = 2,
+                                        name = " ",
+                                        width = "full",
+                                        type = "description",
+                                    },
+                                    -- druidHeader =
+                                    -- {
+                                        -- order = 10,
+                                        -- name = L["Options"],
+                                        -- type = "header",
+                                    -- },
+                                },
+                            },
+                            -- Hunter 3xx
+                            hunter =
+                            {
+                                order = 300,
+                                name = A.color.HUNTER..L["Hunter"],
+                                type = "group",
+                                inline = true,
+                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                hidden = function()
+                                    if ( A.playerClass == "HUNTER" or not A.db.profile.hideOtherClasses ) then
+                                        return nil;
+                                    end
+
+                                    return 1;
+                                end,
+                                args =
+                                {
+                                    hunterDescription =
+                                    {
+                                        order = 1,
+                                        name = L["For Hunters it handles Aspect of the Cheetah and Aspect of the Pack when moving."],
+                                        type = "description",
+                                        fontSize = "medium",
+                                    },
+                                    hunterBlankLine =
+                                    {
+                                        order = 2,
+                                        name = " ",
+                                        width = "full",
+                                        type = "description",
+                                    },
+                                    hunterHeader =
+                                    {
+                                        order = 10,
+                                        name = L["Options"],
+                                        type = "header",
+                                    },
+                                    hunterPreferPack =
+                                    {
+                                        order = 20,
+                                        name = L["Prefer Aspect of the Pack"],
+                                        desc = L["Prioritise Aspect of the Pack other Aspect of the Cheetah."],
+                                        type = "toggle",
+                                        set = function()
+                                            A.db.profile.hunterPreferPack = not A.db.profile.hunterPreferPack;
+                                            A:SetPostClickMacro();
+                                        end,
+                                        get = function() return A.db.profile.hunterPreferPack; end,
+                                    },
+                                    hunterWantModifier =
+                                    {
+                                        order = 21,
+                                        name = L["Use a modifier"],
+                                        desc = L["Use a modifier to disable the aspect, this will also prevent the spell toggle.\n Be aware that if a bind is set to the modifier plus the button bind this will not work."],
+                                        type = "toggle",
+                                        set = function()
+                                            A.db.profile.hunterWantModifier = not A.db.profile.hunterWantModifier;
+                                            A:SetPostClickMacro();
+                                        end,
+                                        get = function() return A.db.profile.hunterWantModifier; end,
+                                    },
+                                    hunterModifier =
+                                    {
+                                        order = 22,
+                                        name = L["Modifier"],
+                                        desc = L["Select which modifier to use for cancelling aspect."],
+                                        disabled = function()
+                                            if ( not A.db.profile.classesMacrosEnabled or not A.db.profile.hunterWantModifier ) then
+                                                return 1;
+                                            end
+
+                                            return nil;
+                                        end,
+                                        type = "select",
+                                        values = A.modifiersList,
+                                        set = function(info, val)
+                                            A.db.profile.hunterModifier = val;
+                                            A:SetPostClickMacro();
+                                        end,
+                                        get = function() return A.db.profile.hunterModifier; end,
+                                    },
+                                },
+                            },
+                            blankFix = -- Dunno why but the next group name after the hunter's one is sticked to its bottom
+                            {
+                                order = 399,
+                                name = " ",
+                                type = "description",
+                            },
+                            -- Mage 4xx
+                            mage =
+                            {
+                                order = 400,
+                                name = A.color.MAGE..L["Mage"],
+                                type = "group",
+                                inline = true,
+                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                hidden = function()
+                                    if ( A.playerClass == "MAGE" or not A.db.profile.hideOtherClasses ) then
+                                        return nil;
+                                    end
+
+                                    return 1;
+                                end,
+                                args =
+                                {
+                                    mageDescription =
+                                    {
+                                        order = 1,
+                                        name = L["For Mages it handles Blazing Speed and Blink when moving, and Slow Fall when falling."],
+                                        type = "description",
+                                        fontSize = "medium",
+                                    },
+                                    mageBlankLine =
+                                    {
+                                        order = 2,
+                                        name = " ",
+                                        width = "full",
+                                        type = "description",
+                                    },
+                                    mageHeader =
+                                    {
+                                        order = 10,
+                                        name = L["Options"],
+                                        type = "header",
+                                    },
+                                    magePreferBlink =
+                                    {
+                                        order = 20,
+                                        name = L["Prefer Blink"],
+                                        desc = L["Prioritise Blink other Blazing Speed. If Blazing Speed is not selected and this option either, it will still use Blink."],
+                                        type = "toggle",
+                                        set = function()
+                                            A.db.profile.magePreferBlink = not A.db.profile.magePreferBlink;
+                                            A:SetPostClickMacro();
+                                        end,
+                                        get = function() return A.db.profile.magePreferBlink; end,
+                                    },
+                                    mageSlowFall =
+                                    {
+                                        order = 21,
+                                        name = L["Slow Fall"],
+                                        desc = L["Use Slow Fall when falling. IMPORTANT: This will not work when in combat, this is why there is an option to disable it."],
+                                        type = "toggle",
+                                        set = function()
+                                            A.db.profile.mageSlowFall = not A.db.profile.mageSlowFall;
+                                            A:SetPostClickMacro();
+                                        end,
+                                        get = function() return A.db.profile.mageSlowFall; end,
+                                    },
+                                    mageForceSlowFall =
+                                    {
+                                        order = 22,
+                                        name = L["Force Slow Fall"],
+                                        desc = L["force Slow Fall when in combat. This will obviously make Blazing Speed or Blink unavailable in combat."],
+                                        type = "toggle",
+                                        set = function()
+                                            A.db.profile.mageForceSlowFall = not A.db.profile.mageForceSlowFall;
+                                            A:SetPostClickMacro();
+                                        end,
+                                        get = function() return A.db.profile.mageForceSlowFall; end,
+                                    },
+                                },
+                            },
+                            -- Monk 5xx
+                            monk =
+                            {
+                                order = 500,
+                                name = A.color.MONK..L["Monk"],
+                                type = "group",
+                                inline = true,
+                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                hidden = function()
+                                    if ( A.playerClass == "MONK" or not A.db.profile.hideOtherClasses ) then
+                                        return nil;
+                                    end
+
+                                    return 1;
+                                end,
+                                args =
+                                {
+                                    monkDescription =
+                                    {
+                                        order = 1,
+                                        name = L["For Monks it handles Flying Serpent Kick and Roll when moving, and Zen Flight when falling."],
+                                        type = "description",
+                                        fontSize = "medium",
+                                    },
+                                    monkBlankLine =
+                                    {
+                                        order = 2,
+                                        name = " ",
+                                        width = "full",
+                                        type = "description",
+                                    },
+                                    monkHeader =
+                                    {
+                                        order = 10,
+                                        name = L["Options"],
+                                        type = "header",
+                                    },
+                                    monkPreferFlyingSerpentKick =
+                                    {
+                                        order = 20,
+                                        name = L["Prefer Flying Serpent Kick"],
+                                        desc = L["Prioritise Flying Serpent Kick other Roll."],
+                                        type = "toggle",
+                                        set = function()
+                                            A.db.profile.monkPreferSerpentKick = not A.db.profile.monkPreferSerpentKick;
+                                            A:SetPostClickMacro();
+                                        end,
+                                        get = function() return A.db.profile.monkPreferSerpentKick; end,
+                                    },
+                                    monkModifier =
+                                    {
+                                        order = 21,
+                                        name = L["Modifier"],
+                                        desc = L["Select which modifier to use for cancelling Zen Flight."],
+                                        type = "select",
+                                        values = A.modifiersList,
+                                        set = function(info, val)
+                                            A.db.profile.monkModifier = val;
+                                            A:SetPostClickMacro();
+                                        end,
+                                        get = function() return A.db.profile.monkModifier; end,
+                                    },
+                                },
+                            },
+                            -- Paladin 6xx
+                            paladin =
+                            {
+                                order = 600,
+                                name = A.color.PALADIN..L["Paladin"],
+                                type = "group",
+                                inline = true,
+                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                hidden = function()
+                                    if ( A.playerClass == "PALADIN" or not A.db.profile.hideOtherClasses ) then
+                                        return nil;
+                                    end
+
+                                    return 1;
+                                end,
+                                args =
+                                {
+                                    paladinDescription =
+                                    {
+                                        order = 1,
+                                        name = L["For Paladins it handles Speed of Light when moving."],
+                                        type = "description",
+                                        fontSize = "medium",
+                                    },
+                                    paladinBlankLine =
+                                    {
+                                        order = 2,
+                                        name = " ",
+                                        width = "full",
+                                        type = "description",
+                                    },
+                                    -- paladinHeader =
+                                    -- {
+                                        -- order = 10,
+                                        -- name = L["Options"],
+                                        -- type = "header",
+                                    -- },
+                                },
+                            },
+                            -- Priest 7xx
+                            priest =
+                            {
+                                order = 700,
+                                name = A.color.PRIEST..L["Priest"],
+                                type = "group",
+                                inline = true,
+                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                hidden = function()
+                                    if ( A.playerClass == "PRIEST" or not A.db.profile.hideOtherClasses ) then
+                                        return nil;
+                                    end
+
+                                    return 1;
+                                end,
+                                args =
+                                {
+                                    priestDescription =
+                                    {
+                                        order = 1,
+                                        name = L["For Priests it handles Body and Soul and Angelic Feather when moving."],
+                                        type = "description",
+                                        fontSize = "medium",
+                                    },
+                                    priestBlankLine =
+                                    {
+                                        order = 2,
+                                        name = " ",
+                                        width = "full",
+                                        type = "description",
+                                    },
+                                    -- priestHeader =
+                                    -- {
+                                        -- order = 10,
+                                        -- name = L["Options"],
+                                        -- type = "header",
+                                    -- },
+                                },
+                            },
+                            -- Rogue 8xx
+                            rogue =
+                            {
+                                order = 800,
+                                name = A.color.ROGUE..L["Rogue"],
+                                type = "group",
+                                inline = true,
+                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                hidden = function()
+                                    if ( A.playerClass == "ROGUE" or not A.db.profile.hideOtherClasses ) then
+                                        return nil;
+                                    end
+
+                                    return 1;
+                                end,
+                                args =
+                                {
+                                    rogueDescription =
+                                    {
+                                        order = 1,
+                                        name = L["For Rogues it handles Sprint when moving."],
+                                        type = "description",
+                                        fontSize = "medium",
+                                    },
+                                    rogueBlankLine =
+                                    {
+                                        order = 2,
+                                        name = " ",
+                                        width = "full",
+                                        type = "description",
+                                    },
+                                    -- rogueHeader =
+                                    -- {
+                                        -- order = 10,
+                                        -- name = L["Options"],
+                                        -- type = "header",
+                                    -- },
+                                },
+                            },
+                            -- Shaman 9xx
+                            shaman =
+                            {
+                                order = 900,
+                                name = A.color.SHAMAN..L["Shaman"],
+                                type = "group",
+                                inline = true,
+                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                hidden = function()
+                                    if ( A.playerClass == "SHAMAN" or not A.db.profile.hideOtherClasses ) then
+                                        return nil;
+                                    end
+
+                                    return 1;
+                                end,
+                                args =
+                                {
+                                    shamanDescription =
+                                    {
+                                        order = 1,
+                                        name = L["For Shamans it handles Ghost Wolf when moving."],
+                                        type = "description",
+                                        fontSize = "medium",
+                                    },
+                                    shamanBlankLine =
+                                    {
+                                        order = 2,
+                                        name = " ",
+                                        width = "full",
+                                        type = "description",
+                                    },
+                                    -- shamanHeader =
+                                    -- {
+                                        -- order = 10,
+                                        -- name = L["Options"],
+                                        -- type = "header",
+                                    -- },
+                                },
+                            },
+                            -- Warlock 10xx
+                            warlock =
+                            {
+                                order = 1000,
+                                name = A.color.WARLOCK..L["Warlock"],
+                                type = "group",
+                                inline = true,
+                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                hidden = function()
+                                    if ( A.playerClass == "WARLOCK" or not A.db.profile.hideOtherClasses ) then
+                                        return nil;
+                                    end
+
+                                    return 1;
+                                end,
+                                args =
+                                {
+                                    warlockDescription =
+                                    {
+                                        order = 1,
+                                        name = L["For Warlocks it handles Burning Rush and Demonic Circle: Teleport when moving."],
+                                        type = "description",
+                                        fontSize = "medium",
+                                    },
+                                    warlockBlankLine =
+                                    {
+                                        order = 2,
+                                        name = " ",
+                                        width = "full",
+                                        type = "description",
+                                    },
+                                    warlockHeader =
+                                    {
+                                        order = 10,
+                                        name = L["Options"],
+                                        type = "header",
+                                    },
+                                    warlockPreferTeleport =
+                                    {
+                                        order = 20,
+                                        name = L["Prefer Teleport"],
+                                        desc = L["Prioritise Demonic Circle: Teleport other Burning Rush. If Burning Rush is not selected and this option either, it will still use Demonic Circle: Teleport."],
+                                        type = "toggle",
+                                        set = function()
+                                            A.db.profile.warlockPreferTeleport = not A.db.profile.warlockPreferTeleport;
+                                            A:SetPostClickMacro();
+                                        end,
+                                        get = function() return A.db.profile.warlockPreferTeleport; end,
+                                    },
+                                    warlockWantModifier =
+                                    {
+                                        order = 21,
+                                        name = L["Use a modifier"],
+                                        desc = L["Use a modifier to disable Burning Rush, this will also prevent the spell toggle.\n Be aware that if a bind is set to the modifier plus the button bind this will not work."],
+                                        disabled = function()
+                                            if ( not A.db.profile.classesMacrosEnabled or A.db.profile.warlockPreferTeleport ) then
+                                                return 1;
+                                            end
+
+                                            return nil;
+                                        end,
+                                        type = "toggle",
+                                        set = function()
+                                            A.db.profile.warlockWantModifier = not A.db.profile.warlockWantModifier;
+                                            A:SetPostClickMacro();
+                                        end,
+                                        get = function() return A.db.profile.warlockWantModifier; end,
+                                    },
+                                    warlockModifier =
+                                    {
+                                        order = 22,
+                                        name = L["Modifier"],
+                                        desc = L["Select which modifier to use for cancelling Burning Rush."],
+                                        disabled = function()
+                                            if ( not A.db.profile.classesMacrosEnabled or not A.db.profile.warlockWantModifier or A.db.profile.warlockPreferTeleport ) then
+                                                return 1;
+                                            end
+
+                                            return nil;
+                                        end,
+                                        type = "select",
+                                        values = A.modifiersList,
+                                        set = function(info, val)
+                                            A.db.profile.warlockModifier = val;
+                                            A:SetPostClickMacro();
+                                        end,
+                                        get = function() return A.db.profile.warlockModifier; end,
+                                    },
+                                },
+                            },
+                            -- Warrior 11xx
+                            warrior =
+                            {
+                                order = 1100,
+                                name = A.color.WARRIOR..L["Warrior"],
+                                type = "group",
+                                inline = true,
+                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                hidden = function()
+                                    if ( A.playerClass == "WARRIOR" or not A.db.profile.hideOtherClasses ) then
+                                        return nil;
+                                    end
+
+                                    return 1;
+                                end,
+                                args = -- warriorForceHeroicLeap
+                                {
+                                    warriorDescription =
+                                    {
+                                        order = 1,
+                                        name = L["For Warriors it handles Heroic Leap when moving and out of combat. Charge with a hostile target and Intervene with a friendly target when in combat."],
+                                        type = "description",
+                                        fontSize = "medium",
+                                    },
+                                    warriorBlankLine =
+                                    {
+                                        order = 2,
+                                        name = " ",
+                                        width = "full",
+                                        type = "description",
+                                    },
+                                    warriorHeader =
+                                    {
+                                        order = 10,
+                                        name = L["Options"],
+                                        type = "header",
+                                    },
+                                    warriorPreferTeleport =
+                                    {
+                                        order = 20,
+                                        name = L["Force Heroic Leap"],
+                                        desc = L["This will force Heroic Leap when in combat."],
+                                        type = "toggle",
+                                        set = function()
+                                            A.db.profile.warriorForceHeroicLeap = not A.db.profile.warriorForceHeroicLeap;
+                                            A:SetPostClickMacro();
+                                        end,
+                                        get = function() return A.db.profile.warriorForceHeroicLeap; end,
+                                    },
+                                },
                             },
                         },
                     },

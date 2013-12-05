@@ -157,140 +157,312 @@ function A:GotMountAllTable(cat)
     return nil;
 end
 
---[[
-    Expert Riding 34090
-    Artisan Riding 34091
-    Master Riding 90265
---]]
-
--- Druid spellIDs
---[[
-    Travel Form - 783 - lvl 16
-    Aquatic Form - 1066 - lvl 18
-    Flight Form - 33943 - lvl 58
-    Swift Flight Form - 40120 - lvl 70
---]]
-
-function A:SetDruidSpells()
-    A.druidTravelForm = GetSpellInfo(783);
-    A.druidAquaticForm = GetSpellInfo(1066);
-    A.druidFlightForm = GetSpellInfo(33943);
-    A.druidSwiftFlightForm = GetSpellInfo(40120);
-end
-
--- Shaman spellIDs
--- Ghost Wolf 2645 - lvl 16
--- Water Walking 546 - lvl 24
-function A:SetShamanSpells()
-    A.shamanGhostWolf = GetSpellInfo(2645);
-    A.shamanWaterWalking = GetSpellInfo(546);
-end
-
--- Death Knight spellIDs
--- Path of Frost 3714 - lvl 66
-function A:SetDeathKnightSpells()
-    A.deathKnightPathOfFrost = GetSpellInfo(3714);
-end
-
--- Hunter spellIDs
--- Aspect of the Cheetah 5118 - lvl 16
--- Aspect of the Pack 13159 - lvl 56
-function A:SetHunterSPells()
-    A.hunterAspectCheetah = GetSpellInfo(5118);
-    A.hunterAspectPack = GetSpellInfo(13159);
-end
-
---- Set the spell name for the player class
+--- Set the spells names for the player's class
+-- This will check if the spell name is not nil
+-- it is required as for some ppl they are not available on login
+-- latency || bad config + cache deleting = no names from server || client
+A.classesSpellsTable =
+{
+    DEATHKNIGHT =
+    {
+        deathKnightPathOfFrost = 3714, -- lvl 66
+        deathKnightDeathAdvance = 96268, -- lvl 58 - tier 3 row 1 - id 7
+        deathKnightUnholyPresence = 48265, -- lvl 64
+    },
+    DRUID =
+    {
+        druidTravelForm = 783, -- lvl 16
+        druidAquaticForm = 1066, -- lvl 18
+        druidFlightForm = 33943, -- lvl 58
+        druidSwiftFlightForm = 40120, -- lvl 70
+    },
+    HUNTER =
+    {
+        hunterAspectCheetah = 5118, -- lvl 16
+        hunterAspectPack = 13159, -- lvl 56
+    },
+    MAGE =
+    {
+        mageSlowFall = 130, -- lvl 32
+        mageBlink = 1953, -- lvl 7
+        mageBlazingSpeed = 108843, -- lvl 15 - tier 1 row 2 - id 2
+    },
+    MONK =
+    {
+        monkRoll = 109132, -- lvl 5
+        monkFlyingSerpentKick = 101545, -- lvl 18
+        monkZenFlight = 125883, -- lvl 25 - need glyph 125893
+    },
+    PALADIN =
+    {
+        paladinSpeedOfLight = 85499, -- lvl 15 - tier 1 row 1 - id 1
+    },
+    PRIEST =
+    {
+        priestPowerWordShield = 17, -- Body and Soul - lvl 30 - tier 2 row 1 - id 4
+        priestAngelicFeather = 121536, -- lvl 30 - tier 2 row 2 - id 5
+    },
+    ROGUE =
+    {
+        rogueSprint = 2983, -- lvl 26
+    },
+    SHAMAN =
+    {
+        shamanGhostWolf = 2645, -- lvl 16
+        shamanWaterWalking = 546, -- lvl 24
+    },
+    WARLOCK =
+    {
+        warlockDemonicCircle = 48020, -- lvl 76
+        warlockBurningRush = 111400, -- lvl 60 - id 11
+    },
+    WARRIOR =
+    {
+        warriorCharge = 100, -- lvl 3
+        warriorIntervene = 3411, -- lvl 72
+        warriorHeroicLeap = 6544, -- lvl 85
+    },
+};
 function A:SetClassSpells()
-    if ( A.playerClass == "DRUID" ) then
-        A:SetDruidSpells()
-    elseif ( A.playerClass == "SHAMAN" ) then
-        A:SetShamanSpells();
-    elseif ( A.playerClass == "DEATHKNIGHT" ) then
-        A:SetDeathKnightSpells();
-    elseif ( A.playerClass == "HUNTER" ) then
-        A:SetHunterSPells();
+    if ( A.classesSpellsTable[A.playerClass] ) then
+        for k,v in pairs(A.classesSpellsTable[A.playerClass]) do
+            A[k] = GetSpellInfo(v);
+
+            if ( not A[k] ) then
+                A:ScheduleTimer("SetClassSpells", 0.5);
+                return;
+            end
+        end
     end
+
+    A.classSpellsOK = 1;
+    A:SetPostClickMacro();
 end
 
--- Druide preclick macro
-function A:SetDruidPreClickMacro()
-    if ( IsFlyableArea() and IsSpellKnown(40120) ) then
-        A.druidPreClickMacro = ("/cast %s\n%s"):format(A.druidSwiftFlightForm, A.macroDismountString);
-    elseif ( A.playerLevel >= 58 and A:IsFlyable() ) then
-        A.druidPreClickMacro = ("/cast %s\n%s"):format(A.druidFlightForm, A.macroDismountString);
-    elseif ( A.playerLevel >= 20 and A:CanRide() ) then
-        A.druidPreClickMacro = "/cancelform\n/run PetsAndMountsGlobal:RandomMount()";
-    elseif ( A.playerLevel >= 16 ) then
-        A.druidPreClickMacro = ("/cast %s\n%s"):format(A.druidTravelForm, A.macroDismountString);
+--- Death Knight preclick macro
+-- @param button The button object
+-- For DK we handle Death's Advance and Unholy Presence when moving
+function A:SetDeathKnightPreClickMacro(button)
+    if ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
+        local selected = select(5, GetTalentInfo(7));
+
+        if ( A.db.profile.deathKnightPreferUnholy and A.playerLevel >= 64 ) then
+            button:SetAttribute("macrotext", ("%s\n/cast %s"):format(A.macroDismountString, A.deathKnightUnholyPresence));
+        elseif ( A.playerLevel >= 58 and selected ) then
+            button:SetAttribute("macrotext", ("%s\n/cast %s"):format(A.macroDismountString, A.deathKnightDeathAdvance));
+        else
+            button:SetAttribute("macrotext", "/pammount");
+        end
     else
-        A.druidPreClickMacro = A.macroDismountString;
+        button:SetAttribute("macrotext", "/pammount");
     end
 end
 
--- Hunter preclick macro
-function A:SetHunterPreClickMacro()
+--- Druid pre click macro
+-- @param button The button object
+-- For Druids we handle flight forms
+function A:SetDruidPreClickMacro(button)
+    if ( not IsFlyableArea() and not IsMounted() and GetUnitSpeed("player") > 0 and A.playerLevel >= 16 ) then
+        button:SetAttribute("macrotext", ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidTravelForm));
+    elseif ( IsFlyableArea() and IsSpellKnown(40120) ) then
+        button:SetAttribute("macrotext", ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidSwiftFlightForm));
+    elseif ( A.playerLevel >= 58 and A:IsFlyable() ) then
+        button:SetAttribute("macrotext", ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidFlightForm));
+    elseif ( A.playerLevel >= 20 and A:CanRide() ) then
+        button:SetAttribute("macrotext", ("/cancelform\n/cast [swimming] %s\n/stopmacro [swimming]\n/pammount"):format(A.druidAquaticForm));
+    elseif ( A.playerLevel >= 18 ) then
+        button:SetAttribute("macrotext", ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidTravelForm));
+    elseif ( A.playerLevel >= 16 ) then
+        button:SetAttribute("macrotext", ("%s\n/cast %s"):format(A.macroDismountString, A.druidTravelForm));
+    else
+        button:SetAttribute("macrotext", A.macroDismountString);
+    end
+end
+
+--- Hunter pre click macro
+-- @param button The button object
+-- For Hunters we handle speed aspects when moving
+function A:SetHunterPreClickMacro(button)
     local spell;
 
-    if ( A.db.profile.hunterPreferPack ) then
+    if ( A.db.profile.hunterPreferPack and A.playerLevel >= 56 ) then
         spell = A.hunterAspectPack;
-    else
+    elseif ( A.playerLevel >= 16 ) then
         spell = A.hunterAspectCheetah;
     end
 
-    if ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
+    if ( not spell ) then
+        button:SetAttribute("macrotext", A.macroDismountString);
+    elseif ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
         if ( A.db.profile.hunterWantModifier ) then
-            A.hunterPreClickMacro = ("/cast [nomod] !%s\n/cancelaura [mod:%s] %s\n%s"):format(spell, A.db.profile.hunterModifier, spell, A.macroDismountString);
+            button:SetAttribute("macrotext", ("%s\n/cast [nomod] !%s\n/cancelaura [mod:%s] %s"):format(A.macroDismountString, spell, A.db.profile.hunterModifier, spell));
         else
-            A.hunterPreClickMacro = ("/cast %s\n%s"):format(spell, A.macroDismountString);
+            button:SetAttribute("macrotext", ("%s\n/cast %s"):format(A.macroDismountString, spell));
         end
     else
         if ( A.db.profile.hunterWantModifier ) then
-            A.hunterPreClickMacro = ("/cancelaura [mod:%s] %s\n/stopmacro [mod:%s]\n/run PetsAndMountsGlobal:RandomMount()"):format(A.db.profile.hunterModifier, spell, A.db.profile.hunterModifier);
+            button:SetAttribute("macrotext", ("/cancelaura [mod:%s] %s\n/stopmacro [mod:%s]\n/pammount"):format(A.db.profile.hunterModifier, spell, A.db.profile.hunterModifier));
         else
-            A.hunterPreClickMacro = ("/cancelaura %s\n/run PetsAndMountsGlobal:RandomMount()"):format(spell);
+            button:SetAttribute("macrotext", ("/cancelaura %s\n/pammount"):format(spell));
         end
     end
 end
 
--- Post click macro
-function A:SetPostClickMacro()
-    if ( A.db.profile.classesMacrosEnabled and A.playerClass == "DRUID" ) then
-        if ( A.playerLevel >= 18 ) then
-            A.postClickMacro = ("/cast [swimming] %s; %s\n%s"):format(A.druidAquaticForm, A.druidTravelForm, A.macroDismountString);
-        elseif ( A.playerLevel >= 16 ) then
-            A.postClickMacro = ("/cast %s\n%s"):format(A.druidTravelForm, A.macroDismountString);
-        else
-            A.postClickMacro = A.macroDismountString;
-        end
-    elseif ( A.db.profile.classesMacrosEnabled and A.playerClass == "SHAMAN" ) then
-        if ( A.playerLevel >= 16 ) then
-            A.postClickMacro = ("/cast %s\n%s"):format(A.shamanGhostWolf, A.macroDismountString);
-        else
-            A.postClickMacro = A.macroDismountString;
-        end
-    --elseif ( A.playerClass == "DEATHKNIGHT" ) then
-    --    A.postClickMacro = A.macroDismountString;
-    elseif ( A.db.profile.classesMacrosEnabled and A.playerClass == "HUNTER" ) then
-        local spell;
+--- Mage pre click macro
+-- @param button The button object
+-- For Mages we handle Blink when moving and Slow Fall when falling
+function A:SetMagePreClickMacro(button)
+    if ( A.db.profile.mageSlowFall and IsFalling() and A.playerLevel >= 32 ) then
+        button:SetAttribute("macrotext", ("%s\n/cast %s"):format(A.macroDismountString, A.mageSlowFall));
+    elseif ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
+        local selected = select(5, GetTalentInfo(2));
 
-        if ( A.db.profile.hunterPreferPack ) then
-            spell = A.hunterAspectPack;
+        if ( (A.db.profile.magePreferBlink or not selected) and A.playerLevel >= 7 ) then
+            button:SetAttribute("macrotext", ("%s\n/cast %s"):format(A.macroDismountString, A.mageBlink));
+        elseif ( selected and A.playerLevel >= 15 ) then
+            button:SetAttribute("macrotext", ("%s\n/cast %s"):format(A.macroDismountString, A.mageBlazingSpeed));
         else
-            spell = A.hunterAspectCheetah;
-        end
-
-        if ( A.db.profile.hunterWantModifier ) then
-            A.postClickMacro = ("/cast [nomounted,novehicleui,nomod] !%s\n/cancelaura [nomounted,novehicleui,mod:%s] %s\n%s"):format(spell, A.db.profile.hunterModifier, spell, A.macroDismountString);
-        else
-            A.postClickMacro = ("/cast [nomounted] %s\n%s")format(spell, A.macroDismountString);
+            button:SetAttribute("macrotext", "/pammount");
         end
     else
-        A.postClickMacro = A.macroDismountString;
+        button:SetAttribute("macrotext", "/pammount");
+    end
+end
+
+--- Monk pre click macro
+-- @param button The button object
+-- For monks we handle Roll and Flying Serpent Kick
+function A:SetMonkPreClickMacro(button)
+    local glyphed;
+
+    for i=1,NUM_GLYPH_SLOTS do
+        local enabled, _, _, spellID = GetGlyphSocketInfo(i);
+
+        if ( enabled and spellID == 125893 ) then
+            glyphed = 1;
+        end
     end
 
-    -- Fire the Post Click callback to update the button macro
-    A:PostClickMount(PetsAndMountsSecureButtonMounts);
+    if ( IsFalling() and glyphed ) then
+        button:SetAttribute("macrotext", ("%s\n/cast %s"):format(A.macroDismountString, A.monkZenFlight));
+    elseif ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
+        if ( A.db.profile.monkPreferSerpentKick and A.playerLevel >= 18 ) then
+            button:SetAttribute("macrotext", ("/cancelaura [mod:%s] %s\n/stopmacro [mod:%s]\n%s\n/cast %s")
+            :format(A.db.profile.monkModifier, A.monkZenFlight, A.db.profile.monkModifier, A.macroDismountString, A.monkFlyingSerpentKick));
+        elseif ( A.playerLevel >= 5 ) then
+            button:SetAttribute("macrotext", ("/cancelaura [mod:%s] %s\n/stopmacro [mod:%s]\n%s\n/cast %s")
+            :format(A.db.profile.monkModifier, A.monkZenFlight, A.db.profile.monkModifier, A.macroDismountString, A.monkRoll));
+        else
+            button:SetAttribute("macrotext", ("/cancelaura [mod:%s] %s\n/stopmacro [mod:%s]\n/pammount"):format(A.db.profile.monkModifier, A.monkZenFlight, A.db.profile.monkModifier));
+        end
+    else
+        button:SetAttribute("macrotext", ("/cancelaura [mod:%s] %s\n/stopmacro [mod:%s]\n/pammount"):format(A.db.profile.monkModifier, A.monkZenFlight, A.db.profile.monkModifier));
+    end
+end
+
+--- Paladin pre click macro
+-- @param button The button object
+-- For Paladins we handle Speed of Light when moving
+function A:SetPaladinPreClickMacro(button)
+    if ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
+        local selected = select(5, GetTalentInfo(1));
+
+        if ( A.playerLevel >= 15 and selected ) then
+            button:SetAttribute("macrotext", ("%s\n/cast %s"):format(A.macroDismountString, A.paladinSpeedOfLight));
+        else
+            button:SetAttribute("macrotext", "/pammount");
+        end
+    else
+        button:SetAttribute("macrotext", "/pammount");
+    end
+end
+
+--- Priest pre click macro
+-- @param button The button object
+-- For Priests we handle Body and Soul and Angelic Feather when moving
+function A:SetPriestPreClickMacro(button)
+    if ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
+        local isFree, talent = GetTalentRowSelectionInfo(2);
+
+        if ( A.playerLevel >= 30 and talent == 4 ) then
+            button:SetAttribute("macrotext", ("%s\n/cast %s"):format(A.macroDismountString, A.priestPowerWordShield));
+        elseif ( A.playerLevel >= 30 and talent == 5 ) then
+            button:SetAttribute("macrotext", ("%s\n/cast %s"):format(A.macroDismountString, A.priestAngelicFeather));
+        else
+            button:SetAttribute("macrotext", "/pammount");
+        end
+    else
+        button:SetAttribute("macrotext", "/pammount");
+    end
+end
+
+--- Rogue pre click macro
+-- @param button The button object
+-- For Rogues we handle Sprint when moving
+function A:SetRoguePreClickMacro(button)
+    if ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
+        if ( A.playerLevel >= 26 ) then
+            button:SetAttribute("macrotext", ("%s\n/cast %s"):format(A.macroDismountString, A.rogueSprint));
+        else
+            button:SetAttribute("macrotext", "/pammount");
+        end
+    else
+        button:SetAttribute("macrotext", "/pammount");
+    end
+end
+
+--- Shaman pre click macro
+-- @param button The button object
+-- For Shamans we handle Ghost Wolf when moving
+function A:SetShamanPreClickMacro(button)
+    if ( not IsMounted() and GetUnitSpeed("player") > 0 and A.playerLevel >= 16 ) then
+        button:SetAttribute("macrotext", ("%s\n/cast %s"):format(A.macroDismountString, A.shamanGhostWolf));
+    else
+        button:SetAttribute("macrotext", "/cancelform\n/pammount");
+    end
+end
+
+--- Warlock pre click macro
+-- @param button The button object
+-- For Warlocks we handle teleport and Burning Rush
+function A:SetWarlockPreClickMacro(button)
+    local selected = select(5, GetTalentInfo(11));
+
+    if ( (not selected or A.db.profile.warlockPreferTeleport) and A.playerLevel >= 76 ) then
+        if ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
+            button:SetAttribute("macrotext", ("%s\n/cast %s"):format(A.macroDismountString, A.warlockDemonicCircle));
+        else
+            button:SetAttribute("macrotext", "/pammount");
+        end
+    elseif ( selected ) then
+        if ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
+            if ( A.db.profile.warlockWantModifier ) then
+                button:SetAttribute("macrotext", ("/cancelaura [mod:%s] %s\n/stopmacro [mod:%s]\n%s\n/cast !%s")
+                :format(A.db.profile.warlockModifier, A.warlockBurningRush, A.db.profile.warlockModifier, A.macroDismountString, A.warlockBurningRush));
+            else
+                button:SetAttribute("macrotext", ("%s\n/cast %s"):format(A.macroDismountString, A.warlockBurningRush));
+            end
+        else
+            if ( A.db.profile.warlockWantModifier ) then
+                button:SetAttribute("macrotext", ("/cancelaura [mod:%s] %s\n/stopmacro [mod:%s]\n/pammount"):format(A.db.profile.warlockModifier, A.warlockBurningRush, A.db.profile.warlockModifier));
+            else
+                button:SetAttribute("macrotext", ("/cancelaura %s\n/pammount"):format(A.warlockBurningRush));
+            end
+        end
+    else
+        button:SetAttribute("macrotext", "/pammount");
+    end
+end
+
+--- Warrior pre click macro
+-- @param button The button object
+-- For Warriors we handle Heroic Leap, Charge and Intervene
+function A:SetWarriorPreClickMacro(button)
+    if ( not IsMounted() and GetUnitSpeed("player") > 0 and A.playerLevel >= 76 ) then
+        button:SetAttribute("macrotext", ("%s\n/cast %s"):format(A.macroDismountString, A.warriorHeroicLeap));
+    else
+        button:SetAttribute("macrotext", "/pammount");
+    end
 end
 
 --- PreClick callback
@@ -307,6 +479,7 @@ function A:PreClickMount(button, clickedBy)
             button:SetAttribute("macrotext", nil);
             A:ToggleButtonLock(button);
         else
+            -- Specials mounts
             if ( A.db.profile.shimmeringMoonstone and GetItemCount(101675, nil, nil) > 0 and (A:IsSwimming() == 2 or not A:IsSwimming())
             and not A:IsFlyable() and not (A.db.profile.vehicleExit and A:IsPlayerInVehicle()) ) then -- 37011 - Shimmering Moonstone from Darkmoon fair (Moonfang drop)
                 if ( not A.shimmeringMoonstoneName ) then A.shimmeringMoonstoneName = GetItemInfo(101675); end
@@ -318,41 +491,89 @@ function A:PreClickMount(button, clickedBy)
 
                 button:SetAttribute("type", "macro");
                 button:SetAttribute("macrotext", ("/use %s"):format(A.magicBroomName or "Magic Broom"));
-            elseif ( A.db.profile.surfaceMount and ((A.playerClass == "DEATHKNIGHT" and A.playerLevel >= 66) or (A.playerClass == "SHAMAN" and A.playerLevel >= 24)) and A:IsSwimming() == 2 ) then -- DK and Sham water walking spells
-                if ( A.db.profile.preferSurfaceSpell or (not A.db.profile.preferSurfaceSpell and not A:GotMountAllTable(6)) ) then
-                    if ( A.playerClass == "DEATHKNIGHT" and not UnitBuff("player", A.deathKnightPathOfFrost) ) then
-                        button:SetAttribute("type", "macro");
-                        button:SetAttribute("macrotext", "/cast "..A.deathKnightPathOfFrost);
-                    elseif ( A.playerClass == "SHAMAN" ) then
-                        if ( UnitBuff("player", A.shamanWaterWalking) ) then
+            -- ATM spells names are required
+            elseif ( A.classSpellsOK ) then
+                -- Water walking spells
+                if ( A.db.profile.surfaceMount and ((A.playerClass == "DEATHKNIGHT" and A.playerLevel >= 66) or (A.playerClass == "SHAMAN" and A.playerLevel >= 24)) and A:IsSwimming() == 2 ) then
+                    if ( A.db.profile.preferSurfaceSpell or (not A.db.profile.preferSurfaceSpell and not A:GotMountAllTable(6)) ) then
+                        if ( A.playerClass == "DEATHKNIGHT" and not UnitBuff("player", A.deathKnightPathOfFrost) ) then
                             button:SetAttribute("type", "macro");
-                            button:SetAttribute("macrotext", "/cancelform\n/run PetsAndMountsGlobal:RandomMount()");
+                            button:SetAttribute("macrotext", "/cast !"..A.deathKnightPathOfFrost);
+                        elseif ( A.playerClass == "SHAMAN" ) then
+                            if ( UnitBuff("player", A.shamanWaterWalking) ) then
+                                button:SetAttribute("type", "macro");
+                                button:SetAttribute("macrotext", "/cancelform\n/pammount");
+                            else
+                                button:SetAttribute("type", "macro");
+                                button:SetAttribute("macrotext", "/cast "..A.shamanWaterWalking);
+                            end
                         else
                             button:SetAttribute("type", "macro");
-                            button:SetAttribute("macrotext", "/cast "..A.shamanWaterWalking);
+                            button:SetAttribute("macrotext", "/pammount");
                         end
                     else
                         button:SetAttribute("type", "macro");
-                        button:SetAttribute("macrotext", "/run PetsAndMountsGlobal:RandomMount()");
+                        button:SetAttribute("macrotext", "/pammount");
                     end
+                -- Classes
+                elseif ( A.db.profile.classesMacrosEnabled ) then
+                    -- Death Knight
+                    if ( A.playerClass == "DEATHKNIGHT" ) then
+                        button:SetAttribute("type", "macro");
+                        A:SetDeathKnightPreClickMacro(button);
+                    -- Druid
+                    elseif ( A.playerClass == "DRUID" ) then
+                        button:SetAttribute("type", "macro");
+                        A:SetDruidPreClickMacro(button);
+                    -- Hunter
+                    elseif ( A.playerClass == "HUNTER" ) then
+                        button:SetAttribute("type", "macro");
+                        A:SetHunterPreClickMacro(button);
+                    -- Mage
+                    elseif ( A.playerClass == "MAGE" ) then
+                        button:SetAttribute("type", "macro");
+                        A:SetMagePreClickMacro(button);
+                    -- Monk
+                    elseif ( A.playerClass == "MONK" ) then
+                        button:SetAttribute("type", "macro");
+                        A:SetMonkPreClickMacro(button);
+                    -- Paladin
+                    elseif ( A.playerClass == "PALADIN" ) then
+                        button:SetAttribute("type", "macro");
+                        A:SetPaladinPreClickMacro(button);
+                    -- Priest
+                    elseif ( A.playerClass == "PRIEST" ) then
+                        button:SetAttribute("type", "macro");
+                        A:SetPriestPreClickMacro(button);
+                    -- Rogue
+                    elseif ( A.playerClass == "ROGUE" ) then
+                        button:SetAttribute("type", "macro");
+                        A:SetRoguePreClickMacro(button);
+                    -- Shaman
+                    elseif ( A.playerClass == "SHAMAN" ) then
+                        button:SetAttribute("type", "macro");
+                        A:SetShamanPreClickMacro(button);
+                    -- Warlock
+                    elseif ( A.playerClass == "WARLOCK" ) then
+                        button:SetAttribute("type", "macro");
+                        A:SetWarlockPreClickMacro(button);
+                    -- Warrior
+                    elseif ( A.playerClass == "WARRIOR" ) then
+                        button:SetAttribute("type", "macro");
+                        A:SetWarriorPreClickMacro(button);
+                    -- Just in case
+                    else
+                        button:SetAttribute("type", "macro");
+                        button:SetAttribute("macrotext", "/pammount");
+                    end
+                -- Global macro
                 else
                     button:SetAttribute("type", "macro");
-                    button:SetAttribute("macrotext", "/run PetsAndMountsGlobal:RandomMount()");
+                    button:SetAttribute("macrotext", "/pammount");
                 end
-            elseif ( A.db.profile.classesMacrosEnabled and A.playerClass == "DRUID" ) then
-                A:SetDruidPreClickMacro();
-                button:SetAttribute("type", "macro");
-                button:SetAttribute("macrotext", A.druidPreClickMacro);
-            elseif ( A.db.profile.classesMacrosEnabled and A.playerClass == "HUNTER" ) then
-                A:SetHunterPreClickMacro();
-                button:SetAttribute("type", "macro");
-                button:SetAttribute("macrotext", A.hunterPreClickMacro);
-            elseif ( A.db.profile.classesMacrosEnabled and A.playerClass == "SHAMAN" ) then
-                button:SetAttribute("type", "macro");
-                button:SetAttribute("macrotext", "/cancelform\n/run PetsAndMountsGlobal:RandomMount()");
             else
                 button:SetAttribute("type", "macro");
-                button:SetAttribute("macrotext", "/run PetsAndMountsGlobal:RandomMount()");
+                button:SetAttribute("macrotext", "/pammount");
             end
         end
     elseif ( clickedBy == "RightButton" ) then
@@ -369,6 +590,147 @@ function A:PreClickMount(button, clickedBy)
         button:SetAttribute("macrotext", nil);
         A:OpenConfigPanel();
     end
+end
+
+-- Post click macro
+function A:SetPostClickMacro()
+    if ( A.classSpellsOK ) then
+        -- Death Knight
+        if ( A.playerClass == "DEATHKNIGHT" ) then
+            local selected = select(5, GetTalentInfo(7));
+
+            if ( A.db.profile.deathKnightPreferUnholy and A.playerLevel >= 64 ) then
+                A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.deathKnightUnholyPresence);
+            elseif ( A.playerLevel >= 58 and selected ) then
+                A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.deathKnightDeathAdvance);
+            else
+                A.postClickMacro = A.macroDismountString;
+            end
+        -- Druid
+        elseif ( A.db.profile.classesMacrosEnabled and A.playerClass == "DRUID" ) then
+            if ( A.playerLevel >= 18 ) then
+                A.postClickMacro = ("%s\n/cast [swimming] %s;[nomounted] %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidTravelForm);
+            elseif ( A.playerLevel >= 16 ) then
+                A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.druidTravelForm);
+            else
+                A.postClickMacro = A.macroDismountString;
+            end
+        -- Hunter
+        elseif ( A.db.profile.classesMacrosEnabled and A.playerClass == "HUNTER" ) then
+            local spell;
+
+            if ( A.db.profile.hunterPreferPack and A.playerLevel >= 56 ) then
+                spell = A.hunterAspectPack;
+            elseif ( A.playerLevel >= 16 ) then
+                spell = A.hunterAspectCheetah;
+            end
+
+            if ( not spell ) then
+                A.postClickMacro = A.macroDismountString;
+            elseif ( A.db.profile.hunterWantModifier ) then
+                A.postClickMacro = ("%s\n/cast [nomounted,novehicleui,nomod] !%s\n/cancelaura [nomounted,novehicleui,mod:%s] %s"):format(A.macroDismountString, spell, A.db.profile.hunterModifier, spell);
+            else
+                A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, spell);
+            end
+        -- Mage
+        elseif ( A.db.profile.classesMacrosEnabled and A.playerClass == "MAGE" ) then
+            if ( A.db.profile.mageForceSlowFall ) then
+                A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.mageSlowFall);
+            else
+                local selected = select(5, GetTalentInfo(2));
+
+                if ( (A.db.profile.magePreferBlink or not selected) and A.playerLevel >= 7 ) then
+                    A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.mageBlink);
+                elseif ( selected and A.playerLevel >= 15 ) then
+                    A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.mageBlazingSpeed);
+                else
+                    A.postClickMacro = A.macroDismountString;
+                end
+            end
+        -- Monk
+        elseif ( A.db.profile.classesMacrosEnabled and A.playerClass == "MONK" ) then
+            if ( A.db.profile.monkPreferSerpentKick and A.playerLevel >= 18 ) then
+                A.postClickMacro = ("/cancelaura [mod:%s] %s\n/stopmacro [mod:%s]\n%s\n/cast [nomounted] %s")
+                :format(A.db.profile.monkModifier, A.monkZenFlight, A.db.profile.monkModifier, A.macroDismountString, A.monkFlyingSerpentKick);
+            elseif ( A.playerLevel >= 5 ) then
+                A.postClickMacro = ("/cancelaura [mod:%s] %s\n/stopmacro [mod:%s]\n%s\n/cast [nomounted] %s")
+                :format(A.db.profile.monkModifier, A.monkZenFlight, A.db.profile.monkModifier, A.macroDismountString, A.monkRoll);
+            else
+                A.postClickMacro = ("/cancelaura [mod:%s] %s\n/stopmacro [mod:%s]\n%s")
+                :format(A.db.profile.monkModifier, A.monkZenFlight, A.db.profile.monkModifier, A.macroDismountString);
+            end
+        -- Paladin
+        elseif ( A.db.profile.classesMacrosEnabled and A.playerClass == "PALADIN" ) then
+            local selected = select(5, GetTalentInfo(1));
+
+            if ( A.playerLevel >= 15 and selected ) then
+                A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.paladinSpeedOfLight);
+            else
+                A.postClickMacro = A.macroDismountString;
+            end
+        -- Priest
+        elseif ( A.db.profile.classesMacrosEnabled and A.playerClass == "PRIEST" ) then
+            local isFree, talent = GetTalentRowSelectionInfo(2);
+
+            if ( A.playerLevel >= 30 and talent == 4 ) then
+                A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.priestPowerWordShield);
+            elseif ( A.playerLevel >= 30 and talent == 5 ) then
+                A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.priestAngelicFeather);
+            else
+                A.postClickMacro = A.macroDismountString;
+            end
+        -- Rogue
+        elseif ( A.db.profile.classesMacrosEnabled and A.playerClass == "ROGUE" ) then
+            if ( A.playerLevel >= 26 ) then
+                A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.rogueSprint);
+            else
+                A.postClickMacro = A.macroDismountString;
+            end
+        -- Shaman
+        elseif ( A.db.profile.classesMacrosEnabled and A.playerClass == "SHAMAN" ) then
+            if ( A.playerLevel >= 16 ) then
+                A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.shamanGhostWolf);
+            else
+                A.postClickMacro = A.macroDismountString;
+            end
+        -- Warlock
+        elseif ( A.db.profile.classesMacrosEnabled and A.playerClass == "WARLOCK" ) then
+            local selected = select(5, GetTalentInfo(11));
+
+            if ( (not selected or A.db.profile.warlockPreferTeleport) and A.playerLevel >= 76 ) then
+                A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.warlockDemonicCircle);
+            elseif ( selected ) then
+                if ( A.db.profile.warlockWantModifier ) then
+                    A.postClickMacro = ("%s\n/cast [nomounted,novehicleui,nomod] !%s\n/cancelaura [nomounted,novehicleui,mod:%s] %s")
+                    :format(A.macroDismountString, A.warlockBurningRush, A.db.profile.warlockModifier, A.warlockBurningRush);
+                else
+                    A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.warlockBurningRush);
+                end
+            else
+                A.postClickMacro = A.macroDismountString;
+            end
+        -- Warrior
+        elseif ( A.db.profile.classesMacrosEnabled and A.playerClass == "WARRIOR" ) then
+            if ( A.db.profile.warriorForceHeroicLeap and A.playerLevel >= 76 ) then
+                A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.warriorHeroicLeap);
+            else
+                if ( A.playerLevel >= 72 ) then
+                    A.postClickMacro = ("%s\n/cast [nomounted,@target,help] %s;[nomounted,@target,harm] %s"):format(A.macroDismountString, A.warriorIntervene, A.warriorCharge);
+                elseif ( A.playerLevel >= 3 ) then
+                    A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.warriorCharge);
+                else
+                    A.postClickMacro = A.macroDismountString;
+                end
+            end
+        else
+            A.postClickMacro = A.macroDismountString;
+        end
+    else
+        A.postClickMacro = A.macroDismountString;
+    end
+
+    -- Fire the Post Click callback to update the button macro
+    A:PostClickMount(PetsAndMountsSecureButtonMounts);
 end
 
 --- PostClick callback
@@ -398,7 +760,7 @@ function A:PreClickPet(button, clickedBy)
             A:ToggleButtonLock(button);
         else
             button:SetAttribute("type", "macro");
-            button:SetAttribute("macrotext", "/run PetsAndMountsGlobal:RandomPet()");
+            button:SetAttribute("macrotext", "/pampet");
         end
     elseif ( clickedBy == "RightButton" ) then
         button:SetAttribute("type", "macro");

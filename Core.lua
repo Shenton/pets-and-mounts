@@ -6,20 +6,8 @@
     Core.lua
 -------------------------------------------------------------------------------]]--
 
---[[
-créer la table des sorts de mouvement par classe
-choix de l'endroit ou utiliser le sort - limité par les conditions de macro
-methode d'ajout a la db de config
-method d'ajout au panneau de config
-]]
-
--- TODO: les icones des boutons
-
--- TODO: Session, timed force one and area
-
+-- TODO: Session, timed for force one and area
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
--- TODO: Fix companion staying where you died
-
 -- TODO: move back red flying cloud to hybrid and prevent summoning it when under water
 
 local A = _G["PetsAndMountsGlobal"];
@@ -85,16 +73,6 @@ function A:SlashCommand(input)
     elseif ( arg1 == "mapids" ) then
         A:ProcessMapID();
     --@end-debug@
-    end
-end
-
---- Show or hide the minimap icon
-function A:ShowHideMinimap()
-    if ( A.db.profile.ldbi.hide ) then
-        A:Message(L["Minimap icon is hidden if you want to show it back use: /pam or /petsandmounts"], true);
-        LibStub("LibDBIcon-1.0"):Hide("PetsAndMountsLDBI");
-    else
-        LibStub("LibDBIcon-1.0"):Show("PetsAndMountsLDBI");
     end
 end
 
@@ -1449,8 +1427,19 @@ function A:ApplyCurrentMountInfos()
     A:SetButtonsIcons();
 end
 
+--- Show or hide the minimap icon
+function A:ShowHideMinimap()
+    if ( A.db.profile.ldbi.hide ) then
+        --A:Message(L["Minimap icon is hidden if you want to show it back use: /pam or /petsandmounts"], true);
+        LibStub("LibDBIcon-1.0"):Hide("PetsAndMountsLDBI");
+    else
+        LibStub("LibDBIcon-1.0"):Show("PetsAndMountsLDBI");
+    end
+end
+
 --- Set everything
 function A:SetEverything()
+    A:DebugMessage("SetEverything()");
     -- Set player vars
     A.playerClass = select(2, UnitClass("player"));
     A.playerGUID = UnitGUID("player");
@@ -1459,14 +1448,19 @@ function A:SetEverything()
     A.playerRace = select(2, UnitRace("player"));
     A.playerName = UnitName("player");
 
+    if ( not A.playerClass or not A.playerGUID or not A.playerLevel
+    or not A.playerFaction or not A.playerRace or not A.playerName ) then
+        A:ScheduleTimer("SetEverything", 1);
+        return;
+    end
+
     A:SetDebugMessage();
     A:ShowHideMinimap();
     A:SetAutoSummonOverride(1);
     A:SetStealthEvents();
 
-    A:SetClassSpells();
     A:SetMacroDismountString();
-    A:SetPostClickMacro();
+    A:SetClassSpells();
     A:SetButtonsMacro();
     A:SetButtons();
 
@@ -1999,8 +1993,9 @@ function A:PLAYER_ENTERING_WORLD()
     A:GetCurrentMapID();
     A:SendAddonVersion();
 
-    -- Set those here, prevent every addon actions with pets or mounts too soon
+    -- Set those here, prevent every add-on actions with pets or mounts too soon
     if ( A.onFirstLoadActions ) then
+        -- Events
         A:RegisterEvent("PLAYER_REGEN_DISABLED"); -- Combat.
         A:RegisterEvent("PLAYER_REGEN_ENABLED"); -- Out of combat.
         A:RegisterEvent("PLAYER_CONTROL_GAINED"); -- After a cc or fly path.
@@ -2008,6 +2003,17 @@ function A:PLAYER_ENTERING_WORLD()
         A:RegisterEvent("PLAYER_ALIVE"); -- It's alive!! (Res, also fire when releasing)
         A:RegisterEvent("PLAYER_LOSES_VEHICLE_DATA"); -- Quitting a vehicle or a multi mount you control.
         A:RegisterEvent("UNIT_EXITED_VEHICLE"); -- Exiting a vehicle.
+
+        -- If player is a lock, building database on spec switch or glyph modification is needed
+        if ( A.playerClass == "WARLOCK" ) then
+            A:RegisterEvent("GLYPH_UPDATED"); -- Will also fire when switching spec
+        end
+
+        -- If player is a DK, a Paladin or a Priest, we need to monitor talents modifications
+        if ( A.playerClass == "DEATHKNIGHT" or A.playerClass == "PALADIN" or A.playerClass == "PRIEST" ) then
+            A:RegisterEvent("PLAYER_TALENT_UPDATE");
+        end
+
         A:LoginModificationsFixes();
         A:ScheduleTimer("InitializeDB", 5);
         A.onFirstLoadActions = nil;
@@ -2176,6 +2182,10 @@ function A:UNIT_EXITED_VEHICLE()
         A:CancelTimer(A.currentInfosTimer, 1);
         A.currentInfosTimer = A:ScheduleTimer("ApplyCurrentPetInfos", 3);
     end
+end
+
+function A:PLAYER_TALENT_UPDATE()
+    A:SetPostClickMacro();
 end
 
 --[[-------------------------------------------------------------------------------
@@ -2430,6 +2440,17 @@ A.aceDefaultDB =
         mountButtonIconCurrent = 1, -- d
         petButtonIcon = A.defaultPetButtonIcon, -- d
         mountButtonIcon = A.defaultMountButtonIcon, -- d
+        deathKnightPreferUnholy = nil, -- d
+        mageSlowFall = nil, -- d
+        magePreferBlink = nil, -- d
+        mageForceSlowFall = nil, -- d
+        monkPreferSerpentKick = nil, -- d
+        monkModifier = "shift", -- d
+        hideOtherClasses = nil, -- d
+        warlockPreferTeleport = nil, -- d
+        warlockWantModifier = nil, -- d
+        warlockModifier = "shift", -- d
+        warriorForceHeroicLeap = nil, -- d
     },
 };
 
@@ -2779,9 +2800,19 @@ end
 --- AceAddon callback
 -- Called during the PLAYER_LOGIN event
 function A:OnEnable()
-    -- Slash command
+    -- Slash commands
     A:RegisterChatCommand("petsandmounts", "SlashCommand");
     A:RegisterChatCommand("pam", "SlashCommand");
+    A:RegisterChatCommand("pampet", "RandomPet");
+    -- /pammount cannot call the method directly, arg is not nil and RandomMount check if the arg is nil
+    A:RegisterChatCommand("pammount", function() A:RandomMount(); end);
+    A:RegisterChatCommand("pamground", function() A:RandomMount(1); end);
+    A:RegisterChatCommand("pamfly", function() A:RandomMount(2); end);
+    A:RegisterChatCommand("pamhybrid", function() A:RandomMount(3); end);
+    A:RegisterChatCommand("pamaquatic", function() A:RandomMount(4); end);
+    A:RegisterChatCommand("pampassengers", function() A:RandomMount(5); end);
+    A:RegisterChatCommand("pamsurface", function() A:RandomMount(6); end);
+    A:RegisterChatCommand("pamrepair", function() A:RandomMount(7); end);
 
     -- Events
     A:RegisterEvent("PLAYER_ENTERING_WORLD");
@@ -2792,9 +2823,4 @@ function A:OnEnable()
 
     -- Set everything
     A:SetEverything();
-
-    -- If it is a lock, building database on spec switch or glyph modification is needed
-    if ( A.playerClass == "WARLOCK" ) then
-        A:RegisterEvent("GLYPH_UPDATED"); -- Will also fire when switching spec
-    end
 end
