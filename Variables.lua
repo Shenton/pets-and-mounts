@@ -48,6 +48,14 @@ A.color =
     SHAMAN = "|cff0070de",
     WARLOCK = "|cff9482c9",
     WARRIOR = "|cffc79c6e",
+    POOR = "|cff9d9d9d",
+    COMMON = "|cffffffff",
+    UNCOMMON = "|cff1eff00",
+    RARE = "|cff0070dd",
+    EPIC = "|cffa335ee",
+    LEGENDAY = "|cffff8000",
+    ARTIFACT = "|cffe6cc80",
+    HEIRLOOM = "|cffe6cc80",
     RESET = "|r",
 };
 

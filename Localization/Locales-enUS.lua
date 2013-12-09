@@ -41,6 +41,7 @@ L["Delete"] = true;
 L["Dock"] = true;
 
 L["Enable"] = true;
+L["Expand"] = true;
 
 L["Filters"] = true;
 L["Fly"] = true;
@@ -57,6 +58,7 @@ L["Indoor"] = true;
 L["Label"] = true;
 L["Left"] = true;
 L["Licence"] = true;
+L["Link"] = true;
 --L["Load"] = true;
 L["Lock"] = true;
 L["Looting"] = true;
@@ -75,6 +77,7 @@ L["No"] = true;
 L["None"] = true;
 
 L["Off"] = true;
+L["Ok"] = true;
 L["On"] = true;
 L["Options"] = true;
 
@@ -93,6 +96,7 @@ L["Separator"] = true;
 L["Shift"] = true;
 L["Size"] = true;
 L["Stealthed"] = true
+L["Summary"] = true;
 L["Summon"] = true;
 L["Surface"] = true;
 
@@ -342,16 +346,16 @@ L["Only show options for your current class."] = true;
 L["Prefer Blink"] = true;
 L["Prioritise Blink other Blazing Speed. If Blazing Speed is not selected and this option either, it will still use Blink."] = true;
 L["Force Slow Fall"] = true;
-L["force Slow Fall when in combat. This will obviously make Blazing Speed or Blink unavailable in combat."] = true;
+L["Force Slow Fall when in combat. This will obviously make Blazing Speed or Blink unavailable in combat."] = true;
 L["For Death Knights it handles Death's Advance and Unholy Presence when moving."] = true;
 L["For Druids it handles aquatic, travel and both flight forms."] = true;
 L["For Hunters it handles Aspect of the Cheetah and Aspect of the Pack when moving."] = true;
-L["For Mages it handles Blazing Speed and Blink when moving, and Slow Fall when falling."] = true;
+L["For Mages it handles Blazing Speed and Blink when moving. Slow Fall when falling."] = true;
 L["For Paladins it handles Speed of Light when moving."] = true;
 L["For Priests it handles Body and Soul and Angelic Feather when moving."] = true;
 L["For Rogues it handles Sprint when moving."] = true;
 L["For Shamans it handles Ghost Wolf when moving."] = true;
-L["For Monks it handles Flying Serpent Kick and Roll when moving, and Zen Flight when falling."] = true;
+L["For Monks it handles Flying Serpent Kick and Roll when moving. Zen Flight when falling."] = true;
 L["Select which modifier to use for cancelling Zen Flight."] = true;
 L["For Warlocks it handles Burning Rush and Demonic Circle: Teleport when moving."] = true;
 L["Out of combat: standing still will summon a random mount, moving will cast a spell for you class.\nIn combat: if you are mounted it will dismount you first, then it will cast a spell for your class, moving or not."] = true;
@@ -362,6 +366,26 @@ L["Select which modifier to use for cancelling Burning Rush."] = true;
 L["For Warriors it handles Heroic Leap when moving and out of combat. Charge with a hostile target and Intervene with a friendly target when in combat."] = true;
 L["Force Heroic Leap"] = true;
 L["This will force Heroic Leap when in combat."] = true;
+L["A word"] = true;
+L["Custom macros"] = true;
+L["Enable the mount button/bind custom macros."] = true;
+L["Macro: %s"] = true;
+L["LUA mode"] = true;
+L["Use LUA code instead of macro syntax."] = true;
+L["Pre Click"] = true;
+L["Expand the text editor."] = true;
+L["Post Click"] = true;
+L["Prepend default icon"] = true;
+L["Prepend the default icon when you have no companion or mount."] = true;
+L["Forms on move"] = true;
+L["Instead of just using forms, this will only use forms when moving and regular mounts when standing still. This is only affecting out of combat macro."] = true;
+L["Macro protection"] = true;
+L["LUA protection"] = true;
+L["Enable the anti grief/scam protection. This a basic protection, the best one is still your brain."] = true;
+L["Icon size"] = true;
+L["Select the text icon size."] = true;
+L["Icon vertical offset"] = true;
+L["Select the text icon vertical offset."] = true;
 -- About
 L["Auto and random summon for your pets and mounts, highly customizable. With Data Broker support."] = true;
 L["A new version is available, version |cff33ff99%s|r revision |cff33ff99%s %s|r."] = true;
@@ -405,6 +429,61 @@ L["New companions set %s added."] = true;
 L["New mounts set %s added."] = true;
 L["You have no favorite selected."] = true;
 L["Cannot modify buttons anchors when they are not docked."] = true;
+L["Your LUA custom %s macro for %s got an error. Error: %s"] = true;
 -- Popup messages
 L["The bindings system have been entirely redone.\n\nThe add-on tried to update them, but just in case you should check if everything is in place.\n\nDo you want to open the configuration panel?"] = true;
+L["|cffff3333Anti grief/scam protection triggered, you should be careful.|r\n\nMessage: |cffff3333%s|r was found in your %s %s custom macro.\n\n|cff33ff99This macro was not used.|r\n\nYou can disable the protection within the configuration panel."] = true;
+L["|cffff3333Anti grief/scam protection triggered, you should be careful.|r\n\nMessage: |cffff3333%s|r was found in your %s %s custom LUA.\n\n|cff33ff99This code was not used.|r\n\nYou can disable the protection within the configuration panel."] = true
+-- Specials
+L["CUSTOM_MACROS_EXLANATIONS"] = [[|cff3399ffIf you cannot scroll the page down select a category on the left menu and return back.|r
+
+|cff9d9d9d-----------------------------------------------------------|r
+
+|cffff3333If you are here you need to know what you are doing.|r
+
+You cannot revert any changes made here, but you can disable custom macros and it will use the built in system.
+
+|cff9d9d9d-----------------------------------------------------------|r
+
+|cffff3333If you import someone else code, be sure to have a total trust in him/her. Do not come and blame me if you get griefed.|r
+
+|cff9d9d9d-----------------------------------------------------------|r
+
+First, a look at how secure buttons works.
+
+When clicked (or using a bind), a preclick function is called which set a macro to the button, then this macro is executed, after that a postclick function is called which also set the button macro. Yes, this all happen in one click.
+
+This cannot be done in combat, this is why we set the macro we want in combat with the postclick one.
+
+If pre or post are left blank it will use the built in system.
+
+Custom macros have two modes, classic macros syntax and lua.
+
+|cff9d9d9d-----------------------------------------------------------|r
+
+Classic macros are what they are named after, you can find help with commands and conditions all other the internet.
+
+Here is some commands provided by the addon:
+/pampet - Summon a random pet
+/pammout - Summon a random mount
+/pamground - Summon a random ground mount
+/pamfly - Summon a random flying mount
+/pamhybrid - Summon a random hybrid mount
+/pamaquatic - Summon a random aquatic mount
+/pampassengers - Summon a random passengers mount
+/pamsurface - Summon a random surface mount
+/pamrepair - Summon a random repair mount
+
+Those are just commands, they do not interact with macros conditionals.
+
+|cff9d9d9d----------------------------------------------------------|r
+
+lua mode is again what it is named after.
+
+If you use this mode I assume you really know what you are doing.
+
+The code will be turned into a function. The preclick code will be launched every time when out of combat. The postclick one will be called only once, on login, when changing related options or when editing the code.
+
+And a last, it should always return a macro string.
+]];
 end

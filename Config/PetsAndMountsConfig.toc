@@ -13,6 +13,7 @@ Libs\AceConfig-3.0\AceConfig-3.0.xml
 #@end-no-lib-strip@
 
 Libs\AceGUIWidget-DropDown-SortByValue\Lib.xml
+Libs\ForAllIndentsAndPurposes\ForAllIndentsAndPurposes.lua
 
 Frames.xml
 

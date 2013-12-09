@@ -311,14 +311,16 @@
 
                 if ( self.cfg.icon ) then
                     self.icon:SetTexture(self.cfg.icon);
+                    self:SetWidth(380);
                     self.text:SetJustifyH("LEFT");
-                    self.text:SetSize(220, 0);
+                    --self.text:SetSize(220, 0);
                     self.text:ClearAllPoints();
                     self.text:SetPoint("TOPRIGHT", self, "TOPRIGHT", -16, -32);
                 else
                     self.icon:SetTexture(nil);
+                    self:SetWidth(320);
                     self.text:SetJustifyH("CENTER");
-                    self.text:SetSize(280, 0);
+                    --self.text:SetSize(280, 0);
                     self.text:ClearAllPoints();
                     self.text:SetPoint("TOP", self, "TOP", 0, -32);
                 end

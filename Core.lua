@@ -847,6 +847,20 @@ function A:AddSummonFilters()
     end
 end
 
+--- Add custom macros categories to the database
+function A:AddCustomMacros()
+    for k,v in ipairs(A.areaTypes) do
+        if ( A.db.profile.customMountMacros[v] == nil ) then
+            A.db.profile.customMountMacros[v] =
+            {
+                luaMode = nil,
+                macro = {},
+                lua = {},
+            };
+        end
+    end
+end
+
 --[[-------------------------------------------------------------------------------
     Sets methods
 -------------------------------------------------------------------------------]]--
@@ -1337,7 +1351,7 @@ function A:SetDataBroker()
     if ( A.db.profile.dataBrokerTextPet ) then
         if ( A.currentPetName ) then
             if ( A.db.profile.dataBrokerTextPetIcon ) then
-                text = "|T"..A.currentPetIcon..":16|t "..A.currentPetName;
+                text = "|T"..A.currentPetIcon..":"..A.db.profile.dataBrokerTextIconSize..":"..A.db.profile.dataBrokerTextIconSize..":0:"..A.db.profile.dataBrokerTextIconVerticalOffset.."|t "..A.currentPetName;
             else
                 text = A.currentPetName;
             end
@@ -1348,13 +1362,13 @@ function A:SetDataBroker()
         if ( A.currentMountName ) then
             if ( text == "" ) then
                 if ( A.db.profile.dataBrokerTextMountIcon ) then
-                    text = "|T"..A.currentMountIcon..":16|t "..A.currentMountName;
+                    text = "|T"..A.currentMountIcon..":"..A.db.profile.dataBrokerTextIconSize..":"..A.db.profile.dataBrokerTextIconSize..":0:"..A.db.profile.dataBrokerTextIconVerticalOffset.."|t "..A.currentMountName;
                 else
                     text = A.currentMountName;
                 end
             else
                 if ( A.db.profile.dataBrokerTextMountIcon ) then
-                    text = text..A.db.profile.dataBrokerTextSeparator.."|T"..A.currentMountIcon..":16|t "..A.currentMountName;
+                    text = text..A.db.profile.dataBrokerTextSeparator.."|T"..A.currentMountIcon..":"..A.db.profile.dataBrokerTextIconSize..":"..A.db.profile.dataBrokerTextIconSize..":0:"..A.db.profile.dataBrokerTextIconVerticalOffset.."|t "..A.currentMountName;
                 else
                     text = text..A.db.profile.dataBrokerTextSeparator..A.currentMountName;
                 end
@@ -1363,7 +1377,11 @@ function A:SetDataBroker()
     end
 
     if ( text == "" ) then
-        A.ldbObject.text = L["None"];
+        if ( A.db.profile.dataBrokerPrependDefaultIcon ) then
+            A.ldbObject.text = "|TInterface\\ICONS\\"..A.db.profile.dataBrokerIcon..":"..A.db.profile.dataBrokerTextIconSize..":"..A.db.profile.dataBrokerTextIconSize..":0:"..A.db.profile.dataBrokerTextIconVerticalOffset.."|t "..L["None"];
+        else
+            A.ldbObject.text = L["None"];
+        end
     else
         A.ldbObject.text = text;
     end
@@ -2023,7 +2041,7 @@ function A:PLAYER_ENTERING_WORLD()
     -- No delay for you on fist loading
     A:AutoPetDelay();
 
-    -- No current pets & mounts infos update on first login too
+    -- No current pets & mounts infos update on first loading too
     A:ApplyCurrentBothInfos();
 end
 
@@ -2033,6 +2051,7 @@ function A:ZONE_CHANGED_NEW_AREA()
 
     if ( InCombatLockdown() ) then
         A.delayedZoneSets = 1;
+        return;
     else
         A:SetZonePetsSets();
         A:SetZoneMountsSets();
@@ -2227,7 +2246,7 @@ function A:OnCommReceived(...)
             A.addonUpdateMessageInfo = {remoteVersion, remoteRevision, remoteStage};
             A:NotifyChangeForAll();
             A:Message(L["A newer version of Pets & Mounts is available. You have version %s revision %s %s, %s got version %s revision %s %s. Get it on Curse at %s or with the Curse client."]
-            :format(tostring(localVersion), tostring(localRevision), L[A.versionStage], who, tostring(remoteVersion), tostring(remoteRevision), L[remoteStage], A.color.BLUE.."|HPAM:config:About|h[Link]|h|r"));
+            :format(tostring(localVersion), tostring(localRevision), L[A.versionStage], who, tostring(remoteVersion), tostring(remoteRevision), L[remoteStage], A.color.BLUE.."|HPAM:config:About|h["..L["Link"].."]|h|r"));
         end
     end
 end
@@ -2451,6 +2470,30 @@ A.aceDefaultDB =
         warlockWantModifier = nil, -- d
         warlockModifier = "shift", -- d
         warriorForceHeroicLeap = nil, -- d
+        customMountMacrosEnabled = nil, -- d
+        customMountMacros = -- d
+        {
+            default =
+            {
+                luaMode = nil,
+                macro =
+                {
+                    pre = "/pammount",
+                    post = "/pammount",
+                },
+                lua =
+                {
+                    pre = "return \"/pammount\";",
+                    post = "return \"/pammount\";",
+                },
+            },
+        },
+        dataBrokerPrependDefaultIcon = nil, -- d
+        druidWantFormsOnMove = nil, -- d
+        customMacrosMacroProtectionEnabled = 1, -- d
+        customMacrosLUAProtectionEnabled = 1, -- d
+        dataBrokerTextIconSize = 16, -- d
+        dataBrokerTextIconVerticalOffset = -3, -- d
     },
 };
 
@@ -2701,6 +2744,7 @@ function A:OnInitialize()
     A:DatabaseRevisionCheck();
     A:RemoveDatabaseOldEntries();
     A:AddSummonFilters();
+    A:AddCustomMacros();
 
     -- Profile modification callbacks
     A.db.RegisterCallback(self, "OnProfileChanged", "SetEverything");

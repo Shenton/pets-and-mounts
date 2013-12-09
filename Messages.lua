@@ -225,3 +225,31 @@ A.popupMessages["newBindingsSystemv150"] =
         self:Hide();
     end,
 };
+
+-- Grief/scam protection message
+A.popupMessages["griefScamProtectionMessageMacro"] =
+{
+    type = "message",
+    text = L["|cffff3333Anti grief/scam protection triggered, you should be careful.|r\n\nMessage: |cffff3333%s|r was found in your %s %s custom macro.\n\n|cff33ff99This macro was not used.|r\n\nYou can disable the protection within the configuration panel."],
+    icon = "Interface\\Buttons\\UI-GroupLoot-Pass-Up",
+    leftButtonText = L["Ok"],
+    escapeClose = 1,
+    enterOK = 1,
+    LeftButtonScript = function(self)
+        self:Hide();
+    end,
+};
+
+-- Grief/scam protection message
+A.popupMessages["griefScamProtectionMessageLUA"] =
+{
+    type = "message",
+    text = L["|cffff3333Anti grief/scam protection triggered, you should be careful.|r\n\nMessage: |cffff3333%s|r was found in your %s %s custom LUA.\n\n|cff33ff99This code was not used.|r\n\nYou can disable the protection within the configuration panel."],
+    icon = "Interface\\RAIDFRAME\\ReadyCheck-NotReady",
+    leftButtonText = L["Ok"],
+    escapeClose = 1,
+    enterOK = 1,
+    LeftButtonScript = function(self)
+        self:Hide();
+    end,
+};

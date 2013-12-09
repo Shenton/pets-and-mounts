@@ -37,6 +37,9 @@ A.searchFrame = PetsAndMountsSearchFrame;
 -- Icon list frame
 A.iconFrame = PetsAndMountsSelectIconFrame;
 
+-- Input frame
+A.inputFrame = PetsAndMountsInputCodeFrame;
+
 local modelFrameSizeSelect =
 {
     [100] = "100x100",
@@ -311,6 +314,24 @@ function A:GetMountsTable()
 end
 
 --[[-------------------------------------------------------------------------------
+    Input code frame methods
+-------------------------------------------------------------------------------]]--
+
+--- OnClick callback
+function A:OnClickAcceptInputCode(frame)
+    if ( not frame.content or not frame.where or not frame.mode or not frame.click ) then
+        return;
+    end
+
+    frame.content = A:StringTrim(frame.content);
+    A.db.profile.customMountMacros[frame.where][frame.mode][frame.click] = frame.content;
+    frame:Hide();
+    A:SetPostClickMacro();
+    A:SetPreClickFunction();
+    A:NotifyChangeForAll();
+end
+
+--[[-------------------------------------------------------------------------------
     Config table methods
 -------------------------------------------------------------------------------]]--
 
@@ -483,6 +504,7 @@ function A:OptionsRoot()
                             {
                                 order = 300,
                                 name = " ",
+                                width = "full",
                                 type = "description",
                             },
                             mountName =
@@ -514,11 +536,63 @@ function A:OptionsRoot()
                             {
                                 order = 350,
                                 name = " ",
+                                width = "full",
+                                type = "description",
+                            },
+                            prependDefaultIcon =
+                            {
+                                order = 351,
+                                name = L["Prepend default icon"],
+                                desc = L["Prepend the default icon when you have no companion or mount."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.dataBrokerPrependDefaultIcon = not A.db.profile.dataBrokerPrependDefaultIcon;
+                                    A:SetDataBroker();
+                                end,
+                                get = function() return A.db.profile.dataBrokerPrependDefaultIcon; end,
+                            },
+                            textIconSize =
+                            {
+                                order = 361,
+                                name = L["Icon size"],
+                                desc = L["Select the text icon size."],
+                                type = "range",
+                                min = 8,
+                                max = 64,
+                                step = 2,
+                                width = "full",
+                                set = function(info, val)
+                                    A.db.profile.dataBrokerTextIconSize = val;
+                                    A:SetDataBroker();
+                                end,
+                                get = function() return A.db.profile.dataBrokerTextIconSize; end,
+                            },
+                            textIconVerticalOffset =
+                            {
+                                order = 362,
+                                name = L["Icon vertical offset"],
+                                desc = L["Select the text icon vertical offset."],
+                                type = "range",
+                                min = -32,
+                                max = 32,
+                                step = 1,
+                                width = "full",
+                                set = function(info, val)
+                                    A.db.profile.dataBrokerTextIconVerticalOffset = val;
+                                    A:SetDataBroker();
+                                end,
+                                get = function() return A.db.profile.dataBrokerTextIconVerticalOffset; end,
+                            },
+                            blankLine3 = 
+                            {
+                                order = 370,
+                                name = " ",
+                                width = "full",
                                 type = "description",
                             },
                             separator =
                             {
-                                order = 351,
+                                order = 371,
                                 name = L["Separator"],
                                 desc = L["Define the separator between current companion and mount."],
                                 type = "input",
@@ -1122,7 +1196,7 @@ function A:OptionsRoot()
                                 name = L["Swimming options"],
                                 type = "header",
                             },
-                            isSwimminMountCat =
+                            isSwimmingMountCat =
                             {
                                 order = 2001,
                                 name = L["Underwater mount category"],
@@ -1132,12 +1206,61 @@ function A:OptionsRoot()
                                 set = function(info, val) A.db.profile.isSwimmingMountCat = val; end,
                                 get = function() return A.db.profile.isSwimmingMountCat; end,
                             },
+                            customMacrosHeader =
+                            {
+                                order = 3000,
+                                name = L["Custom macros"],
+                                type = "header",
+                            },
+                            customMacrosEnabled =
+                            {
+                                order = 3002,
+                                name = L["Enable"],
+                                desc = L["Enable the mount button/bind custom macros."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.customMountMacrosEnabled = not A.db.profile.customMountMacrosEnabled;
+                                    A:SetPostClickMacro();
+                                    A:SetPreClickFunction();
+                                end,
+                                get = function() return A.db.profile.customMountMacrosEnabled; end,
+                            },
+                            customMacrosMacroProtection =
+                            {
+                                order = 3003,
+                                name = L["Macro protection"],
+                                desc = L["Enable the anti grief/scam protection. This a basic protection, the best one is still your brain."],
+                                disabled = function() return not A.db.profile.customMountMacrosEnabled; end,
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.customMacrosMacroProtectionEnabled = not A.db.profile.customMacrosMacroProtectionEnabled;
+                                    A:SetPostClickMacro();
+                                    A:SetPreClickFunction();
+                                end,
+                                get = function() return A.db.profile.customMacrosMacroProtectionEnabled; end,
+                            },
+                            customMacrosLUAProtection =
+                            {
+                                order = 3004,
+                                name = L["LUA protection"],
+                                desc = L["Enable the anti grief/scam protection. This a basic protection, the best one is still your brain."],
+                                disabled = function() return not A.db.profile.customMountMacrosEnabled; end,
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.customMacrosLUAProtectionEnabled = not A.db.profile.customMacrosLUAProtectionEnabled;
+                                    A:SetPostClickMacro();
+                                    A:SetPreClickFunction();
+                                end,
+                                get = function() return A.db.profile.customMacrosLUAProtectionEnabled; end,
+                            },
+                            
                         },
                     },
                     classSpecific =
                     {
                         order = 100,
                         name = L["Class specific"],
+                        disabled = function() return A.db.profile.customMountMacrosEnabled; end,
                         type = "group",
                         inline = true,
                         args =
@@ -1151,6 +1274,7 @@ function A:OptionsRoot()
                                 set = function()
                                     A.db.profile.classesMacrosEnabled = not A.db.profile.classesMacrosEnabled;
                                     A:SetPostClickMacro();
+                                    A:SetPreClickFunction();
                                 end,
                                 get = function() return A.db.profile.classesMacrosEnabled; end,
                             },
@@ -1160,10 +1284,7 @@ function A:OptionsRoot()
                                 name = L["Hide other classes"],
                                 desc = L["Only show options for your current class."],
                                 type = "toggle",
-                                set = function()
-                                    A.db.profile.hideOtherClasses = not A.db.profile.hideOtherClasses;
-                                    A:SetPostClickMacro();
-                                end,
+                                set = function() A.db.profile.hideOtherClasses = not A.db.profile.hideOtherClasses; end,
                                 get = function() return A.db.profile.hideOtherClasses; end,
                             },
                             aWordHeader =
@@ -1192,7 +1313,13 @@ function A:OptionsRoot()
                                 name = A.color.DEATHKNIGHT..L["Death Knight"],
                                 type = "group",
                                 inline = true,
-                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                disabled = function()
+                                    if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled ) then
+                                        return 1;
+                                    end
+
+                                    return nil;
+                                end,
                                 hidden = function()
                                     if ( A.playerClass == "DEATHKNIGHT" or not A.db.profile.hideOtherClasses ) then
                                         return nil;
@@ -1231,6 +1358,7 @@ function A:OptionsRoot()
                                         set = function()
                                             A.db.profile.deathKnightPreferUnholy = not A.db.profile.deathKnightPreferUnholy;
                                             A:SetPostClickMacro();
+                                            A:SetPreClickFunction();
                                         end,
                                         get = function() return A.db.profile.deathKnightPreferUnholy; end,
                                     },
@@ -1243,7 +1371,13 @@ function A:OptionsRoot()
                                 name = A.color.DRUID..L["Druid"],
                                 type = "group",
                                 inline = true,
-                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                disabled = function()
+                                    if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled ) then
+                                        return 1;
+                                    end
+
+                                    return nil;
+                                end,
                                 hidden = function()
                                     if ( A.playerClass == "DRUID" or not A.db.profile.hideOtherClasses ) then
                                         return nil;
@@ -1267,12 +1401,25 @@ function A:OptionsRoot()
                                         width = "full",
                                         type = "description",
                                     },
-                                    -- druidHeader =
-                                    -- {
-                                        -- order = 10,
-                                        -- name = L["Options"],
-                                        -- type = "header",
-                                    -- },
+                                    druidHeader =
+                                    {
+                                        order = 10,
+                                        name = L["Options"],
+                                        type = "header",
+                                    },
+                                    druidWantFormsOnMove =
+                                    {
+                                        order = 20,
+                                        name = L["Forms on move"],
+                                        desc = L["Instead of just using forms, this will only use forms when moving and regular mounts when standing still. This is only affecting out of combat macro."],
+                                        type = "toggle",
+                                        set = function()
+                                            A.db.profile.druidWantFormsOnMove = not A.db.profile.druidWantFormsOnMove;
+                                            A:SetPostClickMacro();
+                                            A:SetPreClickFunction();
+                                        end,
+                                        get = function() return A.db.profile.druidWantFormsOnMove; end,
+                                    },
                                 },
                             },
                             -- Hunter 3xx
@@ -1282,7 +1429,13 @@ function A:OptionsRoot()
                                 name = A.color.HUNTER..L["Hunter"],
                                 type = "group",
                                 inline = true,
-                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                disabled = function()
+                                    if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled ) then
+                                        return 1;
+                                    end
+
+                                    return nil;
+                                end,
                                 hidden = function()
                                     if ( A.playerClass == "HUNTER" or not A.db.profile.hideOtherClasses ) then
                                         return nil;
@@ -1321,6 +1474,7 @@ function A:OptionsRoot()
                                         set = function()
                                             A.db.profile.hunterPreferPack = not A.db.profile.hunterPreferPack;
                                             A:SetPostClickMacro();
+                                            A:SetPreClickFunction();
                                         end,
                                         get = function() return A.db.profile.hunterPreferPack; end,
                                     },
@@ -1333,6 +1487,7 @@ function A:OptionsRoot()
                                         set = function()
                                             A.db.profile.hunterWantModifier = not A.db.profile.hunterWantModifier;
                                             A:SetPostClickMacro();
+                                            A:SetPreClickFunction();
                                         end,
                                         get = function() return A.db.profile.hunterWantModifier; end,
                                     },
@@ -1342,7 +1497,7 @@ function A:OptionsRoot()
                                         name = L["Modifier"],
                                         desc = L["Select which modifier to use for cancelling aspect."],
                                         disabled = function()
-                                            if ( not A.db.profile.classesMacrosEnabled or not A.db.profile.hunterWantModifier ) then
+                                            if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled or not A.db.profile.hunterWantModifier ) then
                                                 return 1;
                                             end
 
@@ -1353,6 +1508,7 @@ function A:OptionsRoot()
                                         set = function(info, val)
                                             A.db.profile.hunterModifier = val;
                                             A:SetPostClickMacro();
+                                            A:SetPreClickFunction();
                                         end,
                                         get = function() return A.db.profile.hunterModifier; end,
                                     },
@@ -1371,7 +1527,13 @@ function A:OptionsRoot()
                                 name = A.color.MAGE..L["Mage"],
                                 type = "group",
                                 inline = true,
-                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                disabled = function()
+                                    if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled ) then
+                                        return 1;
+                                    end
+
+                                    return nil;
+                                end,
                                 hidden = function()
                                     if ( A.playerClass == "MAGE" or not A.db.profile.hideOtherClasses ) then
                                         return nil;
@@ -1384,7 +1546,7 @@ function A:OptionsRoot()
                                     mageDescription =
                                     {
                                         order = 1,
-                                        name = L["For Mages it handles Blazing Speed and Blink when moving, and Slow Fall when falling."],
+                                        name = L["For Mages it handles Blazing Speed and Blink when moving. Slow Fall when falling."],
                                         type = "description",
                                         fontSize = "medium",
                                     },
@@ -1410,6 +1572,7 @@ function A:OptionsRoot()
                                         set = function()
                                             A.db.profile.magePreferBlink = not A.db.profile.magePreferBlink;
                                             A:SetPostClickMacro();
+                                            A:SetPreClickFunction();
                                         end,
                                         get = function() return A.db.profile.magePreferBlink; end,
                                     },
@@ -1422,6 +1585,7 @@ function A:OptionsRoot()
                                         set = function()
                                             A.db.profile.mageSlowFall = not A.db.profile.mageSlowFall;
                                             A:SetPostClickMacro();
+                                            A:SetPreClickFunction();
                                         end,
                                         get = function() return A.db.profile.mageSlowFall; end,
                                     },
@@ -1429,11 +1593,12 @@ function A:OptionsRoot()
                                     {
                                         order = 22,
                                         name = L["Force Slow Fall"],
-                                        desc = L["force Slow Fall when in combat. This will obviously make Blazing Speed or Blink unavailable in combat."],
+                                        desc = L["Force Slow Fall when in combat. This will obviously make Blazing Speed or Blink unavailable in combat."],
                                         type = "toggle",
                                         set = function()
                                             A.db.profile.mageForceSlowFall = not A.db.profile.mageForceSlowFall;
                                             A:SetPostClickMacro();
+                                            A:SetPreClickFunction();
                                         end,
                                         get = function() return A.db.profile.mageForceSlowFall; end,
                                     },
@@ -1446,7 +1611,13 @@ function A:OptionsRoot()
                                 name = A.color.MONK..L["Monk"],
                                 type = "group",
                                 inline = true,
-                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                disabled = function()
+                                    if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled ) then
+                                        return 1;
+                                    end
+
+                                    return nil;
+                                end,
                                 hidden = function()
                                     if ( A.playerClass == "MONK" or not A.db.profile.hideOtherClasses ) then
                                         return nil;
@@ -1459,7 +1630,7 @@ function A:OptionsRoot()
                                     monkDescription =
                                     {
                                         order = 1,
-                                        name = L["For Monks it handles Flying Serpent Kick and Roll when moving, and Zen Flight when falling."],
+                                        name = L["For Monks it handles Flying Serpent Kick and Roll when moving. Zen Flight when falling."],
                                         type = "description",
                                         fontSize = "medium",
                                     },
@@ -1485,6 +1656,7 @@ function A:OptionsRoot()
                                         set = function()
                                             A.db.profile.monkPreferSerpentKick = not A.db.profile.monkPreferSerpentKick;
                                             A:SetPostClickMacro();
+                                            A:SetPreClickFunction();
                                         end,
                                         get = function() return A.db.profile.monkPreferSerpentKick; end,
                                     },
@@ -1498,6 +1670,7 @@ function A:OptionsRoot()
                                         set = function(info, val)
                                             A.db.profile.monkModifier = val;
                                             A:SetPostClickMacro();
+                                            A:SetPreClickFunction();
                                         end,
                                         get = function() return A.db.profile.monkModifier; end,
                                     },
@@ -1510,7 +1683,13 @@ function A:OptionsRoot()
                                 name = A.color.PALADIN..L["Paladin"],
                                 type = "group",
                                 inline = true,
-                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                disabled = function()
+                                    if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled ) then
+                                        return 1;
+                                    end
+
+                                    return nil;
+                                end,
                                 hidden = function()
                                     if ( A.playerClass == "PALADIN" or not A.db.profile.hideOtherClasses ) then
                                         return nil;
@@ -1549,7 +1728,13 @@ function A:OptionsRoot()
                                 name = A.color.PRIEST..L["Priest"],
                                 type = "group",
                                 inline = true,
-                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                disabled = function()
+                                    if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled ) then
+                                        return 1;
+                                    end
+
+                                    return nil;
+                                end,
                                 hidden = function()
                                     if ( A.playerClass == "PRIEST" or not A.db.profile.hideOtherClasses ) then
                                         return nil;
@@ -1588,7 +1773,13 @@ function A:OptionsRoot()
                                 name = A.color.ROGUE..L["Rogue"],
                                 type = "group",
                                 inline = true,
-                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                disabled = function()
+                                    if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled ) then
+                                        return 1;
+                                    end
+
+                                    return nil;
+                                end,
                                 hidden = function()
                                     if ( A.playerClass == "ROGUE" or not A.db.profile.hideOtherClasses ) then
                                         return nil;
@@ -1627,7 +1818,13 @@ function A:OptionsRoot()
                                 name = A.color.SHAMAN..L["Shaman"],
                                 type = "group",
                                 inline = true,
-                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                disabled = function()
+                                    if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled ) then
+                                        return 1;
+                                    end
+
+                                    return nil;
+                                end,
                                 hidden = function()
                                     if ( A.playerClass == "SHAMAN" or not A.db.profile.hideOtherClasses ) then
                                         return nil;
@@ -1666,7 +1863,13 @@ function A:OptionsRoot()
                                 name = A.color.WARLOCK..L["Warlock"],
                                 type = "group",
                                 inline = true,
-                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                disabled = function()
+                                    if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled ) then
+                                        return 1;
+                                    end
+
+                                    return nil;
+                                end,
                                 hidden = function()
                                     if ( A.playerClass == "WARLOCK" or not A.db.profile.hideOtherClasses ) then
                                         return nil;
@@ -1705,6 +1908,7 @@ function A:OptionsRoot()
                                         set = function()
                                             A.db.profile.warlockPreferTeleport = not A.db.profile.warlockPreferTeleport;
                                             A:SetPostClickMacro();
+                                            A:SetPreClickFunction();
                                         end,
                                         get = function() return A.db.profile.warlockPreferTeleport; end,
                                     },
@@ -1714,7 +1918,7 @@ function A:OptionsRoot()
                                         name = L["Use a modifier"],
                                         desc = L["Use a modifier to disable Burning Rush, this will also prevent the spell toggle.\n Be aware that if a bind is set to the modifier plus the button bind this will not work."],
                                         disabled = function()
-                                            if ( not A.db.profile.classesMacrosEnabled or A.db.profile.warlockPreferTeleport ) then
+                                            if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled or A.db.profile.warlockPreferTeleport ) then
                                                 return 1;
                                             end
 
@@ -1724,6 +1928,7 @@ function A:OptionsRoot()
                                         set = function()
                                             A.db.profile.warlockWantModifier = not A.db.profile.warlockWantModifier;
                                             A:SetPostClickMacro();
+                                            A:SetPreClickFunction();
                                         end,
                                         get = function() return A.db.profile.warlockWantModifier; end,
                                     },
@@ -1733,7 +1938,7 @@ function A:OptionsRoot()
                                         name = L["Modifier"],
                                         desc = L["Select which modifier to use for cancelling Burning Rush."],
                                         disabled = function()
-                                            if ( not A.db.profile.classesMacrosEnabled or not A.db.profile.warlockWantModifier or A.db.profile.warlockPreferTeleport ) then
+                                            if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled or not A.db.profile.warlockWantModifier or A.db.profile.warlockPreferTeleport ) then
                                                 return 1;
                                             end
 
@@ -1744,6 +1949,7 @@ function A:OptionsRoot()
                                         set = function(info, val)
                                             A.db.profile.warlockModifier = val;
                                             A:SetPostClickMacro();
+                                            A:SetPreClickFunction();
                                         end,
                                         get = function() return A.db.profile.warlockModifier; end,
                                     },
@@ -1756,7 +1962,13 @@ function A:OptionsRoot()
                                 name = A.color.WARRIOR..L["Warrior"],
                                 type = "group",
                                 inline = true,
-                                disabled = function() return not A.db.profile.classesMacrosEnabled; end,
+                                disabled = function()
+                                    if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled ) then
+                                        return 1;
+                                    end
+
+                                    return nil;
+                                end,
                                 hidden = function()
                                     if ( A.playerClass == "WARRIOR" or not A.db.profile.hideOtherClasses ) then
                                         return nil;
@@ -1795,6 +2007,7 @@ function A:OptionsRoot()
                                         set = function()
                                             A.db.profile.warriorForceHeroicLeap = not A.db.profile.warriorForceHeroicLeap;
                                             A:SetPostClickMacro();
+                                            A:SetPreClickFunction();
                                         end,
                                         get = function() return A.db.profile.warriorForceHeroicLeap; end,
                                     },
@@ -1813,11 +2026,178 @@ function A:OptionsRoot()
                 },
             },
             --
+            -- Main options tree - Custom macros tab
+            --
+            customMacros =
+            {
+                order = 400,
+                name = L["Custom macros"],
+                type = "group",
+                hidden = function() return not A.db.profile.customMountMacrosEnabled; end,
+                args =
+                {
+                    summary =
+                    {
+                        order = 0,
+                        name = L["Summary"],
+                        type = "group",
+                        args =
+                        {
+                            explanations =
+                            {
+                                order = 0,
+                                name = L["CUSTOM_MACROS_EXLANATIONS"],
+                                type = "description",
+                                fontSize = "medium",
+                            },
+                        },
+                    },
+                    default =
+                    {
+                        order = 50,
+                        name = L["Macro: %s"]:format(L["Default"]),
+                        type = "group",
+                        args =
+                        {
+                            luaMode =
+                            {
+                                order = 0,
+                                name = L["LUA mode"],
+                                desc = L["Use LUA code instead of macro syntax."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.customMountMacros.default.luaMode = not A.db.profile.customMountMacros.default.luaMode;
+                                    A:SetPreClickFunction();
+                                    A:SetPostClickMacro();
+                                end,
+                                get = function() return A.db.profile.customMountMacros.default.luaMode; end,
+                            },
+                            preClickHeader =
+                            {
+                                order = 100,
+                                name = L["Pre Click"],
+                                type = "header",
+                            },
+                            preClickInput =
+                            {
+                                order = 101,
+                                name = L["Pre Click"],
+                                width = "full",
+                                type = "input",
+                                multiline = 5,
+                                set = function(info, val)
+                                    if ( A.db.profile.customMountMacros.default.luaMode ) then
+                                        A.db.profile.customMountMacros.default.lua.pre = val;
+                                    else
+                                        A.db.profile.customMountMacros.default.macro.pre = val;
+                                    end
+                                    A:SetPostClickMacro();
+                                    A:SetPreClickFunction();
+                                end,
+                                get = function()
+                                    if ( A.db.profile.customMountMacros.default.luaMode ) then
+                                        return A.db.profile.customMountMacros.default.lua.pre;
+                                    else
+                                        return A.db.profile.customMountMacros.default.macro.pre;
+                                    end
+                                end,
+                            },
+                            expandPreClick =
+                            {
+                                order = 102,
+                                name = L["Expand"],
+                                desc = L["Expand the text editor."],
+                                type = "execute",
+                                func = function()
+                                    if ( A.db.profile.customMountMacros.default.luaMode ) then
+                                        A.inputFrame.where = "default";
+                                        A.inputFrame.mode = "lua";
+                                        A.inputFrame.click = "pre";
+                                        A.inputFrame.content = A.db.profile.customMountMacros.default.lua.pre;
+                                    else
+                                        A.inputFrame.where = "default";
+                                        A.inputFrame.mode = "macro";
+                                        A.inputFrame.click = "pre";
+                                        A.inputFrame.content = A.db.profile.customMountMacros.default.macro.pre;
+                                    end
+
+                                    if ( A.inputFrame:IsVisible() ) then
+                                        A.inputFrame:Hide();
+                                    else
+                                        A.inputFrame:ClearAllPoints();
+                                        A.inputFrame:SetPoint("TOP", A.configFocusFrame, "TOP", 0, 0);
+                                        A.inputFrame:Show();
+                                    end
+                                end,
+                            },
+                            postClickHeader =
+                            {
+                                order = 200,
+                                name = L["Post Click"],
+                                type = "header",
+                            },
+                            postClickInput =
+                            {
+                                order = 201,
+                                name = L["Post Click"],
+                                width = "full",
+                                type = "input",
+                                multiline = 5,
+                                set = function(info, val)
+                                    if ( A.db.profile.customMountMacros.default.luaMode ) then
+                                        A.db.profile.customMountMacros.default.lua.post = val;
+                                    else
+                                        A.db.profile.customMountMacros.default.macro.post = val;
+                                    end
+                                    A:SetPostClickMacro();
+                                    A:SetPreClickFunction();
+                                end,
+                                get = function()
+                                    if ( A.db.profile.customMountMacros.default.luaMode ) then
+                                        return A.db.profile.customMountMacros.default.lua.post;
+                                    else
+                                        return A.db.profile.customMountMacros.default.macro.post;
+                                    end
+                                end,
+                            },
+                            expandPostClick =
+                            {
+                                order = 202,
+                                name = L["Expand"],
+                                desc = L["Expand the text editor."],
+                                type = "execute",
+                                func = function()
+                                    if ( A.db.profile.customMountMacros.default.luaMode ) then
+                                        A.inputFrame.where = "default";
+                                        A.inputFrame.mode = "lua";
+                                        A.inputFrame.click = "post";
+                                        A.inputFrame.content = A.db.profile.customMountMacros.default.lua.post;
+                                    else
+                                        A.inputFrame.where = "default";
+                                        A.inputFrame.mode = "macro";
+                                        A.inputFrame.click = "post";
+                                        A.inputFrame.content = A.db.profile.customMountMacros.default.macro.post;
+                                    end
+
+                                    if ( A.inputFrame:IsVisible() ) then
+                                        A.inputFrame:Hide();
+                                    else
+                                        A.inputFrame:ClearAllPoints();
+                                        A.inputFrame:SetPoint("TOP", A.configFocusFrame, "TOP", 0, 0);
+                                        A.inputFrame:Show();
+                                    end
+                                end,
+                            },
+                        },
+                    },
+                },
+            },
+            --
             -- Main options tree - Bindings tab
             --
             bindings =
             {
-                order = 400,
+                order = 500,
                 name = L["Bindings"],
                 type = "group",
                 args = {},
@@ -1827,7 +2207,7 @@ function A:OptionsRoot()
             --
             buttons =
             {
-                order = 400,
+                order = 600,
                 name = L["Buttons"],
                 type = "group",
                 args =
@@ -2327,12 +2707,170 @@ function A:OptionsRoot()
         orderGroup = orderGroup + 1;
     end
 
+    -- Custom macros
+    orderGroup = 100;
+    for k,v in ipairs(A.areaTypes) do
+        root.args.customMacros.args[v] =
+        {
+            order = orderGroup,
+            name = L["Macro: %s"]:format(A.areaTypesLocales[v]),
+            type = "group",
+            args =
+            {
+                luaMode =
+                {
+                    order = 0,
+                    name = L["LUA mode"],
+                    desc = L["Use LUA code instead of macro syntax."],
+                    type = "toggle",
+                    set = function()
+                        A.db.profile.customMountMacros[v].luaMode = not A.db.profile.customMountMacros[v].luaMode;
+                        A:SetPreClickFunction();
+                        A:SetPostClickMacro();
+                    end,
+                    get = function() return A.db.profile.customMountMacros[v].luaMode; end,
+                },
+                preClickHeader =
+                {
+                    order = 100,
+                    name = L["Pre Click"],
+                    type = "header",
+                },
+                preClickInput =
+                {
+                    order = 101,
+                    name = L["Pre Click"],
+                    width = "full",
+                    type = "input",
+                    multiline = 5,
+                    set = function(info, val)
+                        if ( A.db.profile.customMountMacros[v].luaMode ) then
+                            A.db.profile.customMountMacros[v].lua.pre = val;
+                        else
+                            A.db.profile.customMountMacros[v].macro.pre = val;
+                        end
+                        A:SetPostClickMacro();
+                        A:SetPreClickFunction();
+                    end,
+                    get = function()
+                        if ( A.db.profile.customMountMacros.default.luaMode ) then
+                            return A.db.profile.customMountMacros[v].lua.pre;
+                        else
+                            return A.db.profile.customMountMacros[v].macro.pre;
+                        end
+                    end,
+                },
+                expandPreClick =
+                {
+                    order = 102,
+                    name = L["Expand"],
+                    desc = L["Expand the text editor."],
+                    type = "execute",
+                    func = function()
+                        if ( A.db.profile.customMountMacros[v].luaMode ) then
+                            A.inputFrame.where = v;
+                            A.inputFrame.mode = "lua";
+                            A.inputFrame.click = "pre";
+                            A.inputFrame.content = A.db.profile.customMountMacros[v].lua.pre;
+                        else
+                            A.inputFrame.where = v;
+                            A.inputFrame.mode = "macro";
+                            A.inputFrame.click = "pre";
+                            A.inputFrame.content = A.db.profile.customMountMacros[v].macro.pre;
+                        end
+
+                        if ( A.inputFrame:IsVisible() ) then
+                            A.inputFrame:Hide();
+                        else
+                            A.inputFrame:ClearAllPoints();
+                            A.inputFrame:SetPoint("TOP", A.configFocusFrame, "TOP", 0, 0);
+                            A.inputFrame:Show();
+                        end
+                    end,
+                },
+                postClickHeader =
+                {
+                    order = 200,
+                    name = L["Post Click"],
+                    type = "header",
+                },
+                postClickInput =
+                {
+                    order = 201,
+                    name = L["Post Click"],
+                    width = "full",
+                    type = "input",
+                    multiline = 5,
+                    set = function(info, val)
+                        if ( A.db.profile.customMountMacros[v].luaMode ) then
+                            A.db.profile.customMountMacros[v].lua.post = val;
+                        else
+                            A.db.profile.customMountMacros[v].macro.post = val;
+                        end
+                        A:SetPostClickMacro();
+                        A:SetPreClickFunction();
+                    end,
+                    get = function()
+                        if ( A.db.profile.customMountMacros[v].luaMode ) then
+                            return A.db.profile.customMountMacros[v].lua.post;
+                        else
+                            return A.db.profile.customMountMacros[v].macro.post;
+                        end
+                    end,
+                },
+                expandPostClick =
+                {
+                    order = 202,
+                    name = L["Expand"],
+                    desc = L["Expand the text editor."],
+                    type = "execute",
+                    func = function()
+                        if ( A.db.profile.customMountMacros[v].luaMode ) then
+                            A.inputFrame.where = v;
+                            A.inputFrame.mode = "lua";
+                            A.inputFrame.click = "post";
+                            A.inputFrame.content = A.db.profile.customMountMacros[v].lua.post;
+                        else
+                            A.inputFrame.where = v;
+                            A.inputFrame.mode = "macro";
+                            A.inputFrame.click = "post";
+                            A.inputFrame.content = A.db.profile.customMountMacros[v].macro.post;
+                        end
+
+                        if ( A.inputFrame:IsVisible() ) then
+                            A.inputFrame:Hide();
+                        else
+                            A.inputFrame:ClearAllPoints();
+                            A.inputFrame:SetPoint("TOP", A.configFocusFrame, "TOP", 0, 0);
+                            A.inputFrame:Show();
+                        end
+                    end,
+                },
+            },
+        };
+        orderGroup = orderGroup + 1;
+    end
+
     -- Profiles
     root.args.profilesOptions = LibStub("AceDBOptions-3.0"):GetOptionsTable(A.db);
     root.args.profilesOptions.order = 10000;
 
     return root;
 end
+
+-- function A:OptionsCustomMacros()
+    -- local customMacros =
+    -- {
+        -- order = 0,
+        -- name = L["Custom macros"],
+        -- disabled = function() return not A.db.profile.customMountMacrosEnabled; end,
+        -- type = "group",
+        -- childGroups = "tab",
+        -- args = {},
+    -- };
+
+    -- return customMacros;
+-- end
 
 function A:OptionsPetsList()
     local pets =
@@ -4229,14 +4767,16 @@ end
 
 -- Register with AceConfig
 LibStub("AceConfig-3.0"):RegisterOptionsTable("PAMOptionsRoot", A.OptionsRoot);
+--LibStub("AceConfig-3.0"):RegisterOptionsTable("PAMOptionsCustomMacros", A.OptionsCustomMacros);
 LibStub("AceConfig-3.0"):RegisterOptionsTable("PAMOptionsPetsList", A.OptionsPetsList);
 LibStub("AceConfig-3.0"):RegisterOptionsTable("PAMOptionsMountsList", A.OptionsMountsList);
 LibStub("AceConfig-3.0"):RegisterOptionsTable("PAMOptionsSets", A.OptionsSets);
 LibStub("AceConfig-3.0"):RegisterOptionsTable("PAMOptionsFavOverride", A.OptionsFavOverride);
 LibStub("AceConfig-3.0"):RegisterOptionsTable("PAMOptionsAbout", A.OptionsAbout);
 
--- Adding addon options to Blizzard UI
+-- Adding add-on options to Blizzard UI
 A.configFrameOptions = A.AceConfigDialog:AddToBlizOptions("PAMOptionsRoot",  L["Pets & Mounts"]);
+--A.configFrameCustomMacros = A.AceConfigDialog:AddToBlizOptions("PAMOptionsCustomMacros", L["Custom macros"], L["Pets & Mounts"]);
 A.configFramePets = A.AceConfigDialog:AddToBlizOptions("PAMOptionsPetsList", L["Companions list"], L["Pets & Mounts"]);
 A.configFrameMounts = A.AceConfigDialog:AddToBlizOptions("PAMOptionsMountsList", L["Mounts list"], L["Pets & Mounts"]);
 A.configFrameSets = A.AceConfigDialog:AddToBlizOptions("PAMOptionsSets", L["Sets options"], L["Pets & Mounts"]);
@@ -4245,6 +4785,7 @@ A.configFrameAbout = A.AceConfigDialog:AddToBlizOptions("PAMOptionsAbout", L["Ab
 
 -- Config frames OnShow
 A.configFrameOptions:HookScript("OnShow", function(self) A.configFocusFrame = self; end);
+--A.configFrameCustomMacros:HookScript("OnShow", function(self) A.configFocusFrame = self; end);
 A.configFramePets:HookScript("OnShow", function(self)
     A.configFocusFrame = self;
 
@@ -4266,7 +4807,11 @@ A.configFrameFavOverride:HookScript("OnShow", function(self) A.configFocusFrame 
 A.configFrameAbout:HookScript("OnShow", function(self) A.configFocusFrame = self; end);
 
 -- Config frames OnHide
-A.configFrameOptions:HookScript("OnHide", function(self) A.iconFrame:Hide(); end);
+A.configFrameOptions:HookScript("OnHide", function(self)
+    A.iconFrame:Hide();
+    A.inputFrame:Hide();
+end);
+--A.configFrameCustomMacros:HookScript("OnHide", function(self) A.iconFrame:Hide(); end);
 A.configFramePets:HookScript("OnHide", function()
     A.configModelFrame:Hide();
     A.searchFrame:Hide();
@@ -4281,6 +4826,8 @@ A.configFrameFavOverride:HookScript("OnHide", function() A.configModelFrame:Hide
 function A:NotifyChangeForAll()
     if ( A.configFrameOptions:IsVisible() ) then
         A.AceConfigRegistry:NotifyChange("PAMOptionsRoot", A.OptionsRoot);
+    -- elseif ( A.configFrameCustomMacros:IsVisible() ) then
+        -- A.AceConfigRegistry:NotifyChange("PAMOptionsCustomMacros", A.OptionsCustomMacros);
     elseif ( A.configFramePets:IsVisible() ) then
         A.AceConfigRegistry:NotifyChange("PAMOptionsPetsList", A.OptionsPetsList);
     elseif ( A.configFrameMounts:IsVisible() ) then

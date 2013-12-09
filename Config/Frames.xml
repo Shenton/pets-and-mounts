@@ -179,7 +179,6 @@
                     </OnTextChanged>
                 </Scripts>
             </EditBox>
-            <!--<ScrollFrame name="$parentScrollFrame" inherits="ListScrollFrameTemplate" parentKey="scrollFrame">-->
             <ScrollFrame name="$parentScrollFrame" inherits="FauxScrollFrameTemplate" parentKey="scrollFrame">
                 <Size x="370" y="350"/>
                 <Anchors>
@@ -523,11 +522,11 @@
                     <Anchor point="LEFT" relativeTo="$parentButton63" relativePoint="RIGHT" x="10" y="0"/>
                 </Anchors>
             </CheckButton>
-            <!-- Cancel Close Default button -->
+            <!-- Cancel Accept Default buttons -->
             <Button name="$parentCancelButton" inherits="UIPanelButtonTemplate">
                 <Size x="80" y="22"/>
                 <Anchors>
-                    <Anchor point="BOTTOMRIGHT" relativeTo="$parent" x="-16" y="16"/>
+                    <Anchor point="BOTTOMRIGHT" relativeTo="$parent" x="-8" y="8"/>
                 </Anchors>
                 <Scripts>
                     <OnShow>
@@ -583,6 +582,141 @@
                 self.type = nil;
                 self.selectedTexture = nil;
                 self.currentTexture = nil;
+            </OnHide>
+        </Scripts>
+    </Frame>
+
+    <!-- Input code frame -->
+    <Frame name="PetsAndMountsInputCodeFrame" parent="UIParent" EnableMouse="true" framestrata="TOOLTIP" hidden="true">
+        <Size x="623" y="568"/>
+        <Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+            <EdgeSize>
+                <AbsValue val="12"/>
+            </EdgeSize>
+            <TileSize>
+                <AbsValue val="12"/>
+            </TileSize>
+            <BackgroundInsets>
+                <AbsInset left="4" right="4" top="4" bottom="4"/>
+            </BackgroundInsets>
+        </Backdrop>
+        <Layers>
+            <Layer level="ARTWORK">
+                <FontString name="$parentErrorString" parentKey="errorString" inherits="GameFontNormalLeft">
+                    <Size x="500" y="16"/>
+                    <Anchors>
+                        <Anchor point="BOTTOMLEFT" relativeTo="$parent" relativePoint="BOTTOMLEFT" x="8" y="16"/>
+                    </Anchors>
+                </FontString>
+            </Layer>
+        </Layers>
+        <Frames>
+            <ScrollFrame name="$parentScrollFrame" inherits="UIPanelScrollFrameTemplate" parentKey="scrollFrame">
+                <Size x="572" y="505"/>
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="16" y="-16"/>
+                </Anchors>
+                <ScrollChild>
+                    <EditBox name="$parentEditBox" multiLine="true" nonspacewrap="true" spacing="1" autoFocus="false" parentKey="editBox">
+                        <Size x="572" y="505"/>
+                        <Scripts>
+                            <OnTextChanged>
+                                ScrollingEdit_OnTextChanged(self, self:GetParent());
+
+                                if ( self:GetParent():GetParent().mode == "lua" ) then
+                                    local func, errorString = loadstring(self:GetText());
+                                    if ( not func ) then
+                                        self:GetParent():GetParent().errorString:SetText("|cffff3333"..errorString);
+                                    else
+                                        self:GetParent():GetParent().errorString:SetText("");
+                                    end
+                                end
+                            </OnTextChanged>
+                            <OnCursorChanged function="ScrollingEdit_OnCursorChanged"/>
+                            <OnUpdate>
+                                ScrollingEdit_OnUpdate(self, elapsed, self:GetParent());
+                            </OnUpdate>
+                            <OnEscapePressed function="EditBox_ClearFocus"/>
+                            <OnLoad>
+                                self.cursorOffset = 0;
+                            </OnLoad>
+                        </Scripts>
+                        <FontString inherits="GameFontHighlight"/>
+                    </EditBox>
+                </ScrollChild>
+            </ScrollFrame>
+            <Frame name="$parentEditBoxBackground">
+                <Size x="582" y="515"/>
+                <Anchors>
+                    <Anchor point="TOP" relativeTo="$parentScrollFrameEditBox" x="0" y="5"/>
+                </Anchors>
+                <Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+                    <EdgeSize>
+                        <AbsValue val="12"/>
+                    </EdgeSize>
+                    <TileSize>
+                        <AbsValue val="12"/>
+                    </TileSize>
+                    <BackgroundInsets>
+                        <AbsInset left="4" right="4" top="4" bottom="4"/>
+                    </BackgroundInsets>
+                </Backdrop>
+                <Scripts>
+                    <OnLoad>
+                        self:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b);
+                        self:SetBackdropColor(0.04, 0.04, 0.04);
+                    </OnLoad>
+                </Scripts>
+            </Frame>
+            <!-- Cancel Accept buttons -->
+            <Button name="$parentCancelButton" inherits="UIPanelButtonTemplate">
+                <Size x="80" y="22"/>
+                <Anchors>
+                    <Anchor point="BOTTOMRIGHT" relativeTo="$parent" x="-8" y="8"/>
+                </Anchors>
+                <Scripts>
+                    <OnShow>
+                        self:SetText(PetsAndMountsGlobal.L["Cancel"]);
+                    </OnShow>
+                    <OnClick>
+                        self:GetParent():Hide();
+                    </OnClick>
+                </Scripts>
+            </Button>
+            <Button name="$parentAcceptButton" parentKey="acceptButton" inherits="UIPanelButtonTemplate">
+                <Size x="80" y="22"/>
+                <Anchors>
+                    <Anchor point="RIGHT" relativeTo="$parentCancelButton" relativePoint="LEFT" x="-2" y="0"/>
+                </Anchors>
+                <Scripts>
+                    <OnShow>
+                        self:SetText(PetsAndMountsGlobal.L["Accept"]);
+                    </OnShow>
+                    <OnClick>
+                        self:GetParent().content = self:GetParent().scrollFrame.editBox:GetText();
+                        PetsAndMountsGlobal:OnClickAcceptInputCode(self:GetParent());
+                    </OnClick>
+                </Scripts>
+            </Button>
+        </Frames>
+        <Scripts>
+            <OnLoad>
+                self:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b);
+                self:SetBackdropColor(0.1, 0.1, 0.1);
+            </OnLoad>
+            <OnShow>
+                if ( self.mode == "lua" ) then
+                    IndentationLib.enable(self.scrollFrame.editBox, nil, 4);
+                end
+                self.scrollFrame.editBox:SetText(self.content or "");
+            </OnShow>
+            <OnHide>
+                IndentationLib.disable(self.scrollFrame.editBox);
+                self.where = nil;
+                self.mode = nil;
+                self.click = nil;
+                self.content = nil;
+                self.errorString:SetText("");
             </OnHide>
         </Scripts>
     </Frame>
