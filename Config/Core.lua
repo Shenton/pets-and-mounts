@@ -19,9 +19,12 @@ local string = string;
 local tostring = tostring;
 local tContains = tContains;
 local tonumber = tonumber;
+local _G = _G;
+local math = math;
 
 -- GLOBALS: LibStub, InCombatLockdown, GetCurrentBindingSet, GetBindingKey, SetBinding, SaveBindings
--- GLOBALS: GetMapNameByID, GetAddOnMetadata
+-- GLOBALS: GetMapNameByID, GetAddOnMetadata, GetMacroItemIcons, GetMacroIcons, FauxScrollFrame_GetOffset
+-- GLOBALS: FauxScrollFrame_Update
 
 -- Ace3 libs <3
 A.AceConfigDialog = LibStub("AceConfigDialog-3.0");
@@ -127,7 +130,7 @@ function A:IconsFrameScrollUpdate()
         end
     end
 
-    FauxScrollFrame_Update(A.iconFrame.scrollFrame, ceil(#icons / 8) , 8, 36);
+    FauxScrollFrame_Update(A.iconFrame.scrollFrame, math.ceil(#icons / 8) , 8, 36);
 end
 
 --- OnCLick callback

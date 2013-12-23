@@ -40,7 +40,7 @@ local _G = _G;
 -- GLOBALS: InterfaceOptions_AddCategory, InterfaceAddOnsList_Update, InterfaceOptionsFrame_OpenToCategory
 -- GLOBALS: GetCurrentBindingSet, GetBindingKey, SetBinding, SaveBindings, DropDownList1, IsShiftKeyDown
 -- GLOBALS: PetsAndMountsMenuModelFrame, PetsAndMountsConfigModelFrame, PetsAndMountsSearchFrame, GameTooltip
--- GLOBALS: PetsAndMountsPopupMessageFrame, UIDropDownMenu_SetAnchor, ToggleDropDownMenu
+-- GLOBALS: PetsAndMountsPopupMessageFrame, UIDropDownMenu_SetAnchor, ToggleDropDownMenu, UnitBuff
 
 --[[-------------------------------------------------------------------------------
     Common methods

@@ -13,11 +13,17 @@ local L = A.L;
 local pairs = pairs;
 local _G = _G;
 local type = type;
+local select = select;
+local loadstring = loadstring;
+local tContains = tContains;
+local string = string;
+local ipairs = ipairs;
 
 -- GLOBALS: BINDING_HEADER_PETSANDMOUNTS, InCombatLockdown, GetSpellInfo, IsFlyableArea, IsSpellKnown
 -- GLOBALS: IsShiftKeyDown, IsControlKeyDown, GetItemCount, GetItemInfo, UnitBuff, UIDropDownMenu_SetAnchor
 -- GLOBALS: ToggleDropDownMenu, GameTooltip, PetsAndMountsSecureButtonMounts, PetsAndMountsSecureButtonPets
--- GLOBALS: GetScreenWidth
+-- GLOBALS: GetScreenWidth, IsMounted, GetUnitSpeed, GetTalentInfo, GetTalentRowSelectionInfo, GetInstanceInfo
+-- GLOBALS: GetGlyphSocketInfo, IsFalling, NUM_GLYPH_SLOTS
 
 --[[-------------------------------------------------------------------------------
     Bindings
