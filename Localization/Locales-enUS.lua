@@ -57,6 +57,7 @@ L["Indoor"] = true;
 
 L["Label"] = true;
 L["Left"] = true;
+L["Levitate"] = true;
 L["Licence"] = true;
 L["Link"] = true;
 --L["Load"] = true;
@@ -386,6 +387,9 @@ L["Icon size"] = true;
 L["Select the text icon size."] = true;
 L["Icon vertical offset"] = true;
 L["Select the text icon vertical offset."] = true;
+L["Use Levitate when falling. IMPORTANT: This will not work when in combat, this is why there is an option to disable it."] = true;
+L["Force Levitate"] = true;
+L["Force Levitate when in combat. This will obviously make Body and Soul or Angelic Feather unavailable in combat."] = true;
 -- About
 L["Auto and random summon for your pets and mounts, highly customizable. With Data Broker support."] = true;
 L["A new version is available, version |cff33ff99%s|r revision |cff33ff99%s %s|r."] = true;

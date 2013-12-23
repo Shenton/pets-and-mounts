@@ -2494,6 +2494,8 @@ A.aceDefaultDB =
         customMacrosLUAProtectionEnabled = 1, -- d
         dataBrokerTextIconSize = 16, -- d
         dataBrokerTextIconVerticalOffset = -3, -- d
+        priestLevitate = nil,
+        priestForceLevitate = nil,
     },
 };
 

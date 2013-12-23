@@ -144,7 +144,7 @@ function A:SetMacroDismountString()
     end
 
     if ( A.db.profile.vehicleExit ) then
-        A.macroDismountString = "\n/leavevehicle [vehicleui]";
+        A.macroDismountString = A.macroDismountString.."\n/leavevehicle [vehicleui]";
     end
 end
 
@@ -205,6 +205,7 @@ A.classesSpellsTable =
     {
         priestPowerWordShield = 17, -- Body and Soul - lvl 30 - tier 2 row 1 - id 4
         priestAngelicFeather = 121536, -- lvl 30 - tier 2 row 2 - id 5
+        priestLevitate = 1706, -- lvl 34
     },
     ROGUE =
     {
@@ -408,7 +409,9 @@ end
 -- @param button The button object
 -- For Priests we handle Body and Soul and Angelic Feather when moving
 function A:SetPriestPreClickMacro(button)
-    if ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
+    if ( A.db.profile.priestLevitate and IsFalling() and A.playerLevel >= 34 ) then
+        return ("%s\n/cast %s"):format(A.macroDismountString, A.priestLevitate);
+    elseif ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
         local isFree, talent = GetTalentRowSelectionInfo(2);
 
         if ( A.playerLevel >= 30 and talent == 4 ) then
@@ -729,6 +732,7 @@ function A:PreClickMount(button, clickedBy)
                 local macro = A:PreClickFunc();
                 button:SetAttribute("type", "macro");
                 button:SetAttribute("macrotext", macro);
+                A:DebugMessage(("Preclick macro set to: %s"):format(macro));
             end
         end
     elseif ( clickedBy == "RightButton" ) then
@@ -915,14 +919,18 @@ function A:SetPostClickMacro(noCustom)
             end
         -- Priest
         elseif ( A.playerClass == "PRIEST" ) then
-            local isFree, talent = GetTalentRowSelectionInfo(2);
-
-            if ( A.playerLevel >= 30 and talent == 4 ) then
-                A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.priestPowerWordShield);
-            elseif ( A.playerLevel >= 30 and talent == 5 ) then
-                A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.priestAngelicFeather);
+            if ( A.db.profile.priestForceLevitate ) then
+                A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.priestLevitate);
             else
-                A.postClickMacro = A.macroDismountString;
+                local isFree, talent = GetTalentRowSelectionInfo(2);
+
+                if ( A.playerLevel >= 30 and talent == 4 ) then
+                    A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.priestPowerWordShield);
+                elseif ( A.playerLevel >= 30 and talent == 5 ) then
+                    A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.priestAngelicFeather);
+                else
+                    A.postClickMacro = A.macroDismountString;
+                end
             end
         -- Rogue
         elseif ( A.playerClass == "ROGUE" ) then
@@ -976,6 +984,8 @@ function A:SetPostClickMacro(noCustom)
 
     -- Fire the Post Click callback to update the button macro
     A:PostClickMount(PetsAndMountsSecureButtonMounts);
+
+    A:DebugMessage(("Postclick macro set to: %s"):format(A.postClickMacro));
 end
 
 --- PostClick callback

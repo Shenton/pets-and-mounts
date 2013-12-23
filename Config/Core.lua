@@ -1758,12 +1758,38 @@ function A:OptionsRoot()
                                         width = "full",
                                         type = "description",
                                     },
-                                    -- priestHeader =
-                                    -- {
-                                        -- order = 10,
-                                        -- name = L["Options"],
-                                        -- type = "header",
-                                    -- },
+                                    priestHeader =
+                                    {
+                                        order = 10,
+                                        name = L["Options"],
+                                        type = "header",
+                                    },
+                                    priestLevitate =
+                                    {
+                                        order = 20,
+                                        name = L["Levitate"],
+                                        desc = L["Use Levitate when falling. IMPORTANT: This will not work when in combat, this is why there is an option to disable it."],
+                                        type = "toggle",
+                                        set = function()
+                                            A.db.profile.priestLevitate = not A.db.profile.priestLevitate;
+                                            A:SetPostClickMacro();
+                                            A:SetPreClickFunction();
+                                        end,
+                                        get = function() return A.db.profile.priestLevitate; end,
+                                    },
+                                    priestForceLevitate =
+                                    {
+                                        order = 21,
+                                        name = L["Force Levitate"],
+                                        desc = L["Force Levitate when in combat. This will obviously make Body and Soul or Angelic Feather unavailable in combat."],
+                                        type = "toggle",
+                                        set = function()
+                                            A.db.profile.priestForceLevitate = not A.db.profile.priestForceLevitate;
+                                            A:SetPostClickMacro();
+                                            A:SetPreClickFunction();
+                                        end,
+                                        get = function() return A.db.profile.priestForceLevitate; end,
+                                    },
                                 },
                             },
                             -- Rogue 8xx
