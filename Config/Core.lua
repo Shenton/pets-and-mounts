@@ -1169,6 +1169,18 @@ function A:OptionsRoot()
                                 set = function() A.db.profile.copyMouseoverMount = not A.db.profile.copyMouseoverMount; end,
                                 get = function() return A.db.profile.copyMouseoverMount; end,
                             },
+                            noMountAfterCancelForm =
+                            {
+                                order = 11,
+                                name = L["No mount after cancel form"],
+                                desc = L["This will prevent summoning a mount after cancelling a form. Works for Druids and Shamans."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.noMountAfterCancelForm = not A.db.profile.noMountAfterCancelForm;
+                                    A:SetPreClickFunction();
+                                end,
+                                get = function() return A.db.profile.noMountAfterCancelForm; end,
+                            },
                             specialMountsHeader =
                             {
                                 order = 1000,

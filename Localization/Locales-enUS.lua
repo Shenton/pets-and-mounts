@@ -390,6 +390,8 @@ L["Select the text icon vertical offset."] = true;
 L["Use Levitate when falling. IMPORTANT: This will not work when in combat, this is why there is an option to disable it."] = true;
 L["Force Levitate"] = true;
 L["Force Levitate when in combat. This will obviously make Body and Soul or Angelic Feather unavailable in combat."] = true;
+L["No mount after cancel form"] = true;
+L["This will prevent summoning a mount after cancelling a form. Works for Druids and Shamans."] = true;
 -- About
 L["Auto and random summon for your pets and mounts, highly customizable. With Data Broker support."] = true;
 L["A new version is available, version |cff33ff99%s|r revision |cff33ff99%s %s|r."] = true;

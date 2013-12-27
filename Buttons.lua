@@ -97,25 +97,25 @@ local buttonsMacro =
 {
     [1] = -- With form cancel
     {
-        ["PetsAndMountsSecureButtonPets"] = "/run PetsAndMountsGlobal:RandomPet()",
-        ["PetsAndMountsSecureButtonPassengers"] = "/cancelform\n/run PetsAndMountsGlobal:RandomMount(5)",
-        ["PetsAndMountsSecureButtonFlying"] = "/cancelform\n/run PetsAndMountsGlobal:RandomMount(2)",
-        ["PetsAndMountsSecureButtonGround"] = "/cancelform\n/run PetsAndMountsGlobal:RandomMount(1)",
-        ["PetsAndMountsSecureButtonAquatic"] = "/cancelform\n/run PetsAndMountsGlobal:RandomMount(4)",
-        ["PetsAndMountsSecureButtonSurface"] = "/cancelform\n/run PetsAndMountsGlobal:RandomMount(6)",
-        ["PetsAndMountsSecureButtonRepair"] = "/cancelform\n/run PetsAndMountsGlobal:RandomMount(7)",
-        ["PetsAndMountsSecureButtonHybrid"] = "/cancelform\n/run PetsAndMountsGlobal:RandomMount(3)",
+        ["PetsAndMountsSecureButtonPets"] = "/pampet",
+        ["PetsAndMountsSecureButtonPassengers"] = "/cancelform [form]\n/pampassengers",
+        ["PetsAndMountsSecureButtonFlying"] = "/cancelform [form]\n/pamfly",
+        ["PetsAndMountsSecureButtonGround"] = "/cancelform [form]\n/pamground",
+        ["PetsAndMountsSecureButtonAquatic"] = "/cancelform [form]\n/pamaquatic",
+        ["PetsAndMountsSecureButtonSurface"] = "/cancelform [form]\n/pamsurface",
+        ["PetsAndMountsSecureButtonRepair"] = "/cancelform [form]\n/pamrepair",
+        ["PetsAndMountsSecureButtonHybrid"] = "/cancelform [form]\n/pamhybrid",
     },
     [2] = -- Without
     {
-        ["PetsAndMountsSecureButtonPets"] = "/run PetsAndMountsGlobal:RandomPet()",
-        ["PetsAndMountsSecureButtonPassengers"] = "/run PetsAndMountsGlobal:RandomMount(5)",
-        ["PetsAndMountsSecureButtonFlying"] = "/run PetsAndMountsGlobal:RandomMount(2)",
-        ["PetsAndMountsSecureButtonGround"] = "/run PetsAndMountsGlobal:RandomMount(1)",
-        ["PetsAndMountsSecureButtonAquatic"] = "/run PetsAndMountsGlobal:RandomMount(4)",
-        ["PetsAndMountsSecureButtonSurface"] = "/run PetsAndMountsGlobal:RandomMount(6)",
-        ["PetsAndMountsSecureButtonRepair"] = "/run PetsAndMountsGlobal:RandomMount(7)",
-        ["PetsAndMountsSecureButtonHybrid"] = "/run PetsAndMountsGlobal:RandomMount(3)",
+        ["PetsAndMountsSecureButtonPets"] = "/pampet",
+        ["PetsAndMountsSecureButtonPassengers"] = "/pampassengers",
+        ["PetsAndMountsSecureButtonFlying"] = "/pamfly",
+        ["PetsAndMountsSecureButtonGround"] = "/pamground",
+        ["PetsAndMountsSecureButtonAquatic"] = "/pamaquatic",
+        ["PetsAndMountsSecureButtonSurface"] = "/pamsurface",
+        ["PetsAndMountsSecureButtonRepair"] = "/pamrepair",
+        ["PetsAndMountsSecureButtonHybrid"] = "/pamhybrid",
     },
 };
 
@@ -145,9 +145,9 @@ end
 function A:SetMacroDismountString()
     A.macroDismountString = "/dismount [mounted]";
 
-    if ( A.playerClass == "DRUID" or A.playerClass == "SHAMAN" ) then
-        A.macroDismountString = A.macroDismountString.."\n/cancelform";
-    end
+    -- if ( A.playerClass == "DRUID" or A.playerClass == "SHAMAN" ) then
+        -- A.macroDismountString = A.macroDismountString.."\n/cancelform [form]\n/stopmacro [form]";
+    -- end
 
     if ( A.db.profile.vehicleExit ) then
         A.macroDismountString = A.macroDismountString.."\n/leavevehicle [vehicleui]";
@@ -275,13 +275,11 @@ end
 -- For Druids we handle flight forms
 function A:SetDruidPreClickMacro(button)
     if ( A.db.profile.druidWantFormsOnMove ) then
-        if ( GetUnitSpeed("player") > 0 ) then
+        if ( GetUnitSpeed("player") > 0 or (A.db.profile.noMountAfterCancelForm and GetShapeshiftForm(1) > 0) ) then
             if ( IsFlyableArea() and IsSpellKnown(40120) ) then
                 return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidSwiftFlightForm);
             elseif ( A.playerLevel >= 58 and A:IsFlyable() ) then
                 return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidFlightForm);
-            elseif ( A.playerLevel >= 20 and A:CanRide() ) then
-                return ("/cancelform\n/cast [swimming] %s\n/stopmacro [swimming]\n/pammount"):format(A.druidAquaticForm);
             elseif ( A.playerLevel >= 18 ) then
                 return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidTravelForm);
             elseif ( A.playerLevel >= 16 ) then
@@ -302,13 +300,21 @@ function A:SetDruidPreClickMacro(button)
         elseif ( A.playerLevel >= 58 and A:IsFlyable() ) then
             return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidFlightForm);
         elseif ( A.playerLevel >= 20 and A:CanRide() ) then
-            return ("/cancelform\n/cast [swimming] %s\n/stopmacro [swimming]\n/pammount"):format(A.druidAquaticForm);
+            if ( A.db.profile.noMountAfterCancelForm and GetShapeshiftForm(1) > 0 ) then
+                return ("%s\n/cast [swimming] %s\n/stopmacro [swimming]"):format(A.macroDismountString, A.druidAquaticForm);
+            else
+                return ("%s\n/cast [swimming] %s\n/stopmacro [swimming]\n/pammount"):format(A.macroDismountString, A.druidAquaticForm);
+            end
         elseif ( A.playerLevel >= 18 ) then
             return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidTravelForm);
         elseif ( A.playerLevel >= 16 ) then
             return ("%s\n/cast %s"):format(A.macroDismountString, A.druidTravelForm);
         else
-            return ("%s\n/pammount"):format(A.macroDismountString);
+            if ( A.db.profile.noMountAfterCancelForm and GetShapeshiftForm(1) > 0 ) then
+                return A.macroDismountString.."\n/cancelform [form]";
+            else
+                return ("%s\n/pammount"):format(A.macroDismountString);
+            end
         end
     end
 end
@@ -451,10 +457,11 @@ end
 -- @param button The button object
 -- For Shamans we handle Ghost Wolf when moving
 function A:SetShamanPreClickMacro(button)
-    if ( not IsMounted() and GetUnitSpeed("player") > 0 and A.playerLevel >= 16 ) then
+    if ( (not IsMounted() and GetUnitSpeed("player") > 0 and A.playerLevel >= 16)
+    or (A.db.profile.noMountAfterCancelForm and GetShapeshiftForm(1) > 0) ) then
         return ("%s\n/cast %s"):format(A.macroDismountString, A.shamanGhostWolf);
     else
-        return "/cancelform\n/pammount";
+        return ("%s\n/pammount"):format(A.macroDismountString);
     end
 end
 
@@ -718,21 +725,29 @@ function A:PreClickMount(button, clickedBy)
                     if ( A.playerClass == "DEATHKNIGHT" and not UnitBuff("player", A.deathKnightPathOfFrost) ) then
                         button:SetAttribute("type", "macro");
                         button:SetAttribute("macrotext", "/cast !"..A.deathKnightPathOfFrost);
+                        A:DebugMessage(("Preclick macro set to: %s"):format("/cast !"..A.deathKnightPathOfFrost));
                     elseif ( A.playerClass == "SHAMAN" ) then
                         if ( UnitBuff("player", A.shamanWaterWalking) ) then
+                            local macro = A:PreClickFunc();
                             button:SetAttribute("type", "macro");
-                            button:SetAttribute("macrotext", "/cancelform\n/pammount");
+                            button:SetAttribute("macrotext", macro);
+                            A:DebugMessage(("Preclick macro set to: %s"):format(macro));
                         else
                             button:SetAttribute("type", "macro");
                             button:SetAttribute("macrotext", "/cast "..A.shamanWaterWalking);
+                            A:DebugMessage(("Preclick macro set to: %s"):format("macrotext", "/cast "..A.shamanWaterWalking));
                         end
                     else
+                        local macro = A:PreClickFunc();
                         button:SetAttribute("type", "macro");
-                        button:SetAttribute("macrotext", "/pammount");
+                        button:SetAttribute("macrotext", macro);
+                        A:DebugMessage(("Preclick macro set to: %s"):format(macro));
                     end
                 else
+                    local macro = A:PreClickFunc();
                     button:SetAttribute("type", "macro");
-                    button:SetAttribute("macrotext", "/pammount");
+                    button:SetAttribute("macrotext", macro);
+                    A:DebugMessage(("Preclick macro set to: %s"):format(macro));
                 end
             else
                 local macro = A:PreClickFunc();
