@@ -1180,7 +1180,12 @@ function A:OptionsRoot()
                                 name = L["Flying dismount"],
                                 desc = L["Using the random mount bind when flying will dismount you."],
                                 type = "toggle",
-                                set = function() A.db.profile.dismountFlying = not A.db.profile.dismountFlying; end,
+                                set = function()
+                                    A.db.profile.dismountFlying = not A.db.profile.dismountFlying;
+                                    A:SetMacroDismountString();
+                                    A:SetPreClickFunction();
+                                    A:SetPostClickMacro();
+                                end,
                                 get = function() return A.db.profile.dismountFlying; end,
                             },
                             areaMounts =

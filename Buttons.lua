@@ -143,7 +143,11 @@ end
 
 -- Global macro dismount string
 function A:SetMacroDismountString()
-    A.macroDismountString = "/dismount [mounted]";
+    if ( A.db.profile.dismountFlying ) then
+        A.macroDismountString = "/dismount [mounted]";
+    else
+        A.macroDismountString = "/dismount [mounted,noflying]";
+    end
 
     -- if ( A.playerClass == "DRUID" or A.playerClass == "SHAMAN" ) then
         -- A.macroDismountString = A.macroDismountString.."\n/cancelform [form]\n/stopmacro [form]";
@@ -285,10 +289,10 @@ function A:SetDruidPreClickMacro(button)
             elseif ( A.playerLevel >= 16 ) then
                 return ("%s\n/cast %s"):format(A.macroDismountString, A.druidTravelForm);
             else
-                return ("%s\n/pammount"):format(A.macroDismountString);
+                return "/pammount";
             end
         else
-            return ("%s\n/pammount"):format(A.macroDismountString);
+            return "/pammount";
         end
     else
         if ( not IsFlyableArea() and not IsMounted() and GetUnitSpeed("player") > 0 and A.playerLevel >= 18 ) then
@@ -301,9 +305,9 @@ function A:SetDruidPreClickMacro(button)
             return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidFlightForm);
         elseif ( A.playerLevel >= 20 and A:CanRide() ) then
             if ( A.db.profile.noMountAfterCancelForm and GetShapeshiftForm(1) > 0 ) then
-                return ("%s\n/cast [swimming] %s\n/stopmacro [swimming]"):format(A.macroDismountString, A.druidAquaticForm);
+                return ("/cast [swimming] %s\n/stopmacro [swimming]"):format(A.druidAquaticForm);
             else
-                return ("%s\n/cast [swimming] %s\n/stopmacro [swimming]\n/pammount"):format(A.macroDismountString, A.druidAquaticForm);
+                return ("/cast [swimming] %s\n/stopmacro [swimming]\n/pammount"):format(A.druidAquaticForm);
             end
         elseif ( A.playerLevel >= 18 ) then
             return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidTravelForm);
@@ -313,7 +317,7 @@ function A:SetDruidPreClickMacro(button)
             if ( A.db.profile.noMountAfterCancelForm and GetShapeshiftForm(1) > 0 ) then
                 return A.macroDismountString.."\n/cancelform [form]";
             else
-                return ("%s\n/pammount"):format(A.macroDismountString);
+                return "/pammount";
             end
         end
     end
@@ -461,7 +465,7 @@ function A:SetShamanPreClickMacro(button)
     or (A.db.profile.noMountAfterCancelForm and GetShapeshiftForm(1) > 0) ) then
         return ("%s\n/cast %s"):format(A.macroDismountString, A.shamanGhostWolf);
     else
-        return ("%s\n/pammount"):format(A.macroDismountString);
+        return "/pammount";
     end
 end
 
