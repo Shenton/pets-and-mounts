@@ -245,7 +245,21 @@ A.popupMessages["griefScamProtectionMessageLUA"] =
 {
     type = "message",
     text = L["|cffff3333Anti grief/scam protection triggered, you should be careful.|r\n\nMessage: |cffff3333%s|r was found in your %s %s custom LUA.\n\n|cff33ff99This code was not used.|r\n\nYou can disable the protection within the configuration panel."],
-    icon = "Interface\\RAIDFRAME\\ReadyCheck-NotReady",
+    icon = "Interface\\Buttons\\UI-GroupLoot-Pass-Up",
+    leftButtonText = L["Ok"],
+    escapeClose = 1,
+    enterOK = 1,
+    LeftButtonScript = function(self)
+        self:Hide();
+    end,
+};
+
+-- New filters for companions in 1.6.1 (rarity & level)
+A.popupMessages["newCompanionsFilters161"] =
+{
+    type = "message",
+    text = L["New filters added for companions, rarity and level.\n\nThey are enabled by default and could have modified your companions list both in configuration panel and Data Broker menu.\n\nIt did not alter you sets or favorites, but you could want to modify them to use your highest level and rarity companions.\n\nTips: You can disable the \"Filter multiple\" option to see all your companions. Rarity and level are displayed next to their names in the list."],
+    icon = "Interface\\DialogFrame\\UI-Dialog-Icon-AlertNew",
     leftButtonText = L["Ok"],
     escapeClose = 1,
     enterOK = 1,

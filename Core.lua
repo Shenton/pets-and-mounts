@@ -2071,6 +2071,7 @@ function A:PLAYER_ENTERING_WORLD()
         end
 
         A:LoginModificationsFixes();
+        A:LoginMessages();
         A:ScheduleTimer("InitializeDB", 5);
         A.onFirstLoadActions = nil;
         return;
@@ -2539,8 +2540,8 @@ A.aceDefaultDB =
         filterPreferHigherRarity = 1, -- d
         filterLevelRarityMode = "rarity", -- d
         addPetLevelRarityToList = 1, -- d
-        dataBrokerPetRarity = 1,
-        dataBrokerPetLevel = 1,
+        dataBrokerPetRarity = 1, -- d
+        dataBrokerPetLevel = 1, -- d
     },
 };
 
@@ -2553,10 +2554,11 @@ function A:DatabaseRevisionCheck()
         end
 
         A.db.global.databaseRevision = A.databaseRevision;
-    else -- Full update
+    else -- Full update just in case someone got an old savedvar
         A:Message(L["A full database update is needed."], 1, 1);
         A:DatabaseRevision2();
         A.db.global.databaseRevision = A.databaseRevision;
+        A.addonFirstLoad = 1; -- First time loading the addon, used to not display login messages
     end
 end
 
@@ -2714,7 +2716,7 @@ function A:OpenConfigPanel(cat)
 end
 
 --[[-------------------------------------------------------------------------------
-    Add-on modifications on login fixes
+    Add-on modifications on login fixes and on login messages
 -------------------------------------------------------------------------------]]--
 
 --- Called upon PLAYER_ENTERING_WORLD
@@ -2777,6 +2779,22 @@ function A:LoginModificationsFixes()
     end
     oldBindings, newBindings, key1, key2, set = nil, nil, nil, nil, nil;
     -- / Old bindings
+end
+
+A.loginMessagesList =
+{
+    "newCompanionsFilters161",
+};
+function A:LoginMessages()
+    for k,v in ipairs(A.loginMessagesList) do
+        if ( not A.db.global.popLoginMessages[v] ) then
+            if ( not A.addonFirstLoad ) then
+                A:PopMessageFrame(v);
+            end
+
+            A.db.global.popLoginMessages[v] = 1;
+        end
+    end
 end
 
 --[[-------------------------------------------------------------------------------
