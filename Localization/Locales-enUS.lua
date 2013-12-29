@@ -57,6 +57,7 @@ L["Indoor"] = true;
 
 L["Label"] = true;
 L["Left"] = true;
+L["Level"] = true;
 L["Levitate"] = true;
 L["Licence"] = true;
 L["Link"] = true;
@@ -84,6 +85,7 @@ L["Options"] = true;
 
 L["Passenger"] = true;
 
+L["Rarity"] = true;
 L["Regen"] = true;
 L["Release"] = true;
 L["Repair"] = true;
@@ -392,6 +394,18 @@ L["Force Levitate"] = true;
 L["Force Levitate when in combat. This will obviously make Body and Soul or Angelic Feather unavailable in combat."] = true;
 L["No mount after cancel form"] = true;
 L["This will prevent summoning a mount after cancelling a form. Works for Druids and Shamans."] = true;
+L["Prefer higher level"] = true;
+L["If you got more than one single pet, this will add only the one with the highest level."] = true;
+L["Prefer higher rarity"] = true;
+L["If you got more than one single pet, this will add only the one with the highest rarity."] = true;
+L["Level/Rarity mode"] = true;
+L["Select which filter should gain the upper hand. This only works when both filters are selected."] = true;
+L["Rarity and level"] = true;
+L["Add companions rarity and level to their names."] = true;
+L["Companion rarity"] = true;
+L["Set the text colour to the pet rarity."] = true;
+L["Companion level"] = true;
+L["Add the current companion level after the name."] = true;
 -- About
 L["Auto and random summon for your pets and mounts, highly customizable. With Data Broker support."] = true;
 L["A new version is available, version |cff33ff99%s|r revision |cff33ff99%s %s|r."] = true;

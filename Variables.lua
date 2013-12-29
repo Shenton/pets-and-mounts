@@ -59,6 +59,18 @@ A.color =
     RESET = "|r",
 };
 
+A.rarityColors =
+{
+    A.color.POOR,
+    A.color.COMMON,
+    A.color.UNCOMMON,
+    A.color.RARE,
+    A.color.EPIC,
+    A.color.LEGENDAY,
+    A.color.ARTIFACT,
+    A.color.HEIRLOOM,
+};
+
 -- Player pets and mounts table
 A.pamTable =
 {

@@ -98,12 +98,16 @@ end
 --- Return if the pet or mount name exists in the table
 -- @param tbl The table
 -- @param name The name
--- @return true or false
+-- @return The key int
 function A:NameExists(tbl, name)
+    if ( not tbl or type(tbl) ~= "table" ) then
+        return nil;
+    end
+
     local index = 1;
 
     while tbl[index] do
-        if ( name == tbl[index]["name"] ) then return 1; end
+        if ( name == tbl[index]["name"] ) then return index; end
 
         index = index + 1;
    end
@@ -525,44 +529,67 @@ function A:BuildPetsTable(force)
     A.pamTable.petsIds = {};
 
     for i=1,numPets do
-        local petID, _, isOwned, customName, _, _, _, creatureName, icon, petType, creatureID = C_PetJournal.GetPetInfoByIndex(i);
+        local petID, _, isOwned, customName, level, _, _, creatureName, icon, petType, creatureID = C_PetJournal.GetPetInfoByIndex(i);
         --local petID, speciesID, isOwned, customName, level, favorite, isRevoked, name, icon, petType, creatureID, sourceText, description, isWildPet, canBattle = C_PetJournal.GetPetInfoByIndex(index);
+        local rarity = select(5, C_PetJournal.GetPetStats(petID or "0x0000000000000000"));
+        --local health, maxHealth, power, speed, rarity = C_PetJournal.GetPetStats(petID);
 
         --if ( not petType ) then petType = 11; end
 
         if ( isOwned and A:CheckPetWithSameName(creatureID) ) then
             if ( A.petTypes[petType] ) then
-                if ( customName and A.db.profile.noFilterCustom ) then
-                    local leadingLetter = string.sub(customName, 1, 1);
-                    if ( not A.pamTable.pets[petType][leadingLetter] ) then A.pamTable.pets[petType][leadingLetter] = {}; end
+                local add;
+                local leadingLetter = string.sub(creatureName, 1, 1);
 
+                if ( not A.pamTable.pets[petType][leadingLetter] ) then A.pamTable.pets[petType][leadingLetter] = {}; end
+
+                local exists = A:NameExists(A.pamTable.pets[petType][leadingLetter], creatureName);
+
+                if ( exists ) then
+                    if ( not A.db.profile.filterMultiple or (customName and A.db.profile.noFilterCustom) ) then
+                        add = 1;
+                    elseif ( A.db.profile.filterPreferHigherLevel or A.db.profile.filterPreferHigherRarity ) then
+                        local higherRarity, higherLevel, equalRarity, equalLevel;
+
+                        if ( A.pamTable.pets[petType][leadingLetter][exists].rarity < rarity ) then
+                            higherRarity = 1;
+                        elseif ( A.pamTable.pets[petType][leadingLetter][exists].rarity == rarity ) then
+                            equalRarity = 1;
+                        end
+
+                        if ( A.pamTable.pets[petType][leadingLetter][exists].level < level ) then
+                            higherLevel = 1;
+                        elseif ( A.pamTable.pets[petType][leadingLetter][exists].level == level ) then
+                            equalLevel = 1;
+                        end
+
+                        if ( (higherRarity and higherLevel and A.db.profile.filterPreferHigherLevel and A.db.profile.filterPreferHigherRarity)
+                        or (higherRarity and A.db.profile.filterPreferHigherRarity and ((equalLevel or A.db.profile.filterLevelRarityMode == "rarity" and A.db.profile.filterPreferHigherLevel)
+                          or not A.db.profile.filterPreferHigherLevel))
+                        or (higherLevel and A.db.profile.filterPreferHigherLevel and ((equalRarity or A.db.profile.filterLevelRarityMode == "level" and A.db.profile.filterPreferHigherRarity)
+                          or not A.db.profile.filterPreferHigherRarity)) ) then
+                            table.remove(A.pamTable.pets[petType][leadingLetter], exists);
+                            add = 1;
+                        end
+                    end
+                else
+                    add = 1;
+                end
+
+                if ( add ) then
                     A.pamTable.petsIds[#A.pamTable.petsIds+1] = petID;
 
                     A.pamTable.pets[petType][leadingLetter][#A.pamTable.pets[petType][leadingLetter]+1] =
                     {
                         petID = petID,
-                        name = customName,
+                        name = customName or creatureName,
                         icon = icon,
                         creatureID = creatureID,
-                        defaultName = creatureName,
+                        defaultName = customName and creatureName or nil,
                         petType = petType,
+                        level = level,
+                        rarity = rarity,
                     };
-                else
-                    local leadingLetter = string.sub(creatureName, 1, 1);
-                    if ( not A.pamTable.pets[petType][leadingLetter] ) then A.pamTable.pets[petType][leadingLetter] = {}; end
-
-                    if ( not A:NameExists(A.pamTable.pets[petType][leadingLetter], creatureName) or not A.db.profile.filterMultiple ) then
-                        A.pamTable.petsIds[#A.pamTable.petsIds+1] = petID;
-
-                        A.pamTable.pets[petType][leadingLetter][#A.pamTable.pets[petType][leadingLetter]+1] =
-                        {
-                            petID = petID,
-                            name = creatureName,
-                            icon = icon,
-                            creatureID = creatureID,
-                            petType = petType,
-                        };
-                    end
                 end
             end
         end
@@ -1292,21 +1319,20 @@ function A:SetCurrentPetInfos()
     local id = C_PetJournal.GetSummonedPetGUID();
 
     if ( id ) then
-        local _, customName, _, _, _, _, _,creatureName, icon = C_PetJournal.GetPetInfoByPetID(id);
+        local _, customName, level, _, _, _, _,creatureName, icon = C_PetJournal.GetPetInfoByPetID(id);
+        local rarity = select(5, C_PetJournal.GetPetStats(id or "0x0000000000000000"));
 
-        if ( customName ) then
-            A.currentPetName = customName;
-            A.currentPetIcon = icon;
-            return;
-        end
-
-        A.currentPetName = creatureName;
+        A.currentPetName = customName or creatureName;
         A.currentPetIcon = icon;
+        A.currentPetRarity = rarity or 1;
+        A.currentPetLevel = level;
         return;
     end
 
     A.currentPetName = nil;
     A.currentPetIcon = nil;
+    A.currentPetRarity = nil;
+    A.currentPetLevel = nil;
 end
 
 --- Set to vars the current summoned mount infos
@@ -1350,10 +1376,22 @@ function A:SetDataBroker()
 
     if ( A.db.profile.dataBrokerTextPet ) then
         if ( A.currentPetName ) then
+            if ( A.db.profile.dataBrokerPetRarity ) then
+                text = A.rarityColors[A.currentPetRarity];
+            end
+
             if ( A.db.profile.dataBrokerTextPetIcon ) then
-                text = "|T"..A.currentPetIcon..":"..A.db.profile.dataBrokerTextIconSize..":"..A.db.profile.dataBrokerTextIconSize..":0:"..A.db.profile.dataBrokerTextIconVerticalOffset.."|t "..A.currentPetName;
+                text = text.."|T"..A.currentPetIcon..":"..A.db.profile.dataBrokerTextIconSize..":"..A.db.profile.dataBrokerTextIconSize..":0:"..A.db.profile.dataBrokerTextIconVerticalOffset.."|t "..A.currentPetName;
             else
-                text = A.currentPetName;
+                text = text..A.currentPetName;
+            end
+
+            if ( A.db.profile.dataBrokerPetLevel ) then
+                text = text.." ("..A.currentPetLevel..")";
+            end
+
+            if ( A.db.profile.dataBrokerPetRarity ) then
+                text = text..A.color.RESET;
             end
         end
     end
@@ -2497,6 +2535,12 @@ A.aceDefaultDB =
         priestLevitate = nil, -- d
         priestForceLevitate = nil, -- d
         noMountAfterCancelForm = nil, -- d
+        filterPreferHigherLevel = 1, -- d
+        filterPreferHigherRarity = 1, -- d
+        filterLevelRarityMode = "rarity", -- d
+        addPetLevelRarityToList = 1, -- d
+        dataBrokerPetRarity = 1,
+        dataBrokerPetLevel = 1,
     },
 };
 

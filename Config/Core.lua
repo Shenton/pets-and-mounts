@@ -392,6 +392,43 @@ function A:OptionsRoot()
                                 end,
                                 get = function() return A.db.profile.noFilterCustom; end,
                             },
+                            filterPreferHigherLevel =
+                            {
+                                order = 2,
+                                name = L["Prefer higher level"],
+                                desc = L["If you got more than one single pet, this will add only the one with the highest level."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.filterPreferHigherLevel = not A.db.profile.filterPreferHigherLevel;
+                                    A:BuildPetsTable(1);
+                                end,
+                                get = function() return A.db.profile.filterPreferHigherLevel; end,
+                            },
+                            filterPreferHigherRarity =
+                            {
+                                order = 3,
+                                name = L["Prefer higher rarity"],
+                                desc = L["If you got more than one single pet, this will add only the one with the highest rarity."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.filterPreferHigherRarity = not A.db.profile.filterPreferHigherRarity;
+                                    A:BuildPetsTable(1);
+                                end,
+                                get = function() return A.db.profile.filterPreferHigherRarity; end,
+                            },
+                            filterLevelRarityMode =
+                            {
+                                order = 4,
+                                name = L["Level/Rarity mode"],
+                                desc = L["Select which filter should gain the upper hand. This only works when both filters are selected."],
+                                type = "select",
+                                values = {["level"] = L["Level"], ["rarity"] = L["Rarity"]},
+                                set = function(info, val)
+                                    A.db.profile.filterLevelRarityMode = val;
+                                    A:BuildPetsTable(1);
+                                end,
+                                get = function() return A.db.profile.filterLevelRarityMode; end,
+                            },
                         },
                     },
                     dataBroker =
@@ -502,6 +539,32 @@ function A:OptionsRoot()
                                     A:SetDataBroker();
                                 end,
                                 get = function() return A.db.profile.dataBrokerTextPetIcon; end,
+                            },
+                            petRarity =
+                            {
+                                order = 203,
+                                name = L["Companion rarity"],
+                                desc = L["Set the text colour to the pet rarity."],
+                                disabled = function() return not A.db.profile.dataBrokerTextPet; end,
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.dataBrokerPetRarity = not A.db.profile.dataBrokerPetRarity;
+                                    A:SetDataBroker();
+                                end,
+                                get = function() return A.db.profile.dataBrokerPetRarity; end,
+                            },
+                            petLevel =
+                            {
+                                order = 204,
+                                name = L["Companion level"],
+                                desc = L["Add the current companion level after the name."],
+                                disabled = function() return not A.db.profile.dataBrokerTextPet; end,
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.dataBrokerPetLevel = not A.db.profile.dataBrokerPetLevel;
+                                    A:SetDataBroker();
+                                end,
+                                get = function() return A.db.profile.dataBrokerPetLevel; end,
                             },
                             blankLine1 = 
                             {
@@ -1061,6 +1124,15 @@ function A:OptionsRoot()
                                     A.db.profile.petWithCustomNameColor.b,
                                     A.db.profile.petWithCustomNameColor.a;
                                 end,
+                            },
+                            addPetLevelRarityToList =
+                            {
+                                order = 3,
+                                name = L["Rarity and level"],
+                                desc = L["Add companions rarity and level to their names."],
+                                type = "toggle",
+                                set = function() A.db.profile.addPetLevelRarityToList = not A.db.profile.addPetLevelRarityToList; end,
+                                get = function() return A.db.profile.addPetLevelRarityToList; end,
                             },
                         },
                     },
@@ -2963,10 +3035,14 @@ function A:OptionsPetsList()
                                 end
 
                                 if ( A.db.profile.colorPetWithCustomName ) then
-                                    petName = A.db.profile.petWithCustomNameColor.hexa..petName;
+                                    petName = A.db.profile.petWithCustomNameColor.hexa..petName..A.color.RESET;
                                 end
                             else
                                 petName = vvv.name;
+                            end
+
+                            if ( A.db.profile.addPetLevelRarityToList ) then
+                                petName = petName.." ("..A.rarityColors[vvv.rarity]..vvv.level..A.color.RESET..")";
                             end
 
                             return petName;
