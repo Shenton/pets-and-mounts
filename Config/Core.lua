@@ -3416,7 +3416,16 @@ function A:OptionsMountsList()
                         type = "execute",
                         disabled = function() return not A.enableMountSelectAllButton; end,
                         func = function()
-                            A.db.profile.favoriteMounts = {};
+                            A.db.profile.favoriteMounts =
+                            {
+                                [1] = {}, -- Ground
+                                [2] = {}, -- Fly
+                                [3] = {}, -- Hybrid (ground & fly)
+                                [4] = {}, -- Aquatic
+                                [5] = {}, -- with passengers
+                                [6] = {}, -- Water walking
+                                [7] = {}, -- Repair
+                            };
 
                             for k,v in ipairs(A.pamTable.mounts) do
                                 for kk,vv in pairs(v) do
