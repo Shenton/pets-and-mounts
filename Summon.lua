@@ -293,6 +293,14 @@ function A:AutoPet()
         return;
     end
 
+    --[[if ( A.flyingPetWithFlyingMountLastPet and A:GotRandomPet(A.db.global.savedSets.pets[A.db.profile.flyingPetWithFlyingMount.set]) ) then
+        if ( currentPet and tContains(A.db.global.savedSets.pets[A.db.profile.flyingPetWithFlyingMount.set], currentPet) and not A:CheckReSummon(currentPet) ) then
+            A:DebugMessage("AutoPet() - Already got a flying pet");
+        else
+            A:DebugMessage("AutoPet() - Summon flying pet");
+            local id = A:GetRandomPet(A.db.global.savedSets.pets[A.db.profile.flyingPetWithFlyingMount.set]);
+            A:SummonPet(id);
+        end]]--
     if ( A.db.profile.forceOne.pet ) then -- Forced pet
         if ( currentPet and currentPet == A.db.profile.forceOne.pet ) then
             A:DebugMessage("AutoPet() - Forced pet is current");
@@ -429,13 +437,19 @@ function A:IsSwimming()
 end
 
 --- Check if the player can ride a (ground) mount
+-- Lower riding skills are "forgotten", only the highest one is known
 -- Apprentice Riding 33388
 -- Journeyman Riding 33391
+-- Expert Riding 34090
+-- Artisan Riding 34091
+-- Master Riding 90265
 function A:CanRide()
-    if ( IsSpellKnown(33388) or IsSpellKnown(33391) ) then
+    if (  IsSpellKnown(90265) or IsSpellKnown(34091) or IsSpellKnown(34090) or IsSpellKnown(33391) or IsSpellKnown(33388) ) then
+        A:DebugMessage("CanRide() - True");
         return 1;
     end
 
+    A:DebugMessage("CanRide() - False");
     return nil;
 end
 

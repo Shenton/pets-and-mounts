@@ -10,6 +10,17 @@
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 -- TODO: move back red flying cloud to hybrid and prevent summoning it when under water
 
+-- 1.6.2 changelog
+--[[
+Added Spectral Wind Rider and Spectral Gryphon to filters
+Removed Vicious War Steed and Vicious War Wolf from filters
+Added support for Anglers Fishing Raft
+Area sets are now disabled by default
+Improved Druid's spells handling
+Improved Hunter's spells handling
+Fixed learned mount skills detection
+Improved forced mount type buttons
+]]--
 local A = _G["PetsAndMountsGlobal"];
 local L = A.L;
 
@@ -41,6 +52,7 @@ local _G = _G;
 -- GLOBALS: GetCurrentBindingSet, GetBindingKey, SetBinding, SaveBindings, DropDownList1, IsShiftKeyDown
 -- GLOBALS: PetsAndMountsMenuModelFrame, PetsAndMountsConfigModelFrame, PetsAndMountsSearchFrame, GameTooltip
 -- GLOBALS: PetsAndMountsPopupMessageFrame, UIDropDownMenu_SetAnchor, ToggleDropDownMenu, UnitBuff
+-- GLOBALS: GetSpecialization, GetSpecializationInfo, GetItemInfo
 
 --[[-------------------------------------------------------------------------------
     Common methods
@@ -366,6 +378,32 @@ function A:StringTrim(str, wat)
     end
 
     return str:match("^["..wat.."]*(.-)["..wat.."]*$");
+end
+
+--- Return the current specialization ID
+-- Death Knight: 250 - Blood / 251 - Frost / 252 - Unholy
+-- Druid: 102 - Balance / 103 - Feral Combat / 104 - Guardian / 105 - Restoration
+-- Hunter: 253 - Beast Mastery / 254 - Marksmanship / 255 - Survival
+-- Mage: 62 - Arcane / 63 - Fire / 64 - Frost
+-- Monk: 268 - Brewmaster / 269 - Windwalker / 270 - Mistweaver
+-- Paladin: 65 - Holy / 66 - Protection / 70 - Retribution
+-- Priest: 256 Discipline / 257 Holy / 258 Shadow
+-- Rogue: 259 - Assassination / 260 - Combat / 261 - Subtlety
+-- Shaman: 262 - Elemental / 263 - Enhancement / 264 - Restoration
+-- Warlock: 265 - Affliction / 266 - Demonology / 267 - Destruction
+-- Warrior: 71 - Arms / 72 - Furry / 73 - Protection
+function A:GetPlayerCurrentSpecID()
+    local index = GetSpecialization();
+
+    if ( index ) then
+        local id = GetSpecializationInfo(index);
+
+        if ( id ) then
+            return id;
+        end
+    end
+
+    return nil;
 end
 
 --[[-------------------------------------------------------------------------------
@@ -1493,6 +1531,27 @@ function A:ShowHideMinimap()
     end
 end
 
+--- Set the fishing poles subType, localized
+function A:SetFishingPoleSubType()
+    A.fishingPoleSubType = select(7, GetItemInfo(6256));
+
+    if ( not A.fishingPoleSubType ) then
+        A:ScheduleTimer("SetFishingPoleSubType", 1);
+    end
+end
+
+--- Set the flying pet with flying mount timer
+--[[function A:SetFlyingPetWithFlyingMountTimer()
+    if ( not A.db.profile.flyingPetWithFlyingMount.enabled and A.flyingPetWithFlyingMountTimer ) then
+        A:CancelTimer(A.flyingPetWithFlyingMountTimer, 1);
+    elseif ( A.db.profile.flyingPetWithFlyingMount.enabled and A.flyingPetWithFlyingMountTimer ) then
+        A:CancelTimer(A.flyingPetWithFlyingMountTimer, 1);
+        A.flyingPetWithFlyingMountTimer = A:ScheduleRepeatingTimer("FlyingPetWithFlyingMountCallback", A.db.profile.flyingPetWithFlyingMount.timer);
+    elseif ( A.db.profile.flyingPetWithFlyingMount.enabled and not A.flyingPetWithFlyingMountTimer ) then
+        A.flyingPetWithFlyingMountTimer = A:ScheduleRepeatingTimer("FlyingPetWithFlyingMountCallback", A.db.profile.flyingPetWithFlyingMount.timer);
+    end
+end]]--
+
 --- Set everything
 function A:SetEverything()
     A:DebugMessage("SetEverything()");
@@ -1503,9 +1562,11 @@ function A:SetEverything()
     A.playerFaction = UnitFactionGroup("player");
     A.playerRace = select(2, UnitRace("player"));
     A.playerName = UnitName("player");
+    A.playerCurrentSpecID = A:GetPlayerCurrentSpecID();
 
     if ( not A.playerClass or not A.playerGUID or not A.playerLevel
-    or not A.playerFaction or not A.playerRace or not A.playerName ) then
+    or not A.playerFaction or not A.playerRace or not A.playerName
+    or not A.playerCurrentSpecID ) then
         A:ScheduleTimer("SetEverything", 1);
         return;
     end
@@ -1515,12 +1576,13 @@ function A:SetEverything()
     A:SetAutoSummonOverride(1);
     A:SetStealthEvents();
 
+    A:SetFishingPoleSubType();
     A:SetMacroDismountString();
     A:SetClassSpells();
-    A:SetButtonsMacro();
     A:SetButtons();
 
     A:SetMainTimer();
+    --A:SetFlyingPetWithFlyingMountTimer();
 end
 
 --[[-------------------------------------------------------------------------------
@@ -1965,11 +2027,6 @@ end
 function A:PLAYER_REGEN_ENABLED()
     A:DebugMessage("PLAYER_REGEN_ENABLED() - -Combat");
 
-    if ( A.delayedButtonsMacro ) then
-        A:SetButtonsMacro();
-        A.delayedButtonsMacro = nil;
-    end
-
     if ( A.delayedPetsTableUpdate ) then
         A:BuildPetsTable();
         A.delayedPetsTableUpdate = nil;
@@ -2065,8 +2122,8 @@ function A:PLAYER_ENTERING_WORLD()
             A:RegisterEvent("GLYPH_UPDATED"); -- Will also fire when switching spec
         end
 
-        -- If player is a DK, a Paladin or a Priest, we need to monitor talents modifications
-        if ( A.playerClass == "DEATHKNIGHT" or A.playerClass == "PALADIN" or A.playerClass == "PRIEST" ) then
+        -- If player is a DK, a Druid, a Paladin or a Priest, we need to monitor talents modifications
+        if ( A.playerClass == "DEATHKNIGHT" or A.playerClass == "DRUID" or A.playerClass == "PALADIN" or A.playerClass == "PRIEST" ) then
             A:RegisterEvent("PLAYER_TALENT_UPDATE");
         end
 
@@ -2176,10 +2233,10 @@ function A:PET_JOURNAL_LIST_UPDATE()
 end
 
 function A:UNIT_AURA(event, unit)
+    if ( InCombatLockdown() or unit ~= "player" ) then return; end
+
     if ( A.db.profile.mountButtonIconCurrent or A.db.profile.dataBrokerTextMount
     or A.db.profile.dataBrokerTextMountIcon or A.db.profile.dataBrokerIconMode == "CURRENT_MOUNT" ) then
-        if ( InCombatLockdown() or unit ~= "player" ) then return; end
-
         A:ApplyCurrentMountInfos();
     end
 end
@@ -2243,8 +2300,25 @@ function A:UNIT_EXITED_VEHICLE()
 end
 
 function A:PLAYER_TALENT_UPDATE()
+    A.playerCurrentSpecID = A:GetPlayerCurrentSpecID();
     A:SetPostClickMacro();
 end
+
+--[[function A:FlyingPetWithFlyingMountCallback()
+    local current = C_PetJournal.GetSummonedPetGUID();
+
+    if ( current and IsFlying() ) then
+        if ( A.db.profile.flyingPetWithFlyingMount.set and A.db.global.savedSets.pets[A.db.profile.flyingPetWithFlyingMount.set] ) then
+            A.flyingPetWithFlyingMountLastPet = current;
+            A:AutoPet();
+        end
+    elseif ( not IsFlying() ) then
+        if ( A.flyingPetWithFlyingMountLastPet ) then
+            A:SummonPet(A.flyingPetWithFlyingMountLastPet);
+            A.flyingPetWithFlyingMountLastPet = nil;
+        end
+    end
+end]]--
 
 --[[-------------------------------------------------------------------------------
     Addon communication
@@ -2478,12 +2552,12 @@ A.aceDefaultDB =
         copyMouseoverMount = nil, -- d
         showMenuModelFrame = 1, -- d
         showConfigModelFrame = 1, -- d
-        petsZoneSets = 1, -- d
-        mountsZoneSets = 1, -- d
+        petsZoneSets = nil, -- d
+        mountsZoneSets = nil, -- d
         petReSummon = nil, -- d
         petReSummonTime = 3600, -- d
         hunterPreferPack = nil, -- d
-        hunterWantModifier = nil, -- d
+        hunterWantModifier = nil, -- d -- Unused as of 1.6.2
         hunterModifier = "shift", -- d
         dataBrokerTextPet = 1, -- d
         dataBrokerTextPetIcon = 1, -- d
@@ -2542,6 +2616,13 @@ A.aceDefaultDB =
         addPetLevelRarityToList = 1, -- d
         dataBrokerPetRarity = 1, -- d
         dataBrokerPetLevel = 1, -- d
+        anglersFishingRaft = 1, -- d
+        --[[flyingPetWithFlyingMount = -- d
+        {
+            enabled = nil,
+            timer = 3,
+            set = nil,
+        },]]--
     },
 };
 

@@ -23,7 +23,8 @@ local ipairs = ipairs;
 -- GLOBALS: IsShiftKeyDown, IsControlKeyDown, GetItemCount, GetItemInfo, UnitBuff, UIDropDownMenu_SetAnchor
 -- GLOBALS: ToggleDropDownMenu, GameTooltip, PetsAndMountsSecureButtonMounts, PetsAndMountsSecureButtonPets
 -- GLOBALS: GetScreenWidth, IsMounted, GetUnitSpeed, GetTalentInfo, GetTalentRowSelectionInfo, GetInstanceInfo
--- GLOBALS: GetGlyphSocketInfo, IsFalling, NUM_GLYPH_SLOTS, GetShapeshiftForm
+-- GLOBALS: GetGlyphSocketInfo, IsFalling, NUM_GLYPH_SLOTS, GetShapeshiftForm, IsEquippedItemType
+-- GLOBALS: ShentonFishingGlobal
 
 --[[-------------------------------------------------------------------------------
     Bindings
@@ -89,55 +90,6 @@ do
 end
 
 --[[-------------------------------------------------------------------------------
-    Simple buttons macros
--------------------------------------------------------------------------------]]--
-
---- Specific buttons macro
-local buttonsMacro =
-{
-    [1] = -- With form cancel
-    {
-        ["PetsAndMountsSecureButtonPets"] = "/pampet",
-        ["PetsAndMountsSecureButtonPassengers"] = "/cancelform [form]\n/pampassengers",
-        ["PetsAndMountsSecureButtonFlying"] = "/cancelform [form]\n/pamfly",
-        ["PetsAndMountsSecureButtonGround"] = "/cancelform [form]\n/pamground",
-        ["PetsAndMountsSecureButtonAquatic"] = "/cancelform [form]\n/pamaquatic",
-        ["PetsAndMountsSecureButtonSurface"] = "/cancelform [form]\n/pamsurface",
-        ["PetsAndMountsSecureButtonRepair"] = "/cancelform [form]\n/pamrepair",
-        ["PetsAndMountsSecureButtonHybrid"] = "/cancelform [form]\n/pamhybrid",
-    },
-    [2] = -- Without
-    {
-        ["PetsAndMountsSecureButtonPets"] = "/pampet",
-        ["PetsAndMountsSecureButtonPassengers"] = "/pampassengers",
-        ["PetsAndMountsSecureButtonFlying"] = "/pamfly",
-        ["PetsAndMountsSecureButtonGround"] = "/pamground",
-        ["PetsAndMountsSecureButtonAquatic"] = "/pamaquatic",
-        ["PetsAndMountsSecureButtonSurface"] = "/pamsurface",
-        ["PetsAndMountsSecureButtonRepair"] = "/pamrepair",
-        ["PetsAndMountsSecureButtonHybrid"] = "/pamhybrid",
-    },
-};
-
-function A:SetButtonsMacro()
-    if ( InCombatLockdown() ) then
-        A.delayedButtonsMacro = 1;
-    else
-        if ( A.playerClass == "DRUID" or A.playerClass == "SHAMAN" ) then
-            for k,v in pairs(buttonsMacro[1]) do
-                _G[k]:SetAttribute("type", "macro");
-                _G[k]:SetAttribute("macrotext", v);
-            end
-        else
-            for k,v in pairs(buttonsMacro[2]) do
-                _G[k]:SetAttribute("type", "macro");
-                _G[k]:SetAttribute("macrotext", v);
-            end
-        end
-    end
-end
-
---[[-------------------------------------------------------------------------------
     Mounts smart button pre & post clicks
 -------------------------------------------------------------------------------]]--
 
@@ -171,6 +123,38 @@ function A:GotMountAllTable(cat)
     return nil;
 end
 
+--- IsEquippedItemType with a check on A.fishingPole subType
+function A:IsEquippedFishingPole()
+    if ( A.fishingPoleSubType ) then
+        return IsEquippedItemType(A.fishingPoleSubType);
+    end
+
+    return nil;
+end
+
+--- Get the mount summon command according to button name
+A.mountButtonCommands =
+{
+    ["PetsAndMountsSecureButtonPassengers"] = "/pampassengers",
+    ["PetsAndMountsSecureButtonFlying"] = "/pamfly",
+    ["PetsAndMountsSecureButtonGround"] = "/pamground",
+    ["PetsAndMountsSecureButtonAquatic"] = "/pamaquatic",
+    ["PetsAndMountsSecureButtonSurface"] = "/pamsurface",
+    ["PetsAndMountsSecureButtonRepair"] = "/pamrepair",
+    ["PetsAndMountsSecureButtonHybrid"] = "/pamhybrid",
+};
+function A:GetMountCommand(button)
+    button = button:GetName();
+
+    local command = A.mountButtonCommands[button];
+
+    if ( command ) then
+        return command, 1;
+    end
+
+    return "/pammount", nil;
+end
+
 --- Set the spells names for the player's class
 -- This will check if the spell name is not nil
 -- it is required as for some ppl they are not available on login
@@ -192,6 +176,8 @@ A.classesSpellsTable =
     },
     HUNTER =
     {
+        hunterAspectHawk = 13165, -- lvl 12
+        hunterAspectIronHawk = 109260, -- lvl 45 - tier 3 row 2 - id 8
         hunterAspectCheetah = 5118, -- lvl 16
         hunterAspectPack = 13159, -- lvl 56
     },
@@ -256,9 +242,8 @@ function A:SetClassSpells()
 end
 
 --- Death Knight preclick macro
--- @param button The button object
 -- For DK we handle Death's Advance and Unholy Presence when moving
-function A:SetDeathKnightPreClickMacro(button)
+function A:SetDeathKnightPreClickMacro()
     if ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
         local selected = select(5, GetTalentInfo(7));
 
@@ -275,21 +260,26 @@ function A:SetDeathKnightPreClickMacro(button)
 end
 
 --- Druid pre click macro
--- @param button The button object
 -- For Druids we handle flight forms
-function A:SetDruidPreClickMacro(button)
+function A:SetDruidPreClickMacro()
     if ( A.db.profile.druidWantFormsOnMove ) then
-        if ( GetUnitSpeed("player") > 0 or (A.db.profile.noMountAfterCancelForm and GetShapeshiftForm(1) > 0) ) then
-            if ( IsFlyableArea() and IsSpellKnown(40120) ) then
+        if ( GetUnitSpeed("player") > 0 ) then
+            if ( IsFlyableArea() and IsSpellKnown(40120) and not IsMounted() ) then
                 return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidSwiftFlightForm);
-            elseif ( A.playerLevel >= 58 and A:IsFlyable() ) then
+            elseif ( A.playerLevel >= 58 and A:IsFlyable() and not IsMounted() ) then
                 return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidFlightForm);
-            elseif ( A.playerLevel >= 18 ) then
+            elseif ( A.playerLevel >= 18 and not IsMounted() ) then
                 return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidTravelForm);
-            elseif ( A.playerLevel >= 16 ) then
+            elseif ( A.playerLevel >= 16 and not IsMounted() ) then
                 return ("%s\n/cast %s"):format(A.macroDismountString, A.druidTravelForm);
             else
                 return "/pammount";
+            end
+        elseif ( GetShapeshiftForm(1) > 0 and ((A.playerCurrentSpecID == 102 and GetShapeshiftForm(1) ~= 5) or A.playerCurrentSpecID ~= 102) ) then
+            if ( A.db.profile.noMountAfterCancelForm ) then
+                return "/cancelform [form]";
+            else
+                return "/cancelform [form]\n/pammount";
             end
         else
             return "/pammount";
@@ -299,63 +289,61 @@ function A:SetDruidPreClickMacro(button)
             return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidTravelForm);
         elseif ( not IsFlyableArea() and not IsMounted() and GetUnitSpeed("player") > 0 and A.playerLevel >= 16 ) then
             return ("%s\n/cast %s"):format(A.macroDismountString, A.druidTravelForm);
-        elseif ( IsFlyableArea() and IsSpellKnown(40120) ) then
+        elseif ( IsFlyableArea() and IsSpellKnown(40120) and not IsMounted() ) then
             return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidSwiftFlightForm);
-        elseif ( A.playerLevel >= 58 and A:IsFlyable() ) then
+        elseif ( A.playerLevel >= 58 and A:IsFlyable() and not IsMounted() ) then
             return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidFlightForm);
-        elseif ( A.playerLevel >= 20 and A:CanRide() ) then
-            if ( A.db.profile.noMountAfterCancelForm and GetShapeshiftForm(1) > 0 ) then
-                return ("/cast [swimming] %s\n/stopmacro [swimming]"):format(A.druidAquaticForm);
-            else
-                return ("/cast [swimming] %s\n/stopmacro [swimming]\n/pammount"):format(A.druidAquaticForm);
-            end
-        elseif ( A.playerLevel >= 18 ) then
-            return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidTravelForm);
-        elseif ( A.playerLevel >= 16 ) then
-            return ("%s\n/cast %s"):format(A.macroDismountString, A.druidTravelForm);
-        else
-            if ( A.db.profile.noMountAfterCancelForm and GetShapeshiftForm(1) > 0 ) then
-                return A.macroDismountString.."\n/cancelform [form]";
+        elseif ( A.playerLevel >= 20 and A:CanRide() and not IsMounted() ) then
+            if ( GetShapeshiftForm(1) > 0 and ((A.playerCurrentSpecID == 102 and GetShapeshiftForm(1) ~= 5) or A.playerCurrentSpecID ~= 102) ) then
+                if ( A.db.profile.noMountAfterCancelForm ) then
+                    return "/cancelform [form]";
+                else
+                    return "/cancelform [form]\n/pammount";
+                end
             else
                 return "/pammount";
             end
+        elseif ( A.playerLevel >= 18 and not IsMounted() ) then
+            return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidTravelForm);
+        elseif ( A.playerLevel >= 16 and not IsMounted() ) then
+            return ("%s\n/cast %s"):format(A.macroDismountString, A.druidTravelForm);
+        else
+            return "/pammount";
         end
     end
 end
 
 --- Hunter pre click macro
--- @param button The button object
 -- For Hunters we handle speed aspects when moving
-function A:SetHunterPreClickMacro(button)
-    local spell;
+function A:SetHunterPreClickMacro()
+    local cheetahOrPack;
 
     if ( A.db.profile.hunterPreferPack and A.playerLevel >= 56 ) then
-        spell = A.hunterAspectPack;
+        cheetahOrPack = A.hunterAspectPack;
     elseif ( A.playerLevel >= 16 ) then
-        spell = A.hunterAspectCheetah;
+        cheetahOrPack = A.hunterAspectCheetah;
     end
 
-    if ( not spell ) then
+    if ( not cheetahOrPack ) then
         return A.macroDismountString;
     elseif ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
-        if ( A.db.profile.hunterWantModifier ) then
-            return ("%s\n/cast [nomod] !%s\n/cancelaura [mod:%s] %s"):format(A.macroDismountString, spell, A.db.profile.hunterModifier, spell);
-        else
-            return ("%s\n/cast %s"):format(A.macroDismountString, spell);
+        if ( A.playerLevel >= 16 ) then
+            if ( UnitBuff("player", cheetahOrPack) or (not UnitBuff("player", A.hunterAspectHawk) and not UnitBuff("player", A.hunterAspectIronHawk)) ) then
+                return ("%s\n/cast !%s"):format(A.macroDismountString, A.hunterAspectHawk);
+            else
+                return ("%s\n/cast !%s"):format(A.macroDismountString, cheetahOrPack);
+            end
+        elseif ( A.playerLevel >= 12 ) then
+            return ("%s\n/cast !%s"):format(A.macroDismountString, A.hunterAspectHawk);
         end
     else
-        if ( A.db.profile.hunterWantModifier ) then
-            return ("/cancelaura [mod:%s] %s\n/stopmacro [mod:%s]\n/pammount"):format(A.db.profile.hunterModifier, spell, A.db.profile.hunterModifier);
-        else
-            return ("/cancelaura %s\n/pammount"):format(spell);
-        end
+        return ("/cancelaura %s\n/pammount"):format(cheetahOrPack);
     end
 end
 
 --- Mage pre click macro
--- @param button The button object
 -- For Mages we handle Blink when moving and Slow Fall when falling
-function A:SetMagePreClickMacro(button)
+function A:SetMagePreClickMacro()
     if ( A.db.profile.mageSlowFall and IsFalling() and A.playerLevel >= 32 ) then
         return ("%s\n/cast %s"):format(A.macroDismountString, A.mageSlowFall);
     elseif ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
@@ -374,9 +362,8 @@ function A:SetMagePreClickMacro(button)
 end
 
 --- Monk pre click macro
--- @param button The button object
 -- For monks we handle Roll and Flying Serpent Kick
-function A:SetMonkPreClickMacro(button)
+function A:SetMonkPreClickMacro()
     local glyphed;
 
     for i=1,NUM_GLYPH_SLOTS do
@@ -405,9 +392,8 @@ function A:SetMonkPreClickMacro(button)
 end
 
 --- Paladin pre click macro
--- @param button The button object
 -- For Paladins we handle Speed of Light when moving
-function A:SetPaladinPreClickMacro(button)
+function A:SetPaladinPreClickMacro()
     if ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
         local selected = select(5, GetTalentInfo(1));
 
@@ -422,9 +408,8 @@ function A:SetPaladinPreClickMacro(button)
 end
 
 --- Priest pre click macro
--- @param button The button object
 -- For Priests we handle Body and Soul and Angelic Feather when moving
-function A:SetPriestPreClickMacro(button)
+function A:SetPriestPreClickMacro()
     if ( A.db.profile.priestLevitate and IsFalling() and A.playerLevel >= 34 ) then
         return ("%s\n/cast %s"):format(A.macroDismountString, A.priestLevitate);
     elseif ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
@@ -443,9 +428,8 @@ function A:SetPriestPreClickMacro(button)
 end
 
 --- Rogue pre click macro
--- @param button The button object
 -- For Rogues we handle Sprint when moving
-function A:SetRoguePreClickMacro(button)
+function A:SetRoguePreClickMacro()
     if ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
         if ( A.playerLevel >= 26 ) then
             return ("%s\n/cast %s"):format(A.macroDismountString, A.rogueSprint);
@@ -458,9 +442,8 @@ function A:SetRoguePreClickMacro(button)
 end
 
 --- Shaman pre click macro
--- @param button The button object
 -- For Shamans we handle Ghost Wolf when moving
-function A:SetShamanPreClickMacro(button)
+function A:SetShamanPreClickMacro()
     if ( (not IsMounted() and GetUnitSpeed("player") > 0 and A.playerLevel >= 16)
     or (A.db.profile.noMountAfterCancelForm and GetShapeshiftForm(1) > 0) ) then
         return ("%s\n/cast %s"):format(A.macroDismountString, A.shamanGhostWolf);
@@ -470,9 +453,8 @@ function A:SetShamanPreClickMacro(button)
 end
 
 --- Warlock pre click macro
--- @param button The button object
 -- For Warlocks we handle teleport and Burning Rush
-function A:SetWarlockPreClickMacro(button)
+function A:SetWarlockPreClickMacro()
     local selected = select(5, GetTalentInfo(11));
 
     if ( (not selected or A.db.profile.warlockPreferTeleport) and A.playerLevel >= 76 ) then
@@ -502,9 +484,8 @@ function A:SetWarlockPreClickMacro(button)
 end
 
 --- Warrior pre click macro
--- @param button The button object
 -- For Warriors we handle Heroic Leap, Charge and Intervene
-function A:SetWarriorPreClickMacro(button)
+function A:SetWarriorPreClickMacro()
     if ( not IsMounted() and GetUnitSpeed("player") > 0 and A.playerLevel >= 76 ) then
         return ("%s\n/cast %s"):format(A.macroDismountString, A.warriorHeroicLeap);
     else
@@ -513,8 +494,7 @@ function A:SetWarriorPreClickMacro(button)
 end
 
 --- Default pre click macro
--- @param button The button object
-function A:SetDefaultPreClickMacro(button)
+function A:SetDefaultPreClickMacro()
     return "/pammount";
 end
 
@@ -722,6 +702,11 @@ function A:PreClickMount(button, clickedBy)
 
                 button:SetAttribute("type", "macro");
                 button:SetAttribute("macrotext", ("/use %s"):format(A.magicBroomName or "Magic Broom"));
+            elseif ( A.db.profile.anglersFishingRaft and GetItemCount(85500, nil, nil) > 0 and A:IsSwimming() == 2 and (A:IsEquippedFishingPole() or (ShentonFishingGlobal and ShentonFishingGlobal.isFishing)) and not (A.db.profile.vehicleExit and A:IsPlayerInVehicle()) ) then -- 85500 - Anglers Fishing Raft
+                if ( not A.anglersFishingRaft ) then A.anglersFishingRaft = GetItemInfo(85500); end
+
+                button:SetAttribute("type", "macro");
+                button:SetAttribute("macrotext", ("/use %s"):format(A.anglersFishingRaft or "Anglers Fishing Raft"));
             -- Water walking spells
             elseif ( A.db.profile.surfaceMount and ((A.playerClass == "DEATHKNIGHT" and A.playerLevel >= 66)
             or (A.playerClass == "SHAMAN" and A.playerLevel >= 24)) and A:IsSwimming() == 2 and A.classSpellsOK ) then
@@ -774,6 +759,52 @@ function A:PreClickMount(button, clickedBy)
         button:SetAttribute("macrotext", nil);
         A:OpenConfigPanel();
     end
+end
+
+function A:PreClickMountForced(button, clickedBy)
+    if ( InCombatLockdown() ) then return; end
+
+    -- Get mount summon command
+    local command, isCustom = A:GetMountCommand(button);
+
+    -- Death Knight
+    --if ( A.playerClass == "DEATHKNIGHT" ) then
+    -- Druid
+    if ( A.playerClass == "DRUID" ) then
+        if ( GetShapeshiftForm(1) > 0 and ((A.playerCurrentSpecID == 102 and GetShapeshiftForm(1) ~= 5) or A.playerCurrentSpecID ~= 102) ) then
+            if ( A.db.profile.noMountAfterCancelForm ) then
+                command = "/cancelform [form]";
+            else
+                command = ("/cancelform [form]\n%s"):format(command);
+            end
+        end
+    -- Hunter
+    --elseif ( A.playerClass == "HUNTER" ) then
+    -- Mage
+    --elseif ( A.playerClass == "MAGE" ) then
+    -- Monk
+    --elseif ( A.playerClass == "MONK" ) then
+    -- Paladin
+    --elseif ( A.playerClass == "PALADIN" ) then
+    -- Priest
+    --elseif ( A.playerClass == "PRIEST" ) then
+    -- Rogue
+    --elseif ( A.playerClass == "ROGUE" ) then
+    -- Shaman
+    elseif ( A.playerClass == "SHAMAN" ) then
+        if ( A.db.profile.noMountAfterCancelForm ) then
+            command = "/cancelform [form]";
+        else
+            command = ("/cancelform [form]\n%s"):format(command);
+        end
+    -- Warlock
+    --elseif ( A.playerClass == "WARLOCK" ) then
+    -- Warrior
+    --elseif ( A.playerClass == "WARRIOR" ) then
+    end
+
+    button:SetAttribute("type", "macro");
+    button:SetAttribute("macrotext", command);
 end
 
 -- Post click macro
@@ -891,20 +922,18 @@ function A:SetPostClickMacro(noCustom)
             end
         -- Hunter
         elseif ( A.playerClass == "HUNTER" ) then
-            local spell;
+            local cheetahOrPack;
 
             if ( A.db.profile.hunterPreferPack and A.playerLevel >= 56 ) then
-                spell = A.hunterAspectPack;
+                cheetahOrPack = A.hunterAspectPack;
             elseif ( A.playerLevel >= 16 ) then
-                spell = A.hunterAspectCheetah;
+                cheetahOrPack = A.hunterAspectCheetah;
             end
 
-            if ( not spell ) then
+            if ( not cheetahOrPack ) then
                 A.postClickMacro = A.macroDismountString;
-            elseif ( A.db.profile.hunterWantModifier ) then
-                A.postClickMacro = ("%s\n/cast [nomounted,novehicleui,nomod] !%s\n/cancelaura [nomounted,novehicleui,mod:%s] %s"):format(A.macroDismountString, spell, A.db.profile.hunterModifier, spell);
             else
-                A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, spell);
+                A.postClickMacro = ("%s\n/cast [nomounted,novehicleui,nomod] !%s\n/cast [nomounted,novehicleui,mod:%s] !%s"):format(A.macroDismountString, A.hunterAspectHawk, A.db.profile.hunterModifier, cheetahOrPack);
             end
         -- Mage
         elseif ( A.playerClass == "MAGE" ) then

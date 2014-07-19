@@ -530,7 +530,7 @@ A.restrictedMounts =
     },
     --
     -- Achievements
-    [100332] = -- Vicious War Steed
+    --[[[100332] = -- Vicious War Steed
     {
         type = "achievement",
         args = {5328, 5329, 5823},
@@ -539,7 +539,7 @@ A.restrictedMounts =
     {
         type = "achievement",
         args = {5325, 5326, 5824},
-    },
+    },]]--
     [37015] = -- Swift Nether Drake - S1 glad
     {
         type = "achievement",
@@ -1016,6 +1016,11 @@ A.restrictedMounts =
         type = "faction",
         args = "Alliance",
     },
+    [107516] = -- Spectral Gryphon
+    {
+        type = "faction",
+        args = "Alliance",
+    },
     --
     -- Horde mounts
     -- Orc's mounts
@@ -1409,6 +1414,11 @@ A.restrictedMounts =
         args = "Horde",
     },
     [118737] = -- Pandaren Kite (Horde)
+    {
+        type = "faction",
+        args = "Horde",
+    },
+    [107517] = -- Spectral Wind Rider
     {
         type = "faction",
         args = "Horde",

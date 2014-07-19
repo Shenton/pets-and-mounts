@@ -1070,6 +1070,83 @@ function A:OptionsRoot()
                             },
                         },
                     },
+                    --[[flyingPetWithFlyingMount =
+                    {
+                        order = 150,
+                        name = L["Flying pet with flying mount."],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            enableHeader =
+                            {
+                                order = 10,
+                                name = L["Enable"],
+                                type = "header",
+                            },
+                            enableToggle =
+                            {
+                                order = 11,
+                                name = L["Enable"],
+                                desc = L["Enable flying pet with flying mount."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.flyingPetWithFlyingMount.enabled = not A.db.profile.flyingPetWithFlyingMount.enabled;
+                                end,
+                                get = function() return A.db.profile.flyingPetWithFlyingMount.enabled; end,
+                            },
+                            optionsHeader =
+                            {
+                                order = 100,
+                                name = L["Options"],
+                                type = "header",
+                            },
+                            timerSelect =
+                            {
+                                order = 101,
+                                name = L["Timer"],
+                                desc = L["Select the time between checking if you are flying."],
+                                type = "select",
+                                disabled = function() return not A.db.profile.flyingPetWithFlyingMount.enabled; end,
+                                values = function()
+                                    local out = {};
+
+                                    for i=1,10 do
+                                        out[i] = i;
+                                    end
+
+                                    return out;
+                                end,
+                                set = function(info, val)
+                                    A.db.profile.flyingPetWithFlyingMount.timer = val;
+
+                                    A:SetFlyingPetWithFlyingMountTimer();
+                                end,
+                                get = function()
+                                    return A.db.profile.flyingPetWithFlyingMount.timer;
+                                end,
+                            },
+                            setsSelect =
+                            {
+                                order = 102,
+                                name = L["Set"],
+                                type = "select",
+                                values = function()
+                                    local out = {};
+
+                                    for k in pairs(A.db.global.savedSets.pets) do
+                                        out[k] = k;
+                                    end
+
+                                    return out;
+                                end;
+                                get = function() return A.db.profile.flyingPetWithFlyingMount.set; end,
+                                set = function(info, val)
+                                    A.db.profile.flyingPetWithFlyingMount.set = val;
+                                end,
+                            },
+                        },
+                    },]]--
                     petsSummonFilters =
                     {
                         order = 200,
@@ -1281,6 +1358,15 @@ function A:OptionsRoot()
                                 type = "toggle",
                                 set = function() A.db.profile.shimmeringMoonstone = not A.db.profile.shimmeringMoonstone; end,
                                 get = function() return A.db.profile.shimmeringMoonstone; end,
+                            },
+                            anglersFishingRaft =
+                            {
+                                order = 1003,
+                                name = L["Anglers Fishing Raft"],
+                                desc = L["Summon the Anglers Fishing Raft when at the water surface and equipped with a fishing pole."],
+                                type = "toggle",
+                                set = function() A.db.profile.anglersFishingRaft = not A.db.profile.anglersFishingRaft; end,
+                                get = function() return A.db.profile.anglersFishingRaft; end,
                             },
                             swimmingOptionsHeader =
                             {
@@ -1540,7 +1626,7 @@ function A:OptionsRoot()
                                     hunterDescription =
                                     {
                                         order = 1,
-                                        name = L["For Hunters it handles Aspect of the Cheetah and Aspect of the Pack when moving."],
+                                        name = L["For Hunters it handles Aspect of the Cheetah/Pack and Aspect of the Hawk/Iron Hawk when moving. In combat you have to use a modifier to switch to Aspect of the Cheetah/Pack."],
                                         type = "description",
                                         fontSize = "medium",
                                     },
@@ -1570,7 +1656,7 @@ function A:OptionsRoot()
                                         end,
                                         get = function() return A.db.profile.hunterPreferPack; end,
                                     },
-                                    hunterWantModifier =
+                                    --[[hunterWantModifier =
                                     {
                                         order = 21,
                                         name = L["Use a modifier"],
@@ -1582,14 +1668,15 @@ function A:OptionsRoot()
                                             A:SetPreClickFunction();
                                         end,
                                         get = function() return A.db.profile.hunterWantModifier; end,
-                                    },
+                                    },]]--
                                     hunterModifier =
                                     {
                                         order = 22,
                                         name = L["Modifier"],
-                                        desc = L["Select which modifier to use for cancelling aspect."],
+                                        desc = L["Select which modifier to use for switching to Aspect of the Cheetah/Pack.\n Be aware that if a bind is set to the modifier plus the button bind this will not work."],
                                         disabled = function()
-                                            if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled or not A.db.profile.hunterWantModifier ) then
+                                            --if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled or not A.db.profile.hunterWantModifier ) then
+                                            if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled ) then
                                                 return 1;
                                             end
 

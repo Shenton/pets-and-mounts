@@ -109,24 +109,59 @@
     </Button>
 
     <Button name="PetsAndMountsSecureButtonPassengers" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
+        <Scripts>
+            <PreClick>
+                PetsAndMountsGlobal:PreClickMountForced(self, button);
+            </PreClick>
+        </Scripts>
     </Button>
 
     <Button name="PetsAndMountsSecureButtonFlying" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
+        <Scripts>
+            <PreClick>
+                PetsAndMountsGlobal:PreClickMountForced(self, button);
+            </PreClick>
+        </Scripts>
     </Button>
 
     <Button name="PetsAndMountsSecureButtonGround" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
+        <Scripts>
+            <PreClick>
+                PetsAndMountsGlobal:PreClickMountForced(self, button);
+            </PreClick>
+        </Scripts>
     </Button>
 
     <Button name="PetsAndMountsSecureButtonAquatic" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
+        <Scripts>
+            <PreClick>
+                PetsAndMountsGlobal:PreClickMountForced(self, button);
+            </PreClick>
+        </Scripts>
     </Button>
 
     <Button name="PetsAndMountsSecureButtonSurface" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
+        <Scripts>
+            <PreClick>
+                PetsAndMountsGlobal:PreClickMountForced(self, button);
+            </PreClick>
+        </Scripts>
     </Button>
 
     <Button name="PetsAndMountsSecureButtonRepair" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
+        <Scripts>
+            <PreClick>
+                PetsAndMountsGlobal:PreClickMountForced(self, button);
+            </PreClick>
+        </Scripts>
     </Button>
 
     <Button name="PetsAndMountsSecureButtonHybrid" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
+        <Scripts>
+            <PreClick>
+                PetsAndMountsGlobal:PreClickMountForced(self, button);
+            </PreClick>
+        </Scripts>
     </Button>
 
     <!-- Models frame -->
