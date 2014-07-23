@@ -316,7 +316,7 @@ L["Select the Data Broker main icon. This also set the minimap icon."] = true;
 L["Select Icon"] = true;
 L["Found %d icon"] = true;
 L["Found %d icons"] = true;
-L["Current: %s"] = true;
+--L["Current: %s"] = true;
 L["Selected: %s"] = true;
 L["Minimap icon"] = true;
 L["Define the separator between current companion and mount."] = true;
@@ -409,6 +409,8 @@ L["Add the current companion level after the name."] = true;
 L["Anglers Fishing Raft"] = true;
 L["Summon the Anglers Fishing Raft when at the water surface and equipped with a fishing pole."] = true;
 --L["Flying pet with flying mount."] = true;
+L["Oculus drakes"] = true;
+L["Summon one of the Oculus drakes if it is in your bags and you are in the instance."] = true;
 -- About
 L["Auto and random summon for your pets and mounts, highly customizable. With Data Broker support."] = true;
 L["A new version is available, version |cff33ff99%s|r revision |cff33ff99%s %s|r."] = true;

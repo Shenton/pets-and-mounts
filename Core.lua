@@ -2623,6 +2623,7 @@ A.aceDefaultDB =
             timer = 3,
             set = nil,
         },]]--
+        oculusDrakes = 1,
     },
 };
 

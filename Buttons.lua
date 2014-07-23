@@ -169,6 +169,7 @@ A.classesSpellsTable =
     },
     DRUID =
     {
+        druidCatForm = 768, -- lvl 6
         druidTravelForm = 783, -- lvl 16
         druidAquaticForm = 1066, -- lvl 18
         druidFlightForm = 33943, -- lvl 58
@@ -265,13 +266,15 @@ function A:SetDruidPreClickMacro()
     if ( A.db.profile.druidWantFormsOnMove ) then
         if ( GetUnitSpeed("player") > 0 ) then
             if ( IsFlyableArea() and IsSpellKnown(40120) and not IsMounted() ) then
-                return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidSwiftFlightForm);
+                return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidAquaticForm, A.druidSwiftFlightForm);
             elseif ( A.playerLevel >= 58 and A:IsFlyable() and not IsMounted() ) then
-                return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidFlightForm);
+                return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidAquaticForm, A.druidFlightForm);
             elseif ( A.playerLevel >= 18 and not IsMounted() ) then
-                return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidTravelForm);
+                return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidAquaticForm, A.druidTravelForm);
             elseif ( A.playerLevel >= 16 and not IsMounted() ) then
-                return ("%s\n/cast %s"):format(A.macroDismountString, A.druidTravelForm);
+                return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
+            elseif ( A.playerLevel >= 6 and not IsMounted() ) then
+                return ("%s\n/cast %s"):format(A.macroDismountString, A.druidCatForm);
             else
                 return "/pammount";
             end
@@ -286,13 +289,13 @@ function A:SetDruidPreClickMacro()
         end
     else
         if ( not IsFlyableArea() and not IsMounted() and GetUnitSpeed("player") > 0 and A.playerLevel >= 18 ) then
-            return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidTravelForm);
+            return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidAquaticForm, A.druidTravelForm);
         elseif ( not IsFlyableArea() and not IsMounted() and GetUnitSpeed("player") > 0 and A.playerLevel >= 16 ) then
-            return ("%s\n/cast %s"):format(A.macroDismountString, A.druidTravelForm);
+            return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
         elseif ( IsFlyableArea() and IsSpellKnown(40120) and not IsMounted() ) then
-            return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidSwiftFlightForm);
+            return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidAquaticForm, A.druidSwiftFlightForm);
         elseif ( A.playerLevel >= 58 and A:IsFlyable() and not IsMounted() ) then
-            return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidFlightForm);
+            return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidAquaticForm, A.druidFlightForm);
         elseif ( A.playerLevel >= 20 and A:CanRide() and not IsMounted() ) then
             if ( GetShapeshiftForm(1) > 0 and ((A.playerCurrentSpecID == 102 and GetShapeshiftForm(1) ~= 5) or A.playerCurrentSpecID ~= 102) ) then
                 if ( A.db.profile.noMountAfterCancelForm ) then
@@ -304,9 +307,11 @@ function A:SetDruidPreClickMacro()
                 return "/pammount";
             end
         elseif ( A.playerLevel >= 18 and not IsMounted() ) then
-            return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidTravelForm);
+            return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidAquaticForm, A.druidTravelForm);
         elseif ( A.playerLevel >= 16 and not IsMounted() ) then
-            return ("%s\n/cast %s"):format(A.macroDismountString, A.druidTravelForm);
+            return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
+        elseif ( A.playerLevel >= 6 and not IsMounted() ) then
+            return ("%s\n/cast %s"):format(A.macroDismountString, A.druidCatForm);
         else
             return "/pammount";
         end
@@ -707,6 +712,19 @@ function A:PreClickMount(button, clickedBy)
 
                 button:SetAttribute("type", "macro");
                 button:SetAttribute("macrotext", ("/use %s"):format(A.anglersFishingRaft or "Anglers Fishing Raft"));
+            elseif ( A.db.profile.oculusDrakes and (GetItemCount(37815, nil, nil) > 0 or GetItemCount(37859, nil, nil) > 0 or GetItemCount(37860, nil, nil) > 0)
+            and (tonumber(A.currentMapID) == 528) and not (A.db.profile.vehicleExit and A:IsPlayerInVehicle()) ) then -- Oculus drakes: 37815 Emerald Essence - 37859 Amber Essence - 37860 Ruby Essence
+                if ( not A.magicBroomName ) then A.magicBroomName = GetItemInfo(37011); end
+                if ( GetItemCount(37815, nil, nil) > 0 ) then
+                    A.oculusDrake = GetItemInfo(37815);
+                elseif ( GetItemCount(37859, nil, nil) > 0 ) then
+                    A.oculusDrake = GetItemInfo(37859);
+                elseif ( GetItemCount(37860, nil, nil) > 0 ) then
+                    A.oculusDrake = GetItemInfo(37860);
+                end
+
+                button:SetAttribute("type", "macro");
+                button:SetAttribute("macrotext", ("/use %s"):format(A.oculusDrake or "Amber Essence"));
             -- Water walking spells
             elseif ( A.db.profile.surfaceMount and ((A.playerClass == "DEATHKNIGHT" and A.playerLevel >= 66)
             or (A.playerClass == "SHAMAN" and A.playerLevel >= 24)) and A:IsSwimming() == 2 and A.classSpellsOK ) then

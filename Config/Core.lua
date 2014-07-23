@@ -1368,6 +1368,15 @@ function A:OptionsRoot()
                                 set = function() A.db.profile.anglersFishingRaft = not A.db.profile.anglersFishingRaft; end,
                                 get = function() return A.db.profile.anglersFishingRaft; end,
                             },
+                            oculusDrakes =
+                            {
+                                order = 1004,
+                                name = L["Oculus drakes"],
+                                desc = L["Summon one of the Oculus drakes if it is in your bags and you are in the instance."],
+                                type = "toggle",
+                                set = function() A.db.profile.oculusDrakes = not A.db.profile.oculusDrakes; end,
+                                get = function() return A.db.profile.oculusDrakes; end,
+                            },
                             swimmingOptionsHeader =
                             {
                                 order = 2000,
