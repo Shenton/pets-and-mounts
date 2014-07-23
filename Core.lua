@@ -10,16 +10,11 @@
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 -- TODO: move back red flying cloud to hybrid and prevent summoning it when under water
 
--- 1.6.2 changelog
+-- 1.6.3 changelog
 --[[
-Added Spectral Wind Rider and Spectral Gryphon to filters
-Removed Vicious War Steed and Vicious War Wolf from filters
-Added support for Anglers Fishing Raft
-Area sets are now disabled by default
-Improved Druid's spells handling
-Improved Hunter's spells handling
-Fixed learned mount skills detection
-Improved forced mount type buttons
+Druid cat form support
+Oculus drakes support
+fr_FR localization
 ]]--
 local A = _G["PetsAndMountsGlobal"];
 local L = A.L;
