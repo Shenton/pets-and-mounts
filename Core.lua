@@ -12,6 +12,7 @@
 
 -- 1.6.3 changelog
 --[[
+Fixed error with specialization detection
 Druid cat form support
 Oculus drakes support
 fr_FR localization
@@ -375,7 +376,7 @@ function A:StringTrim(str, wat)
     return str:match("^["..wat.."]*(.-)["..wat.."]*$");
 end
 
---- Return the current specialization ID
+--- Return the current specialization ID or 0 if none
 -- Death Knight: 250 - Blood / 251 - Frost / 252 - Unholy
 -- Druid: 102 - Balance / 103 - Feral Combat / 104 - Guardian / 105 - Restoration
 -- Hunter: 253 - Beast Mastery / 254 - Marksmanship / 255 - Survival
@@ -398,7 +399,7 @@ function A:GetPlayerCurrentSpecID()
         end
     end
 
-    return nil;
+    return 0;
 end
 
 --[[-------------------------------------------------------------------------------
