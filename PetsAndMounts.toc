@@ -1,6 +1,7 @@
 ## Interface: 50400
 ## Title: Pets & Mounts
 ## Notes: Auto and random summon highly customizable for your pets and mounts, with Data Broker support.
+## Notes-frFR: Invocation automatique et aléatoire pour vos compagnons et montures, extrêmement personnalisable. Avec support Data Broker.
 ## Author: Shenton
 ## SavedVariables: petsAndMountsDB
 ## Version: 1.6.4
