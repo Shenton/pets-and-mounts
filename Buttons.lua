@@ -684,7 +684,7 @@ end
 
 --- PreClick callback
 function A:PreClickMount(button, clickedBy)
-    if ( InCombatLockdown() ) then return; end
+    if ( not A.addonRunning or InCombatLockdown() ) then return; end
 
     if ( clickedBy == "LeftButton" ) then
         if ( IsShiftKeyDown() ) then
@@ -780,7 +780,7 @@ function A:PreClickMount(button, clickedBy)
 end
 
 function A:PreClickMountForced(button, clickedBy)
-    if ( InCombatLockdown() ) then return; end
+    if ( not A.addonRunning or InCombatLockdown() ) then return; end
 
     -- Get mount summon command
     local command, isCustom = A:GetMountCommand(button);
@@ -1062,7 +1062,7 @@ end
 
 --- PostClick callback
 function A:PostClickMount(button, clickedBy)
-    if ( InCombatLockdown() ) then return; end
+    if ( not A.addonRunning or InCombatLockdown() ) then return; end
 
     button:SetAttribute("type", "macro");
     button:SetAttribute("macrotext", A.postClickMacro);
@@ -1074,7 +1074,7 @@ end
 
 --- PreClick callback
 function A:PreClickPet(button, clickedBy)
-    if ( InCombatLockdown() ) then return; end
+    if ( not A.addonRunning or InCombatLockdown() ) then return; end
 
     if ( clickedBy == "LeftButton" ) then
         if ( IsShiftKeyDown() ) then

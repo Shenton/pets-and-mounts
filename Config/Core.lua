@@ -1025,6 +1025,7 @@ function A:OptionsRoot()
                                     end
 
                                     A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].autoPet = not A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].autoPet;
+                                    A:SetAutoSummonOverride();
                                 end,
                                 get = function()
                                     if ( A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] ) then
@@ -1059,6 +1060,8 @@ function A:OptionsRoot()
                                     end
 
                                     A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].notWhenStealthed = not A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected].notWhenStealthed;
+                                    A:SetAutoSummonOverride();
+                                    A:SetStealthEvents();
                                 end,
                                 get = function()
                                     if ( A.db.profile.autoSummonOverride[petAutoSummonOverrideSelected] ) then
@@ -2858,7 +2861,7 @@ function A:OptionsRoot()
             inline = true,
             args =
             {
-                randomPetKey1 =
+                key1 =
                 {
                     order = 0,
                     name = L["Key one"],
@@ -2866,52 +2869,62 @@ function A:OptionsRoot()
                     type = "keybinding",
                     set = function(info, val)
                         local set = GetCurrentBindingSet();
-                        local key1, key2 = GetBindingKey(v.name, set);
+                        -- Do not ask me why but the var in Blizzard code is always set to 1, this is set when clicking the Key Bindings button of the game menu frame
+                        -- GetCurrentBindingSet is only used to save bindings
+                        local key1, key2 = GetBindingKey(v.name, 1);
 
-                        if ( key1 ) then SetBinding(key1, nil, set); end
-                        if ( key2 ) then SetBinding(key2, nil, set); end
+                        -- Unbind current action
+                        if ( key1 ) then SetBinding(key1, nil, 1); end
+                        if ( key2 ) then SetBinding(key2, nil, 1); end
+
+                        -- Unbind old action
+                        local oldAction = GetBindingAction(val, 1);
+
+                        if ( oldAction ) then
+                            SetBinding(val, nil, 1);
+                        end
 
                         if ( val == "" ) then
-                            if ( key2 ) then SetBinding(key2, v.name, set); end
+                            if ( key2 ) then SetBinding(key2, v.name, 1); end
                         else
-                            SetBinding(val, v.name, set);
+                            SetBinding(val, v.name, 1);
 
-                            if ( key2 ) then SetBinding(key2, v.name, set); end
+                            if ( key2 ) then SetBinding(key2, v.name, 1); end
                         end
 
                         SaveBindings(set);
                     end,
                     get = function()
-                        local set = GetCurrentBindingSet();
-                        return GetBindingKey(v.name, set);
+                        --local set = GetCurrentBindingSet();
+                        return GetBindingKey(v.name, 1);
                     end,
                 },
-                randomPetKey2 =
+                key2 =
                 {
                     order = 1,
                     name = L["Key two"],
                     desc = v.configDesc,
                     type = "keybinding",
                     set = function(info, val)
-                        local set = GetCurrentBindingSet();
-                        local key1, key2 = GetBindingKey(v.name, set);
+                        --local set = GetCurrentBindingSet();
+                        local key1, key2 = GetBindingKey(v.name, 1);
 
-                        if ( key1 ) then SetBinding(key1, nil, set); end
-                        if ( key2 ) then SetBinding(key2, nil, set); end
+                        if ( key1 ) then SetBinding(key1, nil, 1); end
+                        if ( key2 ) then SetBinding(key2, nil, 1); end
 
                         if ( val == "" ) then
-                            if ( key1 ) then SetBinding(key1, v.name, set); end
+                            if ( key1 ) then SetBinding(key1, v.name, 1); end
                         else
-                            if ( key1 ) then SetBinding(key1, v.name, set); end
+                            if ( key1 ) then SetBinding(key1, v.name, 1); end
 
-                            SetBinding(val, v.name, set);
+                            SetBinding(val, v.name, 1);
                         end
 
                         SaveBindings(set);
                     end,
                     get = function()
-                        local set = GetCurrentBindingSet();
-                        local _, key = GetBindingKey(v.name, set);
+                        --local set = GetCurrentBindingSet();
+                        local _, key = GetBindingKey(v.name, 1);
                         return key;
                     end,
                 },

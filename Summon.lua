@@ -478,18 +478,16 @@ function A:SetMountCat()
 end
 
 --- Summon a mount with it spell ID
-function A:SummonMountBySpellId(id)
-    local numMounts = GetNumCompanions("MOUNT");
-    local _, name, spellID;
+function A:SummonMountBySpellId(spellID)
+    local id = A:GetMountIDFromSpellID(spellID);
 
-    for i=1,numMounts do
-        _, name, spellID = GetCompanionInfo("MOUNT", i);
-
-        if ( spellID == id ) then
-            A:DebugMessage("Summon mount: "..name);
-            CallCompanion("MOUNT", i);
-            return 1;
+    if ( id ) then
+        if ( A.db.profile.debug ) then
+            A:DebugMessage("Summon mount: "..select(2, GetCompanionInfo("MOUNT", id)));
         end
+
+        CallCompanion("MOUNT", id);
+        return 1;
     end
 
     return nil;
@@ -504,6 +502,148 @@ function A:GetUniqueAreaMount(cat)
     else
         return A.uniqueAreaMounts[cat][A.currentMapID];
     end
+end
+
+--- Check if the mount is restricted
+-- @param mount The mount spellID
+-- @return bool
+function A:IsMountRestricted(mount)
+    if ( A.restrictedMounts[mount] ) then -- Got a restricted mount
+        -- Location
+        if ( A.restrictedMounts[mount].type == "location" ) then
+            if ( type(A.restrictedMounts[mount].args) == "table" ) then
+                if ( not tContains(A.restrictedMounts[mount].args, A.currentMapID) ) then
+                    return 1;
+                end
+            else
+                if ( A.restrictedMounts[mount].args ~= A.currentMapID ) then
+                    return 1;
+                end
+            end
+        -- Spell
+        elseif ( A.restrictedMounts[mount].type == "spell" ) then
+            if ( type(A.restrictedMounts[mount].args) == "table" ) then
+                for k,v in ipairs(A.restrictedMounts[mount].args) do
+                    if ( IsSpellKnown(v) ) then
+                        return nil;
+                    end
+                end
+
+                return 1;
+            else
+                if ( not IsSpellKnown(A.restrictedMounts[mount].args) ) then
+                    return 1;
+                end
+            end
+        -- Class
+        elseif ( A.restrictedMounts[mount].type == "class" ) then
+            if ( type(A.restrictedMounts[mount].args) == "table" ) then
+                if ( not tContains(A.restrictedMounts[mount].args, A.playerClass) ) then
+                    return 1;
+                end
+            else
+                if ( A.restrictedMounts[mount].args ~= A.playerClass ) then
+                    return 1;
+                end
+            end
+        -- Faction
+        elseif ( A.restrictedMounts[mount].type == "faction" ) then
+            if ( type(A.restrictedMounts[mount].args) == "table" ) then
+                if ( not tContains(A.restrictedMounts[mount].args, A.playerFaction) ) then
+                    return 1;
+                end
+            else
+                if ( A.restrictedMounts[mount].args ~= A.playerFaction ) then
+                    return 1;
+                end
+            end
+        -- Race & class
+        elseif ( A.restrictedMounts[mount].type == "race&class" ) then
+            if ( type(A.restrictedMounts[mount].args) == "table" ) then
+                if ( not tContains(A.restrictedMounts[mount].args, A.playerRace..A.playerClass) ) then
+                    return 1;
+                end
+            else
+                if ( A.restrictedMounts[mount].args ~= A.playerRace..A.playerClass ) then
+                    return 1;
+                end
+            end
+        -- Profession
+        elseif ( A.restrictedMounts[mount].type == "profession" ) then
+            local professionOne, professionTwo = GetProfessions();
+            local professionOneSkill, professionTwoSkill, _;
+
+            if ( professionOne ) then
+                _, _, professionOneSkill, _, _, _, professionOne = GetProfessionInfo(professionOne);
+            end
+
+            if ( professionTwo ) then
+                _, _, professionTwoSkill, _, _, _, professionTwo = GetProfessionInfo(professionTwo);
+            end
+
+            if ( (professionOne and professionOne == A.restrictedMounts[mount].args[1] and professionOneSkill >= A.restrictedMounts[mount].args[2])
+            or (professionTwo and professionTwo == A.restrictedMounts[mount].args[1] and professionTwoSkill >= A.restrictedMounts[mount].args[2]) ) then
+                return nil;
+            else
+                return 1;
+            end
+        -- Achievement
+        elseif ( A.restrictedMounts[mount].type == "achievement" ) then
+            if ( type(A.restrictedMounts[mount].args) == "table" ) then
+                for k,v in ipairs(A.restrictedMounts[mount].args) do
+                    local earnedBy = select(14, GetAchievementInfo(v));
+
+                    if ( A.playerName == earnedBy ) then
+                        return nil;
+                    end
+                end
+
+                return 1;
+            else
+                local earnedBy = select(14, GetAchievementInfo(A.restrictedMounts[mount].args));
+
+                if ( A.playerName ~= earnedBy ) then
+                    return 1;
+                end
+            end
+        -- Owned
+        elseif ( A.restrictedMounts[mount].type == "owned" ) then
+            if ( not A.ownedFilterCache ) then
+                A.ownedFilterCache = {};
+            end
+
+            if ( A.ownedFilterCache[mount] ) then
+                if ( A.ownedFilterCache[mount] == "1" ) then
+                    return nil;
+                else
+                    return 1;
+                end
+            end
+
+            local numMounts = GetNumCompanions("MOUNT");
+            local _, spellID;
+
+            for i=1,numMounts do
+                _, _, spellID = GetCompanionInfo("MOUNT", i);
+
+                if ( spellID == mount ) then
+                    if ( not A.ownedFilterCache ) then
+                        A.ownedFilterCache = {};
+                    end
+
+                    A.ownedFilterCache[mount] = "1";
+
+                    return nil;
+                end
+            end
+
+            A.ownedFilterCache[mount] = "0";
+
+            return 1;
+        end
+    end
+
+    return nil;
 end
 
 --- Get a table with usable mounts
@@ -522,127 +662,8 @@ function A:GetUsableMountsTable(tbl)
     end
 
     for k,v in ipairs(tbl) do
-        if ( A.restrictedMounts[v] ) then -- Got a restricted mount
-            -- Location
-            if ( A.restrictedMounts[v].type == "location" ) then
-                if ( type(A.restrictedMounts[v].args) == "table" ) then
-                    if ( tContains(A.restrictedMounts[v].args, A.currentMapID) ) then
-                        A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
-                    else
-                        A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
-                    end
-                else
-                    if ( A.restrictedMounts[v].args == A.currentMapID ) then
-                        A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
-                    else
-                        A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
-                    end
-                end
-            -- Spell
-            elseif ( A.restrictedMounts[v].type == "spell" ) then
-                if ( type(A.restrictedMounts[v].args) == "table" ) then
-                    for kk,vv in ipairs(A.restrictedMounts[v].args) do
-                        if ( IsSpellKnown(vv) ) then
-                            A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
-                            break;
-                        end
-                    end
-
-                    A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
-                else
-                    if ( IsSpellKnown(A.restrictedMounts[v].args) ) then
-                        A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v
-                    else
-                        A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
-                    end
-                end
-            -- Class
-            elseif ( A.restrictedMounts[v].type == "class" ) then
-                if ( type(A.restrictedMounts[v].args) == "table" ) then
-                    if ( tContains(A.restrictedMounts[v].args, A.playerClass) ) then
-                        A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
-                    else
-                        A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
-                    end
-                else
-                    if ( A.restrictedMounts[v].args == A.playerClass ) then
-                        A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
-                    else
-                        A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
-                    end
-                end
-            -- Faction
-            elseif ( A.restrictedMounts[v].type == "faction" ) then
-                if ( type(A.restrictedMounts[v].args) == "table" ) then
-                    if ( tContains(A.restrictedMounts[v].args, A.playerFaction) ) then
-                        A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
-                    else
-                        A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
-                    end
-                else
-                    if ( A.restrictedMounts[v].args == A.playerFaction ) then
-                        A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
-                    else
-                        A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
-                    end
-                end
-            -- Race & class
-            elseif ( A.restrictedMounts[v].type == "race&class" ) then
-                if ( type(A.restrictedMounts[v].args) == "table" ) then
-                    if ( tContains(A.restrictedMounts[v].args, A.playerRace..A.playerClass) ) then
-                        A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
-                    else
-                        A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
-                    end
-                else
-                    if ( A.restrictedMounts[v].args == A.playerRace..A.playerClass ) then
-                        A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
-                    else
-                        A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
-                    end
-                end
-            -- Profession
-            elseif ( A.restrictedMounts[v].type == "profession" ) then
-                local professionOne, professionTwo = GetProfessions();
-                local professionOneSkill, professionTwoSkill, _;
-
-                if ( professionOne ) then
-                    _, _, professionOneSkill, _, _, _, professionOne = GetProfessionInfo(professionOne);
-                end
-
-                if ( professionTwo ) then
-                    _, _, professionTwoSkill, _, _, _, professionTwo = GetProfessionInfo(professionTwo);
-                end
-
-                if ( (professionOne and professionOne == A.restrictedMounts[v].args[1] and professionOneSkill >= A.restrictedMounts[v].args[2])
-                or (professionTwo and professionTwo == A.restrictedMounts[v].args[1] and professionTwoSkill >= A.restrictedMounts[v].args[2]) ) then
-                    A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
-                else
-                    A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
-                end
-            -- Achievement
-            elseif ( A.restrictedMounts[v].type == "achievement" ) then
-                if ( type(A.restrictedMounts[v].args) == "table" ) then
-                    for kk,vv in ipairs(A.restrictedMounts[v].args) do
-                        local earnedBy = select(14, GetAchievementInfo(vv));
-
-                        if ( A.playerName == earnedBy ) then
-                            A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
-                            break;
-                        end
-                    end
-
-                    A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
-                else
-                    local earnedBy = select(14, A.restrictedMounts[v].args);
-
-                    if ( A.playerName == earnedBy ) then
-                        A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
-                    else
-                        A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
-                    end
-                end
-            end
+        if ( A:IsMountRestricted(v) ) then -- Got a restricted mount
+            A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
         else
             A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
         end
@@ -762,15 +783,15 @@ function A:RandomMount(cat)
     or (cat == 2 and A.db.profile.noHybridWhenFly)
     or cat == 3 or cat == 4 or cat == 5 or cat == 6 or cat == 7 ) then
         -- Got forced
-        if ( A.db.profile.forceOne.mount[cat] ) then
+        if ( A.db.profile.forceOne.mount[cat] and not A:IsMountRestricted(A.db.profile.forceOne.mount[cat]) ) then
             A:DebugMessage(("RandomMount() - No hybrid - Got forced - %i"):format(cat));
             id = A.db.profile.forceOne.mount[cat];
         -- Got area
-        elseif ( A.db.profile.mountByMapID[cat][A.currentMapID] ) then
+        elseif ( A.db.profile.mountByMapID[cat][A.currentMapID] and not A:IsMountRestricted(A.db.profile.mountByMapID[cat][A.currentMapID]) ) then
             A:DebugMessage(("RandomMount() - No hybrid - Got area - %i"):format(cat));
             id = A.db.profile.mountByMapID[cat][A.currentMapID];
         -- Got unique area
-        elseif ( A.db.profile.areaMounts and A.uniqueAreaMounts[cat][A.currentMapID] ) then
+        elseif ( A.db.profile.areaMounts and A.uniqueAreaMounts[cat][A.currentMapID] and not A:IsMountRestricted(A.uniqueAreaMounts[cat][A.currentMapID]) ) then
             A:DebugMessage(("RandomMount() - No hybrid - Got unique area - %i"):format(cat));
             id = A:GetUniqueAreaMount(cat);
         -- got fav
@@ -788,7 +809,7 @@ function A:RandomMount(cat)
     -- ground, want hybrid when ground - fly
     elseif ( (cat == 1 and not A.db.profile.noHybridWhenGround) or (cat == 2 and not A.db.profile.noHybridWhenFly) ) then
         -- Got forced ground/fly and hybrid
-        if ( A.db.profile.forceOne.mount[cat] and A.db.profile.forceOne.mount[3] ) then
+        if ( A.db.profile.forceOne.mount[cat] and A.db.profile.forceOne.mount[3] and not A:IsMountRestricted(A.db.profile.forceOne.mount[cat]) and not A:IsMountRestricted(A.db.profile.forceOne.mount[3]) ) then
             -- hybrid
             if ( A:RandHybrid(1, 1) ) then
                 A:DebugMessage(("RandomMount() - With hybrid - Got forced - Got hybrid - Rand hybrid - %i"):format(cat));
@@ -799,16 +820,16 @@ function A:RandomMount(cat)
                 id = A.db.profile.forceOne.mount[cat];
             end
         -- Got forced ground/fly
-        elseif ( A.db.profile.forceOne.mount[cat] ) then
+        elseif ( A.db.profile.forceOne.mount[cat] and not A:IsMountRestricted(A.db.profile.forceOne.mount[cat]) ) then
             A:DebugMessage(("RandomMount() - With hybrid - Got forced ground/fly - %i"):format(cat));
             id = A.db.profile.forceOne.mount[cat];
         -- Got forced hybrid
-        elseif ( A.db.profile.forceOne.mount[3] ) then
+        elseif ( A.db.profile.forceOne.mount[3] and not A:IsMountRestricted(A.db.profile.forceOne.mount[3]) ) then
             A:DebugMessage(("RandomMount() - With hybrid - Got forced hybrid - %i"):format(cat));
             id = A.db.profile.forceOne.mount[3];
         -- No forced going for area
         -- Got area ground/fly and hybrid
-        elseif ( A.db.profile.mountByMapID[cat][A.currentMapID] and A.db.profile.mountByMapID[3][A.currentMapID] ) then
+        elseif ( A.db.profile.mountByMapID[cat][A.currentMapID] and A.db.profile.mountByMapID[3][A.currentMapID] and not A:IsMountRestricted(A.db.profile.mountByMapID[cat][A.currentMapID]) and not A:IsMountRestricted(A.db.profile.mountByMapID[3][A.currentMapID]) ) then
             -- hybrid
             if ( A:RandHybrid(1, 1) ) then
                 A:DebugMessage(("RandomMount() - With hybrid - Got area ground/fly - Got hybrid - Rand hybrid - %i"):format(cat));
@@ -819,16 +840,17 @@ function A:RandomMount(cat)
                 id = A.db.profile.mountByMapID[cat][A.currentMapID];
             end
         -- Got area ground/fly
-        elseif ( A.db.profile.mountByMapID[cat][A.currentMapID] ) then
+        elseif ( A.db.profile.mountByMapID[cat][A.currentMapID] and not A:IsMountRestricted(A.db.profile.mountByMapID[cat][A.currentMapID]) ) then
             A:DebugMessage(("RandomMount() - With hybrid - Got area ground/fly - %i"):format(cat));
             id = A.db.profile.mountByMapID[cat][A.currentMapID];
         -- Got area hybrid
-        elseif ( A.db.profile.mountByMapID[3][A.currentMapID] ) then
+        elseif ( A.db.profile.mountByMapID[3][A.currentMapID] and not A:IsMountRestricted(A.db.profile.mountByMapID[3][A.currentMapID]) ) then
             A:DebugMessage(("RandomMount() - With hybrid - Got area hybrid - %i"):format(cat));
             id = A.db.profile.mountByMapID[3][A.currentMapID];
         -- No area going for unique area
         -- Got unique area ground/fly and hybrid
-        elseif ( A.db.profile.areaMounts and A.uniqueAreaMounts[cat][A.currentMapID] and A.uniqueAreaMounts[3][A.currentMapID] ) then
+        elseif ( A.db.profile.areaMounts and A.uniqueAreaMounts[cat][A.currentMapID] and A.uniqueAreaMounts[3][A.currentMapID] and
+        not A:IsMountRestricted(A.uniqueAreaMounts[cat][A.currentMapID]) and not A:IsMountRestricted(A.uniqueAreaMounts[3][A.currentMapID]) ) then
             if ( A:RandHybrid(1, 1) ) then
                 A:DebugMessage(("RandomMount() - With hybrid - Got unique area ground/fly - Got hybrid - Rand hybrid - %i"):format(cat));
                 id = A:GetUniqueAreaMount(3);
@@ -837,11 +859,11 @@ function A:RandomMount(cat)
                 id = A:GetUniqueAreaMount(cat);
             end
         -- Got unique area ground/fly
-        elseif ( A.db.profile.areaMounts and A.uniqueAreaMounts[cat][A.currentMapID] ) then
+        elseif ( A.uniqueAreaMounts[cat][A.currentMapID] and A.db.profile.areaMounts and not A:IsMountRestricted(A.uniqueAreaMounts[cat][A.currentMapID]) ) then
             A:DebugMessage(("RandomMount() - With hybrid - Got unique area ground/fly - %i"):format(cat));
             id = A:GetUniqueAreaMount(cat);
         -- Got unique area hybrid
-        elseif ( A.db.profile.areaMounts and A.uniqueAreaMounts[3][A.currentMapID] ) then
+        elseif ( A.uniqueAreaMounts[3][A.currentMapID] and A.db.profile.areaMounts and not A:IsMountRestricted(A.uniqueAreaMounts[3][A.currentMapID]) ) then
             A:DebugMessage(("RandomMount() - With hybrid - Got unique area hybrid - %i"):format(cat));
             id = A:GetUniqueAreaMount(3);
         -- No unique area going for fav

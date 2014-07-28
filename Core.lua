@@ -10,13 +10,17 @@
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 -- TODO: move back red flying cloud to hybrid and prevent summoning it when under water
 
--- 1.6.3 changelog
+-- 1.6.4 changelog
 --[[
-Fixed error with specialization detection
-Druid cat form support
-Oculus drakes support
-fr_FR localization
+Buttons now hides when in a pet battle
+Achievement filter error (derp) fixed
+Added new filter type, "owned"
+Added Vicious War Steed and Vicious War Wolf to filters
+Added Ancestral Phoenix mounts to filters
+Fixed bindings bug, that was a weird one, grats Blizzard @ ninja lame/lazy fix
+Several little fixes/improvements
 ]]--
+
 local A = _G["PetsAndMountsGlobal"];
 local L = A.L;
 
@@ -269,16 +273,23 @@ end
 
 --- Return mount ID from spell ID
 function A:GetMountIDFromSpellID(spellID)
-    -- Init addon databases
-    A:InitializeDB();
+    if ( not A.mountsSpellIDToIDCache ) then
+        A.mountsSpellIDToIDCache = {};
+    end
 
-    for k,v in ipairs(A.pamTable.mounts) do
-        for kk,vv in pairs(v) do
-            for kkk,vvv in ipairs(vv) do
-                if ( spellID == vvv.spellID ) then
-                    return vvv.id;
-                end
-            end
+    if ( A.mountsSpellIDToIDCache[spellID] ) then
+        return A.mountsSpellIDToIDCache[spellID];
+    end
+
+    local numMounts = GetNumCompanions("MOUNT");
+    local _, spellID2;
+
+    for i=1,numMounts do
+        _, _, spellID2 = GetCompanionInfo("MOUNT", i);
+
+        if ( spellID == spellID2 ) then
+            A.mountsSpellIDToIDCache[spellID] = i;
+            return i;
         end
     end
 
@@ -286,10 +297,12 @@ function A:GetMountIDFromSpellID(spellID)
 end
 
 --- Return mount name
-function A:GetMountNameBySpellID(id)
+function A:GetMountNameBySpellID(spellID)
+    local id = A:GetMountIDFromSpellID(spellID);
+
     if ( not id ) then return nil; end
 
-    return select(2, GetCompanionInfo("MOUNT", A:GetMountIDFromSpellID(id)));
+    return select(2, GetCompanionInfo("MOUNT", id));
 end
 
 --- Check if it is a GUID
@@ -724,6 +737,7 @@ function A:BuildMountsTable(force)
 
     -- (Re)Building database, deleting cache
     A.usableMountsCache = nil;
+    A.mountsSpellIDToIDCache = nil;
 
     A.pamTable.mounts =
     {
@@ -864,7 +878,7 @@ function A:InitializeDB()
     A:BuildBothTables();
 
     -- Registering database update events here
-    -- I do not know if something change for me but I was able to get pets and mount info when login in
+    -- I do not know if something change for me as I was able to get pets and mounts info when login in
     -- It is obviously not the same for everyone as some players were receiving errors (expected string got nil) within the DB update methods
     A:RegisterEvent("COMPANION_LEARNED");
     A:RegisterEvent("COMPANION_UNLEARNED");
@@ -879,7 +893,7 @@ function A:InitializeDB()
     -- Same
     A:Hook(C_PetJournal, "SummonPetByGUID", true);
 
-    -- Setting here both infos the first time
+    -- Setting here both infos the first time (Data Broker)
     -- Doing this too soon can cause nil error with strings manipulation when creating the DB
     A:ApplyCurrentBothInfos();
 end
@@ -1557,15 +1571,17 @@ function A:SetEverything()
     A.playerLevel = UnitLevel("player");
     A.playerFaction = UnitFactionGroup("player");
     A.playerRace = select(2, UnitRace("player"));
-    A.playerName = UnitName("player");
+    A.playerName, A.playerRealm = UnitFullName("player");
     A.playerCurrentSpecID = A:GetPlayerCurrentSpecID();
 
     if ( not A.playerClass or not A.playerGUID or not A.playerLevel
     or not A.playerFaction or not A.playerRace or not A.playerName
-    or not A.playerCurrentSpecID ) then
+    or not A.playerRealm or not A.playerCurrentSpecID ) then
         A:ScheduleTimer("SetEverything", 1);
         return;
     end
+
+    A.playerFullName = A.playerName.."-"..A.playerRealm;
 
     A:SetDebugMessage();
     A:ShowHideMinimap();
@@ -1579,6 +1595,8 @@ function A:SetEverything()
 
     A:SetMainTimer();
     --A:SetFlyingPetWithFlyingMountTimer();
+
+    A.addonRunning = 1;
 end
 
 --[[-------------------------------------------------------------------------------
@@ -2054,6 +2072,11 @@ function A:PLAYER_REGEN_ENABLED()
         A.applyCurrentMountInfosDelayed = nil
     end
 
+    if ( A.petBattleButtonsVisibilityDelayed ) then
+        A:PET_BATTLE_CLOSE();
+        A.petBattleButtonsVisibilityDelayed = nil;
+    end
+
     A:AutoPetDelay();
     A:PopMessageLeavingCombat();
 end
@@ -2112,6 +2135,9 @@ function A:PLAYER_ENTERING_WORLD()
         A:RegisterEvent("PLAYER_ALIVE"); -- It's alive!! (Res, also fire when releasing)
         A:RegisterEvent("PLAYER_LOSES_VEHICLE_DATA"); -- Quitting a vehicle or a multi mount you control.
         A:RegisterEvent("UNIT_EXITED_VEHICLE"); -- Exiting a vehicle.
+        A:RegisterEvent("PLAYER_LEVEL_UP"); -- Update post click macros
+        A:RegisterEvent("PET_BATTLE_OPENING_START"); -- Buttons visibility
+        A:RegisterEvent("PET_BATTLE_CLOSE"); -- Same
 
         -- If player is a lock, building database on spec switch or glyph modification is needed
         if ( A.playerClass == "WARLOCK" ) then
@@ -2316,6 +2342,39 @@ end
     end
 end]]--
 
+function A:PET_BATTLE_OPENING_START()
+    if ( InCombatLockdown() ) then
+        return;
+    end
+
+    if ( PetsAndMountsSecureButtonPets:IsShown() ) then
+        PetsAndMountsSecureButtonPets:Hide();
+        A.petBattlePetsButtonWasShown = 1;
+    end
+
+    if ( PetsAndMountsSecureButtonMounts:IsShown() ) then
+        PetsAndMountsSecureButtonMounts:Hide();
+        A.petBattleMountsButtonWasShown = 1;
+    end
+end
+
+function A:PET_BATTLE_CLOSE()
+    if ( InCombatLockdown() ) then
+        A.petBattleButtonsVisibilityDelayed = 1;
+        return;
+    end
+
+    if ( A.petBattlePetsButtonWasShown ) then
+        PetsAndMountsSecureButtonPets:Show();
+        A.petBattlePetsButtonWasShown = nil;
+    end
+
+    if ( A.petBattleMountsButtonWasShown ) then
+        PetsAndMountsSecureButtonMounts:Show();
+        A.petBattleMountsButtonWasShown = nil;
+    end
+end
+
 --[[-------------------------------------------------------------------------------
     Addon communication
 -------------------------------------------------------------------------------]]--
@@ -2338,7 +2397,7 @@ function A:OnCommReceived(...)
     prefix, message, method, who = ...;
 
     -- Prevent own message
-    if ( who == UnitName("player") ) then return; end
+    if ( who == A.playerFullName ) then return; end
 
     remoteStage, remoteVersion = strsplit(":", message);
     remoteVersion, remoteRevision = A:GetAddonVersion(remoteVersion);
@@ -2934,7 +2993,7 @@ function A:OnInitialize()
             end
         end,
         OnTooltipShow = function(tooltip)
-            local currentSet;
+            local currentSet, forcedInfo1, forcedInfo2, forcedInfo3, forcedInfo4, forcedInfo5;
 
             tooltip:AddDoubleLine(A.color["WHITE"]..L["Pets & Mounts"], A.color["GREEN"].."v"..A.version);
             tooltip:AddLine(" ");
@@ -2946,10 +3005,16 @@ function A:OnInitialize()
                 currentSet = A.color["GREEN"]..currentSet;
             end
 
+            if ( A.db.profile.forceOne.pet and A:GetPetNameByID(A.db.profile.forceOne.pet) ) then
+                forcedInfo1 = A.color["GREEN"]..A:GetPetNameByID(A.db.profile.forceOne.pet);
+            else
+                forcedInfo1 = A.color["RED"]..L["None"];
+            end
+
             tooltip:AddLine(L["Companions set in use: %s."]:format(currentSet));
             tooltip:AddLine(L["Auto summon companion is %s."]:format(A:IsAutoPetEnabled() and A.color["GREEN"]..L["On"] or A.color["RED"]..L["Off"]));
             tooltip:AddLine(L["Not when stealthed is %s."]:format(A:IsNotWhenStealthedEnabled() and A.color["GREEN"]..L["On"] or A.color["RED"]..L["Off"]));
-            tooltip:AddLine(L["Forced companion: %s"]:format(A.db.profile.forceOne.pet and A.color["GREEN"]..A:GetPetNameByID(A.db.profile.forceOne.pet) or A.color["RED"]..L["None"]));
+            tooltip:AddLine(L["Forced companion: %s"]:format(forcedInfo1));
             tooltip:AddLine(" ");
 
             currentSet = A:GetSetsInUse("MOUNTS");
@@ -2959,12 +3024,42 @@ function A:OnInitialize()
                 currentSet = A.color["GREEN"]..currentSet;
             end
 
+            if ( A.db.profile.forceOne.mount[4] and A:GetMountNameBySpellID(A.db.profile.forceOne.mount[4]) ) then
+                forcedInfo1 = A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[4]);
+            else
+                forcedInfo1 = A.color["RED"]..L["None"];
+            end
+
+            if ( A.db.profile.forceOne.mount[1] and A:GetMountNameBySpellID(A.db.profile.forceOne.mount[1]) ) then
+                forcedInfo2 = A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[1]);
+            else
+                forcedInfo2 = A.color["RED"]..L["None"];
+            end
+
+            if ( A.db.profile.forceOne.mount[2] and A:GetMountNameBySpellID(A.db.profile.forceOne.mount[2]) ) then
+                forcedInfo3 = A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[2]);
+            else
+                forcedInfo3 = A.color["RED"]..L["None"];
+            end
+
+            if ( A.db.profile.forceOne.mount[3] and A:GetMountNameBySpellID(A.db.profile.forceOne.mount[3]) ) then
+                forcedInfo4 = A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[3]);
+            else
+                forcedInfo4 = A.color["RED"]..L["None"];
+            end
+
+            if ( A.db.profile.forceOne.mount[5] and A:GetMountNameBySpellID(A.db.profile.forceOne.mount[5]) ) then
+                forcedInfo5 = A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[5]);
+            else
+                forcedInfo5 = A.color["RED"]..L["None"];
+            end
+
             tooltip:AddLine(L["Mounts set in use: %s."]:format(currentSet));
-            tooltip:AddLine(L["Forced aquatic mount: %s"]:format(A.db.profile.forceOne.mount[4] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[4]) or A.color["RED"]..L["None"]));
-            tooltip:AddLine(L["Forced ground mount: %s"]:format(A.db.profile.forceOne.mount[1] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[1]) or A.color["RED"]..L["None"]));
-            tooltip:AddLine(L["Forced fly mount: %s"]:format(A.db.profile.forceOne.mount[2] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[2]) or A.color["RED"]..L["None"]));
-            tooltip:AddLine(L["Forced hybrid mount: %s"]:format(A.db.profile.forceOne.mount[3] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[3]) or A.color["RED"]..L["None"]));
-            tooltip:AddLine(L["Forced passenger mount: %s"]:format(A.db.profile.forceOne.mount[5] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[5]) or A.color["RED"]..L["None"]));
+            tooltip:AddLine(L["Forced aquatic mount: %s"]:format(forcedInfo1));
+            tooltip:AddLine(L["Forced ground mount: %s"]:format(forcedInfo2));
+            tooltip:AddLine(L["Forced fly mount: %s"]:format(forcedInfo3));
+            tooltip:AddLine(L["Forced hybrid mount: %s"]:format(forcedInfo4));
+            tooltip:AddLine(L["Forced passenger mount: %s"]:format(forcedInfo5));
 
             tooltip:AddLine(" ");
             tooltip:AddLine(L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random companion.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Revoke current companion.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open the configuration panel."]);
@@ -3003,8 +3098,6 @@ function A:OnEnable()
 
     -- Events
     A:RegisterEvent("PLAYER_ENTERING_WORLD");
-    -- Update post click macros
-    A:RegisterEvent("PLAYER_LEVEL_UP");
     -- Update current mapID
     A:RegisterEvent("ZONE_CHANGED_NEW_AREA");
 

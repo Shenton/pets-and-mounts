@@ -617,6 +617,33 @@ A.restrictedMounts =
         -- args = 8707,
     -- },
     --
+    -- Owned Mount
+    -- Owned did not require args
+    [100332] = -- Vicious War Steed
+    {
+        type = "owned",
+    },
+    [100333] = -- Vicious War Wolf
+    {
+        type = "owned",
+    },
+    [129552] = -- Crimson Pandaren Phoenix
+    {
+        type = "owned",
+    },
+    [132117] = -- Ashen Pandaren Phoenix
+    {
+        type = "owned",
+    },
+    [132118] = -- Emerald Pandaren Phoenix
+    {
+        type = "owned",
+    },
+    [132119] = -- Violet Pandaren Phoenix
+    {
+        type = "owned",
+    },
+    --
     -- Faction mounts
     -- Alliance Horde
     --
