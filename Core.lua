@@ -10,15 +10,10 @@
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 -- TODO: move back red flying cloud to hybrid and prevent summoning it when under water
 
--- 1.6.4 changelog
+-- 1.6.5 changelog
 --[[
-Buttons now hides when in a pet battle
-Achievement filter error (derp) fixed
-Added new filter type, "owned"
-Added Vicious War Steed and Vicious War Wolf to filters
-Added Ancestral Phoenix mounts to filters
-Fixed bindings bug, that was a weird one, grats Blizzard @ ninja lame/lazy fix
-Several little fixes/improvements
+Updated some spells level requirement
+Updating fr_FR localization
 ]]--
 
 local A = _G["PetsAndMountsGlobal"];

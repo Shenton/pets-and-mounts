@@ -179,7 +179,7 @@ A.classesSpellsTable =
     {
         hunterAspectHawk = 13165, -- lvl 12
         hunterAspectIronHawk = 109260, -- lvl 45 - tier 3 row 2 - id 8
-        hunterAspectCheetah = 5118, -- lvl 16
+        hunterAspectCheetah = 5118, -- lvl 24
         hunterAspectPack = 13159, -- lvl 56
     },
     MAGE =
@@ -210,7 +210,7 @@ A.classesSpellsTable =
     },
     SHAMAN =
     {
-        shamanGhostWolf = 2645, -- lvl 16
+        shamanGhostWolf = 2645, -- lvl 15
         shamanWaterWalking = 546, -- lvl 24
     },
     WARLOCK =
@@ -325,14 +325,14 @@ function A:SetHunterPreClickMacro()
 
     if ( A.db.profile.hunterPreferPack and A.playerLevel >= 56 ) then
         cheetahOrPack = A.hunterAspectPack;
-    elseif ( A.playerLevel >= 16 ) then
+    elseif ( A.playerLevel >= 24 ) then
         cheetahOrPack = A.hunterAspectCheetah;
     end
 
     if ( not cheetahOrPack ) then
         return A.macroDismountString;
     elseif ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
-        if ( A.playerLevel >= 16 ) then
+        if ( A.playerLevel >= 24 ) then
             if ( UnitBuff("player", cheetahOrPack) or (not UnitBuff("player", A.hunterAspectHawk) and not UnitBuff("player", A.hunterAspectIronHawk)) ) then
                 return ("%s\n/cast !%s"):format(A.macroDismountString, A.hunterAspectHawk);
             else
@@ -449,7 +449,7 @@ end
 --- Shaman pre click macro
 -- For Shamans we handle Ghost Wolf when moving
 function A:SetShamanPreClickMacro()
-    if ( (not IsMounted() and GetUnitSpeed("player") > 0 and A.playerLevel >= 16)
+    if ( (not IsMounted() and GetUnitSpeed("player") > 0 and A.playerLevel >= 15)
     or (A.db.profile.noMountAfterCancelForm and GetShapeshiftForm(1) > 0) ) then
         return ("%s\n/cast %s"):format(A.macroDismountString, A.shamanGhostWolf);
     else
@@ -944,7 +944,7 @@ function A:SetPostClickMacro(noCustom)
 
             if ( A.db.profile.hunterPreferPack and A.playerLevel >= 56 ) then
                 cheetahOrPack = A.hunterAspectPack;
-            elseif ( A.playerLevel >= 16 ) then
+            elseif ( A.playerLevel >= 24 ) then
                 cheetahOrPack = A.hunterAspectCheetah;
             end
 
@@ -1013,7 +1013,7 @@ function A:SetPostClickMacro(noCustom)
             end
         -- Shaman
         elseif ( A.playerClass == "SHAMAN" ) then
-            if ( A.playerLevel >= 16 ) then
+            if ( A.playerLevel >= 15 ) then
                 A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.shamanGhostWolf);
             else
                 A.postClickMacro = A.macroDismountString;
