@@ -150,10 +150,10 @@ A.popupMessages["overwriteOrChangeNameSet"] =
 
         if ( not name or name == "" ) then
             if ( A.newPetSetName ) then
-                A.db.global.savedSets.pets[A.newPetSetName] = A:CopyTable(A.db.profile.favoritePets);
+                A.db.global.savedSets.pets[A.newPetSetName] = A:CopyTable(A.petsDB.profile.favorites);
                 A.newPetSetName = nil;
             elseif ( A.newMountSetName ) then
-                A.db.global.savedSets.mounts[A.newMountSetName] = A:CopyTable(A.db.profile.favoriteMounts);
+                A.db.global.savedSets.mounts[A.newMountSetName] = A:CopyTable(A.mountsDB.profile.favorites);
                 A.newMountSetName = nil;
             end
 
@@ -166,7 +166,7 @@ A.popupMessages["overwriteOrChangeNameSet"] =
             if ( A.db.global.savedSets.pets[name] ) then
                 A:Message(L["Set %s already exists."]:format(name), 1);
             else
-                A.db.global.savedSets.pets[name] = A:CopyTable(A.db.profile.favoritePets);
+                A.db.global.savedSets.pets[name] = A:CopyTable(A.petsDB.profile.favorites);
                 A.newPetSetName = nil;
                 A:ForceSetsUpdate();
                 self:Hide();
@@ -175,7 +175,7 @@ A.popupMessages["overwriteOrChangeNameSet"] =
             if ( A.db.global.savedSets.mounts[name] ) then
                 A:Message(L["Set %s already exists."]:format(name), 1);
             else
-                A.db.global.savedSets.mounts[name] = A:CopyTable(A.db.profile.favoriteMounts);
+                A.db.global.savedSets.mounts[name] = A:CopyTable(A.mountsDB.profile.favorites);
                 A.newPetSetName = nil;
                 A:ForceSetsUpdate();
                 self:Hide();
@@ -264,6 +264,22 @@ A.popupMessages["newCompanionsFilters161"] =
     escapeClose = 1,
     enterOK = 1,
     LeftButtonScript = function(self)
+        self:Hide();
+    end,
+};
+
+-- 6.0 modifications message v1.7.0
+A.popupMessages["wodModifications170"] =
+{
+    type = "question",
+    text = L["WoD (6.02) modified a lot both companions and mounts APIs.\n\nCheck the add-on page on Curse for some explanations on those changes. The link can be found in the About section of the configuration panel.\n\nDo you want to open the configuration panel?"],
+    icon = "Interface\\DialogFrame\\UI-Dialog-Icon-AlertNew",
+    leftButtonText = L["Yes"],
+    rightButtonText = L["No"],
+    escapeClose = 1,
+    enterOK = 1,
+    LeftButtonScript = function(self)
+        A:OpenConfigPanel();
         self:Hide();
     end,
 };

@@ -21,10 +21,13 @@ local tContains = tContains;
 local tonumber = tonumber;
 local _G = _G;
 local math = math;
+local type = type;
 
 -- GLOBALS: LibStub, InCombatLockdown, GetCurrentBindingSet, GetBindingKey, SetBinding, SaveBindings
 -- GLOBALS: GetMapNameByID, GetAddOnMetadata, GetMacroItemIcons, GetMacroIcons, FauxScrollFrame_GetOffset
--- GLOBALS: FauxScrollFrame_Update
+-- GLOBALS: FauxScrollFrame_Update, GetNumSpellTabs, GetSpellTabInfo, GetSpellBookItemInfo, GetSpellBookItemTexture
+-- GLOBALS: GetFlyoutInfo, GetFlyoutSlotInfo, GetSpellTexture, GetLooseMacroIcons, GetLooseMacroItemIcons
+-- GLOBALS: GetBindingAction, C_PetJournal, C_MountJournal
 
 -- Ace3 libs <3
 A.AceConfigDialog = LibStub("AceConfigDialog-3.0");
@@ -87,8 +90,48 @@ A.iconList = {};
 function A:GetIconsList()
     A.iconsList = {};
     A.iconsList[1] = "INV_MISC_QUESTIONMARK";
-    GetMacroItemIcons(A.iconsList);
+
+    local index = 2;
+    local numFlyouts = 0;
+
+    for i=1,GetNumSpellTabs() do
+        local tab, tabTex, offset, numSpells, _ = GetSpellTabInfo(i);
+        local tabEnd = offset + numSpells;
+
+        offset = offset + 1;
+
+        for j=offset,tabEnd-1 do
+            local spellType, ID = GetSpellBookItemInfo(j, "player");
+
+            if ( spellType ~= "FUTURESPELL" ) then
+                local spellTexture = string.upper(GetSpellBookItemTexture(j, "player"));
+
+                if ( not string.match(spellTexture, "INTERFACE\\BUTTONS\\") ) then
+                    A.iconsList[index] = string.gsub(spellTexture, "INTERFACE\\ICONS\\", "");
+                    index = index + 1;
+                end
+            end
+            if ( spellType == "FLYOUT" ) then
+                local _, _, numSlots, isKnown = GetFlyoutInfo(ID);
+
+                if ( isKnown and numSlots > 0 ) then
+                    for k=1,numSlots do
+                        local spellID, overrideSpellID, isKnown = GetFlyoutSlotInfo(ID, k);
+
+                        if ( isKnown ) then
+                            A.iconsList[index] = string.gsub(string.upper(GetSpellTexture(spellID)), "INTERFACE\\ICONS\\", ""); 
+                            index = index + 1;
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    GetLooseMacroIcons(A.iconsList);
+    GetLooseMacroItemIcons(A.iconsList);
     GetMacroIcons(A.iconsList);
+    GetMacroItemIcons(A.iconsList);
 end
 
 --- Scroll frame update method
@@ -113,8 +156,14 @@ function A:IconsFrameScrollUpdate()
             texture = nil;
         end
 
-        if ( texture ) then
-            icon:SetTexture("INTERFACE\\ICONS\\"..texture);
+        if ( index <= #icons and texture ) then
+            if( type(texture) == "number" ) then
+                icon:SetToFileData(texture);
+                texture = icon:GetTexture();
+                texture = string.gsub(string.upper(texture), "INTERFACE\\ICONS\\", "");
+            else
+                icon:SetTexture("INTERFACE\\ICONS\\"..texture);
+            end
             button.textureName = texture;
             button:Show();
         else
@@ -886,7 +935,7 @@ function A:OptionsRoot()
                             {
                                 order = 21,
                                 name = L["Enable"],
-                                desc = L["With this enabled, the add-on will summon another pet after a defined time. See next option to define the time."],
+                                desc = L["With this enabled, the add-on will summon another pet after a defined time. See next option to define the time.\n\nThis will override the \"Not with a companion\" option."],
                                 type = "toggle",
                                 set = function() A.db.profile.petReSummon = not A.db.profile.petReSummon; end,
                                 get = function() return A.db.profile.petReSummon; end,
@@ -960,6 +1009,8 @@ function A:OptionsRoot()
                                 type = "toggle",
                                 set = function()
                                     A.db.profile.enableAutoSummonOverride = not A.db.profile.enableAutoSummonOverride;
+                                    A:SetAutoSummonOverride();
+                                    A:SetStealthEvents();
                                 end,
                                 get = function() return A.db.profile.enableAutoSummonOverride; end,
                             },
@@ -1443,7 +1494,37 @@ function A:OptionsRoot()
                                 end,
                                 get = function() return A.db.profile.customMacrosLUAProtectionEnabled; end,
                             },
-                            
+                            hybridsHeader =
+                            {
+                                order = 4000,
+                                name = L["Hybrids Options"],
+                                type = "header",
+                            },
+                            hybridsSelectionEnabled =
+                            {
+                                order = 4001,
+                                name = L["Hybrids Selection"],
+                                desc = L["Enable the hybrids selection tab.\n\nFor the changes to take effect, this option need to be disabled. A /reload will also works."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.hybridsSelectionTab = not A.db.profile.hybridsSelectionTab;
+
+                                    if ( not A.db.profile.hybridsSelectionTab ) then
+                                        A:RemoveUnforcedHybrids();
+                                        A:BuildBothTables(1);
+                                    end
+                                end,
+                                get = function() return A.db.profile.hybridsSelectionTab; end,
+                            },
+                            hybridsSelectionOnlyOwned =
+                            {
+                                order = 4002,
+                                name = L["Only owned"],
+                                desc = L["This will display only the mounts you own within the list. Otherwise it will display all the mounts available in the game."],
+                                type = "toggle",
+                                set = function() A.db.profile.hybridsSelectionOnlyOwned = not A.db.profile.hybridsSelectionOnlyOwned; end,
+                                get = function() return A.db.profile.hybridsSelectionOnlyOwned; end,
+                            },
                         },
                     },
                     classSpecific =
@@ -1638,7 +1719,7 @@ function A:OptionsRoot()
                                     hunterDescription =
                                     {
                                         order = 1,
-                                        name = L["For Hunters it handles Aspect of the Cheetah/Pack and Aspect of the Hawk/Iron Hawk when moving. In combat you have to use a modifier to switch to Aspect of the Cheetah/Pack."],
+                                        name = L["For Hunters it handles Aspect of the Cheetah/Pack when moving. In combat you have to use a modifier to switch of Aspect of the Cheetah/Pack."],
                                         type = "description",
                                         fontSize = "medium",
                                     },
@@ -2238,6 +2319,34 @@ function A:OptionsRoot()
                         name = L["Random mount summon filters"],
                         type = "group",
                         inline = true,
+                        args = {},
+                    },
+                },
+            },
+            --
+            -- Main options tree - Hybrids selection tab
+            --
+            hybridsSelection =
+            {
+                order = 350,
+                name = L["Hybrids Selection"],
+                type = "group",
+                --childGroups = "tab", -- If using leading letter groups
+                hidden = function() return not A.db.profile.hybridsSelectionTab; end,
+                args =
+                {
+                    add =
+                    {
+                        order = 0,
+                        name = L["Add"],
+                        type = "group",
+                        args = {},
+                    },
+                    rem =
+                    {
+                        order = 1,
+                        name = L["Remove"],
+                        type = "group",
                         args = {},
                     },
                 },
@@ -2906,7 +3015,6 @@ function A:OptionsRoot()
                     desc = v.configDesc,
                     type = "keybinding",
                     set = function(info, val)
-                        --local set = GetCurrentBindingSet();
                         local key1, key2 = GetBindingKey(v.name, 1);
 
                         if ( key1 ) then SetBinding(key1, nil, 1); end
@@ -2920,10 +3028,9 @@ function A:OptionsRoot()
                             SetBinding(val, v.name, 1);
                         end
 
-                        SaveBindings(set);
+                        SaveBindings();
                     end,
                     get = function()
-                        --local set = GetCurrentBindingSet();
                         local _, key = GetBindingKey(v.name, 1);
                         return key;
                     end,
@@ -2932,6 +3039,96 @@ function A:OptionsRoot()
         };
 
         orderGroup = orderGroup + 1;
+    end
+
+    -- Hybrids selection
+    if ( A.db.profile.hybridsSelectionTab ) then
+        local mountsCount = C_MountJournal.GetNumMounts();
+
+        orderItem = 0;
+        orderGroup = 0;
+
+        for i=1,mountsCount do
+            local creatureName, spellID, _, _, _, _, _, _, _, _, isCollected = C_MountJournal.GetMountInfo(i);
+            local creatureID, _, _, _, mountType = C_MountJournal.GetMountInfoExtra(i);
+
+            if ( mountType == 247 or mountType == 248 and
+            (not A.db.profile.hybridsSelectionOnlyOwned or (A.db.profile.hybridsSelectionOnlyOwned and isCollected))) then
+                if ( tContains(A.db.global.forcedHybrid, spellID) ) then
+                    root.args.hybridsSelection.args.rem.args[tostring(spellID)] =
+                    {
+                        order = orderItem,
+                        name = creatureName,
+                        desc = function()
+                            if ( A.db.profile.showConfigModelFrame ) then
+                                A.configModelFrame.rotation = 0;
+                                A.configModelFrame:SetDisplayInfo(creatureID);
+                                A.configModelFrame:SetAnimation(618, -1);
+                                A.configModelFrame:SetDoBlend(false);
+
+                                -- Frame pos
+                                A.configModelFrame:ClearAllPoints()
+                                A.configModelFrame:SetPoint("TOPLEFT", A.configFocusFrame, "TOPRIGHT", 0, 0);
+                                A.configModelFrame:Show();
+                            else
+                                A.configModelFrame:Hide();
+                            end
+
+                            return ("%s %s"):format(L["Remove"], creatureName);
+                        end,
+                        width = "full",
+                        type = "execute",
+                        func = function()
+                            A:TableRemove(A.db.global.forcedHybrid, spellID);
+                        end,
+                    };
+                else
+                    -- local leadingLetter = string.sub(creatureName, 1, 1);
+
+                    -- if ( not root.args.hybridsSelection.args.add.args[leadingLetter] ) then
+                        -- root.args.hybridsSelection.args.add.args[leadingLetter] =
+                        -- {
+                            -- order = orderGroup,
+                            -- name = leadingLetter,
+                            -- type = "group",
+                            -- args = {},
+                        -- };
+
+                        -- orderGroup = orderGroup + 1;
+                    -- end
+                    --root.args.hybridsSelection.args.add.args[leadingLetter].args[tostring(spellID)] =
+                    root.args.hybridsSelection.args.add.args[tostring(spellID)] =
+                    {
+                        order = orderItem,
+                        name = creatureName,
+                        desc = function()
+                            if ( A.db.profile.showConfigModelFrame ) then
+                                A.configModelFrame.rotation = 0;
+                                A.configModelFrame:SetDisplayInfo(creatureID);
+                                A.configModelFrame:SetAnimation(618, -1);
+                                A.configModelFrame:SetDoBlend(false);
+
+                                -- Frame pos
+                                A.configModelFrame:ClearAllPoints()
+                                A.configModelFrame:SetPoint("TOPLEFT", A.configFocusFrame, "TOPRIGHT", 0, 0);
+                                A.configModelFrame:Show();
+                            else
+                                A.configModelFrame:Hide();
+                            end
+
+                            return ("%s %s"):format(L["Add"], creatureName);
+                        end,
+                        width = "full",
+                        type = "execute",
+                        func = function()
+                            A.db.global.forcedHybrid[#A.db.global.forcedHybrid+1] = spellID;
+                        end,
+                    };
+                end
+            end
+
+            orderItem = orderItem + 1;
+        end
     end
 
     -- Custom macros
@@ -3165,7 +3362,9 @@ function A:OptionsPetsList()
                             -- Model
                             if ( A.db.profile.showConfigModelFrame ) then
                                 A.configModelFrame.rotation = 0;
-                                A.configModelFrame:SetCreature(vvv.creatureID);
+                                A.configModelFrame:SetDisplayInfo(vvv.creatureID);
+                                A.configModelFrame:SetAnimation(618, -1);
+                                A.configModelFrame:SetDoBlend(false);
 
                                 -- Frame pos
                                 A.configModelFrame:ClearAllPoints()
@@ -3186,16 +3385,17 @@ function A:OptionsPetsList()
                         image = vvv.icon,
                         type = "toggle",
                         set = function()
-                            if ( tContains(A.db.profile.favoritePets, vvv.petID) ) then
-                                A:TableRemove(A.db.profile.favoritePets, vvv.petID);
+                            if ( tContains(A.petsDB.profile.favorites, vvv.petID) ) then
+                                A:TableRemove(A.petsDB.profile.favorites, vvv.petID);
                             else
-                                A.db.profile.favoritePets[#A.db.profile.favoritePets+1] = vvv.petID;
+                                A.petsDB.profile.favorites[#A.petsDB.profile.favorites+1] = vvv.petID;
                             end
 
                             A.usablePetsCache = nil;
+                            A:SetZonePetsSets(1);
                         end,
                         get = function()
-                            if ( tContains(A.db.profile.favoritePets, vvv.petID) ) then
+                            if ( tContains(A.petsDB.profile.favorites, vvv.petID) ) then
                                 return 1;
                             else
                                 return nil;
@@ -3221,7 +3421,7 @@ function A:OptionsPetsList()
             {
                 order = 0,
                 name = function()
-                    local count = #A.db.profile.favoritePets;
+                    local count = #A.petsDB.profile.favorites;
 
                     return L["You currently have %d selected favorites.\n\n"]:format(count);
                 end,
@@ -3267,18 +3467,19 @@ function A:OptionsPetsList()
                         type = "execute",
                         disabled = function() return not A.enablePetSelectAllButton; end,
                         func = function()
-                            A.db.profile.favoritePets = {};
+                            A.petsDB.profile.favorites = {};
 
                             for k,v in ipairs(A.pamTable.pets) do
                                 for kk,vv in pairs(v) do
                                     for kkk,vvv in ipairs(vv) do
-                                        A.db.profile.favoritePets[#A.db.profile.favoritePets+1] = vvv.petID;
+                                        A.petsDB.profile.favorites[#A.petsDB.profile.favorites+1] = vvv.petID;
                                     end
                                 end
                             end
 
                             A.usablePetsCache = nil;
                             A.enablePetSelectAllButton = nil;
+                            A:SetZonePetsSets(1);
                         end,
                     },
                 },
@@ -3306,9 +3507,10 @@ function A:OptionsPetsList()
                         type = "execute",
                         disabled = function() return not A.enablePetSelectNoneButton; end,
                         func = function()
-                            A.db.profile.favoritePets = {};
+                            A.petsDB.profile.favorites = {};
                             A.usablePetsCache = nil;
                             A.enablePetSelectNoneButton = nil;
+                            A:SetZonePetsSets(1);
                         end,
                     },
                 },
@@ -3328,12 +3530,14 @@ function A:OptionsPetsList()
 
                 for kk,vv in pairs(v) do
                     for kkk,vvv in ipairs(vv) do
-                        if ( not tContains(A.db.profile.favoritePets, vvv.petID) ) then
-                            A.db.profile.favoritePets[#A.db.profile.favoritePets+1] = vvv.petID;
+                        if ( not tContains(A.petsDB.profile.favorites, vvv.petID) ) then
+                            A.petsDB.profile.favorites[#A.petsDB.profile.favorites+1] = vvv.petID;
                             count = count + 1;
                         end
                     end
                 end
+
+                A:SetZonePetsSets(1);
 
                 if ( count > 1 ) then
                     A:Message(L["Added %d entries."]:format(count));
@@ -3353,11 +3557,13 @@ function A:OptionsPetsList()
 
                 for kk,vv in pairs(v) do
                     for kkk,vvv in ipairs(vv) do
-                        if ( A:TableRemove(A.db.profile.favoritePets, vvv.petID) ) then
+                        if ( A:TableRemove(A.petsDB.profile.favorites, vvv.petID) ) then
                             count = count + 1;
                         end
                     end
                 end
+
+                A:SetZonePetsSets(1);
 
                 if ( count > 1 ) then
                     A:Message(L["Removed %d entries."]:format(count));
@@ -3417,7 +3623,8 @@ function A:OptionsMountsList()
                             -- Model
                             if ( A.db.profile.showConfigModelFrame ) then
                                 A.configModelFrame.rotation = 0;
-                                A.configModelFrame:SetCreature(vvv.creatureID);
+                                A.configModelFrame:SetDisplayInfo(vvv.creatureID);
+                                A.configModelFrame:SetAnimation(618, -1);
 
                                 -- Frame pos
                                 A.configModelFrame:ClearAllPoints()
@@ -3440,16 +3647,17 @@ function A:OptionsMountsList()
                         image = vvv.icon,
                         type = "toggle",
                         set = function()
-                            if ( tContains(A.db.profile.favoriteMounts[k], vvv.spellID) ) then
-                                A:TableRemove(A.db.profile.favoriteMounts[k], vvv.spellID);
+                            if ( tContains(A.mountsDB.profile.favorites[k], vvv.spellID) ) then
+                                A:TableRemove(A.mountsDB.profile.favorites[k], vvv.spellID);
                             else
-                                A.db.profile.favoriteMounts[k][#A.db.profile.favoriteMounts[k]+1] = vvv.spellID;
+                                A.mountsDB.profile.favorites[k][#A.mountsDB.profile.favorites[k]+1] = vvv.spellID;
                             end
 
                             A.usableMountsCache = nil;
+                            A:SetZoneMountsSets(1);
                         end,
                         get = function()
-                            if ( tContains(A.db.profile.favoriteMounts[k], vvv.spellID) ) then
+                            if ( tContains(A.mountsDB.profile.favorites[k], vvv.spellID) ) then
                                 return 1;
                             else
                                 return nil;
@@ -3477,7 +3685,7 @@ function A:OptionsMountsList()
                 name = function()
                     local count = 0;
 
-                    for k,v in ipairs(A.db.profile.favoriteMounts) do
+                    for k,v in ipairs(A.mountsDB.profile.favorites) do
                         count = count + #v;
                     end
 
@@ -3525,7 +3733,7 @@ function A:OptionsMountsList()
                         type = "execute",
                         disabled = function() return not A.enableMountSelectAllButton; end,
                         func = function()
-                            A.db.profile.favoriteMounts =
+                            A.mountsDB.profile.favorites =
                             {
                                 [1] = {}, -- Ground
                                 [2] = {}, -- Fly
@@ -3539,13 +3747,14 @@ function A:OptionsMountsList()
                             for k,v in ipairs(A.pamTable.mounts) do
                                 for kk,vv in pairs(v) do
                                     for kkk,vvv in ipairs(vv) do
-                                        A.db.profile.favoriteMounts[k][#A.db.profile.favoriteMounts[k]+1] = vvv.spellID;
+                                        A.mountsDB.profile.favorites[k][#A.mountsDB.profile.favorites[k]+1] = vvv.spellID;
                                     end
                                 end
                             end
 
                             A.usableMountsCache = nil;
                             A.enableMountSelectAllButton = nil;
+                            A:SetZoneMountsSets(1);
                         end,
                     },
                 },
@@ -3573,7 +3782,7 @@ function A:OptionsMountsList()
                         type = "execute",
                         disabled = function() return not A.enableMountSelectNoneButton; end,
                         func = function()
-                            A.db.profile.favoriteMounts =
+                            A.mountsDB.profile.favorites =
                             {
                                 [1] = {}, -- Ground
                                 [2] = {}, -- Fly
@@ -3585,6 +3794,7 @@ function A:OptionsMountsList()
                             };
                             A.usableMountsCache = nil;
                             A.enableMountSelectNoneButton = nil;
+                            A:SetZoneMountsSets(1);
                         end,
                     },
                 },
@@ -3604,12 +3814,14 @@ function A:OptionsMountsList()
 
                 for kk,vv in pairs(A.pamTable.mounts[k]) do
                     for kkk,vvv in ipairs(vv) do
-                        if ( not tContains(A.db.profile.favoriteMounts[k], vvv.spellID) ) then
-                            A.db.profile.favoriteMounts[k][#A.db.profile.favoriteMounts[k]+1] = vvv.spellID;
+                        if ( not tContains(A.mountsDB.profile.favorites[k], vvv.spellID) ) then
+                            A.mountsDB.profile.favorites[k][#A.mountsDB.profile.favorites[k]+1] = vvv.spellID;
                             count = count + 1;
                         end
                     end
                 end
+
+                A:SetZoneMountsSets(1);
 
                 if ( count > 1 ) then
                     A:Message(L["Added %d entries."]:format(count));
@@ -3629,11 +3841,13 @@ function A:OptionsMountsList()
 
                 for kk,vv in pairs(A.pamTable.mounts[k]) do
                     for kkk,vvv in ipairs(vv) do
-                        if ( A:TableRemove(A.db.profile.favoriteMounts[k], vvv.spellID) ) then
+                        if ( A:TableRemove(A.mountsDB.profile.favorites[k], vvv.spellID) ) then
                             count = count + 1;
                         end
                     end
                 end
+
+                A:SetZoneMountsSets(1);
 
                 if ( count > 1 ) then
                     A:Message(L["Removed %d entries."]:format(count));
@@ -3658,279 +3872,188 @@ function A:OptionsSets()
         childGroups = "tab",
         args =
         {
-            pets =
+            defaultSets =
             {
-                order = 0,
-                name = L["Companions"],
+                order = 2,
+                name = L["Default sets"],
                 type = "group",
                 args =
                 {
-                    selectedFav =
+                    desc =
                     {
                         order = 0,
-                        name = function()
-                            local count = #A.db.profile.favoritePets;
-
-                            return L["You currently have %d selected favorites.\n\n"]:format(count);
-                        end,
+                        name = L["Set here the default set or sets. This will be used when no set of sets is defined for an area or if area sets are disabled.\n\nIf nothing is defined here the add-on will search for a set named Default and use it.\n\n"],
+                        width = "full",
                         type = "description",
                         fontSize = "medium",
                     },
-                    select =
+                    pets =
                     {
-                        order = 10,
-                        name = L["Select"],
-                        type = "multiselect",
-                        values = function()
-                            local out = {};
-
-                            for k in pairs(A.db.global.savedSets.pets) do
-                                out[k] = k;
-                            end
-
-                            return out;
-                        end,
-                        get = function(info, name)
-                            if ( tContains(A.db.profile.enabledSets.pets, name) ) then
-                                return 1;
-                            end
-
-                            return nil;
-                        end,
-                        set = function(info, name, val)
-                            if ( val ) then
-                                A.db.profile.enabledSets.pets[#A.db.profile.enabledSets.pets+1] = name;
-                            else
-                                A:TableRemove(A.db.profile.enabledSets.pets, name);
-                            end
-
-                            A:SetGlobalPetsSets();
-                        end,
-                    },
-                    save =
-                    {
-                        order = 20,
-                        name = L["Save"],
-                        type = "group",
-                        inline = true,
-                        args =
-                        {
-                            input =
-                            {
-                                order = 0,
-                                name = L["Name"],
-                                type = "input",
-                                set = function(info, val) A.newPetSetName = val; end,
-                                get = function() return A.newPetSetName; end,
-                            },
-                            exec =
-                            {
-                                order = 1,
-                                name = L["Save"],
-                                type = "execute",
-                                disabled = function()
-                                    if ( A.newPetSetName ) then
-                                        return nil;
-                                    end
-
-                                    return 1;
-                                end,
-                                func = function()
-                                    if ( #A.db.profile.favoritePets == 0 ) then
-                                        A:Message(L["You have no favorite selected."], 1);
-                                        A.newPetSetName = nil;
-                                    elseif ( A.db.global.savedSets.pets[A.newPetSetName] ) then
-                                        A:PopMessageFrame("overwriteOrChangeNameSet", A.newPetSetName);
-                                    else
-                                        A.db.global.savedSets.pets[A.newPetSetName] = A:CopyTable(A.db.profile.favoritePets);
-                                        A:Message(L["New companions set %s added."]:format(A.newPetSetName));
-                                        A.newPetSetName = nil;
-                                    end
-                                end,
-                            },
-                        },
-                    },
-                    delete =
-                    {
-                        order = 30,
-                        name = L["Delete"],
+                        order = 100,
+                        name = L["Companions"],
                         type = "group",
                         inline = true,
                         args =
                         {
                             select =
                             {
-                                order = 0,
-                                name = L["Choose"],
-                                type = "select",
+                                order = 200,
+                                name = L["Select"],
+                                type = "multiselect",
                                 values = function()
                                     local out = {};
 
-                                    for k in pairs(A.db.global.savedSets.pets) do
-                                        out[k] = k;
+                                    for k,v in ipairs(A.petsDB:GetProfiles()) do
+                                        if ( A.petsDB.profiles[v] ) then
+                                            out[v] = v;
+                                        end
                                     end
 
                                     return out;
-                                end;
-                                get = function() return A.deleteSetPets; end,
-                                set = function(info, val)
-                                    A.deleteSetMounts = nil;
-                                    A.deleteSetPets = val;
                                 end,
-                            },
-                            exec =
-                            {
-                                order = 1,
-                                name = L["Delete"],
-                                type = "execute",
-                                disabled = function() return not A.deleteSetPets; end,
-                                func = function()
-                                    A:PopMessageFrame("deleteSet", A.deleteSetPets);
-                                end,
-                            },
-                        },
-                    },
-                },
-            },
-            mounts =
-            {
-                order = 1,
-                name = L["Mounts"],
-                type = "group",
-                args =
-                {
-                    selectedFav =
-                    {
-                        order = 0,
-                        name = function()
-                            local count = 0;
-
-                            for k,v in ipairs(A.db.profile.favoriteMounts) do
-                                count = count + #v;
-                            end
-
-                            return L["You currently have %d selected favorites.\n\n"]:format(count);
-                        end,
-                        type = "description",
-                        fontSize = "medium",
-                    },
-                    select =
-                    {
-                        order = 10,
-                        name = L["Select"],
-                        type = "multiselect",
-                        values = function()
-                            local out = {};
-
-                            for k in pairs(A.db.global.savedSets.mounts) do
-                                out[k] = k;
-                            end
-
-                            return out;
-                        end,
-                        get = function(info, name)
-                            if ( tContains(A.db.profile.enabledSets.mounts, name) ) then
-                                return 1;
-                            end
-
-                            return nil;
-                        end,
-                        set = function(info, name, val)
-                            if ( val ) then
-                                A.db.profile.enabledSets.mounts[#A.db.profile.enabledSets.mounts+1] = name;
-                            else
-                                A:TableRemove(A.db.profile.enabledSets.mounts, name);
-                            end
-
-                            A:SetGlobalMountsSets();
-                        end,
-                    },
-                    save =
-                    {
-                        order = 30,
-                        name = L["Save"],
-                        type = "group",
-                        inline = true,
-                        args =
-                        {
-                            input =
-                            {
-                                order = 0,
-                                name = L["Name"],
-                                type = "input",
-                                set = function(info, val) A.newMountSetName = val; end,
-                                get = function() return A.newMountSetName; end,
-                            },
-                            exec =
-                            {
-                                order = 1,
-                                name = L["Save"],
-                                type = "execute",
-                                disabled = function() 
-                                    if ( A.newMountSetName ) then
-                                        return nil;
+                                get = function(info, name)
+                                    if ( tContains(A.db.profile.defaultSets.pets, name) ) then
+                                        return 1;
                                     end
 
-                                    return 1;
+                                    return nil;
                                 end,
-                                func = function()
-                                    local gotOne;
-
-                                    for k,v in ipairs(A.db.profile.favoriteMounts) do
-                                        if ( #v > 0 ) then gotOne = 1; end
-                                    end
-
-                                    if ( not gotOne ) then
-                                        A:Message(L["You have no favorite selected."], 1);
-                                        A.newMountSetName = nil;
-                                    elseif ( A.db.global.savedSets.mounts[A.newMountSetName] ) then
-                                        A:PopMessageFrame("overwriteOrChangeNameSet", A.newMountSetName);
+                                set = function(info, name, val)
+                                    if ( val ) then
+                                        A.db.profile.defaultSets.pets[#A.db.profile.defaultSets.pets+1] = name;
                                     else
-                                        A.db.global.savedSets.mounts[A.newMountSetName] = A:CopyTable(A.db.profile.favoriteMounts);
-                                        A:Message(L["New mounts set %s added."]:format(A.newMountSetName));
-                                        A.newMountSetName = nil;
+                                        A:TableRemove(A.db.profile.defaultSets.pets, name);
                                     end
+
+                                    A:SetZonePetsSets(1);
                                 end,
+                            },
+                            petsInSets =
+                            {
+                                order = 250,
+                                name = L["Companions in sets"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
+                                    desc =
+                                    {
+                                        order = 0,
+                                        name = L["List of the companions in the selected sets:"],
+                                        width = "full",
+                                        type = "description",
+                                    },
+                                    list =
+                                    {
+                                        order = 1,
+                                        name = function()
+                                            local list = "";
+
+                                            if ( #A.db.profile.defaultSets.pets > 0) then
+                                                local set = A:BuildTempSetTable("PETS", A.db.profile.defaultSets.pets);
+
+                                                for k,v in pairs(set) do
+                                                    local _, customName, _, _, _, _, _, name = C_PetJournal.GetPetInfoByPetID(v);
+
+                                                    if ( customName ) then
+                                                        name = customName.." ("..name")";
+                                                    end
+
+                                                    list = list..", "..name;
+                                                end
+                                            end
+
+                                            if ( list == "" ) then list = L["None"]; end
+
+                                            return A:StringTrim(list, "%s,");
+                                        end,
+                                        width = "full",
+                                        type = "description",
+                                    }
+                                },
                             },
                         },
                     },
-                    delete =
+                    mounts =
                     {
-                        order = 40,
-                        name = L["Delete"],
+                        order = 100,
+                        name = L["Mounts"],
                         type = "group",
                         inline = true,
                         args =
                         {
                             select =
                             {
-                                order = 0,
-                                name = L["Choose"],
-                                type = "select",
+                                order = 200,
+                                name = L["Select"],
+                                type = "multiselect",
                                 values = function()
                                     local out = {};
 
-                                    for k in pairs(A.db.global.savedSets.mounts) do
-                                        out[k] = k;
+                                    for k,v in ipairs(A.mountsDB:GetProfiles()) do
+                                        if ( A.mountsDB.profiles[v] ) then
+                                            out[v] = v;
+                                        end
                                     end
 
                                     return out;
-                                end;
-                                get = function() return A.deleteSetMounts; end,
-                                set = function(info, val)
-                                    A.deleteSetPets = nil;
-                                    A.deleteSetMounts = val;
+                                end,
+                                get = function(info, name)
+                                    if ( tContains(A.db.profile.defaultSets.mounts, name) ) then
+                                        return 1;
+                                    end
+
+                                    return nil;
+                                end,
+                                set = function(info, name, val)
+                                    if ( val ) then
+                                        A.db.profile.defaultSets.mounts[#A.db.profile.defaultSets.mounts+1] = name;
+                                    else
+                                        A:TableRemove(A.db.profile.defaultSets.mounts, name);
+                                    end
+
+                                    A:SetZoneMountsSets(1);
                                 end,
                             },
-                            exec =
+                            mountsInSets =
                             {
-                                order = 1,
-                                name = L["Delete"],
-                                type = "execute",
-                                disabled = function() return not A.deleteSetMounts; end,
-                                func = function()
-                                    A:PopMessageFrame("deleteSet", A.deleteSetMounts);
-                                end,
+                                order = 250,
+                                name = L["Mounts in sets"],
+                                type = "group",
+                                inline = true,
+                                args =
+                                {
+                                    desc =
+                                    {
+                                        order = 0,
+                                        name = L["List of the mounts in the selected sets:"],
+                                        width = "full",
+                                        type = "description",
+                                    },
+                                    list =
+                                    {
+                                        order = 1,
+                                        name = function()
+                                            local list = "";
+
+                                            if ( #A.db.profile.defaultSets.mounts > 0) then
+                                                local set = A:BuildTempSetTable("MOUNTS", A.db.profile.defaultSets.mounts);
+
+                                                for k,v in pairs(set) do
+                                                    for kk,vv in pairs(v) do
+                                                        list = list..", "..A:GetMountNameBySpellID(vv);
+                                                    end
+                                                end
+                                            end
+
+                                            if ( list == "" ) then list = L["None"]; end
+
+                                            return A:StringTrim(list, "%s,");
+                                        end,
+                                        width = "full",
+                                        type = "description",
+                                    }
+                                },
                             },
                         },
                     },
@@ -3938,7 +4061,7 @@ function A:OptionsSets()
             },
             areaPets =
             {
-                order = 2,
+                order = 3,
                 name = L["Area companions"],
                 type = "group",
                 args =
@@ -4005,8 +4128,10 @@ function A:OptionsSets()
                         values = function()
                             local out = {};
 
-                            for k in pairs(A.db.global.savedSets.pets) do
-                                out[k] = k;
+                            for k,v in ipairs(A.petsDB:GetProfiles()) do
+                                if ( A.petsDB.profiles[v] ) then
+                                    out[v] = v;
+                                end
                             end
 
                             return out;
@@ -4051,6 +4176,58 @@ function A:OptionsSets()
                                 A:SetZonePetsSets(1);
                             end
                         end,
+                    },
+                    petsInSets =
+                    {
+                        order = 250,
+                        name = L["Companions in sets"],
+                        type = "group",
+                        inline = true,
+                        disabled = function() return not A.db.profile.petsZoneSets; end,
+                        args =
+                        {
+                            desc =
+                            {
+                                order = 0,
+                                name = L["List of the companions in the selected sets:"],
+                                width = "full",
+                                type = "description",
+                            },
+                            list =
+                            {
+                                order = 1,
+                                name = function()
+                                    local list = "";
+                                    local mapID;
+
+                                    if ( A.currentMapIDForPetsSets ) then
+                                        mapID = A.currentMapIDForPetsSets;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( A.db.profile.petsSetsByMapID[mapID] and #A.db.profile.petsSetsByMapID[mapID] > 0) then
+                                        local set = A:BuildTempSetTable("PETS", A.db.profile.petsSetsByMapID[mapID]);
+
+                                        for k,v in pairs(set) do
+                                            local _, customName, _, _, _, _, _, name = C_PetJournal.GetPetInfoByPetID(v);
+
+                                            if ( customName ) then
+                                                name = customName.." ("..name")";
+                                            end
+
+                                            list = list..", "..name;
+                                        end
+                                    end
+
+                                    if ( list == "" ) then list = L["None"]; end
+
+                                    return A:StringTrim(list, "%s,");
+                                end,
+                                width = "full",
+                                type = "description",
+                            }
+                        },
                     },
                     zoneResetGroup =
                     {
@@ -4110,7 +4287,7 @@ function A:OptionsSets()
             },
             areaMounts =
             {
-                order = 3,
+                order = 4,
                 name = L["Area mounts"],
                 type = "group",
                 args =
@@ -4177,8 +4354,10 @@ function A:OptionsSets()
                         values = function()
                             local out = {};
 
-                            for k in pairs(A.db.global.savedSets.mounts) do
-                                out[k] = k;
+                            for k,v in ipairs(A.mountsDB:GetProfiles()) do
+                                if ( A.mountsDB.profiles[v] ) then
+                                    out[v] = v;
+                                end
                             end
 
                             return out;
@@ -4223,6 +4402,54 @@ function A:OptionsSets()
                                 A:SetZoneMountsSets(1);
                             end
                         end,
+                    },
+                    mountsInSets =
+                    {
+                        order = 250,
+                        name = L["Mounts in sets"],
+                        type = "group",
+                        inline = true,
+                        disabled = function() return not A.db.profile.mountsZoneSets; end,
+                        args =
+                        {
+                            desc =
+                            {
+                                order = 0,
+                                name = L["List of the mounts in the selected sets:"],
+                                width = "full",
+                                type = "description",
+                            },
+                            list =
+                            {
+                                order = 1,
+                                name = function()
+                                    local list = "";
+                                    local mapID;
+
+                                    if ( A.currentMapIDForMountsSets ) then
+                                        mapID = A.currentMapIDForMountsSets;
+                                    else
+                                        mapID = A.currentMapID;
+                                    end
+
+                                    if ( A.db.profile.mountsSetsByMapID[mapID] and #A.db.profile.mountsSetsByMapID[mapID] > 0 ) then
+                                        local set = A:BuildTempSetTable("MOUNTS", A.db.profile.mountsSetsByMapID[mapID]);
+
+                                        for k,v in pairs(set) do
+                                            for kk,vv in pairs(v) do
+                                                list = list..", "..A:GetMountNameBySpellID(vv);
+                                            end
+                                        end
+                                    end
+
+                                    if ( list == "" ) then list = L["None"]; end
+
+                                    return A:StringTrim(list, "%s,");
+                                end,
+                                width = "full",
+                                type = "description",
+                            }
+                        },
                     },
                     zoneResetGroup =
                     {
@@ -4283,6 +4510,14 @@ function A:OptionsSets()
             },
         },
     };
+
+    sets.args.petsProfiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(A.petsDB, true);
+    sets.args.petsProfiles.name = L["Companions"];
+    sets.args.petsProfiles.order = 0;
+
+    sets.args.mountsProfiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(A.mountsDB, true);
+    sets.args.mountsProfiles.name = L["Mounts"];
+    sets.args.mountsProfiles.order = 1;
 
     return sets;
 end
@@ -5005,6 +5240,242 @@ function A:OptionsAbout()
     return about;
 end
 
+function A:OptionsImport()
+    local import =
+    {
+        order = 0,
+        name = L["Import"],
+        type = "group",
+        args = {},
+    };
+
+    -- Pets sets
+    if ( A:TableCount(A.db.global.savedSets.pets) > 0 ) then
+        import.args.petsSets =
+        {
+            order = 0,
+            name = L["Old companions sets names"],
+            type = "group",
+            args =
+            {
+                desc =
+                {
+                    order = 0,
+                    name = L["This will import the companions sets names to the new system as empty sets.\n\nRemember that companions unique identifiers changed with 6.0, so the name is the only thing that can be saved.\n\n"],
+                    width = "full",
+                    type = "description",
+                    fontSize = "medium",
+                },
+                exec =
+                {
+                    order = 1,
+                    name = L["Create Sets"],
+                    type = "execute",
+                    func = function()
+                        local currentProfile = A.petsDB:GetCurrentProfile();
+
+                        for k in pairs(A.db.global.savedSets.pets) do
+                            if ( not A.petsDB.profiles[k] ) then
+                                A.petsDB:SetProfile(k);
+                                A:Message(L["Added %s set name."]:format(k), nil, 1);
+                            else
+                                A:Message(L["%s set name already exists."]:format(k), 1, 1);
+                            end
+                        end
+
+                        A.petsDB:SetProfile(currentProfile);
+                    end,
+                },
+            },
+        };
+    end
+
+    local globalMounts = nil;
+
+    for k,v in ipairs(A.db.profile.favoriteMounts) do
+        if (#v > 0 ) then
+            globalMounts = 1;
+        end
+    end
+
+    -- mounts global favorites
+    if ( globalMounts ) then
+        import.args.mountsFav =
+        {
+            order = 10,
+            name = L["Global mounts favorites"],
+            type = "group",
+            args =
+            {
+                desc =
+                {
+                    order = 0,
+                    name = L["This will import the global mounts favorites to a set named OldGlobal.\n\nRemember that Hybrid category is no more automatic, those mounts will be copied to the Flying one.\n\n"],
+                    width = "full",
+                    type = "description",
+                    fontSize = "medium",
+                },
+                createSets =
+                {
+                    order = 1,
+                    name = L["Create Sets"],
+                    type = "execute",
+                    func = function()
+                        if ( A.mountsDB.profiles["OldGlobal"] ) then
+                            A:Message(L["%s set name already exists."]:format("OldGlobal"), 1);
+                            return;
+                        end
+
+                        local currentProfile = A.mountsDB:GetCurrentProfile();
+
+                        A.mountsDB:SetProfile("OldGlobal");
+                        A.mountsDB:SetProfile(currentProfile);
+                        A:Message(L["Added %s set name."]:format("OldGlobal"), nil, 1);
+                    end,
+                },
+                populate =
+                {
+                    order = 2,
+                    name = L["Add data"],
+                    type = "execute",
+                    func = function()
+                        if ( not A.mountsDB.profiles["OldGlobal"] ) then
+                            A:Message(L["Set %s do not exists."]:format("OldGlobal"), 1);
+                            return;
+                        end
+
+                        if ( not A.mountsDB.profiles["OldGlobal"].favorites ) then
+                            A.mountsDB.profiles["OldGlobal"].favorites = {};
+                        end
+
+                        if ( #A.mountsDB.profiles["OldGlobal"].favorites > 0 ) then
+                            A:Message(L["Set %s is not empty."]:format("OldGlobal"), 1);
+                            return;
+                        end
+
+                        for k,v in ipairs(A.db.profile.favoriteMounts[3]) do
+                            A.db.profile.favoriteMounts[2][#A.db.profile.favoriteMounts[2]+1] = v
+                        end
+                        A.db.profile.favoriteMounts[3] = {};
+                        A:CopyTable(A.db.profile.favoriteMounts, A.mountsDB.profiles["OldGlobal"].favorites);
+                        A:Message(L["Added data to %s set."]:format("OldGlobal"), nil, 1);
+                    end,
+                },
+            },
+        };
+    end
+
+    -- Mounts sets
+    if ( A:TableCount(A.db.global.savedSets.mounts) > 0 ) then
+        import.args.mountsSets =
+        {
+            order = 20,
+            name = L["Global mounts sets"],
+            type = "group",
+            args =
+            {
+                desc =
+                {
+                    order = 0,
+                    name = L["This will import the mounts sets to the new system.\n\nRemember that Hybrid category is no more automatic, those mounts will be copied to the Flying one.\n\n"],
+                    width = "full",
+                    type = "description",
+                    fontSize = "medium",
+                },
+                createSets =
+                {
+                    order = 1,
+                    name = L["Create Sets"],
+                    type = "execute",
+                    func = function()
+                        local currentProfile = A.mountsDB:GetCurrentProfile();
+
+                        for k,v in pairs(A.db.global.savedSets.mounts) do
+                            if ( A.mountsDB.profiles[k] ) then
+                                A:Message(L["%s set name already exists."]:format(k), 1);
+                            else
+                                A.mountsDB:SetProfile(k);
+                                A:Message(L["Added %s set name."]:format(k), nil, 1);
+                            end
+                        end
+
+                        A.mountsDB:SetProfile(currentProfile);
+                    end,
+                },
+                populate =
+                {
+                    order = 2,
+                    name = L["Add data"],
+                    type = "execute",
+                    func = function()
+                        for k,v in pairs(A.db.global.savedSets.mounts) do
+                            if ( A.mountsDB.profiles[k] ) then
+                                if ( not A.mountsDB.profiles[k].favorites ) then
+                                    A.mountsDB.profiles[k].favorites = {};
+                                end
+
+                                if ( #A.mountsDB.profiles[k].favorites == 0 ) then
+                                    for kk,vv in ipairs(v[3]) do
+                                        v[2][#v[2]+1] = vv
+                                    end
+                                    v[3] = {};
+                                    A:CopyTable(v, A.mountsDB.profiles[k].favorites);
+                                    A:Message(L["Added data to %s set."]:format(k), nil, 1);
+                                else
+                                    A:Message(L["Set %s is not empty."]:format(k), 1);
+                                end
+                            else
+                                A:Message(L["Set %s do not exists."]:format(k), 1);
+                            end
+                        end
+                    end,
+                },
+            },
+        };
+    end
+
+    -- Delete old data
+    import.args.deleteData =
+    {
+        order = 30,
+        name = L["Delete old data"],
+        type = "group",
+        args =
+        {
+            desc =
+            {
+                order = 0,
+                name = L["This will delete the old data. Freeing space and hiding the Import category.\n\nThere is no confirmation, after clicking the button it is gone.\n\n"],
+                width = "full",
+                type = "description",
+                fontSize = "medium",
+            },
+            createSets =
+            {
+                order = 1,
+                name = L["Delete"],
+                type = "execute",
+                func = function()
+                    A.db.global.savedSets.pets = {};
+                    A.db.profile.favoriteMounts =
+                    {
+                        [1] = {}, -- Ground
+                        [2] = {}, -- Fly
+                        [3] = {}, -- Hybrid (ground & fly)
+                        [4] = {}, -- Aquatic
+                        [5] = {}, -- with passengers
+                        [6] = {}, -- Water walking
+                        [7] = {}, -- Repair
+                    };
+                    A.db.global.savedSets.mounts = {};
+                end,
+            },
+        },
+    };
+    
+    return import;
+end
+
 -- Register with AceConfig
 LibStub("AceConfig-3.0"):RegisterOptionsTable("PAMOptionsRoot", A.OptionsRoot);
 --LibStub("AceConfig-3.0"):RegisterOptionsTable("PAMOptionsCustomMacros", A.OptionsCustomMacros);
@@ -5050,6 +5521,7 @@ A.configFrameAbout:HookScript("OnShow", function(self) A.configFocusFrame = self
 A.configFrameOptions:HookScript("OnHide", function(self)
     A.iconFrame:Hide();
     A.inputFrame:Hide();
+    A.configModelFrame:Hide();
 end);
 --A.configFrameCustomMacros:HookScript("OnHide", function(self) A.iconFrame:Hide(); end);
 A.configFramePets:HookScript("OnHide", function()
@@ -5079,4 +5551,16 @@ function A:NotifyChangeForAll()
     elseif ( A.configFrameAbout:IsVisible() ) then
         A.AceConfigRegistry:NotifyChange("PAMOptionsAbout", A.OptionsAbout);
     end
+end
+
+-- Import frame (6.0 new db)
+local globalMounts = nil;
+for k,v in ipairs(A.db.profile.favoriteMounts) do
+    if (#v > 0 ) then
+        globalMounts = 1;
+    end
+end
+if ( A:TableCount(A.db.global.savedSets.pets) > 0 or globalMounts or A:TableCount(A.db.global.savedSets.mounts) > 0 ) then
+    LibStub("AceConfig-3.0"):RegisterOptionsTable("PAMOptionsImport", A.OptionsImport);
+    A.configFrameImport = A.AceConfigDialog:AddToBlizOptions("PAMOptionsImport", L["Import"], L["Pets & Mounts"]);
 end

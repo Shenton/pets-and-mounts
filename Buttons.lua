@@ -18,13 +18,14 @@ local loadstring = loadstring;
 local tContains = tContains;
 local string = string;
 local ipairs = ipairs;
+local tonumber = tonumber;
 
 -- GLOBALS: BINDING_HEADER_PETSANDMOUNTS, InCombatLockdown, GetSpellInfo, IsFlyableArea, IsSpellKnown
 -- GLOBALS: IsShiftKeyDown, IsControlKeyDown, GetItemCount, GetItemInfo, UnitBuff, UIDropDownMenu_SetAnchor
 -- GLOBALS: ToggleDropDownMenu, GameTooltip, PetsAndMountsSecureButtonMounts, PetsAndMountsSecureButtonPets
 -- GLOBALS: GetScreenWidth, IsMounted, GetUnitSpeed, GetTalentInfo, GetTalentRowSelectionInfo, GetInstanceInfo
 -- GLOBALS: GetGlyphSocketInfo, IsFalling, NUM_GLYPH_SLOTS, GetShapeshiftForm, IsEquippedItemType
--- GLOBALS: ShentonFishingGlobal
+-- GLOBALS: ShentonFishingGlobal, GetActiveSpecGroup
 
 --[[-------------------------------------------------------------------------------
     Bindings
@@ -115,7 +116,7 @@ function A:GotMountAllTable(cat)
     if ( A.db.profile.forceOne.mount[cat]
     or A.db.profile.mountByMapID[cat][A.currentMapID]
     or A.db.profile.areaMounts and A.uniqueAreaMounts[cat][A.currentMapID]
-    or A:GotRandomMount(A.db.profile.favoriteMounts[cat])
+    or A:GotRandomMount(A.mountsDB.profile.favorites[cat])
     or A:GotRandomMount(A.pamTable.mountsIds[cat]) ) then
         return 1;
     end
@@ -171,14 +172,15 @@ A.classesSpellsTable =
     {
         druidCatForm = 768, -- lvl 6
         druidTravelForm = 783, -- lvl 16
-        druidAquaticForm = 1066, -- lvl 18
+        --druidAquaticForm = 1066, -- lvl 18
         druidFlightForm = 33943, -- lvl 58
         druidSwiftFlightForm = 40120, -- lvl 70
     },
     HUNTER =
     {
-        hunterAspectHawk = 13165, -- lvl 12
-        hunterAspectIronHawk = 109260, -- lvl 45 - tier 3 row 2 - id 8
+        --hunterAspectHawk = 13165, -- lvl 12
+        --hunterAspectIronHawk = 109260, -- lvl 45 - tier 3 row 2 - id 8
+        hunterAspectFox = 172106, -- lvl 84
         hunterAspectCheetah = 5118, -- lvl 24
         hunterAspectPack = 13159, -- lvl 56
     },
@@ -232,6 +234,8 @@ function A:SetClassSpells()
 
             if ( not A[k] ) then
                 A:ScheduleTimer("SetClassSpells", 0.5);
+                A:SetPreClickFunction();
+                A:DebugMessage(("SetClassSpells() - Error with a spell. Spell: %d"):format(v));
                 return;
             end
         end
@@ -246,7 +250,8 @@ end
 -- For DK we handle Death's Advance and Unholy Presence when moving
 function A:SetDeathKnightPreClickMacro()
     if ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
-        local selected = select(5, GetTalentInfo(7));
+        local specGroup = GetActiveSpecGroup();
+        local selected = select(4, GetTalentInfo(3, 1, specGroup));
 
         if ( A.db.profile.deathKnightPreferUnholy and A.playerLevel >= 64 ) then
             return ("%s\n/cast %s"):format(A.macroDismountString, A.deathKnightUnholyPresence);
@@ -266,11 +271,11 @@ function A:SetDruidPreClickMacro()
     if ( A.db.profile.druidWantFormsOnMove ) then
         if ( GetUnitSpeed("player") > 0 ) then
             if ( IsFlyableArea() and IsSpellKnown(40120) and not IsMounted() ) then
-                return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidAquaticForm, A.druidSwiftFlightForm);
+                return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidSwiftFlightForm);
             elseif ( A.playerLevel >= 58 and A:IsFlyable() and not IsMounted() ) then
-                return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidAquaticForm, A.druidFlightForm);
-            elseif ( A.playerLevel >= 18 and not IsMounted() ) then
-                return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidAquaticForm, A.druidTravelForm);
+                return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidFlightForm);
+            -- elseif ( A.playerLevel >= 18 and not IsMounted() ) then
+                -- return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidTravelForm);
             elseif ( A.playerLevel >= 16 and not IsMounted() ) then
                 return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
             elseif ( A.playerLevel >= 6 and not IsMounted() ) then
@@ -289,13 +294,13 @@ function A:SetDruidPreClickMacro()
         end
     else
         if ( not IsFlyableArea() and not IsMounted() and GetUnitSpeed("player") > 0 and A.playerLevel >= 18 ) then
-            return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidAquaticForm, A.druidTravelForm);
+            return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidTravelForm);
         elseif ( not IsFlyableArea() and not IsMounted() and GetUnitSpeed("player") > 0 and A.playerLevel >= 16 ) then
             return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
         elseif ( IsFlyableArea() and IsSpellKnown(40120) and not IsMounted() ) then
-            return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidAquaticForm, A.druidSwiftFlightForm);
+            return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidSwiftFlightForm);
         elseif ( A.playerLevel >= 58 and A:IsFlyable() and not IsMounted() ) then
-            return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidAquaticForm, A.druidFlightForm);
+            return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidFlightForm);
         elseif ( A.playerLevel >= 20 and A:CanRide() and not IsMounted() ) then
             if ( GetShapeshiftForm(1) > 0 and ((A.playerCurrentSpecID == 102 and GetShapeshiftForm(1) ~= 5) or A.playerCurrentSpecID ~= 102) ) then
                 if ( A.db.profile.noMountAfterCancelForm ) then
@@ -306,8 +311,8 @@ function A:SetDruidPreClickMacro()
             else
                 return "/pammount";
             end
-        elseif ( A.playerLevel >= 18 and not IsMounted() ) then
-            return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidAquaticForm, A.druidTravelForm);
+        -- elseif ( A.playerLevel >= 18 and not IsMounted() ) then
+            -- return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidTravelForm);
         elseif ( A.playerLevel >= 16 and not IsMounted() ) then
             return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
         elseif ( A.playerLevel >= 6 and not IsMounted() ) then
@@ -333,13 +338,7 @@ function A:SetHunterPreClickMacro()
         return A.macroDismountString;
     elseif ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
         if ( A.playerLevel >= 24 ) then
-            if ( UnitBuff("player", cheetahOrPack) or (not UnitBuff("player", A.hunterAspectHawk) and not UnitBuff("player", A.hunterAspectIronHawk)) ) then
-                return ("%s\n/cast !%s"):format(A.macroDismountString, A.hunterAspectHawk);
-            else
-                return ("%s\n/cast !%s"):format(A.macroDismountString, cheetahOrPack);
-            end
-        elseif ( A.playerLevel >= 12 ) then
-            return ("%s\n/cast !%s"):format(A.macroDismountString, A.hunterAspectHawk);
+            return ("%s\n/cast !%s"):format(A.macroDismountString, cheetahOrPack);
         end
     else
         return ("/cancelaura %s\n/pammount"):format(cheetahOrPack);
@@ -352,7 +351,8 @@ function A:SetMagePreClickMacro()
     if ( A.db.profile.mageSlowFall and IsFalling() and A.playerLevel >= 32 ) then
         return ("%s\n/cast %s"):format(A.macroDismountString, A.mageSlowFall);
     elseif ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
-        local selected = select(5, GetTalentInfo(2));
+        local specGroup = GetActiveSpecGroup();
+        local selected = select(4, GetTalentInfo(1, 2, specGroup));
 
         if ( (A.db.profile.magePreferBlink or not selected) and A.playerLevel >= 7 ) then
             return ("%s\n/cast %s"):format(A.macroDismountString, A.mageBlink);
@@ -400,7 +400,8 @@ end
 -- For Paladins we handle Speed of Light when moving
 function A:SetPaladinPreClickMacro()
     if ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
-        local selected = select(5, GetTalentInfo(1));
+        local specGroup = GetActiveSpecGroup();
+        local selected = select(4, GetTalentInfo(1, 1, specGroup));
 
         if ( A.playerLevel >= 15 and selected ) then
             return ("%s\n/cast %s"):format(A.macroDismountString, A.paladinSpeedOfLight);
@@ -418,11 +419,11 @@ function A:SetPriestPreClickMacro()
     if ( A.db.profile.priestLevitate and IsFalling() and A.playerLevel >= 34 ) then
         return ("%s\n/cast %s"):format(A.macroDismountString, A.priestLevitate);
     elseif ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
-        local isFree, talent = GetTalentRowSelectionInfo(2);
+        local specGroup = GetActiveSpecGroup();
 
-        if ( A.playerLevel >= 30 and talent == 4 ) then
+        if ( A.playerLevel >= 30 and select(4, GetTalentInfo(2, 1, specGroup)) ) then
             return ("%s\n/cast %s"):format(A.macroDismountString, A.priestPowerWordShield);
-        elseif ( A.playerLevel >= 30 and talent == 5 ) then
+        elseif ( A.playerLevel >= 30 and select(4, GetTalentInfo(2, 2, specGroup)) ) then
             return ("%s\n/cast %s"):format(A.macroDismountString, A.priestAngelicFeather);
         else
             return "/pammount";
@@ -460,7 +461,8 @@ end
 --- Warlock pre click macro
 -- For Warlocks we handle teleport and Burning Rush
 function A:SetWarlockPreClickMacro()
-    local selected = select(5, GetTalentInfo(11));
+    local specGroup = GetActiveSpecGroup();
+    local selected = select(4, GetTalentInfo(4, 2, specGroup));
 
     if ( (not selected or A.db.profile.warlockPreferTeleport) and A.playerLevel >= 76 ) then
         if ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
@@ -920,7 +922,8 @@ function A:SetPostClickMacro(noCustom)
     if ( A.db.profile.classesMacrosEnabled and A.classSpellsOK ) then
         -- Death Knight
         if ( A.playerClass == "DEATHKNIGHT" ) then
-            local selected = select(5, GetTalentInfo(7));
+            local specGroup = GetActiveSpecGroup();
+            local selected = select(4, GetTalentInfo(3, 1, specGroup));
 
             if ( A.db.profile.deathKnightPreferUnholy and A.playerLevel >= 64 ) then
                 A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.deathKnightUnholyPresence);
@@ -931,9 +934,9 @@ function A:SetPostClickMacro(noCustom)
             end
         -- Druid
         elseif ( A.playerClass == "DRUID" ) then
-            if ( A.playerLevel >= 18 ) then
-                A.postClickMacro = ("%s\n/cast [swimming] %s;[nomounted] %s"):format(A.macroDismountString, A.druidAquaticForm, A.druidTravelForm);
-            elseif ( A.playerLevel >= 16 ) then
+            -- if ( A.playerLevel >= 18 ) then
+                -- A.postClickMacro = ("%s\n/cast [swimming] %s;[nomounted] %s"):format(A.macroDismountString, A.druidTravelForm, A.druidTravelForm);
+            if ( A.playerLevel >= 16 ) then
                 A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.druidTravelForm);
             else
                 A.postClickMacro = A.macroDismountString;
@@ -951,14 +954,15 @@ function A:SetPostClickMacro(noCustom)
             if ( not cheetahOrPack ) then
                 A.postClickMacro = A.macroDismountString;
             else
-                A.postClickMacro = ("%s\n/cast [nomounted,novehicleui,nomod] !%s\n/cast [nomounted,novehicleui,mod:%s] !%s"):format(A.macroDismountString, A.hunterAspectHawk, A.db.profile.hunterModifier, cheetahOrPack);
+                A.postClickMacro = ("%s\n/cast [nomounted,novehicleui,nomod] !%s\n/cancelaura [mod:%s] %s"):format(A.macroDismountString, cheetahOrPack, A.db.profile.hunterModifier, cheetahOrPack);
             end
         -- Mage
         elseif ( A.playerClass == "MAGE" ) then
             if ( A.db.profile.mageForceSlowFall ) then
                 A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.mageSlowFall);
             else
-                local selected = select(5, GetTalentInfo(2));
+                local specGroup = GetActiveSpecGroup();
+                local selected = select(4, GetTalentInfo(1, 2, specGroup));
 
                 if ( (A.db.profile.magePreferBlink or not selected) and A.playerLevel >= 7 ) then
                     A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.mageBlink);
@@ -982,7 +986,8 @@ function A:SetPostClickMacro(noCustom)
             end
         -- Paladin
         elseif ( A.playerClass == "PALADIN" ) then
-            local selected = select(5, GetTalentInfo(1));
+            local specGroup = GetActiveSpecGroup();
+            local selected = select(4, GetTalentInfo(1, 1, specGroup));
 
             if ( A.playerLevel >= 15 and selected ) then
                 A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.paladinSpeedOfLight);
@@ -1020,7 +1025,8 @@ function A:SetPostClickMacro(noCustom)
             end
         -- Warlock
         elseif ( A.playerClass == "WARLOCK" ) then
-            local selected = select(5, GetTalentInfo(11));
+            local specGroup = GetActiveSpecGroup();
+            local selected = select(4, GetTalentInfo(4, 2, specGroup));
 
             if ( (not selected or A.db.profile.warlockPreferTeleport) and A.playerLevel >= 76 ) then
                 A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.warlockDemonicCircle);

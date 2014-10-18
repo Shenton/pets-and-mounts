@@ -6,14 +6,15 @@
     Core.lua
 -------------------------------------------------------------------------------]]--
 
--- TODO: Session, timed for force one and area
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
--- TODO: move back red flying cloud to hybrid and prevent summoning it when under water
 
--- 1.6.5 changelog
+-- 1.7.0 changelog
 --[[
-Updated some spells level requirement
-Updating fr_FR localization
+WoD toc bump and API modifications update
+Moved pets and mounts databases to unique Ace3 ones
+Added an import feature for old DB
+Added a custom Hybrid category for mounts
+Fixed classes modifications
 ]]--
 
 local A = _G["PetsAndMountsGlobal"];
@@ -47,7 +48,8 @@ local _G = _G;
 -- GLOBALS: GetCurrentBindingSet, GetBindingKey, SetBinding, SaveBindings, DropDownList1, IsShiftKeyDown
 -- GLOBALS: PetsAndMountsMenuModelFrame, PetsAndMountsConfigModelFrame, PetsAndMountsSearchFrame, GameTooltip
 -- GLOBALS: PetsAndMountsPopupMessageFrame, UIDropDownMenu_SetAnchor, ToggleDropDownMenu, UnitBuff
--- GLOBALS: GetSpecialization, GetSpecializationInfo, GetItemInfo
+-- GLOBALS: GetSpecialization, GetSpecializationInfo, GetItemInfo, C_MountJournal, UnitFullName
+-- GLOBALS: PetsAndMountsSecureButtonPets, PetsAndMountsSecureButtonMounts
 
 --[[-------------------------------------------------------------------------------
     Common methods
@@ -276,11 +278,11 @@ function A:GetMountIDFromSpellID(spellID)
         return A.mountsSpellIDToIDCache[spellID];
     end
 
-    local numMounts = GetNumCompanions("MOUNT");
+    local numMounts = C_MountJournal.GetNumMounts();
     local _, spellID2;
 
     for i=1,numMounts do
-        _, _, spellID2 = GetCompanionInfo("MOUNT", i);
+        _, spellID2 = C_MountJournal.GetMountInfo(i);
 
         if ( spellID == spellID2 ) then
             A.mountsSpellIDToIDCache[spellID] = i;
@@ -297,16 +299,7 @@ function A:GetMountNameBySpellID(spellID)
 
     if ( not id ) then return nil; end
 
-    return select(2, GetCompanionInfo("MOUNT", id));
-end
-
---- Check if it is a GUID
-function A:IsGUID(GUID)
-    if ( type(GUID) ~= "string" ) then return nil; end
-    if ( string.len(GUID) < 18 ) then return nil; end
-    if ( not string.match(GUID, "^0x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x$") ) then return nil; end
-
-    return 1;
+    return select(1, C_MountJournal.GetMountInfo(id));
 end
 
 --- Check if the player is using a vehicle
@@ -410,6 +403,30 @@ function A:GetPlayerCurrentSpecID()
     return 0;
 end
 
+--- Check if it is a BattlePetID
+function A:IsBattlePetID(id)
+    if ( type(id) ~= "string" ) then return nil; end
+    if ( string.len(id) < 18 ) then return nil; end
+    if ( not string.match(id, "^BattlePet%-%x%-%x%x%x%x%x%x%x%x%x%x%x%x$") ) then return nil; end
+
+    return 1;
+end
+
+--- Remove forced hybrids from favorites if they were removed
+function A:RemoveUnforcedHybrids()
+    for k,v in ipairs(A.mountsDB:GetProfiles()) do
+        if ( A.mountsDB.profiles[v] and A.mountsDB.profiles[v].favorites ) then
+            if ( A.mountsDB.profiles[v].favorites[3] and #A.mountsDB.profiles[v].favorites[3] > 0 ) then
+                for kk,vv in ipairs(A.mountsDB.profiles[v].favorites[3]) do
+                    if ( not tContains(A.db.global.forcedHybrid, vv) ) then
+                        A:TableRemove(A.mountsDB.profiles[v].favorites[3], vv);
+                    end
+                end
+            end
+        end
+    end
+end
+
 --[[-------------------------------------------------------------------------------
     Frames methods
 -------------------------------------------------------------------------------]]--
@@ -467,7 +484,6 @@ petsFilters.sources = {};
 function A:StoreAndResetPetsFilters()
     -- Store filters
     petsFilters["LE_PET_JOURNAL_FLAG_COLLECTED"] = C_PetJournal.IsFlagFiltered(LE_PET_JOURNAL_FLAG_COLLECTED); -- Collected
-    petsFilters["LE_PET_JOURNAL_FLAG_FAVORITES"] = C_PetJournal.IsFlagFiltered(LE_PET_JOURNAL_FLAG_FAVORITES); -- Only favorites
     petsFilters["LE_PET_JOURNAL_FLAG_NOT_COLLECTED"] = C_PetJournal.IsFlagFiltered(LE_PET_JOURNAL_FLAG_NOT_COLLECTED); -- Not collected
 
     for i=1,C_PetJournal.GetNumPetTypes() do
@@ -484,7 +500,6 @@ function A:StoreAndResetPetsFilters()
 
     -- Set filters for DB update
     C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_COLLECTED, 1); -- Collected - Obviously needed
-    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_FAVORITES, nil); -- Only favorites - Do not want that
     C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_NOT_COLLECTED, 1); -- Not collected - Needed as it will allow us to get the full number of pets
     C_PetJournal.AddAllPetTypesFilter();
     C_PetJournal.AddAllPetSourcesFilter();
@@ -497,7 +512,6 @@ end
 --- Restore pets filters
 function A:RestorePetsFilters()
     C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_COLLECTED, not petsFilters["LE_PET_JOURNAL_FLAG_COLLECTED"]);
-    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_FAVORITES, not petsFilters["LE_PET_JOURNAL_FLAG_FAVORITES"]);
     C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_NOT_COLLECTED, not petsFilters["LE_PET_JOURNAL_FLAG_NOT_COLLECTED"]);
 
     for i=1,C_PetJournal.GetNumPetTypes() do
@@ -571,12 +585,9 @@ function A:BuildPetsTable(force)
     A.pamTable.petsIds = {};
 
     for i=1,numPets do
-        local petID, _, isOwned, customName, level, _, _, creatureName, icon, petType, creatureID = C_PetJournal.GetPetInfoByIndex(i);
-        --local petID, speciesID, isOwned, customName, level, favorite, isRevoked, name, icon, petType, creatureID, sourceText, description, isWildPet, canBattle = C_PetJournal.GetPetInfoByIndex(index);
-        local rarity = select(5, C_PetJournal.GetPetStats(petID or "0x0000000000000000"));
-        --local health, maxHealth, power, speed, rarity = C_PetJournal.GetPetStats(petID);
-
-        --if ( not petType ) then petType = 11; end
+        local petID, _, isOwned, customName, level, _, _, creatureName, icon, petType = C_PetJournal.GetPetInfoByIndex(i);
+        local creatureID = select(6, C_PetJournal.GetPetInfoByPetID(petID or "BattlePet-0-000000000000"));
+        local rarity = select(5, C_PetJournal.GetPetStats(petID or "BattlePet-0-000000000000"));
 
         if ( isOwned and A:CheckPetWithSameName(creatureID) ) then
             if ( A.petTypes[petType] ) then
@@ -642,57 +653,33 @@ function A:BuildPetsTable(force)
     A:DebugMessage("BuildPetsTable() - Update successful");
 end
 
---- Return the mount type according to the bit field
--- 0x01 - Ground mount
--- 0x02 - Flying mount
--- 0x04 - Usable at the water's surface
--- 0x08 - Usable underwater
--- 0x10 - Can jump
-function A:GetMountCategory(bf)
-    local ground = bit.band(bf, 0x1) ~= 0 and 1 or nil;
-    local fly = bit.band(bf, 0x2) ~= 0 and 1 or nil;
-    local surface = bit.band(bf, 0x4) ~= 0 and 1 or nil;
-    local water = bit.band(bf, 0x8) ~= 0 and 1 or nil;
-    local jump = bit.band(bf, 0x10) ~= 0 and 1 or nil;
-
-    -- 5 Entries x 1
-    if ( ground and fly and surface and water and jump ) then -- hybrid - 31
-        return 3;
-    -- 4 Entries x 5
-    elseif ( (ground and fly and surface and water) or (ground and fly and water and jump) or (ground and fly and surface and jump) -- fly - 15 27
-    or (fly and surface and water and jump) ) then -- fly - 30
-        return 2;
-    -- elseif ( (ground and fly and surface and jump) ) then -- hybrid - 23
-        -- return 3;
-    elseif ( (ground and surface and water and jump) ) then -- ground - 29
-        return 1;
-    -- 3 Entries x 10
-    elseif ( (ground and fly and surface) or (ground and fly and water) or (ground and fly and jump) -- fly - 7 11 19
-    or (fly and surface and water) or (fly and surface and jump) or (fly and jump and water) ) then-- fly - 14 22 26
-        return 2;
-    elseif ( (ground and surface and water) or (ground and surface and jump) or (ground and water and jump) ) then -- ground - 13 21 25
-        return 1;
-    elseif ( water and surface and jump ) then -- aquatic - 28
-        return 4;
-    -- 2 Entries x 10
-    elseif ( (ground and fly) or (fly and surface) or (fly and water) or (fly and jump) ) then -- fly - 3 6 10 18
-        return 2;
-    elseif ( (ground and surface) or (ground and water) or (ground and jump) or (surface and jump) ) then -- ground - 5 9 17 20
-        return 1;
-    elseif ( (water and surface) or (water and jump) ) then -- aquatic - 12 24
-        return 4;
-    -- 1 Entry x 5
-    elseif ( ground ) then -- ground - 1
-        return 1;
-    elseif ( fly ) then -- fly - 2
-        return 2;
-    elseif ( surface ) then -- fly (going default to fly) - 4
-        return 2;
-    elseif ( water ) then -- aquatic - 8
-        return 4;
-    elseif ( jump ) then -- mount (flying mount cannot jump) - 16
-        return 1;
+--- Return the mount category from mount type
+-- 230 Ground
+-- 231 Both turtles (not pandaren ones)
+-- 232 Vashj'ir Seahorse
+-- 241 Qiraji Battle Tanks
+-- 242 Swift Spectral Gryphon (while dead mount)
+-- 247 Red Flying Cloud
+-- 248 Flying
+-- 254 Subdued Seahorse
+-- 269 Striders
+A.mountTypeToCategory =
+{
+    [230] = 1,
+    [231] = 1,
+    [232] = 4,
+    [241] = 1,
+    [247] = 2,
+    [248] = 2,
+    [254] = 4,
+    [269] = 1,
+};
+function A:GetMountCategory(mountType)
+    if ( A.mountTypeToCategory[mountType] ) then
+        return A.mountTypeToCategory[mountType];
     end
+
+    return nil;
 end
 
 --- Check if the mount is walking on surface
@@ -717,7 +704,7 @@ end
 
 --- Build the mounts table
 function A:BuildMountsTable(force)
-    local mountsCount = GetNumCompanions("MOUNT");
+    local mountsCount = C_MountJournal.GetNumMounts();
 
     if ( not force and A.lastMountsCount == mountsCount ) then
         A:DebugMessage("BuildMountsTable() - No update needed");
@@ -728,7 +715,7 @@ function A:BuildMountsTable(force)
 
     A.lastMountsCount = mountsCount;
 
-    local creatureID, creatureName, spellID, icon, isSummoned, mountType, leadingLetter, cat;
+    local _, creatureID, creatureName, spellID, icon, mountType, leadingLetter, cat, isUsable, hideOnChar, isCollected;
 
     -- (Re)Building database, deleting cache
     A.usableMountsCache = nil;
@@ -756,102 +743,111 @@ function A:BuildMountsTable(force)
     };
 
     for i=1,mountsCount do
-        creatureID, creatureName, spellID, icon, isSummoned, mountType = GetCompanionInfo("MOUNT", i);
-        leadingLetter = string.sub(creatureName, 1, 1);
+        -- local creatureName, spellID, icon, active, isUsable, sourceType, isFavorite, _, _, hideOnChar, isCollected = C_MountJournal.GetMountInfo(i);
+        -- local creatureDisplayID, descriptionText, sourceText, isSelfMount = C_MountJournal.GetMountInfoExtra(index);
+        creatureName, spellID, icon, _, isUsable, _, _, _, _, hideOnChar, isCollected = C_MountJournal.GetMountInfo(i);
+        creatureID, _, _, _, mountType = C_MountJournal.GetMountInfoExtra(i);
 
-        -- Forced passenger mounts
-        if ( tContains(A.passengerMounts, spellID) ) then
-            if ( not A.pamTable.mounts[5][leadingLetter] ) then A.pamTable.mounts[5][leadingLetter] = {}; end
+        if ( hideOnChar ~= true and isCollected ) then
+            leadingLetter = string.sub(creatureName, 1, 1);
 
-            A.pamTable.mountsIds[5][#A.pamTable.mountsIds[5]+1] = spellID;
+            -- Forced passenger mounts
+            if ( tContains(A.passengerMounts, spellID) ) then
+                if ( not A.pamTable.mounts[5][leadingLetter] ) then A.pamTable.mounts[5][leadingLetter] = {}; end
 
-            A.pamTable.mounts[5][leadingLetter][#A.pamTable.mounts[5][leadingLetter]+1] =
-            {
-                id = i,
-                spellID = spellID,
-                creatureID = creatureID,
-                name = creatureName,
-                icon = icon,
-                isSummoned = isSummoned,
-                mountType = mountType,
-            };
+                A.pamTable.mountsIds[5][#A.pamTable.mountsIds[5]+1] = spellID;
+
+                A.pamTable.mounts[5][leadingLetter][#A.pamTable.mounts[5][leadingLetter]+1] =
+                {
+                    id = i,
+                    spellID = spellID,
+                    creatureID = creatureID,
+                    name = creatureName,
+                    icon = icon,
+                    mountType = mountType,
+                };
+            end
+
+            -- Forced aquatic mounts
+            if ( tContains(A.aquaticMounts, spellID) ) then
+                if ( not A.pamTable.mounts[4][leadingLetter] ) then A.pamTable.mounts[4][leadingLetter] = {}; end
+
+                A.pamTable.mountsIds[4][#A.pamTable.mountsIds[4]+1] = spellID;
+
+                A.pamTable.mounts[4][leadingLetter][#A.pamTable.mounts[4][leadingLetter]+1] =
+                {
+                    id = i,
+                    spellID = spellID,
+                    creatureID = creatureID,
+                    name = creatureName,
+                    icon = icon,
+                    mountType = mountType,
+                };
+            end
+
+            -- Forced water walking mounts
+            if ( A:IsWaterWalkingMount(spellID) ) then
+                if ( not A.pamTable.mounts[6][leadingLetter] ) then A.pamTable.mounts[6][leadingLetter] = {}; end
+
+                A.pamTable.mountsIds[6][#A.pamTable.mountsIds[6]+1] = spellID;
+
+                A.pamTable.mounts[6][leadingLetter][#A.pamTable.mounts[6][leadingLetter]+1] =
+                {
+                    id = i,
+                    spellID = spellID,
+                    creatureID = creatureID,
+                    name = creatureName,
+                    icon = icon,
+                    mountType = mountType,
+                };
+            end
+
+            -- Forced repair mounts
+            if ( tContains(A.repairMounts, spellID) ) then
+                if ( not A.pamTable.mounts[7][leadingLetter] ) then A.pamTable.mounts[7][leadingLetter] = {}; end
+
+                A.pamTable.mountsIds[7][#A.pamTable.mountsIds[7]+1] = spellID;
+
+                A.pamTable.mounts[7][leadingLetter][#A.pamTable.mounts[7][leadingLetter]+1] =
+                {
+                    id = i,
+                    spellID = spellID,
+                    creatureID = creatureID,
+                    name = creatureName,
+                    icon = icon,
+                    mountType = mountType,
+                };
+            end
+
+            -- Forced Hybrids
+            if ( tContains(A.db.global.forcedHybrid, spellID) ) then
+                cat = 3;
+            else
+                cat = A:GetMountCategory(mountType);
+            end
+
+            -- Using the first non water mount found for water surface testing
+            -- Bring me that back Blizzard!!
+            -- if ( not A.swimmingCheckSpellID and bit.band(mountType, 0x8) == 0 ) then
+                -- A.swimmingCheckSpellID = spellID;
+            -- end
+
+            if ( cat ) then
+                if ( not A.pamTable.mounts[cat][leadingLetter] ) then A.pamTable.mounts[cat][leadingLetter] = {}; end
+
+                A.pamTable.mountsIds[cat][#A.pamTable.mountsIds[cat]+1] = spellID;
+
+                A.pamTable.mounts[cat][leadingLetter][#A.pamTable.mounts[cat][leadingLetter]+1] =
+                {
+                    id = i,
+                    spellID = spellID,
+                    creatureID = creatureID,
+                    name = creatureName,
+                    icon = icon,
+                    mountType = mountType,
+                };
+            end
         end
-
-        -- Forced aquatic mounts
-        if ( tContains(A.aquaticMounts, spellID) ) then
-            if ( not A.pamTable.mounts[4][leadingLetter] ) then A.pamTable.mounts[4][leadingLetter] = {}; end
-
-            A.pamTable.mountsIds[4][#A.pamTable.mountsIds[4]+1] = spellID;
-
-            A.pamTable.mounts[4][leadingLetter][#A.pamTable.mounts[4][leadingLetter]+1] =
-            {
-                id = i,
-                spellID = spellID,
-                creatureID = creatureID,
-                name = creatureName,
-                icon = icon,
-                isSummoned = isSummoned,
-                mountType = mountType,
-            };
-        end
-
-        -- Forced water walking mounts
-        if ( A:IsWaterWalkingMount(spellID) ) then
-            if ( not A.pamTable.mounts[6][leadingLetter] ) then A.pamTable.mounts[6][leadingLetter] = {}; end
-
-            A.pamTable.mountsIds[6][#A.pamTable.mountsIds[6]+1] = spellID;
-
-            A.pamTable.mounts[6][leadingLetter][#A.pamTable.mounts[6][leadingLetter]+1] =
-            {
-                id = i,
-                spellID = spellID,
-                creatureID = creatureID,
-                name = creatureName,
-                icon = icon,
-                isSummoned = isSummoned,
-                mountType = mountType,
-            };
-        end
-
-        -- Forced repair mounts
-        if ( tContains(A.repairMounts, spellID) ) then
-            if ( not A.pamTable.mounts[7][leadingLetter] ) then A.pamTable.mounts[7][leadingLetter] = {}; end
-
-            A.pamTable.mountsIds[7][#A.pamTable.mountsIds[7]+1] = spellID;
-
-            A.pamTable.mounts[7][leadingLetter][#A.pamTable.mounts[7][leadingLetter]+1] =
-            {
-                id = i,
-                spellID = spellID,
-                creatureID = creatureID,
-                name = creatureName,
-                icon = icon,
-                isSummoned = isSummoned,
-                mountType = mountType,
-            };
-        end
-
-        cat = A:GetMountCategory(mountType);
-
-        -- Using the first non water mount found for water surface testing
-        if ( not A.swimmingCheckSpellID and bit.band(mountType, 0x8) == 0 ) then
-            A.swimmingCheckSpellID = spellID;
-        end
-
-        if ( not A.pamTable.mounts[cat][leadingLetter] ) then A.pamTable.mounts[cat][leadingLetter] = {}; end
-
-        A.pamTable.mountsIds[cat][#A.pamTable.mountsIds[cat]+1] = spellID;
-
-        A.pamTable.mounts[cat][leadingLetter][#A.pamTable.mounts[cat][leadingLetter]+1] =
-        {
-            id = i,
-            spellID = spellID,
-            creatureID = creatureID,
-            name = creatureName,
-            icon = icon,
-            isSummoned = isSummoned,
-            mountType = mountType,
-        };
     end
 
     A:DebugMessage("BuildMountsTable() - Update successful");
@@ -895,9 +891,9 @@ end
 
 --- Remove unknown pets from favorites
 function A:CleanPetsFavorites()
-    for k,v in ipairs(A.db.profile.favoritePets) do
+    for k,v in ipairs(A.petsDB.profile.favorites) do
         if ( not C_PetJournal.GetPetInfoByPetID(v) ) then
-            table.remove(A.db.profile.favoritePets, k);
+            table.remove(A.petsDB.profile.favorites, k);
             A:DebugMessage(("CleanPetsFavorites() - Removed petID: %s"):format(v));
         end
     end
@@ -946,8 +942,8 @@ function A:BuildTempSetTable(cat, sets)
         out = {};
 
         for k,v in ipairs(sets) do
-            if ( A.db.global.savedSets.pets[v] and #A.db.global.savedSets.pets[v] > 0 ) then
-                for kk,vv in ipairs(A.db.global.savedSets.pets[v]) do
+            if ( A.petsDB.profiles[v] and A.petsDB.profiles[v].favorites and #A.petsDB.profiles[v].favorites > 0 ) then
+                for kk,vv in ipairs(A.petsDB.profiles[v].favorites) do
                     if ( not tContains(out, vv) ) then
                         out[#out+1] = vv;
                     end
@@ -967,8 +963,8 @@ function A:BuildTempSetTable(cat, sets)
         };
 
         for k,v in ipairs(sets) do
-            if ( A.db.global.savedSets.mounts[v] ) then
-                for kk,vv in ipairs(A.db.global.savedSets.mounts[v]) do
+            if ( A.mountsDB.profiles[v] and A.mountsDB.profiles[v].favorites ) then
+                for kk,vv in ipairs(A.mountsDB.profiles[v].favorites) do
                     if ( #vv > 0 ) then
                         for kkk,vvv in ipairs(vv) do
                             if ( not tContains(out[kk], vvv) ) then
@@ -988,11 +984,17 @@ end
 function A:SetGlobalPetsSets()
     A:DebugMessage("SetGlobalPetsSets()");
 
-    local pets = A:BuildTempSetTable("PETS", A.db.profile.enabledSets.pets);
+    local pets;
+
+    if ( #A.db.profile.defaultSets.pets > 0 ) then
+        pets = A:BuildTempSetTable("PETS", A.db.profile.defaultSets.pets);
+    else
+        pets = A:BuildTempSetTable("PETS", {"Default"});
+    end
 
     if ( pets ) then
-        A.db.profile.favoritePets = {};
-        A:CopyTable(pets, A.db.profile.favoritePets);
+        A.currentPetsSet = {};
+        A:CopyTable(pets, A.currentPetsSet);
         A.usablePetsCache = nil;
     end
 end
@@ -1001,11 +1003,17 @@ end
 function A:SetGlobalMountsSets()
     A:DebugMessage("SetGlobalMountsSets()");
 
-    local mounts = A:BuildTempSetTable("MOUNTS", A.db.profile.enabledSets.mounts);
+    local mounts;
+
+    if ( #A.db.profile.defaultSets.mounts > 0 ) then
+        mounts = A:BuildTempSetTable("MOUNTS", A.db.profile.defaultSets.mounts);
+    else
+        mounts = A:BuildTempSetTable("MOUNTS", {"Default"});
+    end
 
     if ( mounts ) then
-        A.db.profile.favoriteMounts = {};
-        A:CopyTable(mounts, A.db.profile.favoriteMounts);
+        A.currentMountsSet = {};
+        A:CopyTable(mounts, A.currentMountsSet);
         A.usableMountsCache = nil;
     end
 end
@@ -1013,7 +1021,10 @@ end
 --- Set the favorites pets with the selected sets (zone)
 -- @param cfg When called by the configuration, override the last ~= current check
 function A:SetZonePetsSets(cfg)
-    if ( not A.db.profile.petsZoneSets ) then return; end
+    if ( not A.db.profile.petsZoneSets ) then
+        A:SetGlobalPetsSets();
+        return;
+    end
 
     A:DebugMessage(("SetZonePetsSets() - cfg: %s"):format(cfg and "true" or "false"));
 
@@ -1022,8 +1033,8 @@ function A:SetZonePetsSets(cfg)
             local pets = A:BuildTempSetTable("PETS", A.db.profile.petsSetsByMapID[A.currentMapID]);
 
             if ( pets ) then
-                A.db.profile.favoritePets = {};
-                A:CopyTable(pets, A.db.profile.favoritePets);
+                A.currentPetsSet = {};
+                A:CopyTable(pets, A.currentPetsSet);
                 A.usablePetsCache = nil;
                 A.db.profile.lastZonePetsSetsDefined = A.currentMapID;
                 return 1;
@@ -1042,7 +1053,10 @@ end
 --- Set the favorites mounts with the selected sets (zone)
 -- @param cfg When called by the configuration, override the last ~= current check
 function A:SetZoneMountsSets(cfg)
-    if ( not A.db.profile.mountsZoneSets ) then return; end
+    if ( not A.db.profile.mountsZoneSets ) then
+        A:SetGlobalMountsSets();
+        return;
+    end
 
     A:DebugMessage(("SetZoneMountsSets() - cfg: %s"):format(cfg and "true" or "false"));
 
@@ -1051,8 +1065,8 @@ function A:SetZoneMountsSets(cfg)
             local mounts = A:BuildTempSetTable("MOUNTS", A.db.profile.mountsSetsByMapID[A.currentMapID]);
 
             if ( mounts ) then
-                A.db.profile.favoriteMounts = {};
-                A:CopyTable(mounts, A.db.profile.favoriteMounts);
+                A.currentMountsSet = {};
+                A:CopyTable(mounts, A.currentMountsSet);
                 A.usableMountsCache = nil;
                 A.db.profile.lastZoneMountsSetsDefined = A.currentMapID;
                 return 1;
@@ -1071,18 +1085,22 @@ end
 --- Return the sets in use
 function A:GetSetsInUse(cat)
     if ( cat == "PETS" ) then
-        if ( A.db.profile.lastZonePetsSetsDefined ) then
+        if ( A.db.profile.lastZonePetsSetsDefined and A.db.profile.petsSetsByMapID[A.currentMapID] ) then
             return string.join(" ", unpack(A.db.profile.petsSetsByMapID[A.currentMapID]));
-        elseif ( #A.db.profile.enabledSets.pets > 0 ) then
-            return string.join(" ", unpack(A.db.profile.enabledSets.pets));
+        elseif ( #A.db.profile.defaultSets.pets > 0 ) then
+            return string.join(" ", unpack(A.db.profile.defaultSets.pets));
+        elseif ( A.petsDB.profiles["Default"] and A.petsDB.profiles["Default"].favorites and #A.petsDB.profiles["Default"].favorites > 0 ) then
+            return "Default";
         else
             return L["None"];
         end
     elseif ( cat == "MOUNTS" ) then
-        if ( A.db.profile.lastZoneMountsSetsDefined ) then
+        if ( A.db.profile.lastZoneMountsSetsDefined and A.db.profile.mountsSetsByMapID[A.currentMapID] ) then
             return string.join(" ", unpack(A.db.profile.mountsSetsByMapID[A.currentMapID]));
-        elseif ( #A.db.profile.enabledSets.mounts > 0 ) then
-            return string.join(" ", unpack(A.db.profile.enabledSets.mounts));
+        elseif ( #A.db.profile.defaultSets.mounts > 0 ) then
+            return string.join(" ", unpack(A.db.profile.defaultSets.mounts));
+        elseif ( A.mountsDB.profiles["Default"] and A.mountsDB.profiles["Default"].favorites and #A.mountsDB.profiles["Default"].favorites > 0 ) then
+            return "Default";
         else
             return L["None"];
         end
@@ -1588,6 +1606,8 @@ function A:SetEverything()
     A:SetClassSpells();
     A:SetButtons();
 
+    A:ForceSetsUpdate();
+
     A:SetMainTimer();
     --A:SetFlyingPetWithFlyingMountTimer();
 
@@ -1965,7 +1985,8 @@ local function PAMMenu(self, level)
                                 end
 
                                 -- Model
-                                A.menuModelFrame:SetCreature(vvv.creatureID);
+                                A.menuModelFrame:SetDisplayInfo(vvv.creatureID);
+                                A.menuModelFrame:SetAnimation(618, -1);
 
                                 -- Frame pos
                                 local point, relativePoint = A:GetMenuModelFrameAnchor();
@@ -1993,7 +2014,7 @@ local function PAMMenu(self, level)
                             self.info.icon = vvv.icon;
                             self.info.keepShownOnClick = 1;
                             self.info.hasArrow = nil;
-                            self.info.func = function() CallCompanion("MOUNT", vvv.id); end;
+                            self.info.func = function() C_MountJournal.Summon(vvv.id); end;
                             UIDropDownMenu_AddButton(self.info, level);
 
                             _G["DropDownList4Button"..buttonIndex]:HookScript("OnEnter", function()
@@ -2004,7 +2025,8 @@ local function PAMMenu(self, level)
                                 end
 
                                 -- Model
-                                A.menuModelFrame:SetCreature(vvv.creatureID);
+                                A.menuModelFrame:SetDisplayInfo(vvv.creatureID);
+                                A.menuModelFrame:SetAnimation(618, -1);
 
                                 -- Frame pos
                                 local point, relativePoint = A:GetMenuModelFrameAnchor();
@@ -2392,7 +2414,7 @@ function A:OnCommReceived(...)
     prefix, message, method, who = ...;
 
     -- Prevent own message
-    if ( who == A.playerFullName ) then return; end
+    if ( who == A.playerName ) then return; end
 
     remoteStage, remoteVersion = strsplit(":", message);
     remoteVersion, remoteRevision = A:GetAddonVersion(remoteVersion);
@@ -2469,6 +2491,7 @@ A.aceDefaultDB =
         },
         zonesIDsToName = {}, -- d
         popLoginMessages = {}, -- no cfg
+        forcedHybrid = {},
     },
     profile =
     {
@@ -2507,8 +2530,8 @@ A.aceDefaultDB =
             hexa = "|cffe95835",
         },
         ldbi = {}, -- d
-        favoritePets = {}, -- d
-        favoriteMounts = -- d
+        favoritePets = {}, -- d -- deprecated
+        favoriteMounts = -- d -- deprecated
         {
             [1] = {}, -- Ground
             [2] = {}, -- Fly
@@ -2532,12 +2555,13 @@ A.aceDefaultDB =
                 [7] = nil, -- Repair
             },
         },
-        savedSets = -- d -- deprecated
-        {
-            pets = {},
-            mounts = {},
-        },
-        enabledSets = -- d
+        --savedSets = -- d -- deprecated
+        --{
+        --    pets = {},
+        --    mounts = {},
+        --},
+        --enabledSets = -- d -- deprecated
+        defaultSets = -- d
         {
             pets = {},
             mounts = {},
@@ -2674,6 +2698,8 @@ A.aceDefaultDB =
             set = nil,
         },]]--
         oculusDrakes = 1,
+        hybridsSelectionTab = nil, -- d
+        hybridsSelectionOnlyOwned = 1, -- d
     },
 };
 
@@ -2757,6 +2783,33 @@ function A:RemoveDatabaseOldEntries()
         end
     end
 end
+
+-- Pets Ace3 DB
+A.aceDefaultPetsDB =
+{
+    profile =
+    {
+        favorites = {},
+    }
+};
+
+-- Mounts Ace3 DB
+A.aceDefaultMountsDB =
+{
+    profile =
+    {
+        favorites =
+        {
+            [1] = {}, -- Ground
+            [2] = {}, -- Fly
+            [3] = {}, -- Hybrid (ground & fly)
+            [4] = {}, -- Aquatic
+            [5] = {}, -- with passengers
+            [6] = {}, -- Water walking
+            [7] = {}, -- Repair
+        },
+    }
+};
 
 --[[-------------------------------------------------------------------------------
     Config panel loader
@@ -2916,6 +2969,7 @@ end
 A.loginMessagesList =
 {
     "newCompanionsFilters161",
+    "wodModifications170",
 };
 function A:LoginMessages()
     for k,v in ipairs(A.loginMessagesList) do
@@ -2938,8 +2992,11 @@ end
 function A:OnInitialize()
     -- Database
     A.db = LibStub("AceDB-3.0"):New("petsAndMountsDB", A.aceDefaultDB, true);
+    A.petsDB = LibStub("AceDB-3.0"):New("petsAndMountsPetsDB", A.aceDefaultPetsDB, true);
+    A.mountsDB = LibStub("AceDB-3.0"):New("petsAndMountsMountsDB", A.aceDefaultMountsDB, true);
     A:DatabaseRevisionCheck();
     A:RemoveDatabaseOldEntries();
+    A:RemoveUnforcedHybrids();
     A:AddSummonFilters();
     A:AddCustomMacros();
 
@@ -2947,6 +3004,12 @@ function A:OnInitialize()
     A.db.RegisterCallback(self, "OnProfileChanged", "SetEverything");
     A.db.RegisterCallback(self, "OnProfileCopied", "SetEverything");
     A.db.RegisterCallback(self, "OnProfileReset", "SetEverything");
+    A.petsDB.RegisterCallback(self, "OnProfileChanged", "SetEverything");
+    A.petsDB.RegisterCallback(self, "OnProfileCopied", "SetEverything");
+    A.petsDB.RegisterCallback(self, "OnProfileReset", "SetEverything");
+    A.mountsDB.RegisterCallback(self, "OnProfileChanged", "SetEverything");
+    A.mountsDB.RegisterCallback(self, "OnProfileCopied", "SetEverything");
+    A.mountsDB.RegisterCallback(self, "OnProfileReset", "SetEverything");
 
     -- Menu frame & table
     A.menuFrame = CreateFrame("Frame", "PetsAndMountsMenuFrame");

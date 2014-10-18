@@ -21,7 +21,7 @@ local select = select;
 -- GLOBALS: C_PetJournal, IsFlyableArea, IsSpellKnown, IsUsableSpell, GetMirrorTimerInfo
 -- GLOBALS: IsSwimming, IsSubmerged, GetNumCompanions, GetCompanionInfo, CallCompanion
 -- GLOBALS: GetProfessions, GetProfessionInfo, GetAchievementInfo, IsMounted, IsFlying
--- GLOBALS: Dismount, VehicleExit, UnitExists, UnitIsPlayer, UnitIsUnit
+-- GLOBALS: Dismount, VehicleExit, UnitExists, UnitIsPlayer, UnitIsUnit, C_MountJournal
 
 --[[-------------------------------------------------------------------------------
     Pets methods
@@ -204,8 +204,8 @@ function A:RandomPet(playerCall)
     local id;
 
     -- Get a random pet
-    if ( A:GotRandomPet(A.db.profile.favoritePets) ) then
-        id = A:GetRandomPet(A.db.profile.favoritePets);
+    if ( A:GotRandomPet(A.petsDB.profile.favorites) ) then
+        id = A:GetRandomPet(A.petsDB.profile.favorites);
     elseif ( A:GotRandomPet(A.pamTable.petsIds) ) then
         id = A:GetRandomPet(A.pamTable.petsIds);
     else
@@ -276,7 +276,7 @@ function A:AutoPet()
     if ( not A:IsAutoPetEnabled() ) then return; end
 
     -- Option is set to not summon when having a pet
-    if ( currentPet and A.db.profile.alreadyGotPet ) then
+    if ( currentPet and A.db.profile.alreadyGotPet and not A:CheckReSummon(currentPet) ) then
         A:DebugMessage("AutoPet() - Already got a pet");
         return;
     end
@@ -315,18 +315,16 @@ function A:AutoPet()
             A:DebugMessage("AutoPet() - Area override pet - summon");
             A:SummonPet(A.db.profile.petByMapID[A.currentMapID]);
         end
-    elseif ( A:GotRandomPet(A.db.profile.favoritePets) ) then -- Fav pets
-        if ( currentPet and tContains(A.db.profile.favoritePets, currentPet) and not A:CheckReSummon(currentPet) ) then
+    elseif ( A:GotRandomPet(A.currentPetsSet) ) then -- Fav pets
+        if ( currentPet and tContains(A.currentPetsSet, currentPet) and not A:CheckReSummon(currentPet) ) then
             A:DebugMessage("AutoPet() - Already got a fav pet");
         else
             A:DebugMessage("AutoPet() - Summon fav pet");
-            local id = A:GetRandomPet(A.db.profile.favoritePets);
-            A:SummonPet(id);
+            A:SummonPet(A:GetRandomPet(A.currentPetsSet));
         end
     elseif ( (not currentPet and A:GotRandomPet(A.pamTable.petsIds)) or (A:CheckReSummon(currentPet) and A:GotRandomPet(A.pamTable.petsIds)) ) then -- All pets
         A:DebugMessage("AutoPet() - Summon random pet global");
-        local id = A:GetRandomPet(A.pamTable.petsIds);
-        A:SummonPet(id);
+        A:SummonPet(A:GetRandomPet(A.pamTable.petsIds));
     else
         A:DebugMessage("AutoPet() - No summon");
     end
@@ -483,10 +481,10 @@ function A:SummonMountBySpellId(spellID)
 
     if ( id ) then
         if ( A.db.profile.debug ) then
-            A:DebugMessage("Summon mount: "..select(2, GetCompanionInfo("MOUNT", id)));
+            A:DebugMessage("Summon mount: "..select(1, C_MountJournal.GetMountInfo(id)));
         end
 
-        CallCompanion("MOUNT", id);
+        C_MountJournal.Summon(id);
         return 1;
     end
 
@@ -505,145 +503,14 @@ function A:GetUniqueAreaMount(cat)
 end
 
 --- Check if the mount is restricted
--- @param mount The mount spellID
+-- @param spellID The mount spellID
 -- @return bool
-function A:IsMountRestricted(mount)
-    if ( A.restrictedMounts[mount] ) then -- Got a restricted mount
-        -- Location
-        if ( A.restrictedMounts[mount].type == "location" ) then
-            if ( type(A.restrictedMounts[mount].args) == "table" ) then
-                if ( not tContains(A.restrictedMounts[mount].args, A.currentMapID) ) then
-                    return 1;
-                end
-            else
-                if ( A.restrictedMounts[mount].args ~= A.currentMapID ) then
-                    return 1;
-                end
-            end
-        -- Spell
-        elseif ( A.restrictedMounts[mount].type == "spell" ) then
-            if ( type(A.restrictedMounts[mount].args) == "table" ) then
-                for k,v in ipairs(A.restrictedMounts[mount].args) do
-                    if ( IsSpellKnown(v) ) then
-                        return nil;
-                    end
-                end
-
-                return 1;
-            else
-                if ( not IsSpellKnown(A.restrictedMounts[mount].args) ) then
-                    return 1;
-                end
-            end
-        -- Class
-        elseif ( A.restrictedMounts[mount].type == "class" ) then
-            if ( type(A.restrictedMounts[mount].args) == "table" ) then
-                if ( not tContains(A.restrictedMounts[mount].args, A.playerClass) ) then
-                    return 1;
-                end
-            else
-                if ( A.restrictedMounts[mount].args ~= A.playerClass ) then
-                    return 1;
-                end
-            end
-        -- Faction
-        elseif ( A.restrictedMounts[mount].type == "faction" ) then
-            if ( type(A.restrictedMounts[mount].args) == "table" ) then
-                if ( not tContains(A.restrictedMounts[mount].args, A.playerFaction) ) then
-                    return 1;
-                end
-            else
-                if ( A.restrictedMounts[mount].args ~= A.playerFaction ) then
-                    return 1;
-                end
-            end
-        -- Race & class
-        elseif ( A.restrictedMounts[mount].type == "race&class" ) then
-            if ( type(A.restrictedMounts[mount].args) == "table" ) then
-                if ( not tContains(A.restrictedMounts[mount].args, A.playerRace..A.playerClass) ) then
-                    return 1;
-                end
-            else
-                if ( A.restrictedMounts[mount].args ~= A.playerRace..A.playerClass ) then
-                    return 1;
-                end
-            end
-        -- Profession
-        elseif ( A.restrictedMounts[mount].type == "profession" ) then
-            local professionOne, professionTwo = GetProfessions();
-            local professionOneSkill, professionTwoSkill, _;
-
-            if ( professionOne ) then
-                _, _, professionOneSkill, _, _, _, professionOne = GetProfessionInfo(professionOne);
-            end
-
-            if ( professionTwo ) then
-                _, _, professionTwoSkill, _, _, _, professionTwo = GetProfessionInfo(professionTwo);
-            end
-
-            if ( (professionOne and professionOne == A.restrictedMounts[mount].args[1] and professionOneSkill >= A.restrictedMounts[mount].args[2])
-            or (professionTwo and professionTwo == A.restrictedMounts[mount].args[1] and professionTwoSkill >= A.restrictedMounts[mount].args[2]) ) then
-                return nil;
-            else
-                return 1;
-            end
-        -- Achievement
-        elseif ( A.restrictedMounts[mount].type == "achievement" ) then
-            if ( type(A.restrictedMounts[mount].args) == "table" ) then
-                for k,v in ipairs(A.restrictedMounts[mount].args) do
-                    local earnedBy = select(14, GetAchievementInfo(v));
-
-                    if ( A.playerName == earnedBy ) then
-                        return nil;
-                    end
-                end
-
-                return 1;
-            else
-                local earnedBy = select(14, GetAchievementInfo(A.restrictedMounts[mount].args));
-
-                if ( A.playerName ~= earnedBy ) then
-                    return 1;
-                end
-            end
-        -- Owned
-        elseif ( A.restrictedMounts[mount].type == "owned" ) then
-            if ( not A.ownedFilterCache ) then
-                A.ownedFilterCache = {};
-            end
-
-            if ( A.ownedFilterCache[mount] ) then
-                if ( A.ownedFilterCache[mount] == "1" ) then
-                    return nil;
-                else
-                    return 1;
-                end
-            end
-
-            local numMounts = GetNumCompanions("MOUNT");
-            local _, spellID;
-
-            for i=1,numMounts do
-                _, _, spellID = GetCompanionInfo("MOUNT", i);
-
-                if ( spellID == mount ) then
-                    if ( not A.ownedFilterCache ) then
-                        A.ownedFilterCache = {};
-                    end
-
-                    A.ownedFilterCache[mount] = "1";
-
-                    return nil;
-                end
-            end
-
-            A.ownedFilterCache[mount] = "0";
-
-            return 1;
-        end
+function A:IsMountRestricted(spellID)
+    if ( select(5, C_MountJournal.GetMountInfo(A:GetMountIDFromSpellID(spellID))) ) then
+        return nil;
     end
 
-    return nil;
+    return 1;
 end
 
 --- Get a table with usable mounts
@@ -663,7 +530,7 @@ function A:GetUsableMountsTable(tbl)
 
     for k,v in ipairs(tbl) do
         if ( A:IsMountRestricted(v) ) then -- Got a restricted mount
-            A:DebugMessage(("Restricted mount: %s - type: %s - spell: %d"):format(select(1,GetSpellInfo(v)), A.restrictedMounts[v].type, v));
+            A:DebugMessage(("Restricted mount: %s - spell: %d"):format(select(1,GetSpellInfo(v)), v));
         else
             A.usableMountsCache[tbl][#A.usableMountsCache[tbl]+1] = v;
         end
@@ -795,9 +662,9 @@ function A:RandomMount(cat)
             A:DebugMessage(("RandomMount() - No hybrid - Got unique area - %i"):format(cat));
             id = A:GetUniqueAreaMount(cat);
         -- got fav
-        elseif ( A:GotRandomMount(A.db.profile.favoriteMounts[cat]) ) then
+        elseif ( A:GotRandomMount(A.currentMountsSet[cat]) ) then
             A:DebugMessage(("RandomMount() - No hybrid - Got fav - %i"):format(cat));
-            id = A:GetRandomMount(A.db.profile.favoriteMounts[cat]);
+            id = A:GetRandomMount(A.currentMountsSet[cat]);
         -- got global
         elseif ( A:GotRandomMount(A.pamTable.mountsIds[cat]) ) then
             A:DebugMessage(("RandomMount() - No hybrid - Got global - %i"):format(cat));
@@ -868,24 +735,24 @@ function A:RandomMount(cat)
             id = A:GetUniqueAreaMount(3);
         -- No unique area going for fav
         -- got ground/fly and hybrid fav
-        elseif ( A:GotRandomMount(A.db.profile.favoriteMounts[cat]) and A:GotRandomMount(A.db.profile.favoriteMounts[3]) ) then
+        elseif ( A:GotRandomMount(A.currentMountsSet[cat]) and A:GotRandomMount(A.currentMountsSet[3]) ) then
             -- hybrid
-            if ( A:RandHybrid(A:GotRandomMount(A.db.profile.favoriteMounts[cat]), A:GotRandomMount(A.db.profile.favoriteMounts[3])) ) then
+            if ( A:RandHybrid(A:GotRandomMount(A.currentMountsSet[cat]), A:GotRandomMount(A.currentMountsSet[3])) ) then
                 A:DebugMessage(("RandomMount() - With hybrid - Got fav - Got hybrid - Rand hybrid - %i"):format(cat));
-                id = A:GetRandomMount(A.db.profile.favoriteMounts[3]);
+                id = A:GetRandomMount(A.currentMountsSet[3]);
             -- ground/fly
             else
                 A:DebugMessage(("RandomMount() - With hybrid - Got fav - Got hybrid - Rand no hybrid - %i"):format(cat));
-                id = A:GetRandomMount(A.db.profile.favoriteMounts[cat]);
+                id = A:GetRandomMount(A.currentMountsSet[cat]);
             end
         -- got fav
-        elseif ( A:GotRandomMount(A.db.profile.favoriteMounts[cat]) ) then
+        elseif ( A:GotRandomMount(A.currentMountsSet[cat]) ) then
             A:DebugMessage(("RandomMount() - With hybrid - Got fav ground/fly - %i"):format(cat));
-            id = A:GetRandomMount(A.db.profile.favoriteMounts[cat]);
+            id = A:GetRandomMount(A.currentMountsSet[cat]);
         -- got hybrid fav
-        elseif ( A:GotRandomMount(A.db.profile.favoriteMounts[3]) ) then
+        elseif ( A:GotRandomMount(A.currentMountsSet[3]) ) then
             A:DebugMessage(("RandomMount() - With hybrid - Got fav hybrid - %i"):format(cat));
-            id = A:GetRandomMount(A.db.profile.favoriteMounts[3]);
+            id = A:GetRandomMount(A.currentMountsSet[3]);
         -- No fav going for global
         -- got ground/fly & hybrid
         elseif ( A:GotRandomMount(A.pamTable.mountsIds[cat]) and A:GotRandomMount(A.pamTable.mountsIds[3]) ) then

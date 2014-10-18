@@ -263,8 +263,8 @@ do
         item:SetCallback("OnEnter", function()
             local creatureID;
 
-            if ( petsAndMountsGlobal:IsGUID(value) ) then
-                creatureID = select(11, C_PetJournal.GetPetInfoByPetID(value));
+            if ( petsAndMountsGlobal:IsBattlePetID(value) ) then
+                creatureID = select(6, C_PetJournal.GetPetInfoByPetID(value));
             else
                 creatureID = petsAndMountsGlobal:GetCreatureIDFromSpellID(value);
             end
@@ -273,7 +273,8 @@ do
 
             -- Model
             petsAndMountsGlobal.configModelFrame.rotation = 0;
-            petsAndMountsGlobal.configModelFrame:SetCreature(creatureID);
+            petsAndMountsGlobal.configModelFrame:SetDisplayInfo(creatureID);
+            petsAndMountsGlobal.configModelFrame:SetAnimation(618, -1);
 
             -- Frame pos
             petsAndMountsGlobal.configModelFrame:ClearAllPoints();
