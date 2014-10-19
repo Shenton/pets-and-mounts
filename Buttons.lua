@@ -116,7 +116,7 @@ function A:GotMountAllTable(cat)
     if ( A.db.profile.forceOne.mount[cat]
     or A.db.profile.mountByMapID[cat][A.currentMapID]
     or A.db.profile.areaMounts and A.uniqueAreaMounts[cat][A.currentMapID]
-    or A:GotRandomMount(A.mountsDB.profile.favorites[cat])
+    or A:GotRandomMount(A.currentMountsSet[cat])
     or A:GotRandomMount(A.pamTable.mountsIds[cat]) ) then
         return 1;
     end

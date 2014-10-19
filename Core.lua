@@ -8,13 +8,10 @@
 
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 
--- 1.7.0 changelog
+-- 1.7.1 changelog
 --[[
-WoD toc bump and API modifications update
-Moved pets and mounts databases to unique Ace3 ones
-Added an import feature for old DB
-Added a custom Hybrid category for mounts
-Fixed classes modifications
+Fixed empty tables with new mounts DB profiles
+Fixed search frames
 ]]--
 
 local A = _G["PetsAndMountsGlobal"];
@@ -1606,6 +1603,8 @@ function A:SetEverything()
     A:SetClassSpells();
     A:SetButtons();
 
+    A:FixMountsProfilesTables();
+
     A:ForceSetsUpdate();
 
     A:SetMainTimer();
@@ -2790,7 +2789,7 @@ A.aceDefaultPetsDB =
     profile =
     {
         favorites = {},
-    }
+    },
 };
 
 -- Mounts Ace3 DB
@@ -2808,8 +2807,32 @@ A.aceDefaultMountsDB =
             [6] = {}, -- Water walking
             [7] = {}, -- Repair
         },
-    }
+    },
 };
+
+-- Mounts profiles tables are created empty, fix that
+function A:FixMountsProfilesTables()
+    for k,v in ipairs(A.mountsDB:GetProfiles()) do
+        if ( A.mountsDB.profiles[v] and not A.mountsDB.profiles[v].favorites ) then
+            A.mountsDB.profiles[v].favorites =
+            {
+                [1] = {}, -- Ground
+                [2] = {}, -- Fly
+                [3] = {}, -- Hybrid (ground & fly)
+                [4] = {}, -- Aquatic
+                [5] = {}, -- with passengers
+                [6] = {}, -- Water walking
+                [7] = {}, -- Repair
+            };
+        elseif ( A.mountsDB.profiles[v] and A.mountsDB.profiles[v].favorites ) then
+            for i=1,7 do
+                if ( not A.mountsDB.profiles[v].favorites[i] ) then
+                    A.mountsDB.profiles[v].favorites[i] = {};
+                end
+            end
+        end
+    end
+end
 
 --[[-------------------------------------------------------------------------------
     Config panel loader
@@ -2994,6 +3017,7 @@ function A:OnInitialize()
     A.db = LibStub("AceDB-3.0"):New("petsAndMountsDB", A.aceDefaultDB, true);
     A.petsDB = LibStub("AceDB-3.0"):New("petsAndMountsPetsDB", A.aceDefaultPetsDB, true);
     A.mountsDB = LibStub("AceDB-3.0"):New("petsAndMountsMountsDB", A.aceDefaultMountsDB, true);
+    A:FixMountsProfilesTables();
     A:DatabaseRevisionCheck();
     A:RemoveDatabaseOldEntries();
     A:RemoveUnforcedHybrids();

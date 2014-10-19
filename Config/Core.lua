@@ -27,7 +27,7 @@ local type = type;
 -- GLOBALS: GetMapNameByID, GetAddOnMetadata, GetMacroItemIcons, GetMacroIcons, FauxScrollFrame_GetOffset
 -- GLOBALS: FauxScrollFrame_Update, GetNumSpellTabs, GetSpellTabInfo, GetSpellBookItemInfo, GetSpellBookItemTexture
 -- GLOBALS: GetFlyoutInfo, GetFlyoutSlotInfo, GetSpellTexture, GetLooseMacroIcons, GetLooseMacroItemIcons
--- GLOBALS: GetBindingAction, C_PetJournal, C_MountJournal
+-- GLOBALS: GetBindingAction, C_PetJournal, C_MountJournal, SearchBoxTemplate_OnTextChanged
 
 -- Ace3 libs <3
 A.AceConfigDialog = LibStub("AceConfigDialog-3.0");
@@ -192,8 +192,12 @@ end
 
 --- OnTextChanged callback
 function A:IconsFrameTextChanged(self)
-    if ( self.clearButton:IsVisible() and self:GetText() ~= "" ) then
-        A:IconSearch(self:GetText());
+    SearchBoxTemplate_OnTextChanged(self);
+
+    local text = self:GetText();
+
+    if ( text and text ~= "" ) then
+        A:IconSearch(text);
     else
         A:IconSearch(nil);
     end
@@ -277,14 +281,18 @@ end
 -- Set the correct var and refresh the config
 -- @param searchType PETS or MOUNTS
 -- @param searchText The string to search for
-function A:SearchListCallback(searchType, searchText)
-    if ( searchType == "PETS" ) then
+function A:SearchListCallback(self)
+    SearchBoxTemplate_OnTextChanged(self);
+
+    local searchText = self:GetText();
+
+    if ( self.searchType == "PETS" ) then
         if ( not searchText or searchText == "" ) then
             A.petsListSearchText = nil;
         else
             A.petsListSearchText = searchText;
         end
-    elseif ( searchType == "MOUNTS" ) then
+    elseif ( self.searchType == "MOUNTS" ) then
         if ( not searchText or searchText == "" ) then
             A.mountsListSearchText = nil;
         else
