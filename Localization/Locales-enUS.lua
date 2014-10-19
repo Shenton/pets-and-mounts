@@ -426,6 +426,8 @@ L["Hybrids Selection"] = true;
 L["Enable the hybrids selection tab.\n\nFor the changes to take effect, this option need to be disabled. A /reload will also works."] = true;
 L["Only owned"] = true;
 L["This will display only the mounts you own within the list. Otherwise it will display all the mounts available in the game."] = true;
+L["Editing set: %s"] = true;
+L["Active: %s"] = true;
 -- About
 L["Auto and random summon for your pets and mounts, highly customizable. With Data Broker support."] = true;
 L["A new version is available, version |cff33ff99%s|r revision |cff33ff99%s %s|r."] = true;

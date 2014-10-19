@@ -1080,27 +1080,40 @@ function A:SetZoneMountsSets(cfg)
 end
 
 --- Return the sets in use
-function A:GetSetsInUse(cat)
+function A:GetTableSetsInUse(cat)
     if ( cat == "PETS" ) then
         if ( A.db.profile.lastZonePetsSetsDefined and A.db.profile.petsSetsByMapID[A.currentMapID] ) then
-            return string.join(" ", unpack(A.db.profile.petsSetsByMapID[A.currentMapID]));
+            return A.db.profile.petsSetsByMapID[A.currentMapID];
         elseif ( #A.db.profile.defaultSets.pets > 0 ) then
-            return string.join(" ", unpack(A.db.profile.defaultSets.pets));
+            return A.db.profile.defaultSets.pets;
         elseif ( A.petsDB.profiles["Default"] and A.petsDB.profiles["Default"].favorites and #A.petsDB.profiles["Default"].favorites > 0 ) then
-            return "Default";
+            return {"Default"};
         else
-            return L["None"];
+            return nil;
         end
     elseif ( cat == "MOUNTS" ) then
         if ( A.db.profile.lastZoneMountsSetsDefined and A.db.profile.mountsSetsByMapID[A.currentMapID] ) then
-            return string.join(" ", unpack(A.db.profile.mountsSetsByMapID[A.currentMapID]));
+            return A.db.profile.mountsSetsByMapID[A.currentMapID];
         elseif ( #A.db.profile.defaultSets.mounts > 0 ) then
-            return string.join(" ", unpack(A.db.profile.defaultSets.mounts));
-        elseif ( A.mountsDB.profiles["Default"] and A.mountsDB.profiles["Default"].favorites and #A.mountsDB.profiles["Default"].favorites > 0 ) then
-            return "Default";
+            return A.db.profile.defaultSets.mounts;
+        elseif ( A.mountsDB.profiles["Default"] and A.mountsDB.profiles["Default"].favorites and (#A.mountsDB.profiles["Default"].favorites[1] > 0
+        or #A.mountsDB.profiles["Default"].favorites[2] > 0 or #A.mountsDB.profiles["Default"].favorites[3] > 0
+        or #A.mountsDB.profiles["Default"].favorites[4] > 0 or #A.mountsDB.profiles["Default"].favorites[5] > 0
+        or #A.mountsDB.profiles["Default"].favorites[6] > 0 or #A.mountsDB.profiles["Default"].favorites[7] > 0) ) then
+            return {"Default"};
         else
-            return L["None"];
+            return nil;
         end
+    else
+        return nil;
+    end
+end
+
+function A:GetSetsInUse(cat)
+    local sets = A:GetTableSetsInUse(cat);
+
+    if ( sets ) then
+        return string.join(" ", unpack(sets));
     else
         return L["None"];
     end

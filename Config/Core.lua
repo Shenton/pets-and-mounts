@@ -3308,7 +3308,20 @@ function A:OptionsPetsList()
     local pets =
     {
         order = 0,
-        name = L["Companions list"],
+        name = function()
+            local currentProfile = A.petsDB:GetCurrentProfile();
+            local sets = A:GetTableSetsInUse("PETS");
+
+            if ( sets ) then
+                if ( tContains(sets, currentProfile) ) then
+                    return L["Companions list"].." - "..L["Editing set: %s"]:format(A.color.WHITE..currentProfile..A.color.RESET).." - "..L["Active: %s"]:format(A.color.GREEN..L["Yes"]);
+                else
+                    return L["Companions list"].." - "..L["Editing set: %s"]:format(A.color.WHITE..currentProfile..A.color.RESET).." - "..L["Active: %s"]:format(A.color.RED..L["No"]);
+                end
+            else
+                return L["Companions list"].." - "..L["Editing set: %s"]:format(A.color.WHITE..currentProfile..A.color.RESET).." - "..L["Active: %s"]:format(A.color.RED..L["No"]);
+            end
+        end,
         type = "group",
         childGroups = "tab",
         args = {},
@@ -3591,7 +3604,20 @@ function A:OptionsMountsList()
     local mounts =
     {
         order = 0,
-        name = L["Mounts list"],
+        name = function()
+            local currentProfile = A.mountsDB:GetCurrentProfile();
+            local sets = A:GetTableSetsInUse("MOUNTS");
+
+            if ( sets ) then
+                if ( tContains(sets, currentProfile) ) then
+                    return L["Mounts list"].." - "..L["Editing set: %s"]:format(A.color.WHITE..currentProfile..A.color.RESET).." - "..L["Active: %s"]:format(A.color.GREEN..L["Yes"]);
+                else
+                    return L["Mounts list"].." - "..L["Editing set: %s"]:format(A.color.WHITE..currentProfile..A.color.RESET).." - "..L["Active: %s"]:format(A.color.RED..L["No"]);
+                end
+            else
+                return L["Mounts list"].." - "..L["Editing set: %s"]:format(A.color.WHITE..currentProfile..A.color.RESET).." - "..L["Active: %s"]:format(A.color.RED..L["No"]);
+            end
+        end,
         type = "group",
         childGroups = "tab",
         args = {},
