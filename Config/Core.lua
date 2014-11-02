@@ -392,6 +392,40 @@ function A:OnClickAcceptInputCode(frame)
 end
 
 --[[-------------------------------------------------------------------------------
+    Popup messages
+-------------------------------------------------------------------------------]]--
+
+A.popupMessages["deletePetSet"] =
+{
+    type = "question",
+    text = L["Delete set %s?"],
+    icon = "Interface\\DialogFrame\\UI-Dialog-Icon-AlertNew",
+    leftButtonText = L["Yes"],
+    rightButtonText = L["No"],
+    escapeClose = 1,
+    LeftButtonScript = function(self)
+        A.petsDB:DeleteProfile(self.cfg.args);
+        A:NotifyChangeForAll();
+        self:Hide();
+    end,
+};
+
+A.popupMessages["deleteMountSet"] =
+{
+    type = "question",
+    text = L["Delete set %s?"],
+    icon = "Interface\\DialogFrame\\UI-Dialog-Icon-AlertNew",
+    leftButtonText = L["Yes"],
+    rightButtonText = L["No"],
+    escapeClose = 1,
+    LeftButtonScript = function(self)
+        A.mountsDB:DeleteProfile(self.cfg.args);
+        A:NotifyChangeForAll();
+        self:Hide();
+    end,
+};
+
+--[[-------------------------------------------------------------------------------
     Config table methods
 -------------------------------------------------------------------------------]]--
 
@@ -3906,29 +3940,71 @@ function A:OptionsSets()
         childGroups = "tab",
         args =
         {
-            defaultSets =
+            petsSets =
             {
-                order = 2,
-                name = L["Default sets"],
+                order = 0,
+                name = L["Companions"],
                 type = "group",
                 args =
                 {
-                    desc =
+                    activ =
                     {
                         order = 0,
-                        name = L["Set here the default set or sets. This will be used when no set of sets is defined for an area or if area sets are disabled.\n\nIf nothing is defined here the add-on will search for a set named Default and use it.\n\n"],
-                        width = "full",
-                        type = "description",
-                        fontSize = "medium",
-                    },
-                    pets =
-                    {
-                        order = 100,
-                        name = L["Companions"],
+                        name = L["Active Set"],
                         type = "group",
                         inline = true,
                         args =
                         {
+                            desc =
+                            {
+                                order = 0,
+                                name = L["Here you can select the active set for |cffff3333edition|r.\n\nI insist on edition because selecting a set here will not make the add-on using it for random summon. This will just define which set you are editing when selecting favorites within the lists.\n\nSee the Default Sets section below to select which sets the add-on will use when random summoning companions or mounts.\n\n"],
+                                width = "full",
+                                type = "description",
+                                fontSize = "medium",
+                            },
+                            header =
+                            {
+                                order = 1,
+                                name = L["Active Set"],
+                                type = "header",
+                            },
+                            selectProfile = {
+                                order = 2,
+                                name = L["Active Set"],
+                                type = "select",
+                                get = function() return A.petsDB:GetCurrentProfile(); end,
+                                set = function(info, val)
+                                    A.petsDB:SetProfile(val);
+                                end,
+                                values = function()
+                                    local profiles = {};
+
+                                    for k,v in pairs(A.petsDB:GetProfiles()) do
+                                        profiles[v] = v;
+                                    end
+
+                                    return profiles;
+                                end,
+                            },
+                        },
+                    },
+                    defaultSets =
+                    {
+                        order = 20,
+                        name = L["Default sets"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            desc =
+                            {
+                                order = 0,
+                                name = L["Set here the default set or sets. This will be used when no set of sets is defined for an area or if area sets are disabled.\n\nIf nothing is defined here the add-on will search for a set named Default and use it.\n\nIf a newly created set do not appear here, do not worry and add a/some favorites, it will then be available.\n\n"],
+                                width = "full",
+                                type = "description",
+                                fontSize = "medium",
+                            },
                             select =
                             {
                                 order = 200,
@@ -3937,7 +4013,7 @@ function A:OptionsSets()
                                 values = function()
                                     local out = {};
 
-                                    for k,v in ipairs(A.petsDB:GetProfiles()) do
+                                    for k,v in pairs(A.petsDB:GetProfiles()) do
                                         if ( A.petsDB.profiles[v] ) then
                                             out[v] = v;
                                         end
@@ -4003,19 +4079,203 @@ function A:OptionsSets()
                                         end,
                                         width = "full",
                                         type = "description",
-                                    }
+                                    },
                                 },
                             },
                         },
                     },
-                    mounts =
+                    actions =
                     {
-                        order = 100,
-                        name = L["Mounts"],
+                        order = 30,
+                        name = L["Actions"],
                         type = "group",
                         inline = true,
                         args =
                         {
+                            createHeader =
+                            {
+                                order = 0,
+                                name = L["Create Set"],
+                                type = "header",
+                            },
+                            create = {
+                                order = 1,
+                                name = L["Create Set"],
+                                type = "input",
+                                set = function(info, val)
+                                    A.petsDB:SetProfile(val);
+                                end,
+                            },
+                            copyHeader =
+                            {
+                                order = 10,
+                                name = L["Copy Set"],
+                                type = "header",
+                            },
+                            copyDesc =
+                            {
+                                order = 11,
+                                name = L["Select which set to copy other the |cffe6cc80%s|r set.\n\n"]:format(A.petsDB:GetCurrentProfile()),
+                                width = "full",
+                                type = "description",
+                                fontSize = "medium",
+                            },
+                            copy = {
+                                order = 12,
+                                name = L["Copy Set"],
+                                type = "select",
+                                set = function(info, val)
+                                    A.petsDB:CopyProfile(val);
+                                end,
+                                values = function()
+                                    local profiles = {};
+                                    local current = A.petsDB:GetCurrentProfile();
+
+                                    for k,v in pairs(A.petsDB:GetProfiles()) do
+                                        if ( v ~= current ) then
+                                            profiles[v] = v;
+                                        end
+                                    end
+
+                                    return profiles;
+                                end,
+                                disabled = function()
+                                    if ( A:TableCount(A.petsDB:GetProfiles()) == 1 ) then
+                                        return 1;
+                                    end
+                                end,
+                            },
+                            resetHeader =
+                            {
+                                order = 20,
+                                name = L["Reset Set"],
+                                type = "header",
+                            },
+                            resetDesc =
+                            {
+                                order = 21,
+                                name = L["Reset the current active set. (|cffe6cc80%s|r)\n\n"]:format(A.petsDB:GetCurrentProfile()),
+                                width = "full",
+                                type = "description",
+                                fontSize = "medium",
+                            },
+                            reset = {
+                                order = 22,
+                                name = L["Reset Set"],
+                                type = "execute",
+                                func = function(info, val)
+                                    A.petsDB:ResetProfile();
+                                end,
+                            },
+                            deleteHeader =
+                            {
+                                order = 30,
+                                name = L["Delete Set"],
+                                type = "header",
+                            },
+                            delete = {
+                                order = 31,
+                                name = L["Delete Set"],
+                                type = "select",
+                                set = function(info, val)
+                                    A:PopMessageFrame("deletePetSet", val, val);
+                                end,
+                                values = function()
+                                    local profiles = {};
+                                    local current = A.petsDB:GetCurrentProfile();
+
+                                    for k,v in pairs(A.petsDB:GetProfiles()) do
+                                        if ( v ~= current and v ~= "Default" ) then
+                                            profiles[v] = v;
+                                        end
+                                    end
+
+                                    return profiles;
+                                end,
+                                disabled = function()
+                                    local profiles = {};
+                                    local current = A.petsDB:GetCurrentProfile();
+
+                                    for k,v in pairs(A.petsDB:GetProfiles()) do
+                                        if ( v ~= current and v ~= "Default" ) then
+                                            profiles[v] = v;
+                                        end
+                                    end
+
+                                    if ( A:TableCount(profiles) == 0 ) then
+                                        return 1;
+                                    end
+                                end,
+                            },
+                        },
+                    },
+                },
+            },
+            mountsSets =
+            {
+                order = 1,
+                name = L["Mounts"],
+                type = "group",
+                args =
+                {
+                    activ =
+                    {
+                        order = 0,
+                        name = L["Active Set"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            desc =
+                            {
+                                order = 0,
+                                name = L["Here you can select the active set for |cffff3333edition|r.\n\nI insist on edition because selecting a set here will not make the add-on using it for random summon. This will just define which set you are editing when selecting favorites within the lists.\n\nSee the Default Sets section below to select which sets the add-on will use when random summoning companions or mounts.\n\n"],
+                                width = "full",
+                                type = "description",
+                                fontSize = "medium",
+                            },
+                            header =
+                            {
+                                order = 1,
+                                name = L["Active Set"],
+                                type = "header",
+                            },
+                            selectProfile = {
+                                order = 2,
+                                name = L["Active Set"],
+                                type = "select",
+                                get = function() return A.mountsDB:GetCurrentProfile(); end,
+                                set = function(info, val)
+                                    A.mountsDB:SetProfile(val);
+                                end,
+                                values = function()
+                                    local profiles = {};
+
+                                    for k,v in pairs(A.mountsDB:GetProfiles()) do
+                                        profiles[v] = v;
+                                    end
+
+                                    return profiles;
+                                end,
+                            },
+                        },
+                    },
+                    defaultSets =
+                    {
+                        order = 20,
+                        name = L["Default sets"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            desc =
+                            {
+                                order = 0,
+                                name = L["Set here the default set or sets. This will be used when no set of sets is defined for an area or if area sets are disabled.\n\nIf nothing is defined here the add-on will search for a set named Default and use it.\n\nIf a newly created set do not appear here, do not worry and add a/some favorites, it will then be available.\n\n"],
+                                width = "full",
+                                type = "description",
+                                fontSize = "medium",
+                            },
                             select =
                             {
                                 order = 200,
@@ -4074,8 +4334,14 @@ function A:OptionsSets()
                                                 local set = A:BuildTempSetTable("MOUNTS", A.db.profile.defaultSets.mounts);
 
                                                 for k,v in pairs(set) do
+                                                    local subList = "";
+
                                                     for kk,vv in pairs(v) do
-                                                        list = list..", "..A:GetMountNameBySpellID(vv);
+                                                        subList = subList..", "..A:GetMountNameBySpellID(vv);
+                                                    end
+
+                                                    if ( subList ~= "" ) then
+                                                        list = list..A.mountCat[k]..":\n"..A:StringTrim(subList, "%s,").."\n\n";
                                                     end
                                                 end
                                             end
@@ -4086,8 +4352,135 @@ function A:OptionsSets()
                                         end,
                                         width = "full",
                                         type = "description",
-                                    }
+                                    },
                                 },
+                            },
+                        },
+                    },
+                    actions =
+                    {
+                        order = 30,
+                        name = L["Actions"],
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            createHeader =
+                            {
+                                order = 0,
+                                name = L["Create Set"],
+                                type = "header",
+                            },
+                            create = {
+                                order = 1,
+                                name = L["Create Set"],
+                                type = "input",
+                                set = function(info, val)
+                                    A.mountsDB:SetProfile(val);
+                                end,
+                            },
+                            copyHeader =
+                            {
+                                order = 10,
+                                name = L["Copy Set"],
+                                type = "header",
+                            },
+                            copyDesc =
+                            {
+                                order = 11,
+                                name = L["Select which set to copy other the |cffe6cc80%s|r set.\n\n"]:format(A.mountsDB:GetCurrentProfile()),
+                                width = "full",
+                                type = "description",
+                                fontSize = "medium",
+                            },
+                            copy = {
+                                order = 12,
+                                name = L["Copy Set"],
+                                type = "select",
+                                set = function(info, val)
+                                    A.mountsDB:CopyProfile(val);
+                                end,
+                                values = function()
+                                    local profiles = {};
+                                    local current = A.mountsDB:GetCurrentProfile();
+
+                                    for k,v in pairs(A.mountsDB:GetProfiles()) do
+                                        if ( v ~= current ) then
+                                            profiles[v] = v;
+                                        end
+                                    end
+
+                                    return profiles;
+                                end,
+                                disabled = function()
+                                    if ( A:TableCount(A.mountsDB:GetProfiles()) == 1 ) then
+                                        return 1;
+                                    end
+                                end,
+                            },
+                            resetHeader =
+                            {
+                                order = 20,
+                                name = L["Reset Set"],
+                                type = "header",
+                            },
+                            resetDesc =
+                            {
+                                order = 21,
+                                name = L["Reset the current active set. (|cffe6cc80%s|r)\n\n"]:format(A.mountsDB:GetCurrentProfile()),
+                                width = "full",
+                                type = "description",
+                                fontSize = "medium",
+                            },
+                            reset =
+                            {
+                                order = 22,
+                                name = L["Reset Set"],
+                                type = "execute",
+                                func = function(info, val)
+                                    A.mountsDB:ResetProfile();
+                                end,
+                            },
+                            deleteHeader =
+                            {
+                                order = 30,
+                                name = L["Delete Set"],
+                                type = "header",
+                            },
+                            delete =
+                            {
+                                order = 31,
+                                name = L["Delete Set"],
+                                type = "select",
+                                set = function(info, val)
+                                    A:PopMessageFrame("deleteMountSet", val, val);
+                                end,
+                                values = function()
+                                    local profiles = {};
+                                    local current = A.mountsDB:GetCurrentProfile();
+
+                                    for k,v in pairs(A.mountsDB:GetProfiles()) do
+                                        if ( v ~= current and v ~= "Default" ) then
+                                            profiles[v] = v;
+                                        end
+                                    end
+
+                                    return profiles;
+                                end,
+                                disabled = function()
+                                    local profiles = {};
+                                    local current = A.mountsDB:GetCurrentProfile();
+
+                                    for k,v in pairs(A.mountsDB:GetProfiles()) do
+                                        if ( v ~= current and v ~= "Default" ) then
+                                            profiles[v] = v;
+                                        end
+                                    end
+
+                                    if ( A:TableCount(profiles) == 0 ) then
+                                        return 1;
+                                    end
+                                end,
                             },
                         },
                     },
@@ -4544,14 +4937,6 @@ function A:OptionsSets()
             },
         },
     };
-
-    sets.args.petsProfiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(A.petsDB, true);
-    sets.args.petsProfiles.name = L["Companions"];
-    sets.args.petsProfiles.order = 0;
-
-    sets.args.mountsProfiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(A.mountsDB, true);
-    sets.args.mountsProfiles.name = L["Mounts"];
-    sets.args.mountsProfiles.order = 1;
 
     return sets;
 end

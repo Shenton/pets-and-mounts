@@ -62,7 +62,7 @@ A.DebugMessage = A.DebugMessageDummy;
     Popup methods
 -------------------------------------------------------------------------------]]--
 
-function A:PopMessageFrame(message, strings)
+function A:PopMessageFrame(message, strings, args)
     if ( type(message) == "table" ) then
         A.popupMessageFrame.cfg = message;
         A.popupMessageFrame:Show();
@@ -83,6 +83,10 @@ function A:PopMessageFrame(message, strings)
             else
                 cfg.text = cfg.text:format(strings);
             end
+        end
+
+        if ( args ) then
+            cfg.args = args;
         end
 
         if ( cfg.enterOK and not cfg.LeftButtonScript ) then

@@ -156,6 +156,29 @@ function A:GetMountCommand(button)
     return "/pammount", nil;
 end
 
+--- Is the player a boomkin?
+function A:IsBoomkin()
+    if ( A.playerCurrentSpecID ~= 102 ) then
+        A:DebugMessage("IsBoomkin() - false");
+        return nil;
+    end
+
+    local form = GetShapeshiftForm(1);
+
+    if ( form == 0 ) then
+        A:DebugMessage("IsBoomkin() - false");
+        return nil;
+    end
+
+    if ( form ~= 4 ) then
+        A:DebugMessage("IsBoomkin() - false");
+        return nil;
+    end
+
+    A:DebugMessage("IsBoomkin() - true");
+    return 1;
+end
+
 --- Set the spells names for the player's class
 -- This will check if the spell name is not nil
 -- it is required as for some ppl they are not available on login
@@ -173,8 +196,8 @@ A.classesSpellsTable =
         druidCatForm = 768, -- lvl 6
         druidTravelForm = 783, -- lvl 16
         --druidAquaticForm = 1066, -- lvl 18
-        druidFlightForm = 33943, -- lvl 58
-        druidSwiftFlightForm = 40120, -- lvl 70
+        --druidFlightForm = 33943, -- lvl 58
+        --druidSwiftFlightForm = 40120, -- lvl 70
     },
     HUNTER =
     {
@@ -270,20 +293,20 @@ end
 function A:SetDruidPreClickMacro()
     if ( A.db.profile.druidWantFormsOnMove ) then
         if ( GetUnitSpeed("player") > 0 ) then
-            if ( IsFlyableArea() and IsSpellKnown(40120) and not IsMounted() ) then
-                return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidSwiftFlightForm);
-            elseif ( A.playerLevel >= 58 and A:IsFlyable() and not IsMounted() ) then
-                return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidFlightForm);
+            -- if ( IsFlyableArea() and IsSpellKnown(40120) and not IsMounted() ) then
+                -- return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidSwiftFlightForm);
+            -- elseif ( A.playerLevel >= 58 and A:IsFlyable() and not IsMounted() ) then
+                -- return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidFlightForm);
             -- elseif ( A.playerLevel >= 18 and not IsMounted() ) then
                 -- return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidTravelForm);
-            elseif ( A.playerLevel >= 16 and not IsMounted() ) then
+            if ( A.playerLevel >= 16 and not IsMounted() ) then
                 return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
             elseif ( A.playerLevel >= 6 and not IsMounted() ) then
                 return ("%s\n/cast %s"):format(A.macroDismountString, A.druidCatForm);
             else
                 return "/pammount";
             end
-        elseif ( GetShapeshiftForm(1) > 0 and ((A.playerCurrentSpecID == 102 and GetShapeshiftForm(1) ~= 5) or A.playerCurrentSpecID ~= 102) ) then
+        elseif ( GetShapeshiftForm(1) > 0 and not A:IsBoomkin() ) then
             if ( A.db.profile.noMountAfterCancelForm ) then
                 return "/cancelform [form]";
             else
@@ -293,16 +316,16 @@ function A:SetDruidPreClickMacro()
             return "/pammount";
         end
     else
-        if ( not IsFlyableArea() and not IsMounted() and GetUnitSpeed("player") > 0 and A.playerLevel >= 18 ) then
-            return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidTravelForm);
-        elseif ( not IsFlyableArea() and not IsMounted() and GetUnitSpeed("player") > 0 and A.playerLevel >= 16 ) then
+        -- if ( not IsFlyableArea() and not IsMounted() and GetUnitSpeed("player") > 0 and A.playerLevel >= 18 ) then
+            -- return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidTravelForm);
+        -- elseif ( not IsFlyableArea() and not IsMounted() and GetUnitSpeed("player") > 0 and A.playerLevel >= 16 ) then
+            -- return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
+        -- elseif ( IsFlyableArea() and IsSpellKnown(40120) and not IsMounted() ) then
+            -- return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidSwiftFlightForm);
+        if ( A.playerLevel >= 58 and A:IsFlyable() and not IsMounted() ) then
             return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
-        elseif ( IsFlyableArea() and IsSpellKnown(40120) and not IsMounted() ) then
-            return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidSwiftFlightForm);
-        elseif ( A.playerLevel >= 58 and A:IsFlyable() and not IsMounted() ) then
-            return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidFlightForm);
         elseif ( A.playerLevel >= 20 and A:CanRide() and not IsMounted() ) then
-            if ( GetShapeshiftForm(1) > 0 and ((A.playerCurrentSpecID == 102 and GetShapeshiftForm(1) ~= 5) or A.playerCurrentSpecID ~= 102) ) then
+            if ( GetShapeshiftForm(1) > 0 and not A:IsBoomkin() ) then
                 if ( A.db.profile.noMountAfterCancelForm ) then
                     return "/cancelform [form]";
                 else
@@ -791,7 +814,7 @@ function A:PreClickMountForced(button, clickedBy)
     --if ( A.playerClass == "DEATHKNIGHT" ) then
     -- Druid
     if ( A.playerClass == "DRUID" ) then
-        if ( GetShapeshiftForm(1) > 0 and ((A.playerCurrentSpecID == 102 and GetShapeshiftForm(1) ~= 5) or A.playerCurrentSpecID ~= 102) ) then
+        if ( GetShapeshiftForm(1) > 0 and not A:IsBoomkin() ) then
             if ( A.db.profile.noMountAfterCancelForm ) then
                 command = "/cancelform [form]";
             else

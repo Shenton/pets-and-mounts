@@ -8,10 +8,12 @@
 
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 
--- 1.7.1 changelog
+-- 1.7.2 changelog
 --[[
-Fixed empty tables with new mounts DB profiles
-Fixed search frames
+Fixed Druid's Travel Form modifications
+Fixed Druid's form ID for boomkin
+Removed default Ace3 profiles panel and added customs ones for favorites sets to avoid confusion
+Moved and split Default Sets tab to their respective set tab
 ]]--
 
 local A = _G["PetsAndMountsGlobal"];
