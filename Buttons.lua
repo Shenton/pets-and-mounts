@@ -102,10 +102,6 @@ function A:SetMacroDismountString()
         A.macroDismountString = "/dismount [mounted,noflying]";
     end
 
-    -- if ( A.playerClass == "DRUID" or A.playerClass == "SHAMAN" ) then
-        -- A.macroDismountString = A.macroDismountString.."\n/cancelform [form]\n/stopmacro [form]";
-    -- end
-
     if ( A.db.profile.vehicleExit ) then
         A.macroDismountString = A.macroDismountString.."\n/leavevehicle [vehicleui]";
     end
@@ -195,14 +191,9 @@ A.classesSpellsTable =
     {
         druidCatForm = 768, -- lvl 6
         druidTravelForm = 783, -- lvl 16
-        --druidAquaticForm = 1066, -- lvl 18
-        --druidFlightForm = 33943, -- lvl 58
-        --druidSwiftFlightForm = 40120, -- lvl 70
     },
     HUNTER =
     {
-        --hunterAspectHawk = 13165, -- lvl 12
-        --hunterAspectIronHawk = 109260, -- lvl 45 - tier 3 row 2 - id 8
         hunterAspectFox = 172106, -- lvl 84
         hunterAspectCheetah = 5118, -- lvl 24
         hunterAspectPack = 13159, -- lvl 56
@@ -293,12 +284,6 @@ end
 function A:SetDruidPreClickMacro()
     if ( A.db.profile.druidWantFormsOnMove ) then
         if ( GetUnitSpeed("player") > 0 ) then
-            -- if ( IsFlyableArea() and IsSpellKnown(40120) and not IsMounted() ) then
-                -- return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidSwiftFlightForm);
-            -- elseif ( A.playerLevel >= 58 and A:IsFlyable() and not IsMounted() ) then
-                -- return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidFlightForm);
-            -- elseif ( A.playerLevel >= 18 and not IsMounted() ) then
-                -- return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidTravelForm);
             if ( A.playerLevel >= 16 and not IsMounted() ) then
                 return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
             elseif ( A.playerLevel >= 6 and not IsMounted() ) then
@@ -316,12 +301,6 @@ function A:SetDruidPreClickMacro()
             return "/pammount";
         end
     else
-        -- if ( not IsFlyableArea() and not IsMounted() and GetUnitSpeed("player") > 0 and A.playerLevel >= 18 ) then
-            -- return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidTravelForm);
-        -- elseif ( not IsFlyableArea() and not IsMounted() and GetUnitSpeed("player") > 0 and A.playerLevel >= 16 ) then
-            -- return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
-        -- elseif ( IsFlyableArea() and IsSpellKnown(40120) and not IsMounted() ) then
-            -- return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidSwiftFlightForm);
         if ( A.playerLevel >= 58 and A:IsFlyable() and not IsMounted() ) then
             return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
         elseif ( A.playerLevel >= 20 and A:CanRide() and not IsMounted() ) then
@@ -334,8 +313,6 @@ function A:SetDruidPreClickMacro()
             else
                 return "/pammount";
             end
-        -- elseif ( A.playerLevel >= 18 and not IsMounted() ) then
-            -- return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidTravelForm);
         elseif ( A.playerLevel >= 16 and not IsMounted() ) then
             return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
         elseif ( A.playerLevel >= 6 and not IsMounted() ) then
@@ -357,14 +334,12 @@ function A:SetHunterPreClickMacro()
         cheetahOrPack = A.hunterAspectCheetah;
     end
 
-    if ( not cheetahOrPack ) then
-        return A.macroDismountString;
-    elseif ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
-        if ( A.playerLevel >= 24 ) then
-            return ("%s\n/cast !%s"):format(A.macroDismountString, cheetahOrPack);
-        end
-    else
+    if ( cheetahOrPack and not IsMounted() and GetUnitSpeed("player") > 0 ) then
+        return ("%s\n/cast !%s"):format(A.macroDismountString, cheetahOrPack);
+    elseif ( cheetahOrPack and not IsMounted() ) then
         return ("/cancelaura %s\n/pammount"):format(cheetahOrPack);
+    else
+        return "/pammount";
     end
 end
 

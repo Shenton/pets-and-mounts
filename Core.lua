@@ -8,12 +8,9 @@
 
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 
--- 1.7.2 changelog
+-- 1.7.3 changelog
 --[[
-Fixed Druid's Travel Form modifications
-Fixed Druid's form ID for boomkin
-Removed default Ace3 profiles panel and added customs ones for favorites sets to avoid confusion
-Moved and split Default Sets tab to their respective set tab
+Fixed a mistake with low level hunter
 ]]--
 
 local A = _G["PetsAndMountsGlobal"];
@@ -80,6 +77,8 @@ function A:SlashCommand(input)
     --@debug@
     elseif ( arg1 == "mapids" ) then
         A:ProcessMapID();
+    elseif ( arg1 == "surface" ) then
+        A:ProcessSurfaceSpells();
     --@end-debug@
     end
 end
@@ -828,7 +827,7 @@ function A:BuildMountsTable(force)
             -- Using the first non water mount found for water surface testing
             -- Bring me that back Blizzard!!
             -- if ( not A.swimmingCheckSpellID and bit.band(mountType, 0x8) == 0 ) then
-                -- A.swimmingCheckSpellID = spellID;
+                -- A.swimmingCheckSpellID = 29998; -- Decrepit Fever
             -- end
 
             if ( cat ) then
@@ -1238,7 +1237,7 @@ function A:GetCurrentMapID()
 end
 
 --@debug@
--- Dump zones with the same name in a AceGUI dialog
+-- Dump zones with the same name in an AceGUI dialog
 function A:CreateMapIDFrame()
     if ( not A.mapIDFrame ) then
         if ( not A.AceConfigDialog ) then
@@ -1253,6 +1252,8 @@ function A:CreateMapIDFrame()
         A.mapIDFrame.editBox:SetNumLines(20);
         A.mapIDFrame.editBox:SetFullWidth(1);
         A.mapIDFrame:AddChild(A.mapIDFrame.editBox);
+    else
+        A.mapIDFrame:Show();
     end
 end
 function A:ProcessMapID()
@@ -3201,3 +3202,25 @@ function A:OnEnable()
     -- Set everything
     A:SetEverything();
 end
+
+--@debug@
+local surfaceSpells = 1;
+local spellTest;
+function A:ProcessSurfaceSpells()
+    spellTest = GetSpellInfo(surfaceSpells);
+    A:ScheduleTimer("ProcessSurfaceSpells2", 0.2);
+end
+function A:ProcessSurfaceSpells2()
+    spellTest = GetSpellInfo(surfaceSpells);
+    if ( spellTest ) then
+        if ( IsUsableSpell(surfaceSpells) ) then
+            print(A.color.GREEN..surfaceSpells);
+        else
+            --print(A.color.RED..surfaceSpells);
+        end
+    end
+    spellTest = nil;
+    surfaceSpells = surfaceSpells + 1;
+    A:ProcessSurfaceSpells();
+end
+--@end-debug@
