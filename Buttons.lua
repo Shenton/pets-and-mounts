@@ -304,7 +304,11 @@ function A:SetDruidPreClickMacro()
         if ( A.playerLevel >= 58 and A:IsFlyable() and not IsMounted() ) then
             return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
         elseif ( A.playerLevel >= 20 and A:CanRide() and not IsMounted() ) then
-            if ( GetShapeshiftForm(1) > 0 and not A:IsBoomkin() ) then
+            if ( GetUnitSpeed("player") > 0 ) then
+                if ( A.playerLevel >= 16 and not IsMounted() ) then
+                    return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
+                end
+            elseif ( GetShapeshiftForm(1) > 0 and not A:IsBoomkin() ) then
                 if ( A.db.profile.noMountAfterCancelForm ) then
                     return "/cancelform [form]";
                 else
