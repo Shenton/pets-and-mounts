@@ -48,3 +48,7 @@ Core.lua
 Buttons.lua
 Messages.lua
 Summon.lua
+
+#@debug@
+DevTools.lua
+#@end-debug@

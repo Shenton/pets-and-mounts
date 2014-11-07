@@ -191,6 +191,7 @@ A.classesSpellsTable =
     {
         druidCatForm = 768, -- lvl 6
         druidTravelForm = 783, -- lvl 16
+        druidFlightForm = 165962; -- lvl 58
     },
     HUNTER =
     {
@@ -284,7 +285,9 @@ end
 function A:SetDruidPreClickMacro()
     if ( A.db.profile.druidWantFormsOnMove ) then
         if ( GetUnitSpeed("player") > 0 ) then
-            if ( A.playerLevel >= 16 and not IsMounted() ) then
+            if ( A:IsGlyphed(114338) and A.playerLevel >= 58 and A:IsFlyable() and not IsMounted() ) then
+                return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidFlightForm);
+            elseif ( A.playerLevel >= 16 and not IsMounted() ) then
                 return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
             elseif ( A.playerLevel >= 6 and not IsMounted() ) then
                 return ("%s\n/cast %s"):format(A.macroDismountString, A.druidCatForm);
@@ -302,12 +305,14 @@ function A:SetDruidPreClickMacro()
         end
     else
         if ( A.playerLevel >= 58 and A:IsFlyable() and not IsMounted() ) then
-            return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
+            if ( A:IsGlyphed(114338) ) then
+                return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidFlightForm);
+            else
+                return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
+            end
         elseif ( A.playerLevel >= 20 and A:CanRide() and not IsMounted() ) then
-            if ( GetUnitSpeed("player") > 0 ) then
-                if ( A.playerLevel >= 16 and not IsMounted() ) then
-                    return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
-                end
+            if ( GetUnitSpeed("player") > 0 and not IsMounted() ) then
+                return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
             elseif ( GetShapeshiftForm(1) > 0 and not A:IsBoomkin() ) then
                 if ( A.db.profile.noMountAfterCancelForm ) then
                     return "/cancelform [form]";
@@ -936,8 +941,6 @@ function A:SetPostClickMacro(noCustom)
             end
         -- Druid
         elseif ( A.playerClass == "DRUID" ) then
-            -- if ( A.playerLevel >= 18 ) then
-                -- A.postClickMacro = ("%s\n/cast [swimming] %s;[nomounted] %s"):format(A.macroDismountString, A.druidTravelForm, A.druidTravelForm);
             if ( A.playerLevel >= 16 ) then
                 A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.druidTravelForm);
             else
