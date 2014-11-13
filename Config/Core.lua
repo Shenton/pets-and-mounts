@@ -1166,83 +1166,58 @@ function A:OptionsRoot()
                             },
                         },
                     },
-                    --[[flyingPetWithFlyingMount =
-                    {
-                        order = 150,
-                        name = L["Flying pet with flying mount."],
-                        type = "group",
-                        inline = true,
-                        args =
-                        {
-                            enableHeader =
-                            {
-                                order = 10,
-                                name = L["Enable"],
-                                type = "header",
-                            },
-                            enableToggle =
-                            {
-                                order = 11,
-                                name = L["Enable"],
-                                desc = L["Enable flying pet with flying mount."],
-                                type = "toggle",
-                                set = function()
-                                    A.db.profile.flyingPetWithFlyingMount.enabled = not A.db.profile.flyingPetWithFlyingMount.enabled;
-                                end,
-                                get = function() return A.db.profile.flyingPetWithFlyingMount.enabled; end,
-                            },
-                            optionsHeader =
-                            {
-                                order = 100,
-                                name = L["Options"],
-                                type = "header",
-                            },
-                            timerSelect =
-                            {
-                                order = 101,
-                                name = L["Timer"],
-                                desc = L["Select the time between checking if you are flying."],
-                                type = "select",
-                                disabled = function() return not A.db.profile.flyingPetWithFlyingMount.enabled; end,
-                                values = function()
-                                    local out = {};
+                    -- flyingPetWithFlyingMount =
+                    -- {
+                        -- order = 150,
+                        -- name = L["Flying pet with flying mount."],
+                        -- type = "group",
+                        -- inline = true,
+                        -- args =
+                        -- {
+                            -- enableHeader =
+                            -- {
+                                -- order = 10,
+                                -- name = L["Enable"],
+                                -- type = "header",
+                            -- },
+                            -- enableToggle =
+                            -- {
+                                -- order = 11,
+                                -- name = L["Enable"],
+                                -- desc = L["Enable flying pet with flying mount."],
+                                -- type = "toggle",
+                                -- set = function()
+                                    -- A.db.profile.flyingPetWithFlyingMount.enabled = not A.db.profile.flyingPetWithFlyingMount.enabled;
+                                -- end,
+                                -- get = function() return A.db.profile.flyingPetWithFlyingMount.enabled; end,
+                            -- },
+                            -- optionsHeader =
+                            -- {
+                                -- order = 100,
+                                -- name = L["Options"],
+                                -- type = "header",
+                            -- },
+                            -- setsSelect =
+                            -- {
+                                -- order = 102,
+                                -- name = L["Set"],
+                                -- type = "select",
+                                -- values = function()
+                                    -- local profiles = {};
 
-                                    for i=1,10 do
-                                        out[i] = i;
-                                    end
+                                    -- for k,v in pairs(A.petsDB:GetProfiles()) do
+                                        -- profiles[v] = v;
+                                    -- end
 
-                                    return out;
-                                end,
-                                set = function(info, val)
-                                    A.db.profile.flyingPetWithFlyingMount.timer = val;
-
-                                    A:SetFlyingPetWithFlyingMountTimer();
-                                end,
-                                get = function()
-                                    return A.db.profile.flyingPetWithFlyingMount.timer;
-                                end,
-                            },
-                            setsSelect =
-                            {
-                                order = 102,
-                                name = L["Set"],
-                                type = "select",
-                                values = function()
-                                    local out = {};
-
-                                    for k in pairs(A.db.global.savedSets.pets) do
-                                        out[k] = k;
-                                    end
-
-                                    return out;
-                                end;
-                                get = function() return A.db.profile.flyingPetWithFlyingMount.set; end,
-                                set = function(info, val)
-                                    A.db.profile.flyingPetWithFlyingMount.set = val;
-                                end,
-                            },
-                        },
-                    },]]--
+                                    -- return profiles;
+                                -- end;
+                                -- get = function() return A.db.profile.flyingPetWithFlyingMount.set; end,
+                                -- set = function(info, val)
+                                    -- A.db.profile.flyingPetWithFlyingMount.set = val;
+                                -- end,
+                            -- },
+                        -- },
+                    -- },
                     petsSummonFilters =
                     {
                         order = 200,

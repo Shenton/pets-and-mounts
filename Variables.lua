@@ -362,24 +362,24 @@ A.underwaterBreathingSpells =
 -- Pets summon filters
 -- Integer indexed table of tables
 -- Each table contains:
--- - name = name of the filter localized, optional when option is false
+-- - name = name of the filter localized
 -- - func = the function called by the auto pet method, it return true when it should be filtered
 -- - option = bool if true it will appear in the options panel and can be disabled/enabled by the player
 -- - desc = optional, it will search for a description to add to the Ace3 config
 A.petsSummonFilters =
 {
     { -- 1
-        --name = L["Stealthed"],
+        name = L["Stealthed"],
         func = function() return A:IsStealthed(); end,
         option = nil,
     },
     { -- 2
-        --name = L["Feign Death"],
+        name = L["Feign Death"],
         func = function() return UnitIsFeignDeath("player"); end,
         option = nil,
     },
     { -- 3
-        --name = L["Casting"],
+        name = L["Casting"],
         func = function()
             if ( UnitCastingInfo("player") ) then return 1; end
             if ( UnitChannelInfo("player") ) then return 1; end
@@ -388,7 +388,7 @@ A.petsSummonFilters =
         option = nil,
     },
     { -- 4
-        --name = L["Dead"],
+        name = L["Dead"],
         func = function() return UnitIsDeadOrGhost("player"); end,
         option = nil,
     },
@@ -398,12 +398,12 @@ A.petsSummonFilters =
         option = 1,
     },
     { -- 6
-        -- Will never go to options, Combat, reviving, fly path end, etc, delay.
+        name = "noAuto",
         func = function() return A.noAutoPet; end,
         option = nil,
     },
     { -- 7
-        --name = L["Looting"],
+        name = L["Looting"],
         func = function()
             if ( GetNumLootItems() > 0 ) then
                 return 1;
@@ -423,7 +423,7 @@ A.petsSummonFilters =
         option = 1,
     },
     { -- 10
-        --name = L["Falling"],
+        name = L["Falling"],
         func = function() return IsFalling(); end,
         option = nil,
     },
@@ -433,22 +433,22 @@ A.petsSummonFilters =
         option = 1,
     },
     { -- 12
-        --name = L["Fly path"],
+        name = L["Fly path"],
         func = function() return UnitOnTaxi("player"); end,
         option = nil,
     },
     { -- 13
-        --name = L["Regen"],
+        name = L["Regen"],
         func = function() return A:HasRegenBuff(); end,
         option = nil,
     },
     { -- 14
-        --name = L["Control lost"],
+        name = L["Control lost"],
         func = function() return not HasFullControl(); end,
         option = nil,
     },
     { -- 15
-        --name = L["Barber"],
+        name = L["Barber"],
         func = function()
             if ( GetBarberShopStyleInfo(1) ) then return 1; end
             return nil;
@@ -532,3 +532,21 @@ A.currentMountsSet =
     [6] = {}, -- Water walking
     [7] = {}, -- Repair
 };
+
+A.draenorMapIDs =
+{
+    962, -- Draenor
+    978, -- Ashran
+    941, -- Frostfire Ridge
+    976, -- Frostwall
+    949, -- Gorgrond
+    971, -- Lunarfall
+    950, -- Nagrand
+    947, -- Shadowmoon Valley
+    948, -- Spires of Arak
+    1009, -- Stormshield
+    946, -- Talador
+    945, -- Tanaan Jungle
+    970, -- Tanaan Jungle - Assault on the Dark Portal
+    1011, -- Warspear
+}

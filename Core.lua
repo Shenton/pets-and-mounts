@@ -9,11 +9,10 @@
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 -- TODO: Handle Druid's new glyphs
 
--- 1.7.3 changelog
+-- 1.7.4 changelog
 --[[
-Fixed a mistake with low level hunter
-Added Travel Form on move when Forms on move is disabled and in a ground only area
-Fixed Druid's Travel Form when Glyph of the Stag is enabled
+Names for all the pets filters, allow me to force disable them
+Quick temporary fix for IsFlyableArea() in Draenor
 ]]--
 
 local A = _G["PetsAndMountsGlobal"];
@@ -1553,18 +1552,6 @@ function A:SetFishingPoleSubType()
     end
 end
 
---- Set the flying pet with flying mount timer
---[[function A:SetFlyingPetWithFlyingMountTimer()
-    if ( not A.db.profile.flyingPetWithFlyingMount.enabled and A.flyingPetWithFlyingMountTimer ) then
-        A:CancelTimer(A.flyingPetWithFlyingMountTimer, 1);
-    elseif ( A.db.profile.flyingPetWithFlyingMount.enabled and A.flyingPetWithFlyingMountTimer ) then
-        A:CancelTimer(A.flyingPetWithFlyingMountTimer, 1);
-        A.flyingPetWithFlyingMountTimer = A:ScheduleRepeatingTimer("FlyingPetWithFlyingMountCallback", A.db.profile.flyingPetWithFlyingMount.timer);
-    elseif ( A.db.profile.flyingPetWithFlyingMount.enabled and not A.flyingPetWithFlyingMountTimer ) then
-        A.flyingPetWithFlyingMountTimer = A:ScheduleRepeatingTimer("FlyingPetWithFlyingMountCallback", A.db.profile.flyingPetWithFlyingMount.timer);
-    end
-end]]--
-
 --- Set everything
 function A:SetEverything()
     A:DebugMessage("SetEverything()");
@@ -1601,7 +1588,6 @@ function A:SetEverything()
     A:ForceSetsUpdate();
 
     A:SetMainTimer();
-    --A:SetFlyingPetWithFlyingMountTimer();
 
     A.addonRunning = 1;
 end
@@ -2327,22 +2313,6 @@ function A:PLAYER_TALENT_UPDATE()
     A:SetPostClickMacro();
 end
 
---[[function A:FlyingPetWithFlyingMountCallback()
-    local current = C_PetJournal.GetSummonedPetGUID();
-
-    if ( current and IsFlying() ) then
-        if ( A.db.profile.flyingPetWithFlyingMount.set and A.db.global.savedSets.pets[A.db.profile.flyingPetWithFlyingMount.set] ) then
-            A.flyingPetWithFlyingMountLastPet = current;
-            A:AutoPet();
-        end
-    elseif ( not IsFlying() ) then
-        if ( A.flyingPetWithFlyingMountLastPet ) then
-            A:SummonPet(A.flyingPetWithFlyingMountLastPet);
-            A.flyingPetWithFlyingMountLastPet = nil;
-        end
-    end
-end]]--
-
 function A:PET_BATTLE_OPENING_START()
     if ( InCombatLockdown() ) then
         return;
@@ -2675,12 +2645,11 @@ A.aceDefaultDB =
         dataBrokerPetRarity = 1, -- d
         dataBrokerPetLevel = 1, -- d
         anglersFishingRaft = 1, -- d
-        --[[flyingPetWithFlyingMount = -- d
+        flyingPetWithFlyingMount = -- d
         {
             enabled = nil,
-            timer = 3,
             set = nil,
-        },]]--
+        },
         oculusDrakes = 1,
         hybridsSelectionTab = nil, -- d
         hybridsSelectionOnlyOwned = 1, -- d
@@ -2979,6 +2948,10 @@ A.loginMessagesList =
     "newCompanionsFilters161",
     "wodModifications170",
 };
+A.loginMessagesListForced =
+{
+    "wodDraenorIsflyingbug603",
+};
 function A:LoginMessages()
     for k,v in ipairs(A.loginMessagesList) do
         if ( not A.db.global.popLoginMessages[v] ) then
@@ -2986,6 +2959,13 @@ function A:LoginMessages()
                 A:PopMessageFrame(v);
             end
 
+            A.db.global.popLoginMessages[v] = 1;
+        end
+    end
+
+    for k,v in ipairs(A.loginMessagesListForced) do
+        if ( not A.db.global.popLoginMessages[v] ) then
+            A:PopMessageFrame(v);
             A.db.global.popLoginMessages[v] = 1;
         end
     end

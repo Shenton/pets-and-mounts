@@ -22,6 +22,7 @@ L["Alt"] = true;
 L["Aquatic"] = true;
 L["Author"] = true;
 
+L["Barber"] = true;
 L["Bindings"] = true;
 L["Bottom"] = true;
 L["Buttons"] = true;
@@ -37,6 +38,7 @@ L["Control"] = true;
 L["Credits"] = true;
 L["Current"] = true;
 
+L["Dead"] = true;
 L["Default"] = true;
 L["Debug"] = true;
 L["Delete"] = true;
@@ -45,6 +47,7 @@ L["Dock"] = true;
 L["Enable"] = true;
 L["Expand"] = true;
 
+L["Falling"] = true;
 L["Filters"] = true;
 L["Fly"] = true;
 L["Flying"] = true;
@@ -437,6 +440,8 @@ L["Select which set to copy other the |cffe6cc80%s|r set.\n\n"] = true;
 L["Reset Set"] = true;
 L["Reset the current active set. (|cffe6cc80%s|r)\n\n"] = true;
 L["Delete Set"] = true;
+L["Fly path"] = true;
+L["Control lost"] = true;
 -- About
 L["Auto and random summon for your pets and mounts, highly customizable. With Data Broker support."] = true;
 L["A new version is available, version |cff33ff99%s|r revision |cff33ff99%s %s|r."] = true;
@@ -502,6 +507,7 @@ L["|cffff3333Anti grief/scam protection triggered, you should be careful.|r\n\nM
 L["|cffff3333Anti grief/scam protection triggered, you should be careful.|r\n\nMessage: |cffff3333%s|r was found in your %s %s custom LUA.\n\n|cff33ff99This code was not used.|r\n\nYou can disable the protection within the configuration panel."] = true
 L["New filters added for companions, rarity and level.\n\nThey are enabled by default and could have modified your companions list both in configuration panel and Data Broker menu.\n\nIt did not alter you sets or favorites, but you could want to modify them to use your highest level and rarity companions.\n\nTips: You can disable the \"Filter multiple\" option to see all your companions. Rarity and level are displayed next to their names in the list."] = true;
 L["WoD (6.02) modified a lot both companions and mounts APIs.\n\nCheck the add-on page on Curse for some explanations on those changes. The link can be found in the About section of the configuration panel.\n\nDo you want to open the configuration panel?"] = true;
+L["There is a bug within Draenor areas. The API always return true when asked if you are in a flyable area. As a temporary fix the add-on will check if you are in Draenor and always return false when checking if the zone is flyable.\n\nThe problem is every time you will want to summon a mount it will set your world map to the current one. This is not a big issue but this is something I hate to do as it is a total disrespect to the player. And yes when your world map is automatically set to the current one it is due to an add-on, the default interface do not do that.\n\nIf this is an issue for you just tell me and I will improve that temporary fix."] = true;
 -- Specials
 L["CUSTOM_MACROS_EXLANATIONS"] = [[|cff3399ffIf you cannot scroll the page down select a category on the left menu and return back.|r
 

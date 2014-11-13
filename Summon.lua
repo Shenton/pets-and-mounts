@@ -16,12 +16,14 @@ local type = type;
 local tContains = tContains;
 local math = math;
 local select = select;
+local pairs = pairs;
 
 -- GLOBALS: IsStealthed, UnitBuff, GetSpellInfo, UnitBuff, GetItemCount, InCombatLockdown
 -- GLOBALS: C_PetJournal, IsFlyableArea, IsSpellKnown, IsUsableSpell, GetMirrorTimerInfo
 -- GLOBALS: IsSwimming, IsSubmerged, GetNumCompanions, GetCompanionInfo, CallCompanion
 -- GLOBALS: GetProfessions, GetProfessionInfo, GetAchievementInfo, IsMounted, IsFlying
 -- GLOBALS: Dismount, VehicleExit, UnitExists, UnitIsPlayer, UnitIsUnit, C_MountJournal
+-- GLOBALS: SetMapToCurrentZone, GetCurrentMapAreaID
 
 --[[-------------------------------------------------------------------------------
     Pets methods
@@ -218,19 +220,22 @@ function A:RandomPet(playerCall)
 end
 
 --- Return if the pet summon should be filtered
-function A:IsPetSummonFiltered()
+function A:IsPetSummonFiltered(disabledFilter)
     if ( not A.petsSummonFiltersCache ) then
         A.petsSummonFiltersCache = {};
 
         for k,v in ipairs(A.petsSummonFilters) do
             if ( A.db.profile.petsSummonFilters[k] ) then
-                A.petsSummonFiltersCache[k] = v.func;
+                A.petsSummonFiltersCache[v.name] = v.func;
             end
         end
     end
 
-    for k,v in ipairs(A.petsSummonFiltersCache) do
-        if ( v() ) then return 1; end
+    for k,v in pairs(A.petsSummonFiltersCache) do
+        if ( k ~= disabledFilter and v() ) then
+            A:DebugMessage(("IsPetSummonFiltered() - %s"):format(k));
+            return 1;
+        end
     end
 
     return nil;
@@ -259,7 +264,7 @@ function A:CheckReSummon(id)
 end
 
 --- Check if a pet can be summoned
-function A:AutoPet()
+function A:AutoPet(disabledFilter)
     -- DB init
     A:InitializeDB();
 
@@ -281,26 +286,31 @@ function A:AutoPet()
         return;
     end
 
-    -- Pet summon filtered
-    if ( A:IsPetSummonFiltered() ) then
-        A:DebugMessage("AutoPet() - Pet summon filtered");
-        return;
-    end
-
     -- Haunted Memento
     if ( A:CheckHauntedMemento() ) then
         A:RevokePet();
         return;
     end
 
-    --[[if ( A.flyingPetWithFlyingMountLastPet and A:GotRandomPet(A.db.global.savedSets.pets[A.db.profile.flyingPetWithFlyingMount.set]) ) then
-        if ( currentPet and tContains(A.db.global.savedSets.pets[A.db.profile.flyingPetWithFlyingMount.set], currentPet) and not A:CheckReSummon(currentPet) ) then
-            A:DebugMessage("AutoPet() - Already got a flying pet");
-        else
-            A:DebugMessage("AutoPet() - Summon flying pet");
-            local id = A:GetRandomPet(A.db.global.savedSets.pets[A.db.profile.flyingPetWithFlyingMount.set]);
-            A:SummonPet(id);
-        end]]--
+    -- Flying pet
+    -- if ( A.db.profile.flyingPetWithFlyingMount.enabled and A.db.profile.flyingPetWithFlyingMount.set
+    -- and A.petsDB.profiles[A.db.profile.flyingPetWithFlyingMount.set] and IsFlying() and IsMounted() ) then
+
+        -- if ( currentPet and tContains(A.petsDB.profiles[A.db.profile.flyingPetWithFlyingMount.set].favorites, currentPet) and not A:CheckReSummon(currentPet) ) then
+            -- A:DebugMessage("AutoPet() - Already got a flying pet");
+        -- elseif ( A:GotRandomPet(A.petsDB.profiles[A.db.profile.flyingPetWithFlyingMount.set].favorites) ) then
+            -- A:DebugMessage("AutoPet() - Summon flying pet");
+            -- local id = A:GetRandomPet(A.petsDB.profiles[A.db.profile.flyingPetWithFlyingMount.set].favorites);
+            -- A:SummonPet(id);
+        -- end
+
+        -- return;
+    -- end
+
+    -- Pet summon filtered
+    if ( A:IsPetSummonFiltered() ) then return; end
+
+    -- Summon pet
     if ( A.db.profile.forceOne.pet ) then -- Forced pet
         if ( currentPet and currentPet == A.db.profile.forceOne.pet ) then
             A:DebugMessage("AutoPet() - Forced pet is current");
@@ -348,6 +358,19 @@ function A:RandHybrid(ground, hybrid)
     return nil;
 end
 
+-- Are we in Draenor?
+function A:IsInDraenor()
+    SetMapToCurrentZone();
+
+    local currentMapID = GetCurrentMapAreaID();
+
+    if ( tContains(A.draenorMapIDs, currentMapID) ) then
+        return 1;
+    end
+
+    return nil;
+end
+
 --- Check if the player can fly
 -- This is for handling a rare case, summoning a mount in outland and not having at least Expert Riding
 -- But in case another one pop this will ease the process
@@ -356,7 +379,7 @@ end
 -- Artisan Riding 34091
 -- Master Riding 90265
 function A:IsFlyable()
-    if ( IsFlyableArea() and (IsSpellKnown(34090) or IsSpellKnown(34091) or IsSpellKnown(90265)) ) then
+    if ( IsFlyableArea() and not A:IsInDraenor() and (IsSpellKnown(34090) or IsSpellKnown(34091) or IsSpellKnown(90265)) ) then
         return 1;
     end
 

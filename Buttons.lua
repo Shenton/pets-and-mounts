@@ -376,17 +376,7 @@ end
 --- Monk pre click macro
 -- For monks we handle Roll and Flying Serpent Kick
 function A:SetMonkPreClickMacro()
-    local glyphed;
-
-    for i=1,NUM_GLYPH_SLOTS do
-        local enabled, _, _, spellID = GetGlyphSocketInfo(i);
-
-        if ( enabled and spellID == 125893 ) then
-            glyphed = 1;
-        end
-    end
-
-    if ( IsFalling() and glyphed ) then
+    if ( IsFalling() and A:IsGlyphed(125893) ) then
         return ("%s\n/cast %s"):format(A.macroDismountString, A.monkZenFlight);
     elseif ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
         if ( A.db.profile.monkPreferSerpentKick and A.playerLevel >= 18 ) then
