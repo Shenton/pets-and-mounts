@@ -1448,6 +1448,15 @@ function A:OptionsRoot()
                                 set = function() A.db.profile.oculusDrakes = not A.db.profile.oculusDrakes; end,
                                 get = function() return A.db.profile.oculusDrakes; end,
                             },
+                            telaariTalbuk =
+                            {
+                                order = 1005,
+                                name = L["Telaari Talbuk"],
+                                desc = L["Summon the Telaari Talbuk if you selected the corral as your garrison outpost in Nagrand."],
+                                type = "toggle",
+                                set = function() A.db.profile.telaariTalbuk = not A.db.profile.telaariTalbuk; end,
+                                get = function() return A.db.profile.telaariTalbuk; end,
+                            },
                             swimmingOptionsHeader =
                             {
                                 order = 2000,

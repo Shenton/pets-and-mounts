@@ -9,10 +9,9 @@
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 -- TODO: Handle Druid's new glyphs
 
--- 1.7.4 changelog
+-- 1.7.5 changelog
 --[[
-Names for all the pets filters, allow me to force disable them
-Quick temporary fix for IsFlyableArea() in Draenor
+Added support for the Telaari Talbuk
 ]]--
 
 local A = _G["PetsAndMountsGlobal"];
@@ -2653,6 +2652,7 @@ A.aceDefaultDB =
         oculusDrakes = 1,
         hybridsSelectionTab = nil, -- d
         hybridsSelectionOnlyOwned = 1, -- d
+        telaariTalbuk = 1,
     },
 };
 

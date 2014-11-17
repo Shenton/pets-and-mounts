@@ -442,6 +442,8 @@ L["Reset the current active set. (|cffe6cc80%s|r)\n\n"] = true;
 L["Delete Set"] = true;
 L["Fly path"] = true;
 L["Control lost"] = true;
+L["Telaari Talbuk"] = true;
+L["Summon the Telaari Talbuk if you selected the corral as your garrison outpost in Nagrand."] = true;
 -- About
 L["Auto and random summon for your pets and mounts, highly customizable. With Data Broker support."] = true;
 L["A new version is available, version |cff33ff99%s|r revision |cff33ff99%s %s|r."] = true;

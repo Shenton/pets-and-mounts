@@ -175,6 +175,19 @@ function A:IsBoomkin()
     return 1;
 end
 
+--- Is the player able to use the Telaari talbuk
+function IsTelaariTalbukUsable()
+    if ( not A.draenorZoneAbilityBaseName ) then
+        A.draenorZoneAbilityBaseName = GetSpellInfo(161691);
+    end
+
+    if ( select(7, GetSpellInfo(A.draenorZoneAbilityBaseName)) == 165803 ) then
+        return 1;
+    end
+
+    return nil;
+end
+
 --- Set the spells names for the player's class
 -- This will check if the spell name is not nil
 -- it is required as for some ppl they are not available on login
@@ -696,7 +709,12 @@ function A:PreClickMount(button, clickedBy)
             A:ToggleButtonLock(button);
         else
             -- Specials mounts
-            if ( A.db.profile.shimmeringMoonstone and GetItemCount(101675, nil, nil) > 0 and not A:IsSwimming() and not A:IsFlyable() and not (A.db.profile.vehicleExit and A:IsPlayerInVehicle()) ) then -- 37011 - Shimmering Moonstone from Darkmoon fair (Moonfang drop)
+            if ( A.db.profile.telaariTalbuk and IsTelaariTalbukUsable() and not A:IsSwimming() and not A:IsFlyable() and not (A.db.profile.vehicleExit and A:IsPlayerInVehicle()) ) then -- 165803 - Telaari Talbuk
+                if ( not A.telaariTalbukName ) then A.telaariTalbukName = GetSpellInfo(165803); end
+
+                button:SetAttribute("type", "macro");
+                button:SetAttribute("macrotext", ("/use %s"):format(A.telaariTalbukName or "Telaari Talbuk"));
+            elseif ( A.db.profile.shimmeringMoonstone and GetItemCount(101675, nil, nil) > 0 and not A:IsSwimming() and not A:IsFlyable() and not (A.db.profile.vehicleExit and A:IsPlayerInVehicle()) ) then -- 37011 - Shimmering Moonstone from Darkmoon fair (Moonfang drop)
                 if ( not A.shimmeringMoonstoneName ) then A.shimmeringMoonstoneName = GetItemInfo(101675); end
 
                 button:SetAttribute("type", "macro");
