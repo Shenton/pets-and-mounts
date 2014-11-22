@@ -20,7 +20,7 @@ function A:CreateMapIDFrame()
         A.mapIDFrame:SetTitle("MapID Frame");
         A.mapIDFrame:SetLayout("FLow");
         A.mapIDFrame.editBox = A.AceGUI:Create("MultiLineEditBox");
-        A.mapIDFrame.editBox:SetNumLines(20);
+        A.mapIDFrame.editBox:SetNumLines(26);
         A.mapIDFrame.editBox:SetFullWidth(1);
         A.mapIDFrame:AddChild(A.mapIDFrame.editBox);
     else

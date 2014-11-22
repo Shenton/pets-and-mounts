@@ -9,9 +9,11 @@
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 -- TODO: Handle Druid's new glyphs
 
--- 1.7.5 changelog
+-- 1.7.6 changelog
 --[[
-Added support for the Telaari Talbuk
+Added support for the Frostwolf War Wolf
+Added some new duplicated zones names
+Fixed an error with mounts cache
 ]]--
 
 local A = _G["PetsAndMountsGlobal"];
@@ -1153,6 +1155,7 @@ end
 -- MapIDs with the same name. Scenarios, quest in instance (legendary, green fire, etc), special events, etc
 A.zonesIDsOverride =
 {
+    -- JUSTIGNOREME are those area used only once
     [539] = "JUSTIGNOREME", -- Gilneas
     [678] = "JUSTIGNOREME", -- Gilneas
     [679] = "JUSTIGNOREME", -- Gilneas
@@ -1174,6 +1177,8 @@ A.zonesIDsOverride =
     [919] = "JUSTIGNOREME", -- Black Temple
     [924] = "JUSTIGNOREME", -- Dalaran
     [933] = "JUSTIGNOREME", -- Isle of Thunder
+    [1010] = "JUSTIGNOREME", -- Hillsbrad Foothills (10 years bg event)
+    -- MoP
     [939] = L["Blood in the Snow"],
     [937] = L["Dark Heart of Pandaria"],
     [920] = L["Domination Point (H)"],
@@ -1181,6 +1186,12 @@ A.zonesIDsOverride =
     [911] = L["Lion's Landing (A)"],
     [906] = L["Theramore's Fall (A)"],
     [851] = L["Theramore's Fall (H)"],
+    -- WoD
+    [947] = L["Shadowmoon Valley (WoD)"],
+    [950] = L["Nagrand (WoD)"],
+    [971] = L["Lunarfall (Main)"],
+    [986] = L["Shattrath City (WoD)"],
+    [992] = L["Blasted Lands (WoD)"],
 };
 
 -- Build the mapIDs DB

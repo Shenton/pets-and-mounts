@@ -175,14 +175,20 @@ function A:IsBoomkin()
     return 1;
 end
 
---- Is the player able to use the Telaari talbuk
-function IsTelaariTalbukUsable()
+--- Is the player able to use the Telaari Talbuk or the Frostwolf War Wolf
+function A:IsTelaariTalbukUsable()
     if ( not A.draenorZoneAbilityBaseName ) then
         A.draenorZoneAbilityBaseName = GetSpellInfo(161691);
     end
 
-    if ( select(7, GetSpellInfo(A.draenorZoneAbilityBaseName)) == 165803 ) then
-        return 1;
+    if ( A.playerFaction == "Alliance" ) then
+        if ( select(7, GetSpellInfo(A.draenorZoneAbilityBaseName)) == 165803 ) then
+            return 1;
+        end
+    elseif ( A.playerFaction == "Horde" ) then
+        if ( select(7, GetSpellInfo(A.draenorZoneAbilityBaseName)) == 164222 ) then
+            return 1;
+        end
     end
 
     return nil;
@@ -539,7 +545,7 @@ function A:BasicProtectionMacro(code)
 end
 
 -- LUA mode
-A.basicProtectionFunctions = {"Click", "SetCVar", "ConsoleExec", "GuildDisband", "GuildSetLeader", "GuildLeave", "GuildPromote", "GuildUninvite", "Logout", "Quit",
+A.basicProtectionFunctions = { "Click", "SetCVar", "ConsoleExec", "GuildDisband", "GuildSetLeader", "GuildLeave", "GuildPromote", "GuildUninvite", "Logout", "Quit",
 "ForceQuit", "StartAuction", "PlaceAuctionBid", "ClickAuctionSellItemButton", "SaveBindings", "PickupBagFromSlot", "PickupContainerItem", "SplitContainerItem", "DeleteCursorItem",
 "DropCursorMoney", "PickupInventoryItem", "PickupItem", "PickupPlayerMoney", "PickupTradeMoney", "SetGuildBankTabPermissions", "SetGuildBankWithdrawGoldLimit", "ConfirmBindOnUse",
 "AcceptSockets", "ConfirmLootRoll", "CreateMacro", "EditMacro", "DeleteInboxItem", "ReturnInboxItem", "SendMail", "BuyMerchantItem", "PickupMerchantItem", "RepairAllItems",
@@ -709,11 +715,18 @@ function A:PreClickMount(button, clickedBy)
             A:ToggleButtonLock(button);
         else
             -- Specials mounts
-            if ( A.db.profile.telaariTalbuk and IsTelaariTalbukUsable() and not A:IsSwimming() and not A:IsFlyable() and not (A.db.profile.vehicleExit and A:IsPlayerInVehicle()) ) then -- 165803 - Telaari Talbuk
-                if ( not A.telaariTalbukName ) then A.telaariTalbukName = GetSpellInfo(165803); end
+            if ( A.db.profile.telaariTalbuk and A:IsTelaariTalbukUsable() and not A:IsSwimming() and not A:IsFlyable() and not (A.db.profile.vehicleExit and A:IsPlayerInVehicle()) ) then -- 165803 - Telaari Talbuk / 164222 - Frostwolf War Wolf
+                if ( A.playerFaction == "Alliance" ) then
+                    if ( not A.telaariTalbukName ) then A.telaariTalbukName = GetSpellInfo(165803); end
 
-                button:SetAttribute("type", "macro");
-                button:SetAttribute("macrotext", ("/use %s"):format(A.telaariTalbukName or "Telaari Talbuk"));
+                    button:SetAttribute("type", "macro");
+                    button:SetAttribute("macrotext", ("/use %s"):format(A.telaariTalbukName or "Telaari Talbuk"));
+                else
+                    if ( not A.telaariTalbukName ) then A.telaariTalbukName = GetSpellInfo(164222); end
+
+                    button:SetAttribute("type", "macro");
+                    button:SetAttribute("macrotext", ("/use %s"):format(A.telaariTalbukName or "Frostwolf War Wolf"));
+                end
             elseif ( A.db.profile.shimmeringMoonstone and GetItemCount(101675, nil, nil) > 0 and not A:IsSwimming() and not A:IsFlyable() and not (A.db.profile.vehicleExit and A:IsPlayerInVehicle()) ) then -- 37011 - Shimmering Moonstone from Darkmoon fair (Moonfang drop)
                 if ( not A.shimmeringMoonstoneName ) then A.shimmeringMoonstoneName = GetItemInfo(101675); end
 

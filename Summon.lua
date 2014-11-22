@@ -559,6 +559,14 @@ function A:GetUsableMountsTable(tbl)
         end
     end
 
+    -- This will prevent a rare case when the mount cache is reset and you are indoor for the server but not for the client, it build an empty cache.
+    -- Grats Blizzard for that one, WoD only (aka addons dev we do not care about you).
+    if ( #A.usableMountsCache[tbl] == 0 ) then
+        A.usableMountsCache[tbl] = nil;
+
+        return {};
+    end
+
     return A.usableMountsCache[tbl];
 end
 
