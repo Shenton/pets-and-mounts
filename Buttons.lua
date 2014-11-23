@@ -161,14 +161,16 @@ function A:IsBoomkin()
 
     local form = GetShapeshiftForm(1);
 
-    if ( form == 0 ) then
-        A:DebugMessage("IsBoomkin() - false");
-        return nil;
-    end
-
-    if ( form ~= 4 ) then
-        A:DebugMessage("IsBoomkin() - false");
-        return nil;
+    if ( A:IsGlyphed(114338) ) then -- Glyph of the Stag - Offset by one druid's forms
+        if ( form ~= 5 ) then
+            A:DebugMessage("IsBoomkin() - false");
+            return nil;
+        end
+    else
+        if ( form ~= 4 ) then
+            A:DebugMessage("IsBoomkin() - false");
+            return nil;
+        end
     end
 
     A:DebugMessage("IsBoomkin() - true");

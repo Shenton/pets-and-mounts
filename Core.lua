@@ -9,11 +9,11 @@
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
 -- TODO: Handle Druid's new glyphs
 
--- 1.7.6 changelog
+-- 1.7.7 changelog
 --[[
-Added support for the Frostwolf War Wolf
-Added some new duplicated zones names
-Fixed an error with mounts cache
+Added a cache system for IsGlyphed method
+Fixed glyph modification detection
+Fixed IsBoomkin method (Glyph of the Stag offset by one some Druid's forms, which imo is dumb)
 ]]--
 
 local A = _G["PetsAndMountsGlobal"];
@@ -431,14 +431,28 @@ end
 --- Check if a glyph is active
 -- @param spellID The glyph spell ID
 function A:IsGlyphed(spellID)
+    if ( not A.isGlyphedCache ) then
+        A:DebugMessage("IsGlyphed() - Creating cache");
+        A.isGlyphedCache = {};
+    end
+
+    if ( A.isGlyphedCache[spellID] ~= nil ) then
+        A:DebugMessage(("IsGlyphed() - %s (Cached)"):format(tostring(A.isGlyphedCache[spellID])));
+        return A.isGlyphedCache[spellID];
+    end
+
     for i=1,NUM_GLYPH_SLOTS do
         local enabled, _, _, glyphSpellID = GetGlyphSocketInfo(i);
 
         if ( enabled and glyphSpellID == spellID ) then
+            A.isGlyphedCache[spellID] = true;
+            A:DebugMessage("IsGlyphed() - true");
             return 1;
         end
     end
 
+    A.isGlyphedCache[spellID] = false;
+    A:DebugMessage("IsGlyphed() - false");
     return nil;
 end
 
@@ -2143,16 +2157,10 @@ function A:PLAYER_ENTERING_WORLD()
         A:RegisterEvent("PLAYER_LEVEL_UP"); -- Update post click macros
         A:RegisterEvent("PET_BATTLE_OPENING_START"); -- Buttons visibility
         A:RegisterEvent("PET_BATTLE_CLOSE"); -- Same
-
-        -- If player is a lock, building database on spec switch or glyph modification is needed
-        if ( A.playerClass == "WARLOCK" ) then
-            A:RegisterEvent("GLYPH_UPDATED"); -- Will also fire when switching spec
-        end
-
-        -- If player is a DK, a Druid, a Paladin or a Priest, we need to monitor talents modifications
-        if ( A.playerClass == "DEATHKNIGHT" or A.playerClass == "DRUID" or A.playerClass == "PALADIN" or A.playerClass == "PRIEST" ) then
-            A:RegisterEvent("PLAYER_TALENT_UPDATE");
-        end
+        A:RegisterEvent("GLYPH_UPDATED", "GlyphModificationCallback"); -- Will also fire when switching spec
+        A:RegisterEvent("GLYPH_ADDED", "GlyphModificationCallback");
+        A:RegisterEvent("GLYPH_REMOVED", "GlyphModificationCallback");
+        A:RegisterEvent("PLAYER_TALENT_UPDATE");
 
         A:LoginModificationsFixes();
         A:LoginMessages();
@@ -2188,12 +2196,12 @@ function A:PLAYER_LEVEL_UP(event, level, ...)
     A:SetPostClickMacro();
 end
 
-function A:GLYPH_UPDATED()
-    local lockGlyphed = A:IsGlyphed(56232);
+function A:GlyphModificationCallback()
+    A.isGlyphedCache = nil;
 
-    if ( A.lockLastGlyphState ~= lockGlyphed ) then
+    if ( A.lockLastGlyphState ~= A:IsGlyphed(56232) ) then
         A:BuildMountsTable(1);
-        A.lockLastGlyphState = lockGlyphed;
+        A.lockLastGlyphState = A:IsGlyphed(56232);
     end
 end
 
