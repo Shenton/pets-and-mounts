@@ -359,17 +359,17 @@ function A:RandHybrid(ground, hybrid)
 end
 
 -- Are we in Draenor?
-function A:IsInDraenor()
-    SetMapToCurrentZone();
+-- function A:IsInDraenor()
+    -- SetMapToCurrentZone();
 
-    local currentMapID = GetCurrentMapAreaID();
+    -- local currentMapID = GetCurrentMapAreaID();
 
-    if ( tContains(A.draenorMapIDs, currentMapID) ) then
-        return 1;
-    end
+    -- if ( tContains(A.draenorMapIDs, currentMapID) ) then
+        -- return 1;
+    -- end
 
-    return nil;
-end
+    -- return nil;
+-- end
 
 --- Check if the player can fly
 -- This is for handling a rare case, summoning a mount in outland and not having at least Expert Riding
@@ -379,7 +379,7 @@ end
 -- Artisan Riding 34091
 -- Master Riding 90265
 function A:IsFlyable()
-    if ( IsFlyableArea() and not A:IsInDraenor() and (IsSpellKnown(34090) or IsSpellKnown(34091) or IsSpellKnown(90265)) ) then
+    if ( IsFlyableArea() and (IsSpellKnown(34090) or IsSpellKnown(34091) or IsSpellKnown(90265)) ) then
         return 1;
     end
 

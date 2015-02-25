@@ -25,7 +25,7 @@ local tonumber = tonumber;
 -- GLOBALS: ToggleDropDownMenu, GameTooltip, PetsAndMountsSecureButtonMounts, PetsAndMountsSecureButtonPets
 -- GLOBALS: GetScreenWidth, IsMounted, GetUnitSpeed, GetTalentInfo, GetTalentRowSelectionInfo, GetInstanceInfo
 -- GLOBALS: GetGlyphSocketInfo, IsFalling, NUM_GLYPH_SLOTS, GetShapeshiftForm, IsEquippedItemType
--- GLOBALS: ShentonFishingGlobal, GetActiveSpecGroup
+-- GLOBALS: ShentonFishingGlobal, GetActiveSpecGroup, IsIndoors
 
 --[[-------------------------------------------------------------------------------
     Bindings
@@ -307,14 +307,16 @@ function A:SetDruidPreClickMacro()
     if ( A.db.profile.druidWantFormsOnMove ) then
         if ( GetUnitSpeed("player") > 0 ) then
             if ( A:IsGlyphed(114338) and A.playerLevel >= 58 and A:IsFlyable() and not IsMounted() ) then
-                return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidFlightForm);
+                return ("%s\n/cast [swimming] %s; [indoors] %s; %s"):format(A.macroDismountString, A.druidTravelForm, A.druidCatForm, A.druidFlightForm);
             elseif ( A.playerLevel >= 16 and not IsMounted() ) then
-                return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
+                return ("%s\n/cast [swimming] %s; [indoors] %s; %s"):format(A.macroDismountString, A.druidTravelForm, A.druidCatForm, A.druidTravelForm);
             elseif ( A.playerLevel >= 6 and not IsMounted() ) then
                 return ("%s\n/cast %s"):format(A.macroDismountString, A.druidCatForm);
             else
                 return "/pammount";
             end
+        elseif ( IsIndoors() ) then
+            return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidTravelForm, A.druidCatForm);
         elseif ( GetShapeshiftForm(1) > 0 and not A:IsBoomkin() ) then
             if ( A.db.profile.noMountAfterCancelForm ) then
                 return "/cancelform [form]";
@@ -327,13 +329,15 @@ function A:SetDruidPreClickMacro()
     else
         if ( A.playerLevel >= 58 and A:IsFlyable() and not IsMounted() ) then
             if ( A:IsGlyphed(114338) ) then
-                return ("%s\n/cast [indoors] %s; [swimming] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm, A.druidFlightForm);
+                return ("%s\n/cast [swimming] %s; [indoors] %s; %s"):format(A.macroDismountString, A.druidTravelForm, A.druidCatForm, A.druidFlightForm);
             else
-                return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
+                return ("%s\n/cast [swimming] %s; [indoors] %s; %s"):format(A.macroDismountString, A.druidTravelForm, A.druidCatForm, A.druidTravelForm);
             end
         elseif ( A.playerLevel >= 20 and A:CanRide() and not IsMounted() ) then
             if ( GetUnitSpeed("player") > 0 and not IsMounted() ) then
-                return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
+                return ("%s\n/cast [swimming] %s; [indoors] %s; %s"):format(A.macroDismountString, A.druidTravelForm, A.druidCatForm, A.druidTravelForm);
+            elseif ( IsIndoors() ) then
+                return ("%s\n/cast [swimming] %s; %s"):format(A.macroDismountString, A.druidTravelForm, A.druidCatForm);
             elseif ( GetShapeshiftForm(1) > 0 and not A:IsBoomkin() ) then
                 if ( A.db.profile.noMountAfterCancelForm ) then
                     return "/cancelform [form]";
@@ -344,7 +348,7 @@ function A:SetDruidPreClickMacro()
                 return "/pammount";
             end
         elseif ( A.playerLevel >= 16 and not IsMounted() ) then
-            return ("%s\n/cast [indoors] %s; %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
+            return ("%s\n/cast [swimming] %s; [indoors] %s; %s"):format(A.macroDismountString, A.druidTravelForm, A.druidCatForm, A.druidTravelForm);
         elseif ( A.playerLevel >= 6 and not IsMounted() ) then
             return ("%s\n/cast %s"):format(A.macroDismountString, A.druidCatForm);
         else
@@ -717,7 +721,7 @@ function A:PreClickMount(button, clickedBy)
             A:ToggleButtonLock(button);
         else
             -- Specials mounts
-            if ( A.db.profile.telaariTalbuk and A:IsTelaariTalbukUsable() and not A:IsSwimming() and not A:IsFlyable() and not (A.db.profile.vehicleExit and A:IsPlayerInVehicle()) ) then -- 165803 - Telaari Talbuk / 164222 - Frostwolf War Wolf
+            if ( A.db.profile.telaariTalbuk and A:IsTelaariTalbukUsable() and not A:IsSwimming() and not A:IsFlyable() and not IsIndoors() and not (A.db.profile.vehicleExit and A:IsPlayerInVehicle()) ) then -- 165803 - Telaari Talbuk / 164222 - Frostwolf War Wolf
                 if ( A.playerFaction == "Alliance" ) then
                     if ( not A.telaariTalbukName ) then A.telaariTalbukName = GetSpellInfo(165803); end
 
@@ -965,7 +969,9 @@ function A:SetPostClickMacro(noCustom)
         -- Druid
         elseif ( A.playerClass == "DRUID" ) then
             if ( A.playerLevel >= 16 ) then
-                A.postClickMacro = ("%s\n/cast [nomounted] %s"):format(A.macroDismountString, A.druidTravelForm);
+                A.postClickMacro = ("%s\n/cast [nomounted,indoors] %s; [nomounted] %s"):format(A.macroDismountString, A.druidCatForm, A.druidTravelForm);
+            elseif ( A.playerLevel >= 6 ) then
+                A.postClickMacro = ("%s\n/cast %s"):format(A.macroDismountString, A.druidCatForm);
             else
                 A.postClickMacro = A.macroDismountString;
             end

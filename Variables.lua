@@ -533,20 +533,20 @@ A.currentMountsSet =
     [7] = {}, -- Repair
 };
 
-A.draenorMapIDs =
-{
-    962, -- Draenor
-    978, -- Ashran
-    941, -- Frostfire Ridge
-    976, -- Frostwall
-    949, -- Gorgrond
-    971, -- Lunarfall
-    950, -- Nagrand
-    947, -- Shadowmoon Valley
-    948, -- Spires of Arak
-    1009, -- Stormshield
-    946, -- Talador
-    945, -- Tanaan Jungle
-    970, -- Tanaan Jungle - Assault on the Dark Portal
-    1011, -- Warspear
-}
+-- A.draenorMapIDs =
+-- {
+    -- 962, -- Draenor
+    -- 978, -- Ashran
+    -- 941, -- Frostfire Ridge
+    -- 976, -- Frostwall
+    -- 949, -- Gorgrond
+    -- 971, -- Lunarfall
+    -- 950, -- Nagrand
+    -- 947, -- Shadowmoon Valley
+    -- 948, -- Spires of Arak
+    -- 1009, -- Stormshield
+    -- 946, -- Talador
+    -- 945, -- Tanaan Jungle
+    -- 970, -- Tanaan Jungle - Assault on the Dark Portal
+    -- 1011, -- Warspear
+-- }

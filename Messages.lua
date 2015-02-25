@@ -211,15 +211,15 @@ A.popupMessages["wodModifications170"] =
 };
 
 -- Draenor isflying always true bug
-A.popupMessages["wodDraenorIsflyingbug603"] =
-{
-    type = "message",
-    text = L["There is a bug within Draenor areas. The API always return true when asked if you are in a flyable area. As a temporary fix the add-on will check if you are in Draenor and always return false when checking if the zone is flyable.\n\nThe problem is every time you will want to summon a mount it will set your world map to the current one. This is not a big issue but this is something I hate to do as it is a total disrespect to the player. And yes when your world map is automatically set to the current one it is due to an add-on, the default interface do not do that.\n\nIf this is an issue for you just tell me and I will improve that temporary fix."],
-    icon = "Interface\\DialogFrame\\UI-Dialog-Icon-AlertNew",
-    leftButtonText = L["Ok"],
-    escapeClose = 1,
-    enterOK = 1,
-    LeftButtonScript = function(self)
-        self:Hide();
-    end,
-};
+-- A.popupMessages["wodDraenorIsflyingbug603"] =
+-- {
+    -- type = "message",
+    -- text = L["There is a bug within Draenor areas. The API always return true when asked if you are in a flyable area. As a temporary fix the add-on will check if you are in Draenor and always return false when checking if the zone is flyable.\n\nThe problem is every time you will want to summon a mount it will set your world map to the current one. This is not a big issue but this is something I hate to do as it is a total disrespect to the player. And yes when your world map is automatically set to the current one it is due to an add-on, the default interface do not do that.\n\nIf this is an issue for you just tell me and I will improve that temporary fix."],
+    -- icon = "Interface\\DialogFrame\\UI-Dialog-Icon-AlertNew",
+    -- leftButtonText = L["Ok"],
+    -- escapeClose = 1,
+    -- enterOK = 1,
+    -- LeftButtonScript = function(self)
+        -- self:Hide();
+    -- end,
+-- };

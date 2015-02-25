@@ -48,7 +48,7 @@ local _G = _G;
 -- GLOBALS: PetsAndMountsMenuModelFrame, PetsAndMountsConfigModelFrame, PetsAndMountsSearchFrame, GameTooltip
 -- GLOBALS: PetsAndMountsPopupMessageFrame, UIDropDownMenu_SetAnchor, ToggleDropDownMenu, UnitBuff
 -- GLOBALS: GetSpecialization, GetSpecializationInfo, GetItemInfo, C_MountJournal, UnitFullName
--- GLOBALS: PetsAndMountsSecureButtonPets, PetsAndMountsSecureButtonMounts
+-- GLOBALS: PetsAndMountsSecureButtonPets, PetsAndMountsSecureButtonMounts, time
 
 --[[-------------------------------------------------------------------------------
     Common methods
@@ -731,11 +731,29 @@ function A:IsWaterWalkingMount(spellID)
     return nil;
 end
 
+--- Return the number of collected mounts
+function A:GetCollectedMounts()
+    if ( A.getCollectedMountsDelay and (time() - A.getCollectedMountsDelay < 2) ) then
+        return nil;
+    end
+
+    local count = 0;
+
+    for i=1,C_MountJournal.GetNumMounts() do
+        if ( select(11, C_MountJournal.GetMountInfo(i)) ) then
+            count = count + 1;
+        end
+    end
+
+    A.getCollectedMountsDelay = time();
+    return count;
+end
+
 --- Build the mounts table
 function A:BuildMountsTable(force)
-    local mountsCount = C_MountJournal.GetNumMounts();
+    local mountsCount = A:GetCollectedMounts();
 
-    if ( not force and A.lastMountsCount == mountsCount ) then
+    if ( not force and (A.lastMountsCount == mountsCount or not mountsCount) ) then
         A:DebugMessage("BuildMountsTable() - No update needed");
         return;
     end
@@ -743,6 +761,7 @@ function A:BuildMountsTable(force)
     A:DebugMessage(("BuildMountsTable() - Update needed %d %d"):format(A.lastMountsCount, mountsCount));
 
     A.lastMountsCount = mountsCount;
+    mountsCount = C_MountJournal.GetNumMounts();
 
     local _, creatureID, creatureName, spellID, icon, mountType, leadingLetter, cat, isUsable, hideOnChar, isCollected;
 
@@ -1167,6 +1186,7 @@ end
 -------------------------------------------------------------------------------]]--
 
 -- MapIDs with the same name. Scenarios, quest in instance (legendary, green fire, etc), special events, etc
+-- 970 = Tanaan Jungle arrival in Draenor
 A.zonesIDsOverride =
 {
     -- JUSTIGNOREME are those area used only once
@@ -2969,7 +2989,7 @@ A.loginMessagesList =
 };
 A.loginMessagesListForced =
 {
-    "wodDraenorIsflyingbug603",
+    --"wodDraenorIsflyingbug603",
 };
 function A:LoginMessages()
     for k,v in ipairs(A.loginMessagesList) do

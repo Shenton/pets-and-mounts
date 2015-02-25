@@ -4050,7 +4050,7 @@ function A:OptionsSets()
                                                     local _, customName, _, _, _, _, _, name = C_PetJournal.GetPetInfoByPetID(v);
 
                                                     if ( customName ) then
-                                                        name = customName.." ("..name")";
+                                                        name = customName.." ("..name..")";
                                                     end
 
                                                     list = list..", "..name;
@@ -4624,7 +4624,7 @@ function A:OptionsSets()
                                             local _, customName, _, _, _, _, _, name = C_PetJournal.GetPetInfoByPetID(v);
 
                                             if ( customName ) then
-                                                name = customName.." ("..name")";
+                                                name = customName.." ("..name..")";
                                             end
 
                                             list = list..", "..name;
@@ -4847,8 +4847,14 @@ function A:OptionsSets()
                                         local set = A:BuildTempSetTable("MOUNTS", A.db.profile.mountsSetsByMapID[mapID]);
 
                                         for k,v in pairs(set) do
+                                            local subList = "";
+
                                             for kk,vv in pairs(v) do
-                                                list = list..", "..A:GetMountNameBySpellID(vv);
+                                                subList = subList..", "..A:GetMountNameBySpellID(vv);
+                                            end
+
+                                            if ( subList ~= "" ) then
+                                                list = list..A.mountCat[k]..":\n"..A:StringTrim(subList, "%s,").."\n\n";
                                             end
                                         end
                                     end
@@ -4859,7 +4865,7 @@ function A:OptionsSets()
                                 end,
                                 width = "full",
                                 type = "description",
-                            }
+                            },
                         },
                     },
                     zoneResetGroup =
