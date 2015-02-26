@@ -502,7 +502,8 @@ L["Tried to summon %s. It is a mount this toon cannot use (Horde/Alliance specif
 L["Minimap icon is hidden if you want to show it back use: /pam or /petsandmounts"] = true;
 L["Failed to load configuration, reason: %s."] = true;
 L["Unable to edit buttons while in combat."] = true;
-L["A newer version of Pets & Mounts is available. You have version %s revision %s %s, %s got version %s revision %s %s. Get it on Curse at %s or with the Curse client."] = true;
+--L["A newer version of Pets & Mounts is available. You have version %s revision %s %s, %s got version %s revision %s %s. Get it on Curse at %s or with the Curse client."] = true;
+L["A newer version of Pets & Mounts is available. You have version %s revision %s %s, %s got version %s revision %s %s. Get it on Curse or with the Curse client."] = true;
 L["New companions set %s added."] = true;
 L["New mounts set %s added."] = true;
 L["You have no favorite selected."] = true;

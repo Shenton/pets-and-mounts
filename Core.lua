@@ -67,7 +67,17 @@ function A:SlashCommand(input)
         A:OpenConfigPanel();
     --@debug@
     elseif ( arg1 == "test" ) then
-        --
+        --local remoteStage, remoteVersion = strsplit(":", message);
+        --local remoteVersion, remoteRevision = A:GetAddonVersion(remoteVersion);
+        local localVersion, localRevision = A:GetAddonVersion(A.version);
+        local remoteVersion = 1.7
+        local remoteRevision = 9
+        local remoteStage = "Release"
+        local who = "Robert"
+        A.addonUpdateMessageInfo = {remoteVersion, remoteRevision, remoteStage};
+        A:NotifyChangeForAll();
+        A:Message(L["A newer version of Pets & Mounts is available. You have version %s revision %s %s, %s got version %s revision %s %s. Get it on Curse at %s or with the Curse client."]
+        :format(tostring(localVersion), tostring(localRevision), L[A.versionStage], who, tostring(remoteVersion), tostring(remoteRevision), L[remoteStage], A.color.BLUE.."|HPAM:config:About|h["..L["Link"].."]|h|r"));
     --@end-debug@
     elseif ( arg1 == "refresh" ) then
         A:BuildBothTables(1);
@@ -2422,8 +2432,10 @@ function A:OnCommReceived(...)
         if ( A:IsRemoteNewer(localVersion, remoteVersion, localRevision, remoteRevision) ) then
             A.addonUpdateMessageInfo = {remoteVersion, remoteRevision, remoteStage};
             A:NotifyChangeForAll();
-            A:Message(L["A newer version of Pets & Mounts is available. You have version %s revision %s %s, %s got version %s revision %s %s. Get it on Curse at %s or with the Curse client."]
-            :format(tostring(localVersion), tostring(localRevision), L[A.versionStage], who, tostring(remoteVersion), tostring(remoteRevision), L[remoteStage], A.color.BLUE.."|HPAM:config:About|h["..L["Link"].."]|h|r"));
+            --A:Message(L["A newer version of Pets & Mounts is available. You have version %s revision %s %s, %s got version %s revision %s %s. Get it on Curse at %s or with the Curse client."]
+            --:format(tostring(localVersion), tostring(localRevision), L[A.versionStage], who, tostring(remoteVersion), tostring(remoteRevision), L[remoteStage], A.color.BLUE.."|HPAM:config:About|h["..L["Link"].."]|h|r"));
+            A:Message(L["A newer version of Pets & Mounts is available. You have version %s revision %s %s, %s got version %s revision %s %s. Get it on Curse or with the Curse client."]
+            :format(tostring(localVersion), tostring(localRevision), L[A.versionStage], who, tostring(remoteVersion), tostring(remoteRevision), L[remoteStage]));
         end
     end
 end
@@ -2454,18 +2466,17 @@ end
     Custom link handling
 -------------------------------------------------------------------------------]]--
 
-function A:SetItemRef(link, ...)
-    local linkType, linkSubType, linkArg = strsplit(":", link);
+-- function A:SetItemRef(link, ...)
+    -- local linkType, linkSubType, linkArg = strsplit(":", link);
 
-    if ( linkType == "PAM" ) then
-        if ( linkSubType == "config" ) then
-            A:OpenConfigPanel(linkArg);
-        end
-
-    else
-        A.hooks.SetItemRef(link, ...);
-    end
-end
+    -- if ( linkType == "PAM" ) then
+        -- if ( linkSubType == "config" ) then
+            -- A:OpenConfigPanel(linkArg);
+        -- end
+    -- else
+        -- A.hooks.SetItemRef(link, ...);
+    -- end
+-- end
 
 --[[-------------------------------------------------------------------------------
     Ace DB and database revision methods
@@ -3159,7 +3170,8 @@ function A:OnInitialize()
     A:RegisterComm("PAMCommPrefix");
 
     -- Raw hook on chat link
-    A:RawHook("SetItemRef", true);
+    --A:RawHook("SetItemRef", true);
+    --A:SecureHook("SetItemRef");
 
     -- Add the config loader to blizzard addon configuration panel
     A:AddToBlizzTemp();
