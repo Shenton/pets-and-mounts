@@ -4546,7 +4546,10 @@ function A:OptionsSets()
                         order = 0,
                         name = L["Enable"],
                         type = "toggle",
-                        set = function() A.db.profile.petsZoneSets = not A.db.profile.petsZoneSets; end,
+                        set = function()
+                            A.db.profile.petsZoneSets = not A.db.profile.petsZoneSets;
+                            A:SetZonePetsSets(1);
+                        end,
                         get = function() return A.db.profile.petsZoneSets; end,
                     },
                     zoneSelectGroup =
@@ -4644,6 +4647,10 @@ function A:OptionsSets()
                             else
                                 if ( A.db.profile.petsSetsByMapID[mapID] ) then
                                     A:TableRemove(A.db.profile.petsSetsByMapID[mapID], name);
+
+                                    if ( #A.db.profile.petsSetsByMapID[mapID] == 0 ) then
+                                        A.db.profile.petsSetsByMapID[mapID] = nil;
+                                    end
                                 end
                             end
 
@@ -4772,7 +4779,10 @@ function A:OptionsSets()
                         order = 0,
                         name = L["Enable"],
                         type = "toggle",
-                        set = function() A.db.profile.mountsZoneSets = not A.db.profile.mountsZoneSets; end,
+                        set = function()
+                            A.db.profile.mountsZoneSets = not A.db.profile.mountsZoneSets;
+                            A:SetZoneMountsSets(1);
+                        end,
                         get = function() return A.db.profile.mountsZoneSets; end,
                     },
                     zoneSelectGroup =
@@ -4870,6 +4880,10 @@ function A:OptionsSets()
                             else
                                 if ( A.db.profile.mountsSetsByMapID[mapID] ) then
                                     A:TableRemove(A.db.profile.mountsSetsByMapID[mapID], name);
+
+                                    if ( #A.db.profile.mountsSetsByMapID[mapID] == 0 ) then
+                                        A.db.profile.mountsSetsByMapID[mapID] = nil;
+                                    end
                                 end
                             end
 

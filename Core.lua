@@ -7,13 +7,12 @@
 -------------------------------------------------------------------------------]]--
 
 -- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
--- TODO: Handle Druid's new glyphs
 
--- 1.7.7 changelog
+-- 1.8.2 changelog
 --[[
-Added a cache system for IsGlyphed method
-Fixed glyph modification detection
-Fixed IsBoomkin method (Glyph of the Stag offset by one some Druid's forms, which imo is dumb)
+Fixed target/mouseover mount copy summon -- Pushed
+Fixed pet summon when clicked error
+Fixed area sets errors
 ]]--
 
 local A = _G["PetsAndMountsGlobal"];
@@ -1184,7 +1183,7 @@ end
 --- Return the sets in use
 function A:GetTableSetsInUse(cat)
     if ( cat == "PETS" ) then
-        if ( A.db.profile.lastZonePetsSetsDefined and A.db.profile.petsSetsByMapID[A.currentMapID] ) then
+        if ( A.db.profile.petsZoneSets and A.db.profile.lastZonePetsSetsDefined and A.db.profile.petsSetsByMapID[A.currentMapID] ) then
             return A.db.profile.petsSetsByMapID[A.currentMapID];
         elseif ( #A.db.profile.defaultSets.pets > 0 ) then
             return A.db.profile.defaultSets.pets;
@@ -1194,7 +1193,7 @@ function A:GetTableSetsInUse(cat)
             return nil;
         end
     elseif ( cat == "MOUNTS" ) then
-        if ( A.db.profile.lastZoneMountsSetsDefined and A.db.profile.mountsSetsByMapID[A.currentMapID] ) then
+        if ( A.db.profile.mountsZoneSets and A.db.profile.lastZoneMountsSetsDefined and A.db.profile.mountsSetsByMapID[A.currentMapID] ) then
             return A.db.profile.mountsSetsByMapID[A.currentMapID];
         elseif ( #A.db.profile.defaultSets.mounts > 0 ) then
             return A.db.profile.defaultSets.mounts;
