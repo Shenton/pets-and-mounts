@@ -500,12 +500,14 @@ end
 
 --- Summon a mount with it spell ID
 function A:SummonMountBySpellId(spellID)
+    if ( not spellID ) then return nil; end
+
     --local id = A:GetMountIDFromSpellID(spellID);
     local id = A:GetMountMountIDFromSpellID(spellID);
 
     if ( id ) then
         if ( A.db.profile.debug ) then
-            --A:DebugMessage("Summon mount: "..id.." - "..select(1, C_MountJournal.GetDisplayedMountInfoByID(id)));
+            A:DebugMessage("Summon mount: "..id.." - "..select(1, C_MountJournal.GetMountInfoByID(id)));
         end
 
         C_MountJournal.SummonByID(id);
@@ -618,7 +620,10 @@ function A:GetOtherPlayerMount(unitID)
 
     -- One shot, woot!
     for k,v in ipairs(A.pamTable.mountsIds) do
-        if ( tContains(A:GetUsableMountsTable(v), id) ) then return id; end
+        if ( tContains(A:GetUsableMountsTable(v), id) ) then
+            A:DebugMessage("GetOtherPlayerMount() - One shot! - "..id);
+            return id;
+        end
     end
 
     -- Continue checking
@@ -627,7 +632,10 @@ function A:GetOtherPlayerMount(unitID)
         id = select(11, UnitBuff(unitID, index));
 
         for k,v in ipairs(A.pamTable.mountsIds) do
-            if ( tContains(A:GetUsableMountsTable(v), id) ) then return id; end
+            if ( tContains(A:GetUsableMountsTable(v), id) ) then
+                A:DebugMessage("GetOtherPlayerMount() - ID: "..id.." - Cycles: "..index);
+                return id;
+            end
         end
     end
 

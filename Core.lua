@@ -309,6 +309,8 @@ end
 
 --- Return mount ID from spell ID
 function A:GetMountMountIDFromSpellID(spellID)
+    if ( not spellID ) then return nil; end
+
     if ( not A.mountsSpellIDToMountIDCache ) then
         A.mountsSpellIDToMountIDCache = {};
     end
