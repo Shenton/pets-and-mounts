@@ -173,3 +173,42 @@ function A:ProcessSurfaceSpells5()
     A.surfaceSpellsFrame.editBox3:SetText(surfaceSpellsStop);
     A.surfaceSpellsFrame:SetStatusText(surfaceSpells.."/"..surfaceSpellsStop.." - "..#results);
 end
+
+-- Dump mounts categories IDs, will display the name of the first mount found - call A:ProcessMapID()
+function A:CreateMountsCategoriesFrame()
+    if ( not A.mountsCategoriesFrame ) then
+        if ( not A.AceConfigDialog ) then
+            local loaded = A:LoadAddonConfig();
+            if ( not loaded ) then return; end
+        end
+        if( not A.AceGUI ) then A.AceGUI = LibStub("AceGUI-3.0"); end
+        A.mountsCategoriesFrame = A.AceGUI:Create("Frame");
+        A.mountsCategoriesFrame:SetTitle("MapID Frame");
+        A.mountsCategoriesFrame:SetLayout("FLow");
+        A.mountsCategoriesFrame.editBox = A.AceGUI:Create("MultiLineEditBox");
+        A.mountsCategoriesFrame.editBox:SetNumLines(26);
+        A.mountsCategoriesFrame.editBox:SetFullWidth(1);
+        A.mountsCategoriesFrame:AddChild(A.mountsCategoriesFrame.editBox);
+    else
+        A.mountsCategoriesFrame:Show();
+    end
+end
+function A:ProcessMountsCategories()
+    A:CreateMountsCategoriesFrame();
+    local cats = {};
+    local count = 0;
+    local result = "";
+    for i=1,C_MountJournal.GetNumMounts() do
+        local name = C_MountJournal.GetMountInfo(i);
+        local _, _, _, _, cat = C_MountJournal.GetMountInfoExtra(i);
+        if ( name ) then
+            if ( not cats[cat] ) then
+                cats[cat] = name;
+                result = result..cat.." - "..name.."\n";
+                count = count + 1;
+                A.mountsCategoriesFrame.editBox:SetText(result);
+                A.mountsCategoriesFrame:SetStatusText(count);
+            end
+        end
+    end
+end

@@ -500,14 +500,15 @@ end
 
 --- Summon a mount with it spell ID
 function A:SummonMountBySpellId(spellID)
-    local id = A:GetMountIDFromSpellID(spellID);
+    --local id = A:GetMountIDFromSpellID(spellID);
+    local id = A:GetMountMountIDFromSpellID(spellID);
 
     if ( id ) then
         if ( A.db.profile.debug ) then
-            A:DebugMessage("Summon mount: "..select(1, C_MountJournal.GetMountInfo(id)));
+            --A:DebugMessage("Summon mount: "..id.." - "..select(1, C_MountJournal.GetDisplayedMountInfoByID(id)));
         end
 
-        C_MountJournal.Summon(id);
+        C_MountJournal.SummonByID(id);
         return 1;
     end
 
@@ -529,7 +530,7 @@ end
 -- @param spellID The mount spellID
 -- @return bool
 function A:IsMountRestricted(spellID)
-    if ( select(5, C_MountJournal.GetMountInfo(A:GetMountIDFromSpellID(spellID))) ) then
+    if ( select(5, C_MountJournal.GetDisplayedMountInfo(A:GetMountIDFromSpellID(spellID))) ) then
         return nil;
     end
 

@@ -37,7 +37,7 @@ local _G = _G;
 
 -- GLOBALS: LibStub, GetScreenWidth, GetCursorPosition, UIParent, C_PetJournal, GetCompanionInfo
 -- GLOBALS: UnitInVehicle, UnitHasVehicleUI, GetTime, MODELFRAME_DRAG_ROTATION_CONSTANT, PI
--- GLOBALS: LE_PET_JOURNAL_FLAG_COLLECTED, LE_PET_JOURNAL_FLAG_FAVORITES, LE_PET_JOURNAL_FLAG_NOT_COLLECTED
+-- GLOBALS: LE_PET_JOURNAL_FILTER_COLLECTED, LE_PET_JOURNAL_FLAG_FAVORITES, LE_PET_JOURNAL_FILTER_NOT_COLLECTED
 -- GLOBALS: PetJournalSearchBox, SEARCH, NUM_GLYPH_SLOTS, GetGlyphSocketInfo, GetNumCompanions
 -- GLOBALS: GetMapNameByID, WorldMapFrame, SetMapToCurrentZone, GetCurrentMapAreaID, GetInstanceInfo
 -- GLOBALS: UnitClass, UnitGUID, UnitLevel, UnitFactionGroup, UnitRace, UnitName, UIDropDownMenu_AddButton
@@ -48,7 +48,8 @@ local _G = _G;
 -- GLOBALS: PetsAndMountsMenuModelFrame, PetsAndMountsConfigModelFrame, PetsAndMountsSearchFrame, GameTooltip
 -- GLOBALS: PetsAndMountsPopupMessageFrame, UIDropDownMenu_SetAnchor, ToggleDropDownMenu, UnitBuff
 -- GLOBALS: GetSpecialization, GetSpecializationInfo, GetItemInfo, C_MountJournal, UnitFullName
--- GLOBALS: PetsAndMountsSecureButtonPets, PetsAndMountsSecureButtonMounts, time
+-- GLOBALS: PetsAndMountsSecureButtonPets, PetsAndMountsSecureButtonMounts, time, GetActiveSpecGroup
+-- GLOBALS: GetMaxTalentTier, GetTalentTierInfo
 
 --[[-------------------------------------------------------------------------------
     Common methods
@@ -92,6 +93,8 @@ function A:SlashCommand(input)
         A:ProcessMapID();
     elseif ( arg1 == "surface" ) then
         A:ProcessSurfaceSpells();
+    elseif ( arg1 == "mcat" ) then
+        A:ProcessMountsCategories();
     --@end-debug@
     end
 end
@@ -290,14 +293,39 @@ function A:GetMountIDFromSpellID(spellID)
     end
 
     local numMounts = C_MountJournal.GetNumMounts();
-    local _, spellID2;
+    local _, spellIDMatch;
 
     for i=1,numMounts do
-        _, spellID2 = C_MountJournal.GetMountInfo(i);
+        _, spellIDMatch = C_MountJournal.GetDisplayedMountInfo(i);
 
-        if ( spellID == spellID2 ) then
+        if ( spellID == spellIDMatch ) then
             A.mountsSpellIDToIDCache[spellID] = i;
             return i;
+        end
+    end
+
+    return nil;
+end
+
+--- Return mount ID from spell ID
+function A:GetMountMountIDFromSpellID(spellID)
+    if ( not A.mountsSpellIDToMountIDCache ) then
+        A.mountsSpellIDToMountIDCache = {};
+    end
+
+    if ( A.mountsSpellIDToMountIDCache[spellID] ) then
+        return A.mountsSpellIDToMountIDCache[spellID];
+    end
+
+    local numMounts = C_MountJournal.GetNumMounts();
+    local _, spellIDMatch, mountID;
+
+    for i=1,numMounts do
+        _, spellIDMatch, _, _, _, _, _, _, _, _, _, mountID = C_MountJournal.GetDisplayedMountInfo(i);
+
+        if ( spellID == spellIDMatch ) then
+            A.mountsSpellIDToMountIDCache[spellID] = mountID;
+            return mountID;
         end
     end
 
@@ -310,7 +338,7 @@ function A:GetMountNameBySpellID(spellID)
 
     if ( not id ) then return nil; end
 
-    return select(1, C_MountJournal.GetMountInfo(id));
+    return select(1, C_MountJournal.GetDisplayedMountInfo(id));
 end
 
 --- Check if the player is using a vehicle
@@ -423,47 +451,55 @@ function A:IsBattlePetID(id)
     return 1;
 end
 
---- Remove forced hybrids from favorites if they were removed
-function A:RemoveUnforcedHybrids()
-    for k,v in ipairs(A.mountsDB:GetProfiles()) do
-        if ( A.mountsDB.profiles[v] and A.mountsDB.profiles[v].favorites ) then
-            if ( A.mountsDB.profiles[v].favorites[3] and #A.mountsDB.profiles[v].favorites[3] > 0 ) then
-                for kk,vv in ipairs(A.mountsDB.profiles[v].favorites[3]) do
-                    if ( not tContains(A.db.global.forcedHybrid, vv) ) then
-                        A:TableRemove(A.mountsDB.profiles[v].favorites[3], vv);
-                    end
-                end
-            end
-        end
-    end
-end
-
 --- Check if a glyph is active
 -- @param spellID The glyph spell ID
-function A:IsGlyphed(spellID)
-    if ( not A.isGlyphedCache ) then
-        A:DebugMessage("IsGlyphed() - Creating cache");
-        A.isGlyphedCache = {};
+-- function A:IsGlyphed(spellID)
+    -- if ( not A.isGlyphedCache ) then
+        -- A:DebugMessage("IsGlyphed() - Creating cache");
+        -- A.isGlyphedCache = {};
+    -- end
+
+    -- if ( A.isGlyphedCache[spellID] ~= nil ) then
+        -- A:DebugMessage(("IsGlyphed() - %s (Cached)"):format(tostring(A.isGlyphedCache[spellID])));
+        -- return A.isGlyphedCache[spellID];
+    -- end
+
+    -- for i=1,NUM_GLYPH_SLOTS do
+        -- local enabled, _, _, glyphSpellID = GetGlyphSocketInfo(i);
+
+        -- if ( enabled and glyphSpellID == spellID ) then
+            -- A.isGlyphedCache[spellID] = true;
+            -- A:DebugMessage("IsGlyphed() - true");
+            -- return 1;
+        -- end
+    -- end
+
+    -- A.isGlyphedCache[spellID] = false;
+    -- A:DebugMessage("IsGlyphed() - false");
+    -- return nil;
+-- end
+
+function A:GetPlayerSpecTalentsInfos()
+    A.playerSpecTalentsInfos =
+    {
+        ["spec"] = 0,
+        ["row1"] = 0,
+        ["row2"] = 0,
+        ["row3"] = 0,
+        ["row4"] = 0,
+        ["row5"] = 0,
+        ["row6"] = 0,
+        ["row7"] = 0,
+    };
+    A.playerSpecTalentsInfos["spec"] = GetSpecialization();
+
+    local specGroup = GetActiveSpecGroup();
+    local _, selected;
+
+    for i=1,GetMaxTalentTier() do
+        _, selected = GetTalentTierInfo(i, specGroup, false, "player");
+        A.playerSpecTalentsInfos["row"..i] = selected;
     end
-
-    if ( A.isGlyphedCache[spellID] ~= nil ) then
-        A:DebugMessage(("IsGlyphed() - %s (Cached)"):format(tostring(A.isGlyphedCache[spellID])));
-        return A.isGlyphedCache[spellID];
-    end
-
-    for i=1,NUM_GLYPH_SLOTS do
-        local enabled, _, _, glyphSpellID = GetGlyphSocketInfo(i);
-
-        if ( enabled and glyphSpellID == spellID ) then
-            A.isGlyphedCache[spellID] = true;
-            A:DebugMessage("IsGlyphed() - true");
-            return 1;
-        end
-    end
-
-    A.isGlyphedCache[spellID] = false;
-    A:DebugMessage("IsGlyphed() - false");
-    return nil;
 end
 
 --[[-------------------------------------------------------------------------------
@@ -522,15 +558,15 @@ petsFilters.types = {};
 petsFilters.sources = {};
 function A:StoreAndResetPetsFilters()
     -- Store filters
-    petsFilters["LE_PET_JOURNAL_FLAG_COLLECTED"] = C_PetJournal.IsFlagFiltered(LE_PET_JOURNAL_FLAG_COLLECTED); -- Collected
-    petsFilters["LE_PET_JOURNAL_FLAG_NOT_COLLECTED"] = C_PetJournal.IsFlagFiltered(LE_PET_JOURNAL_FLAG_NOT_COLLECTED); -- Not collected
+    petsFilters["LE_PET_JOURNAL_FILTER_COLLECTED"] = C_PetJournal.IsFilterChecked(LE_PET_JOURNAL_FILTER_COLLECTED); -- Collected
+    petsFilters["LE_PET_JOURNAL_FILTER_NOT_COLLECTED"] = C_PetJournal.IsFilterChecked(LE_PET_JOURNAL_FILTER_NOT_COLLECTED); -- Not collected
 
     for i=1,C_PetJournal.GetNumPetTypes() do
-        petsFilters.types[i] = C_PetJournal.IsPetTypeFiltered(i);
+        petsFilters.types[i] = C_PetJournal.IsPetTypeChecked(i);
     end
 
     for i=1,C_PetJournal.GetNumPetSources() do
-        petsFilters.sources[i] = C_PetJournal.IsPetSourceFiltered(i);
+        petsFilters.sources[i] = C_PetJournal.IsPetSourceChecked(i);
     end
 
     if ( PetJournalSearchBox and PetJournalSearchBox:GetText() ~= SEARCH ) then
@@ -538,10 +574,10 @@ function A:StoreAndResetPetsFilters()
     end
 
     -- Set filters for DB update
-    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_COLLECTED, 1); -- Collected - Obviously needed
-    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_NOT_COLLECTED, 1); -- Not collected - Needed as it will allow us to get the full number of pets
-    C_PetJournal.AddAllPetTypesFilter();
-    C_PetJournal.AddAllPetSourcesFilter();
+    C_PetJournal.SetFilterChecked(LE_PET_JOURNAL_FILTER_COLLECTED, 1); -- Collected - Obviously needed
+    C_PetJournal.SetFilterChecked(LE_PET_JOURNAL_FILTER_NOT_COLLECTED, 1); -- Not collected - Needed as it will allow us to get the full number of pets
+    C_PetJournal.SetAllPetTypesChecked(true);
+    C_PetJournal.SetAllPetSourcesChecked(true);
 
     if ( petsFilters["SearchBoxValue"] ) then
         C_PetJournal.SetSearchFilter("");
@@ -550,15 +586,15 @@ end
 
 --- Restore pets filters
 function A:RestorePetsFilters()
-    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_COLLECTED, not petsFilters["LE_PET_JOURNAL_FLAG_COLLECTED"]);
-    C_PetJournal.SetFlagFilter(LE_PET_JOURNAL_FLAG_NOT_COLLECTED, not petsFilters["LE_PET_JOURNAL_FLAG_NOT_COLLECTED"]);
+    C_PetJournal.SetFilterChecked(LE_PET_JOURNAL_FILTER_COLLECTED, not petsFilters["LE_PET_JOURNAL_FILTER_COLLECTED"]);
+    C_PetJournal.SetFilterChecked(LE_PET_JOURNAL_FILTER_NOT_COLLECTED, not petsFilters["LE_PET_JOURNAL_FILTER_NOT_COLLECTED"]);
 
     for i=1,C_PetJournal.GetNumPetTypes() do
         C_PetJournal.SetPetTypeFilter(i, not petsFilters.types[i]);
     end
 
     for i=1,C_PetJournal.GetNumPetSources() do
-        C_PetJournal.SetPetSourceFilter(i, not petsFilters.sources[i]);
+        C_PetJournal.SetPetSourceChecked(i, not petsFilters.sources[i]);
     end
 
     if ( PetJournalSearchBox and petsFilters["SearchBoxValue"] ) then
@@ -701,7 +737,8 @@ end
 -- 247 Red Flying Cloud
 -- 248 Flying
 -- 254 Subdued Seahorse
--- 269 Striders
+-- 269 Water Striders
+-- 284 Chauffeured Mechano-Hog
 A.mountTypeToCategory =
 {
     [230] = 1,
@@ -712,6 +749,7 @@ A.mountTypeToCategory =
     [248] = 2,
     [254] = 4,
     [269] = 1,
+    [284] = 1,
 };
 function A:GetMountCategory(mountType)
     if ( A.mountTypeToCategory[mountType] ) then
@@ -721,21 +759,17 @@ function A:GetMountCategory(mountType)
     return nil;
 end
 
---- Check if the mount is walking on surface
+--- Check if the mount is able to walk on water surface
 -- @param spellID The mount spell ID
 function A:IsWaterWalkingMount(spellID)
     if ( tContains(A.surfaceMounts, spellID) ) then -- Generic mounts
         return 1;
-    else -- Special cases
-        if ( spellID == 23161 or spellID == 5784 ) then -- Warlock's Dreadsteed and Felsteed, check for Glyph of Nightmares (spellID: 56232)
-            for i=1,NUM_GLYPH_SLOTS do
-                local enabled, _, _, glyphSpellID = GetGlyphSocketInfo(i);
-
-                if ( enabled and glyphSpellID == 56232 ) then
-                    return 1;
-                end
-            end
-        end
+    -- else -- Special cases
+        -- if ( spellID == 23161 or spellID == 5784 ) then -- Warlock's Dreadsteed and Felsteed, check for Glyph of Nightmares (spellID: 56232)
+            -- if ( A:IsGlyphed(56232) ) then
+                -- return 1;
+            -- end
+        -- end
     end
 
     return nil;
@@ -750,7 +784,7 @@ function A:GetCollectedMounts()
     local count = 0;
 
     for i=1,C_MountJournal.GetNumMounts() do
-        if ( select(11, C_MountJournal.GetMountInfo(i)) ) then
+        if ( select(11, C_MountJournal.GetDisplayedMountInfo(i)) ) then
             count = count + 1;
         end
     end
@@ -773,7 +807,7 @@ function A:BuildMountsTable(force)
     A.lastMountsCount = mountsCount;
     mountsCount = C_MountJournal.GetNumMounts();
 
-    local _, creatureID, creatureName, spellID, icon, mountType, leadingLetter, cat, isUsable, hideOnChar, isCollected;
+    local _, creatureID, creatureName, spellID, icon, mountType, leadingLetter, cat, isUsable, hideOnChar, isCollected, mountID;
 
     -- (Re)Building database, deleting cache
     A.usableMountsCache = nil;
@@ -801,10 +835,10 @@ function A:BuildMountsTable(force)
     };
 
     for i=1,mountsCount do
-        -- local creatureName, spellID, icon, active, isUsable, sourceType, isFavorite, _, _, hideOnChar, isCollected = C_MountJournal.GetMountInfo(i);
-        -- local creatureDisplayID, descriptionText, sourceText, isSelfMount = C_MountJournal.GetMountInfoExtra(index);
-        creatureName, spellID, icon, _, isUsable, _, _, _, _, hideOnChar, isCollected = C_MountJournal.GetMountInfo(i);
-        creatureID, _, _, _, mountType = C_MountJournal.GetMountInfoExtra(i);
+        -- local creatureName, spellID, icon, active, isUsable, sourceType, isFavorite, _, _, hideOnChar, isCollected = C_MountJournal.GetDisplayedMountInfo(i);
+        -- local creatureDisplayID, descriptionText, sourceText, isSelfMount = C_MountJournal.GetDisplayedMountInfoExtra(index);
+        creatureName, spellID, icon, _, isUsable, _, _, _, _, hideOnChar, isCollected, mountID = C_MountJournal.GetDisplayedMountInfo(i);
+        creatureID, _, _, _, mountType = C_MountJournal.GetDisplayedMountInfoExtra(i);
 
         if ( hideOnChar ~= true and isCollected ) then
             leadingLetter = string.sub(creatureName, 1, 1);
@@ -823,6 +857,7 @@ function A:BuildMountsTable(force)
                     name = creatureName,
                     icon = icon,
                     mountType = mountType,
+                    mountID = mountID,
                 };
             end
 
@@ -840,6 +875,7 @@ function A:BuildMountsTable(force)
                     name = creatureName,
                     icon = icon,
                     mountType = mountType,
+                    mountID = mountID,
                 };
             end
 
@@ -857,6 +893,7 @@ function A:BuildMountsTable(force)
                     name = creatureName,
                     icon = icon,
                     mountType = mountType,
+                    mountID = mountID,
                 };
             end
 
@@ -874,6 +911,7 @@ function A:BuildMountsTable(force)
                     name = creatureName,
                     icon = icon,
                     mountType = mountType,
+                    mountID = mountID,
                 };
             end
 
@@ -887,7 +925,7 @@ function A:BuildMountsTable(force)
             -- Using the first non water mount found for water surface testing
             -- Bring me that back Blizzard!!
             -- if ( not A.swimmingCheckSpellID and bit.band(mountType, 0x8) == 0 ) then
-                -- A.swimmingCheckSpellID = 29998; -- Decrepit Fever
+                -- A.swimmingCheckSpellID = 29998; -- Decrepit Fever (testing things here)
             -- end
 
             if ( cat ) then
@@ -903,6 +941,7 @@ function A:BuildMountsTable(force)
                     name = creatureName,
                     icon = icon,
                     mountType = mountType,
+                    mountID = mountID,
                 };
             end
         end
@@ -1174,7 +1213,7 @@ function A:GetSetsInUse(cat)
     local sets = A:GetTableSetsInUse(cat);
 
     if ( sets ) then
-        return string.join(" ", unpack(sets));
+        return A:StringTrim(string.join(", ", unpack(sets)), ", ");
     else
         return L["None"];
     end
@@ -1617,6 +1656,7 @@ function A:SetEverything()
     A.playerRace = select(2, UnitRace("player"));
     A.playerName, A.playerRealm = UnitFullName("player");
     A.playerCurrentSpecID = A:GetPlayerCurrentSpecID();
+    A:GetPlayerSpecTalentsInfos();
 
     if ( not A.playerClass or not A.playerGUID or not A.playerLevel
     or not A.playerFaction or not A.playerRace or not A.playerName
@@ -1734,7 +1774,7 @@ local function PAMMenu(self, level)
             end
         end
 
-        --Mounts
+        -- Mounts
         if ( UIDROPDOWNMENU_MENU_VALUE == "MOUNTS" ) then
             -- Menu title
             self.info.isTitle = 1;
@@ -2046,7 +2086,7 @@ local function PAMMenu(self, level)
                             self.info.icon = vvv.icon;
                             self.info.keepShownOnClick = 1;
                             self.info.hasArrow = nil;
-                            self.info.func = function() C_MountJournal.Summon(vvv.id); end;
+                            self.info.func = function() C_MountJournal.SummonByID(vvv.mountID); end;
                             UIDropDownMenu_AddButton(self.info, level);
 
                             _G["DropDownList4Button"..buttonIndex]:HookScript("OnEnter", function()
@@ -2187,9 +2227,9 @@ function A:PLAYER_ENTERING_WORLD()
         A:RegisterEvent("PLAYER_LEVEL_UP"); -- Update post click macros
         A:RegisterEvent("PET_BATTLE_OPENING_START"); -- Buttons visibility
         A:RegisterEvent("PET_BATTLE_CLOSE"); -- Same
-        A:RegisterEvent("GLYPH_UPDATED", "GlyphModificationCallback"); -- Will also fire when switching spec
-        A:RegisterEvent("GLYPH_ADDED", "GlyphModificationCallback");
-        A:RegisterEvent("GLYPH_REMOVED", "GlyphModificationCallback");
+        -- A:RegisterEvent("GLYPH_UPDATED", "GlyphModificationCallback"); -- Will also fire when switching spec
+        -- A:RegisterEvent("GLYPH_ADDED", "GlyphModificationCallback");
+        -- A:RegisterEvent("GLYPH_REMOVED", "GlyphModificationCallback");
         A:RegisterEvent("PLAYER_TALENT_UPDATE");
 
         A:LoginModificationsFixes();
@@ -2226,14 +2266,14 @@ function A:PLAYER_LEVEL_UP(event, level, ...)
     A:SetPostClickMacro();
 end
 
-function A:GlyphModificationCallback()
-    A.isGlyphedCache = nil;
+-- function A:GlyphModificationCallback()
+    -- A.isGlyphedCache = nil;
 
-    if ( A.lockLastGlyphState ~= A:IsGlyphed(56232) ) then
-        A:BuildMountsTable(1);
-        A.lockLastGlyphState = A:IsGlyphed(56232);
-    end
-end
+    -- if ( A.lockLastGlyphState ~= A:IsGlyphed(56232) ) then
+        -- A:BuildMountsTable(1);
+        -- A.lockLastGlyphState = A:IsGlyphed(56232);
+    -- end
+-- end
 
 function A:COMPANION_UPDATE(event, companionType)
     if ( companionType == "CRITTER" ) then
@@ -2359,6 +2399,7 @@ end
 function A:PLAYER_TALENT_UPDATE()
     A.playerCurrentSpecID = A:GetPlayerCurrentSpecID();
     A:SetPostClickMacro();
+    A:GetPlayerSpecTalentsInfos();
 end
 
 function A:PET_BATTLE_OPENING_START()
@@ -2624,6 +2665,8 @@ A.aceDefaultDB =
         petsSummonFilters = {}, -- d
         mountsSummonFilters = {}, -- d
         mountButtonshiftClickCat = 5, -- d
+        mountButtonshiftClickEnabled = nil, -- d
+        mountButtonControlLock = nil, -- d
         isSwimmingMountCat = 4, -- d
         copyTargetMount = 1, -- d
         copyMouseoverMount = nil, -- d
@@ -2659,6 +2702,7 @@ A.aceDefaultDB =
         warlockPreferTeleport = nil, -- d
         warlockWantModifier = nil, -- d
         warlockModifier = "shift", -- d
+        warlockDemonicCircleModifier = "shift",
         warriorForceHeroicLeap = nil, -- d
         customMountMacrosEnabled = nil, -- d
         customMountMacros = -- d
@@ -2703,6 +2747,33 @@ A.aceDefaultDB =
         hybridsSelectionTab = nil, -- d
         hybridsSelectionOnlyOwned = 1, -- d
         telaariTalbuk = 1,
+    },
+};
+
+-- Pets Ace3 DB
+A.aceDefaultPetsDB =
+{
+    profile =
+    {
+        favorites = {},
+    },
+};
+
+-- Mounts Ace3 DB
+A.aceDefaultMountsDB =
+{
+    profile =
+    {
+        favorites =
+        {
+            [1] = {}, -- Ground
+            [2] = {}, -- Fly
+            [3] = {}, -- Hybrid (ground & fly)
+            [4] = {}, -- Aquatic
+            [5] = {}, -- with passengers
+            [6] = {}, -- Water walking
+            [7] = {}, -- Repair
+        },
     },
 };
 
@@ -2776,7 +2847,6 @@ function A:RemoveDatabaseOldEntries()
             end
         end
     end
-
     for k,v in pairs(A.db.global.savedSets) do
         for kk,vv in pairs(v) do
             if ( vv[1] and type(vv[1]) == "number" ) then
@@ -2787,34 +2857,22 @@ function A:RemoveDatabaseOldEntries()
     end
 end
 
--- Pets Ace3 DB
-A.aceDefaultPetsDB =
-{
-    profile =
-    {
-        favorites = {},
-    },
-};
+--- Remove forced hybrids from favorites if they were removed
+function A:RemoveUnforcedHybrids()
+    for k,v in ipairs(A.mountsDB:GetProfiles()) do
+        if ( A.mountsDB.profiles[v] and A.mountsDB.profiles[v].favorites ) then
+            if ( A.mountsDB.profiles[v].favorites[3] and #A.mountsDB.profiles[v].favorites[3] > 0 ) then
+                for kk,vv in ipairs(A.mountsDB.profiles[v].favorites[3]) do
+                    if ( not tContains(A.db.global.forcedHybrid, vv) ) then
+                        A:TableRemove(A.mountsDB.profiles[v].favorites[3], vv);
+                    end
+                end
+            end
+        end
+    end
+end
 
--- Mounts Ace3 DB
-A.aceDefaultMountsDB =
-{
-    profile =
-    {
-        favorites =
-        {
-            [1] = {}, -- Ground
-            [2] = {}, -- Fly
-            [3] = {}, -- Hybrid (ground & fly)
-            [4] = {}, -- Aquatic
-            [5] = {}, -- with passengers
-            [6] = {}, -- Water walking
-            [7] = {}, -- Repair
-        },
-    },
-};
-
--- Mounts profiles tables are created empty, fix that
+--- Mounts profiles tables are created empty, fix that
 function A:FixMountsProfilesTables()
     for k,v in ipairs(A.mountsDB:GetProfiles()) do
         if ( A.mountsDB.profiles[v] and not A.mountsDB.profiles[v].favorites ) then
@@ -2834,6 +2892,20 @@ function A:FixMountsProfilesTables()
                     A.mountsDB.profiles[v].favorites[i] = {};
                 end
             end
+        end
+    end
+end
+
+--- Remove empty area sets from database
+function A:RemoveEmptyAreaSets()
+    for k,v in pairs(A.db.profile.mountsSetsByMapID) do
+        if ( #v == 0 ) then
+            A.db.profile.mountsSetsByMapID[k] = nil;
+        end
+    end
+    for k,v in pairs(A.db.profile.petsSetsByMapID) do
+        if ( #v == 0 ) then
+            A.db.profile.petsSetsByMapID[k] = nil;
         end
     end
 end
@@ -3036,6 +3108,7 @@ function A:OnInitialize()
     A:DatabaseRevisionCheck();
     A:RemoveDatabaseOldEntries();
     A:RemoveUnforcedHybrids();
+    A:RemoveEmptyAreaSets();
     A:AddSummonFilters();
     A:AddCustomMacros();
 

@@ -1629,7 +1629,7 @@ function A:OptionsRoot()
                                     deathKnightDescription =
                                     {
                                         order = 1,
-                                        name = L["For Death Knights it handles Death's Advance and Unholy Presence when moving."],
+                                        name = L["For Death Knights it handles Wraith Walk when moving."],
                                         type = "description",
                                         fontSize = "medium",
                                     },
@@ -1640,25 +1640,25 @@ function A:OptionsRoot()
                                         width = "full",
                                         type = "description",
                                     },
-                                    deathKnightHeader =
-                                    {
-                                        order = 10,
-                                        name = L["Options"],
-                                        type = "header",
-                                    },
-                                    deathKnightPreferUnholy =
-                                    {
-                                        order = 20,
-                                        name = L["Prefer Unholy Presence"],
-                                        desc = L["Prioritise Unholy Presence other Death's Advance. If Death's Advance is not selected and this option either, it will still use Unholy Presence."],
-                                        type = "toggle",
-                                        set = function()
-                                            A.db.profile.deathKnightPreferUnholy = not A.db.profile.deathKnightPreferUnholy;
-                                            A:SetPostClickMacro();
-                                            A:SetPreClickFunction();
-                                        end,
-                                        get = function() return A.db.profile.deathKnightPreferUnholy; end,
-                                    },
+                                    -- deathKnightHeader =
+                                    -- {
+                                        -- order = 10,
+                                        -- name = L["Options"],
+                                        -- type = "header",
+                                    -- },
+                                    -- deathKnightPreferUnholy =
+                                    -- {
+                                        -- order = 20,
+                                        -- name = L["Prefer Unholy Presence"],
+                                        -- desc = L["Prioritise Unholy Presence other Death's Advance. If Death's Advance is not selected and this option either, it will still use Unholy Presence."],
+                                        -- type = "toggle",
+                                        -- set = function()
+                                            -- A.db.profile.deathKnightPreferUnholy = not A.db.profile.deathKnightPreferUnholy;
+                                            -- A:SetPostClickMacro();
+                                            -- A:SetPreClickFunction();
+                                        -- end,
+                                        -- get = function() return A.db.profile.deathKnightPreferUnholy; end,
+                                    -- },
                                 },
                             },
                             -- Druid 2xx
@@ -1687,7 +1687,7 @@ function A:OptionsRoot()
                                     druidDescription =
                                     {
                                         order = 1,
-                                        name = L["For Druids it handles aquatic, travel and both flight forms."],
+                                        name = L["For Druids it handles aquatic, travel, flight and cat forms."],
                                         type = "description",
                                         fontSize = "medium",
                                     },
@@ -1745,7 +1745,7 @@ function A:OptionsRoot()
                                     hunterDescription =
                                     {
                                         order = 1,
-                                        name = L["For Hunters it handles Aspect of the Cheetah/Pack when moving. In combat you have to use a modifier to switch of Aspect of the Cheetah/Pack."],
+                                        name = L["For Hunters it handles Aspect of the Cheetah."],
                                         type = "description",
                                         fontSize = "medium",
                                     },
@@ -1756,25 +1756,25 @@ function A:OptionsRoot()
                                         width = "full",
                                         type = "description",
                                     },
-                                    hunterHeader =
-                                    {
-                                        order = 10,
-                                        name = L["Options"],
-                                        type = "header",
-                                    },
-                                    hunterPreferPack =
-                                    {
-                                        order = 20,
-                                        name = L["Prefer Aspect of the Pack"],
-                                        desc = L["Prioritise Aspect of the Pack other Aspect of the Cheetah."],
-                                        type = "toggle",
-                                        set = function()
-                                            A.db.profile.hunterPreferPack = not A.db.profile.hunterPreferPack;
-                                            A:SetPostClickMacro();
-                                            A:SetPreClickFunction();
-                                        end,
-                                        get = function() return A.db.profile.hunterPreferPack; end,
-                                    },
+                                    -- hunterHeader =
+                                    -- {
+                                        -- order = 10,
+                                        -- name = L["Options"],
+                                        -- type = "header",
+                                    -- },
+                                    -- hunterPreferPack =
+                                    -- {
+                                        -- order = 20,
+                                        -- name = L["Prefer Aspect of the Pack"],
+                                        -- desc = L["Prioritise Aspect of the Pack other Aspect of the Cheetah."],
+                                        -- type = "toggle",
+                                        -- set = function()
+                                            -- A.db.profile.hunterPreferPack = not A.db.profile.hunterPreferPack;
+                                            -- A:SetPostClickMacro();
+                                            -- A:SetPreClickFunction();
+                                        -- end,
+                                        -- get = function() return A.db.profile.hunterPreferPack; end,
+                                    -- },
                                     --[[hunterWantModifier =
                                     {
                                         order = 21,
@@ -1788,28 +1788,28 @@ function A:OptionsRoot()
                                         end,
                                         get = function() return A.db.profile.hunterWantModifier; end,
                                     },]]--
-                                    hunterModifier =
-                                    {
-                                        order = 22,
-                                        name = L["Modifier"],
-                                        desc = L["Select which modifier to use for switching to Aspect of the Cheetah/Pack.\n Be aware that if a bind is set to the modifier plus the button bind this will not work."],
-                                        disabled = function()
-                                            --if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled or not A.db.profile.hunterWantModifier ) then
-                                            if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled ) then
-                                                return 1;
-                                            end
+                                    -- hunterModifier =
+                                    -- {
+                                        -- order = 22,
+                                        -- name = L["Modifier"],
+                                        -- desc = L["Select which modifier to use for switching to Aspect of the Cheetah/Pack.\n Be aware that if a bind is set to the modifier plus the button bind this will not work."],
+                                        -- disabled = function()
+                                            -- --if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled or not A.db.profile.hunterWantModifier ) then
+                                            -- if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled ) then
+                                                -- return 1;
+                                            -- end
 
-                                            return nil;
-                                        end,
-                                        type = "select",
-                                        values = A.modifiersList,
-                                        set = function(info, val)
-                                            A.db.profile.hunterModifier = val;
-                                            A:SetPostClickMacro();
-                                            A:SetPreClickFunction();
-                                        end,
-                                        get = function() return A.db.profile.hunterModifier; end,
-                                    },
+                                            -- return nil;
+                                        -- end,
+                                        -- type = "select",
+                                        -- values = A.modifiersList,
+                                        -- set = function(info, val)
+                                            -- A.db.profile.hunterModifier = val;
+                                            -- A:SetPostClickMacro();
+                                            -- A:SetPreClickFunction();
+                                        -- end,
+                                        -- get = function() return A.db.profile.hunterModifier; end,
+                                    -- },
                                 },
                             },
                             blankFix = -- Dunno why but the next group name after the hunter's one is sticked to its bottom
@@ -1844,7 +1844,7 @@ function A:OptionsRoot()
                                     mageDescription =
                                     {
                                         order = 1,
-                                        name = L["For Mages it handles Blazing Speed and Blink when moving. Slow Fall when falling."],
+                                        name = L["For Mages it handles Blink when moving. Slow Fall when falling."],
                                         type = "description",
                                         fontSize = "medium",
                                     },
@@ -1861,19 +1861,19 @@ function A:OptionsRoot()
                                         name = L["Options"],
                                         type = "header",
                                     },
-                                    magePreferBlink =
-                                    {
-                                        order = 20,
-                                        name = L["Prefer Blink"],
-                                        desc = L["Prioritise Blink other Blazing Speed. If Blazing Speed is not selected and this option either, it will still use Blink."],
-                                        type = "toggle",
-                                        set = function()
-                                            A.db.profile.magePreferBlink = not A.db.profile.magePreferBlink;
-                                            A:SetPostClickMacro();
-                                            A:SetPreClickFunction();
-                                        end,
-                                        get = function() return A.db.profile.magePreferBlink; end,
-                                    },
+                                    -- magePreferBlink =
+                                    -- {
+                                        -- order = 20,
+                                        -- name = L["Prefer Blink"],
+                                        -- desc = L["Prioritise Blink other Blazing Speed. If Blazing Speed is not selected and this option either, it will still use Blink."],
+                                        -- type = "toggle",
+                                        -- set = function()
+                                            -- A.db.profile.magePreferBlink = not A.db.profile.magePreferBlink;
+                                            -- A:SetPostClickMacro();
+                                            -- A:SetPreClickFunction();
+                                        -- end,
+                                        -- get = function() return A.db.profile.magePreferBlink; end,
+                                    -- },
                                     mageSlowFall =
                                     {
                                         order = 21,
@@ -1891,7 +1891,7 @@ function A:OptionsRoot()
                                     {
                                         order = 22,
                                         name = L["Force Slow Fall"],
-                                        desc = L["Force Slow Fall when in combat. This will obviously make Blazing Speed or Blink unavailable in combat."],
+                                        desc = L["Force Slow Fall when in combat. This will obviously make Blink unavailable in combat."],
                                         type = "toggle",
                                         set = function()
                                             A.db.profile.mageForceSlowFall = not A.db.profile.mageForceSlowFall;
@@ -1928,7 +1928,7 @@ function A:OptionsRoot()
                                     monkDescription =
                                     {
                                         order = 1,
-                                        name = L["For Monks it handles Flying Serpent Kick and Roll when moving. Zen Flight when falling."],
+                                        name = L["For Monks it handles Flying Serpent Kick and Roll when moving."],
                                         type = "description",
                                         fontSize = "medium",
                                     },
@@ -1958,20 +1958,20 @@ function A:OptionsRoot()
                                         end,
                                         get = function() return A.db.profile.monkPreferSerpentKick; end,
                                     },
-                                    monkModifier =
-                                    {
-                                        order = 21,
-                                        name = L["Modifier"],
-                                        desc = L["Select which modifier to use for cancelling Zen Flight."],
-                                        type = "select",
-                                        values = A.modifiersList,
-                                        set = function(info, val)
-                                            A.db.profile.monkModifier = val;
-                                            A:SetPostClickMacro();
-                                            A:SetPreClickFunction();
-                                        end,
-                                        get = function() return A.db.profile.monkModifier; end,
-                                    },
+                                    -- monkModifier =
+                                    -- {
+                                        -- order = 21,
+                                        -- name = L["Modifier"],
+                                        -- desc = L["Select which modifier to use for cancelling Zen Flight."],
+                                        -- type = "select",
+                                        -- values = A.modifiersList,
+                                        -- set = function(info, val)
+                                            -- A.db.profile.monkModifier = val;
+                                            -- A:SetPostClickMacro();
+                                            -- A:SetPreClickFunction();
+                                        -- end,
+                                        -- get = function() return A.db.profile.monkModifier; end,
+                                    -- },
                                 },
                             },
                             -- Paladin 6xx
@@ -2000,7 +2000,7 @@ function A:OptionsRoot()
                                     paladinDescription =
                                     {
                                         order = 1,
-                                        name = L["For Paladins it handles Speed of Light when moving."],
+                                        name = L["For Paladins it handles Divine Steed when moving."],
                                         type = "description",
                                         fontSize = "medium",
                                     },
@@ -2045,7 +2045,7 @@ function A:OptionsRoot()
                                     priestDescription =
                                     {
                                         order = 1,
-                                        name = L["For Priests it handles Body and Soul and Angelic Feather when moving."],
+                                        name = L["For Priests it handles Body and Soul, Body and Mind and Angelic Feather when moving."],
                                         type = "description",
                                         fontSize = "medium",
                                     },
@@ -2079,7 +2079,7 @@ function A:OptionsRoot()
                                     {
                                         order = 21,
                                         name = L["Force Levitate"],
-                                        desc = L["Force Levitate when in combat. This will obviously make Body and Soul or Angelic Feather unavailable in combat."],
+                                        desc = L["Force Levitate when in combat. This will obviously make Body and Soul, Body and Mind or Angelic Feather unavailable in combat."],
                                         type = "toggle",
                                         set = function()
                                             A.db.profile.priestForceLevitate = not A.db.profile.priestForceLevitate;
@@ -2206,7 +2206,7 @@ function A:OptionsRoot()
                                     warlockDescription =
                                     {
                                         order = 1,
-                                        name = L["For Warlocks it handles Burning Rush and Demonic Circle: Teleport when moving."],
+                                        name = L["For Warlocks it handles Burning Rush and Demonic Circle when moving."],
                                         type = "description",
                                         fontSize = "medium",
                                     },
@@ -2223,26 +2223,54 @@ function A:OptionsRoot()
                                         name = L["Options"],
                                         type = "header",
                                     },
-                                    warlockPreferTeleport =
+                                    -- warlockPreferTeleport =
+                                    -- {
+                                        -- order = 20,
+                                        -- name = L["Prefer Teleport"],
+                                        -- desc = L["Prioritise Demonic Circle: Teleport other Burning Rush. If Burning Rush is not selected and this option either, it will still use Demonic Circle: Teleport."],
+                                        -- type = "toggle",
+                                        -- set = function()
+                                            -- A.db.profile.warlockPreferTeleport = not A.db.profile.warlockPreferTeleport;
+                                            -- A:SetPostClickMacro();
+                                            -- A:SetPreClickFunction();
+                                        -- end,
+                                        -- get = function() return A.db.profile.warlockPreferTeleport; end,
+                                    -- },
+                                    warlockDemonicCircleModifier =
                                     {
                                         order = 20,
-                                        name = L["Prefer Teleport"],
-                                        desc = L["Prioritise Demonic Circle: Teleport other Burning Rush. If Burning Rush is not selected and this option either, it will still use Demonic Circle: Teleport."],
-                                        type = "toggle",
-                                        set = function()
-                                            A.db.profile.warlockPreferTeleport = not A.db.profile.warlockPreferTeleport;
+                                        name = L["Demonic Circle"],
+                                        desc = L["Select which modifier to use for casting Demonic Circle when out of combat."]..L["\nBe aware that if a bind is set to the modifier plus the button bind this will not work."],
+                                        disabled = function()
+                                            if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled ) then
+                                                return 1;
+                                            end
+
+                                            return nil;
+                                        end,
+                                        type = "select",
+                                        values = A.modifiersList,
+                                        set = function(info, val)
+                                            A.db.profile.warlockDemonicCircleModifier = val;
                                             A:SetPostClickMacro();
                                             A:SetPreClickFunction();
                                         end,
-                                        get = function() return A.db.profile.warlockPreferTeleport; end,
+                                        get = function() return A.db.profile.warlockDemonicCircleModifier; end,
+                                    },
+                                    warlockBlankLine2 =
+                                    {
+                                        order = 21,
+                                        name = " ",
+                                        width = "full",
+                                        type = "description",
                                     },
                                     warlockWantModifier =
                                     {
-                                        order = 21,
+                                        order = 22,
                                         name = L["Use a modifier"],
-                                        desc = L["Use a modifier to disable Burning Rush, this will also prevent the spell toggle.\n Be aware that if a bind is set to the modifier plus the button bind this will not work."],
+                                        desc = L["Use a modifier to disable Burning Rush, this will also prevent the spell toggle."]..L["\nBe aware that if a bind is set to the modifier plus the button bind this will not work."],
                                         disabled = function()
-                                            if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled or A.db.profile.warlockPreferTeleport ) then
+                                            if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled ) then
                                                 return 1;
                                             end
 
@@ -2258,11 +2286,11 @@ function A:OptionsRoot()
                                     },
                                     warlockModifier =
                                     {
-                                        order = 22,
+                                        order = 23,
                                         name = L["Modifier"],
-                                        desc = L["Select which modifier to use for cancelling Burning Rush."],
+                                        desc = L["Select which modifier to use for cancelling Burning Rush."]..L["\nBe aware that if a bind is set to the modifier plus the button bind this will not work."],
                                         disabled = function()
-                                            if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled or not A.db.profile.warlockWantModifier or A.db.profile.warlockPreferTeleport ) then
+                                            if ( A.db.profile.customMountMacrosEnabled or not A.db.profile.classesMacrosEnabled or not A.db.profile.warlockWantModifier ) then
                                                 return 1;
                                             end
 
@@ -2305,7 +2333,7 @@ function A:OptionsRoot()
                                     warriorDescription =
                                     {
                                         order = 1,
-                                        name = L["For Warriors it handles Heroic Leap when moving and out of combat. Charge with a hostile target and Intervene with a friendly target when in combat."],
+                                        name = L["For Warriors it handles Heroic Leap when moving and out of combat. Charge and Intercept when in combat."],
                                         type = "description",
                                         fontSize = "medium",
                                     },
@@ -2856,15 +2884,51 @@ function A:OptionsRoot()
                                 name = L["Click behavior"],
                                 type = "header",
                             },
-                            shiftClick =
+                            mountButtonshiftClickEnabled =
                             {
                                 order = 201,
+                                name = L["Enable %s"]:format(L["Shift+Click"]),
+                                desc = L["Enable %s to summon a specific mount category when clicking the button. This will override every class modifiers using shift."]:format(L["Shift+Click"]),
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.mountButtonshiftClickEnabled = not A.db.profile.mountButtonshiftClickEnabled;
+                                end,
+                                get = function() return A.db.profile.mountButtonshiftClickEnabled; end,
+                            },
+                            shiftClick =
+                            {
+                                order = 202,
                                 name = L["Shift+Click"],
                                 desc = L["Choose which mount category to summon when using %s"]:format(L["Shift+Click"]),
                                 type = "select",
+                                disabled = function()
+                                    if ( not A.db.profile.mountButtonshiftClickEnabled ) then
+                                        return 1;
+                                    end
+
+                                    return nil;
+                                end,
                                 values = function() return A.mountCat; end,
                                 set = function(info, val) A.db.profile.mountButtonshiftClickCat = val; end,
                                 get = function() return A.db.profile.mountButtonshiftClickCat; end,
+                            },
+                            controlLockBlankLine =
+                            {
+                                order = 203,
+                                name = " ",
+                                width = "full",
+                                type = "description",
+                            },
+                            mountButtonControlLock =
+                            {
+                                order = 204,
+                                name = L["Enable Control-Click"],
+                                desc = L["Enable Control-Click to lock/unlock the mount button. This will override every class modifiers using control."],
+                                type = "toggle",
+                                set = function()
+                                    A.db.profile.mountButtonControlLock = not A.db.profile.mountButtonControlLock;
+                                end,
+                                get = function() return A.db.profile.mountButtonControlLock; end,
                             },
                         },
                     },
