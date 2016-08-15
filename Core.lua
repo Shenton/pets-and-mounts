@@ -14,6 +14,7 @@ Fixed target/mouseover mount copy summon -- Pushed
 Fixed pet summon when clicked error
 Fixed area sets errors
 Fixed an error with hybrid selection
+Finally fixed login bug with Blizzard_Collections by adding a loader addon, which will load Blizzard_Collection, which will load PAM, yo dawg
 ]]--
 
 local A = _G["PetsAndMountsGlobal"];

@@ -1,0 +1,7 @@
+## Interface: 70000
+## Title: Pets & Mounts Loader
+## Notes: Load Pets & Mounts with Blizzard's needed addons.
+## Notes-frFR: Charge Pets & Mounts avec les addons Blizzard nécessaires.
+## Author: Shenton
+
+Loader.lua

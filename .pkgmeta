@@ -4,7 +4,8 @@ ignore:
  - .pkgmeta
 
 move-folders:
-  PetsAndMounts/Config: PetsAndMountsConfig
+  PetsAndMounts/config: PetsAndMountsConfig
+  PetsAndMounts/loader: PetsAndMountsLoader
 
 externals:
  Libs/LibStub:
