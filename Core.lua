@@ -13,6 +13,7 @@
 Fixed target/mouseover mount copy summon -- Pushed
 Fixed pet summon when clicked error
 Fixed area sets errors
+Fixed an error with hybrid selection
 ]]--
 
 local A = _G["PetsAndMountsGlobal"];
@@ -94,6 +95,8 @@ function A:SlashCommand(input)
         A:ProcessSurfaceSpells();
     elseif ( arg1 == "mcat" ) then
         A:ProcessMountsCategories();
+    elseif ( arg1 == "mess" ) then
+        A:PopMessageFrame("newBindingsSystemv150");
     --@end-debug@
     end
 end
