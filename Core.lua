@@ -15,6 +15,7 @@ Fixed pet summon when clicked error
 Fixed area sets errors
 Fixed an error with hybrid selection
 Finally fixed login bug with Blizzard_Collections by adding a loader addon, which will load Blizzard_Collection, which will load PAM, yo dawg
+Fixed and updated pets filters store/restore
 ]]--
 
 local A = _G["PetsAndMountsGlobal"];
@@ -563,9 +564,6 @@ petsFilters.types = {};
 petsFilters.sources = {};
 function A:StoreAndResetPetsFilters()
     -- Store filters
-    petsFilters["LE_PET_JOURNAL_FILTER_COLLECTED"] = C_PetJournal.IsFilterChecked(LE_PET_JOURNAL_FILTER_COLLECTED); -- Collected
-    petsFilters["LE_PET_JOURNAL_FILTER_NOT_COLLECTED"] = C_PetJournal.IsFilterChecked(LE_PET_JOURNAL_FILTER_NOT_COLLECTED); -- Not collected
-
     for i=1,C_PetJournal.GetNumPetTypes() do
         petsFilters.types[i] = C_PetJournal.IsPetTypeChecked(i);
     end
@@ -574,39 +572,28 @@ function A:StoreAndResetPetsFilters()
         petsFilters.sources[i] = C_PetJournal.IsPetSourceChecked(i);
     end
 
-    if ( PetJournalSearchBox and PetJournalSearchBox:GetText() ~= SEARCH ) then
-        petsFilters["SearchBoxValue"] = PetJournalSearchBox:GetText();
-    end
-
-    -- Set filters for DB update
-    C_PetJournal.SetFilterChecked(LE_PET_JOURNAL_FILTER_COLLECTED, 1); -- Collected - Obviously needed
-    C_PetJournal.SetFilterChecked(LE_PET_JOURNAL_FILTER_NOT_COLLECTED, 1); -- Not collected - Needed as it will allow us to get the full number of pets
+    -- Check them all
     C_PetJournal.SetAllPetTypesChecked(true);
     C_PetJournal.SetAllPetSourcesChecked(true);
-
-    if ( petsFilters["SearchBoxValue"] ) then
-        C_PetJournal.SetSearchFilter("");
-    end
 end
 
 --- Restore pets filters
 function A:RestorePetsFilters()
-    C_PetJournal.SetFilterChecked(LE_PET_JOURNAL_FILTER_COLLECTED, not petsFilters["LE_PET_JOURNAL_FILTER_COLLECTED"]);
-    C_PetJournal.SetFilterChecked(LE_PET_JOURNAL_FILTER_NOT_COLLECTED, not petsFilters["LE_PET_JOURNAL_FILTER_NOT_COLLECTED"]);
-
     for i=1,C_PetJournal.GetNumPetTypes() do
-        C_PetJournal.SetPetTypeFilter(i, not petsFilters.types[i]);
+        if ( petsFilters.types[i] ) then
+            C_PetJournal.SetPetTypeFilter(i, true);
+        else
+            C_PetJournal.SetPetTypeFilter(i, false);
+        end
     end
 
     for i=1,C_PetJournal.GetNumPetSources() do
-        C_PetJournal.SetPetSourceChecked(i, not petsFilters.sources[i]);
+        if ( petsFilters.sources[i] ) then
+            C_PetJournal.SetPetSourceChecked(i, true);
+        else
+            C_PetJournal.SetPetSourceChecked(i, false);
+        end
     end
-
-    if ( PetJournalSearchBox and petsFilters["SearchBoxValue"] ) then
-        C_PetJournal.SetSearchFilter(petsFilters["SearchBoxValue"]);
-    end
-
-    petsFilters["SearchBoxValue"] = nil;
 end
 
 --- Will check if the pet can be used, this is special as there is some pets with the same name, but faction locked
