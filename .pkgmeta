@@ -30,11 +30,11 @@ externals:
   url: svn://svn.wowace.com/wow/ace3/mainline/trunk/AceComm-3.0
  Libs/LibDBIcon-1.0:
   url: svn://svn.wowace.com/wow/libdbicon-1-0/mainline/trunk/LibDBIcon-1.0
- Config/Libs/AceDBOptions-3.0:
+ config/Libs/AceDBOptions-3.0:
   url: svn://svn.wowace.com/wow/ace3/mainline/trunk/AceDBOptions-3.0
- Config/Libs/AceGUI-3.0:
+ config/Libs/AceGUI-3.0:
   url: svn://svn.wowace.com/wow/ace3/mainline/trunk/AceGUI-3.0
- Config/Libs/AceConfig-3.0:
+ config/Libs/AceConfig-3.0:
   url: svn://svn.wowace.com/wow/ace3/mainline/trunk/AceConfig-3.0
 
 tools-used:
