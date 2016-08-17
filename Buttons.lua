@@ -1202,6 +1202,11 @@ end
 
 --- Toggle lock button
 function A:ToggleButtonLock(button)
+    if ( InCombatLockdown() ) then
+        A:Message(L["Unable to edit buttons while in combat."], 1);
+        return;
+    end
+
     if ( type(button) ~= "string" ) then
         button = button:GetName();
     end
@@ -1239,6 +1244,11 @@ end
 
 --- Dock buttons together
 function A:DockButton()
+    if ( InCombatLockdown() ) then
+        A:Message(L["Unable to edit buttons while in combat."], 1);
+        return;
+    end
+
     A.db.profile.PetsAndMountsSecureButtonPets.anchor =
     {
         point = A.dockButtonsAnchors[A.db.profile.dockAnchor][1],
@@ -1254,6 +1264,11 @@ end
 
 --- Dock buttons together
 function A:UnDockButton()
+    if ( InCombatLockdown() ) then
+        A:Message(L["Unable to edit buttons while in combat."], 1);
+        return;
+    end
+
     local point, relativeTo, relativePoint, offX, offY = PetsAndMountsSecureButtonMounts:GetPoint(1);
 
     offX = offX + 40
@@ -1272,6 +1287,11 @@ end
 
 --- Reset button
 function A:ResetButton(button)
+    if ( InCombatLockdown() ) then
+        A:Message(L["Unable to edit buttons while in combat."], 1);
+        return;
+    end
+
     if ( type(button) ~= "string" ) then
         button = button:GetName();
     end
@@ -1280,6 +1300,7 @@ function A:ResetButton(button)
 
     if ( button == "PetsAndMountsSecureButtonPets" ) then
         offX = 20;
+        A.db.profile.dockButton = nil;
     elseif ( button == "PetsAndMountsSecureButtonMounts" ) then
         offX = -20
     else
@@ -1300,12 +1321,17 @@ function A:ResetButton(button)
             offX = offX,
             offY = 0,
         },
-    },
+    };
 
     A:SetButtons();
 end
 
 function A:SetButtonsIcons()
+    if ( InCombatLockdown() ) then
+        A:Message(L["Unable to edit buttons while in combat."], 1);
+        return;
+    end
+
     if ( A.db.profile.petButtonIconCurrent and A.currentPetIcon ) then
         PetsAndMountsSecureButtonPets.icon:SetTexture(A.currentPetIcon);
     else
@@ -1392,7 +1418,7 @@ function A:SetTooltip(frame)
     if ( not A.db.profile.PetsAndMountsSecureButtonPets.tooltip and frame:GetName() == "PetsAndMountsSecureButtonPets" ) then return; end
     if ( not A.db.profile.PetsAndMountsSecureButtonMounts.tooltip and frame:GetName() == "PetsAndMountsSecureButtonMounts" ) then return; end
 
-    local currentSet;
+    local currentSet, forcedInfo1, forcedInfo2, forcedInfo3, forcedInfo4, forcedInfo5;
 
     if ( frame:GetRight() >= ( GetScreenWidth() / 2 ) ) then
         GameTooltip:SetOwner(frame, "ANCHOR_LEFT");
@@ -1412,10 +1438,16 @@ function A:SetTooltip(frame)
             currentSet = A.color["GREEN"]..currentSet;
         end
 
+        if ( A.db.profile.forceOne.pet and A:GetPetNameByID(A.db.profile.forceOne.pet) ) then
+            forcedInfo1 = A.color["GREEN"]..A:GetPetNameByID(A.db.profile.forceOne.pet);
+        else
+            forcedInfo1 = A.color["RED"]..L["None"];
+        end
+
         GameTooltip:AddLine(L["Companions set in use: %s."]:format(currentSet));
         GameTooltip:AddLine(L["Auto summon companion is %s."]:format(A:IsAutoPetEnabled() and A.color["GREEN"]..L["On"] or A.color["RED"]..L["Off"]));
         GameTooltip:AddLine(L["Not when stealthed is %s."]:format(A:IsNotWhenStealthedEnabled() and A.color["GREEN"]..L["On"] or A.color["RED"]..L["Off"]));
-        GameTooltip:AddLine(L["Forced companion: %s"]:format(A.db.profile.forceOne.pet and A.color["GREEN"]..A:GetPetNameByID(A.db.profile.forceOne.pet) or A.color["RED"]..L["None"]));
+        GameTooltip:AddLine(L["Forced companion: %s"]:format(forcedInfo1));
         GameTooltip:AddLine(" ");
         GameTooltip:AddLine(L["|cFFC79C6ELeft-Click: |cFF33FF99Summon a random companion.\n|cFFC79C6EShift+Left-Click: |cFF33FF99Revoke current companion.\n|cFFC79C6EControl+Left-Click: |cFF33FF99Toggle button lock.\n|cFFC79C6ERight-Click: |cFF33FF99Open the menu.\n|cFFC79C6EMiddle-Click: |cFF33FF99Open configuration panel."]);
     elseif ( frame:GetName() == "PetsAndMountsSecureButtonMounts" ) then
@@ -1427,12 +1459,41 @@ function A:SetTooltip(frame)
             currentSet = A.color["GREEN"]..currentSet;
         end
 
+        if ( A.db.profile.forceOne.mount[4] and A:GetMountNameBySpellID(A.db.profile.forceOne.mount[4]) ) then
+            forcedInfo1 = A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[4]);
+        else
+            forcedInfo1 = A.color["RED"]..L["None"];
+        end
+
+        if ( A.db.profile.forceOne.mount[1] and A:GetMountNameBySpellID(A.db.profile.forceOne.mount[1]) ) then
+            forcedInfo2 = A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[1]);
+        else
+            forcedInfo2 = A.color["RED"]..L["None"];
+        end
+
+        if ( A.db.profile.forceOne.mount[2] and A:GetMountNameBySpellID(A.db.profile.forceOne.mount[2]) ) then
+            forcedInfo3 = A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[2]);
+        else
+            forcedInfo3 = A.color["RED"]..L["None"];
+        end
+
+        if ( A.db.profile.forceOne.mount[3] and A:GetMountNameBySpellID(A.db.profile.forceOne.mount[3]) ) then
+            forcedInfo4 = A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[3]);
+        else
+            forcedInfo4 = A.color["RED"]..L["None"];
+        end
+
+        if ( A.db.profile.forceOne.mount[5] and A:GetMountNameBySpellID(A.db.profile.forceOne.mount[5]) ) then
+            forcedInfo5 = A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[5]);
+        else
+            forcedInfo5 = A.color["RED"]..L["None"];
+        end
         GameTooltip:AddLine(L["Mounts set in use: %s."]:format(currentSet));
-        GameTooltip:AddLine(L["Forced aquatic mount: %s"]:format(A.db.profile.forceOne.mount[4] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[4]) or A.color["RED"]..L["None"]));
-        GameTooltip:AddLine(L["Forced ground mount: %s"]:format(A.db.profile.forceOne.mount[1] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[1]) or A.color["RED"]..L["None"]));
-        GameTooltip:AddLine(L["Forced fly mount: %s"]:format(A.db.profile.forceOne.mount[2] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[2]) or A.color["RED"]..L["None"]));
-        GameTooltip:AddLine(L["Forced hybrid mount: %s"]:format(A.db.profile.forceOne.mount[3] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[3]) or A.color["RED"]..L["None"]));
-        GameTooltip:AddLine(L["Forced passenger mount: %s"]:format(A.db.profile.forceOne.mount[5] and A.color["GREEN"]..A:GetMountNameBySpellID(A.db.profile.forceOne.mount[5]) or A.color["RED"]..L["None"]));
+        GameTooltip:AddLine(L["Forced aquatic mount: %s"]:format(forcedInfo1));
+        GameTooltip:AddLine(L["Forced ground mount: %s"]:format(forcedInfo2));
+        GameTooltip:AddLine(L["Forced fly mount: %s"]:format(forcedInfo3));
+        GameTooltip:AddLine(L["Forced hybrid mount: %s"]:format(forcedInfo4));
+        GameTooltip:AddLine(L["Forced passenger mount: %s"]:format(forcedInfo5));
         GameTooltip:AddLine(" ");
 
         if ( A.db.profile.dockButton ) then

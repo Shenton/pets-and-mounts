@@ -206,9 +206,9 @@ function A:RandomPet(playerCall)
     local id;
 
     -- Get a random pet
-    if ( A:GotRandomPet(A.currentPetsSet) ) then
-        id = A:GetRandomPet(A.currentPetsSet);
-    elseif ( A:GotRandomPet(A.pamTable.petsIds) ) then
+    --if ( A:GotRandomPet(A.currentPetsSet) ) then
+        --id = A:GetRandomPet(A.currentPetsSet);
+    if ( A:GotRandomPet(A.pamTable.petsIds) ) then
         id = A:GetRandomPet(A.pamTable.petsIds);
     else
         return;
@@ -318,7 +318,7 @@ function A:AutoPet(disabledFilter)
             A:DebugMessage("AutoPet() - Forced pet");
             A:SummonPet(A.db.profile.forceOne.pet);
         end
-    elseif ( A.db.profile.petsZoneSets and A.db.profile.petByMapID[A.currentMapID] ) then -- Area pet
+    elseif ( A.db.profile.petByMapID[A.currentMapID] ) then -- Area overrride pet
         if ( A.db.profile.petByMapID[A.currentMapID] == currentPet ) then
             A:DebugMessage("AutoPet() - Area override pet - Already got that pet");
         else
@@ -502,8 +502,7 @@ end
 function A:SummonMountBySpellId(spellID)
     if ( not spellID ) then return nil; end
 
-    --local id = A:GetMountIDFromSpellID(spellID);
-    local id = A:GetMountMountIDFromSpellID(spellID);
+    local id = A:GetMountIDFromSpellID(spellID);
 
     if ( id ) then
         if ( A.db.profile.debug ) then
@@ -532,7 +531,7 @@ end
 -- @param spellID The mount spellID
 -- @return bool
 function A:IsMountRestricted(spellID)
-    if ( select(5, C_MountJournal.GetDisplayedMountInfo(A:GetMountIDFromSpellID(spellID))) ) then
+    if ( select(5, C_MountJournal.GetMountInfoByID(A:GetMountIDFromSpellID(spellID))) ) then
         return nil;
     end
 
@@ -693,15 +692,15 @@ function A:RandomMount(cat)
         if ( A.db.profile.forceOne.mount[cat] and not A:IsMountRestricted(A.db.profile.forceOne.mount[cat]) ) then
             A:DebugMessage(("RandomMount() - No hybrid - Got forced - %i"):format(cat));
             id = A.db.profile.forceOne.mount[cat];
-        -- Got area
-        elseif ( A.db.profile.mountsZoneSets and A.db.profile.mountByMapID[cat][A.currentMapID] and not A:IsMountRestricted(A.db.profile.mountByMapID[cat][A.currentMapID]) ) then
-            A:DebugMessage(("RandomMount() - No hybrid - Got area - %i"):format(cat));
+        -- Got area override
+        elseif ( A.db.profile.mountByMapID[cat][A.currentMapID] and not A:IsMountRestricted(A.db.profile.mountByMapID[cat][A.currentMapID]) ) then
+            A:DebugMessage(("RandomMount() - No hybrid - Got area override - %i"):format(cat));
             id = A.db.profile.mountByMapID[cat][A.currentMapID];
         -- Got unique area
         elseif ( A.db.profile.areaMounts and A.uniqueAreaMounts[cat][A.currentMapID] and not A:IsMountRestricted(A.uniqueAreaMounts[cat][A.currentMapID]) ) then
             A:DebugMessage(("RandomMount() - No hybrid - Got unique area - %i"):format(cat));
             id = A:GetUniqueAreaMount(cat);
-        -- got fav
+        -- got fav or area sets
         elseif ( A:GotRandomMount(A.currentMountsSet[cat]) ) then
             A:DebugMessage(("RandomMount() - No hybrid - Got fav - %i"):format(cat));
             id = A:GetRandomMount(A.currentMountsSet[cat]);
@@ -735,26 +734,26 @@ function A:RandomMount(cat)
             A:DebugMessage(("RandomMount() - With hybrid - Got forced hybrid - %i"):format(cat));
             id = A.db.profile.forceOne.mount[3];
         -- No forced going for area
-        -- Got area ground/fly and hybrid
-        elseif ( A.db.profile.mountsZoneSets and A.db.profile.mountByMapID[cat][A.currentMapID] and A.db.profile.mountByMapID[3][A.currentMapID] and not A:IsMountRestricted(A.db.profile.mountByMapID[cat][A.currentMapID]) and not A:IsMountRestricted(A.db.profile.mountByMapID[3][A.currentMapID]) ) then
+        -- Got area override ground/fly and hybrid
+        elseif ( A.db.profile.mountByMapID[cat][A.currentMapID] and A.db.profile.mountByMapID[3][A.currentMapID] and not A:IsMountRestricted(A.db.profile.mountByMapID[cat][A.currentMapID]) and not A:IsMountRestricted(A.db.profile.mountByMapID[3][A.currentMapID]) ) then
             -- hybrid
             if ( A:RandHybrid(1, 1) ) then
-                A:DebugMessage(("RandomMount() - With hybrid - Got area ground/fly - Got hybrid - Rand hybrid - %i"):format(cat));
+                A:DebugMessage(("RandomMount() - With hybrid - Got area override ground/fly - Got hybrid - Rand hybrid - %i"):format(cat));
                 id = A.db.profile.mountByMapID[3][A.currentMapID];
             -- ground/fly
             else
-                A:DebugMessage(("RandomMount() - With hybrid - Got area ground/fly - Got hybrid - Rand no hybrid - %i"):format(cat));
+                A:DebugMessage(("RandomMount() - With hybrid - Got area override ground/fly - Got hybrid - Rand no hybrid - %i"):format(cat));
                 id = A.db.profile.mountByMapID[cat][A.currentMapID];
             end
-        -- Got area ground/fly
-        elseif ( A.db.profile.mountsZoneSets and A.db.profile.mountByMapID[cat][A.currentMapID] and not A:IsMountRestricted(A.db.profile.mountByMapID[cat][A.currentMapID]) ) then
-            A:DebugMessage(("RandomMount() - With hybrid - Got area ground/fly - %i"):format(cat));
+        -- Got area overrride ground/fly
+        elseif ( A.db.profile.mountByMapID[cat][A.currentMapID] and not A:IsMountRestricted(A.db.profile.mountByMapID[cat][A.currentMapID]) ) then
+            A:DebugMessage(("RandomMount() - With hybrid - Got area override ground/fly - %i"):format(cat));
             id = A.db.profile.mountByMapID[cat][A.currentMapID];
-        -- Got area hybrid
-        elseif ( A.db.profile.mountsZoneSets and A.db.profile.mountByMapID[3][A.currentMapID] and not A:IsMountRestricted(A.db.profile.mountByMapID[3][A.currentMapID]) ) then
-            A:DebugMessage(("RandomMount() - With hybrid - Got area hybrid - %i"):format(cat));
+        -- Got area overrride hybrid
+        elseif ( A.db.profile.mountByMapID[3][A.currentMapID] and not A:IsMountRestricted(A.db.profile.mountByMapID[3][A.currentMapID]) ) then
+            A:DebugMessage(("RandomMount() - With hybrid - Got area override hybrid - %i"):format(cat));
             id = A.db.profile.mountByMapID[3][A.currentMapID];
-        -- No area going for unique area
+        -- No area override going for unique area
         -- Got unique area ground/fly and hybrid
         elseif ( A.db.profile.areaMounts and A.uniqueAreaMounts[cat][A.currentMapID] and A.uniqueAreaMounts[3][A.currentMapID] and
         not A:IsMountRestricted(A.uniqueAreaMounts[cat][A.currentMapID]) and not A:IsMountRestricted(A.uniqueAreaMounts[3][A.currentMapID]) ) then
@@ -773,7 +772,7 @@ function A:RandomMount(cat)
         elseif ( A.uniqueAreaMounts[3][A.currentMapID] and A.db.profile.areaMounts and not A:IsMountRestricted(A.uniqueAreaMounts[3][A.currentMapID]) ) then
             A:DebugMessage(("RandomMount() - With hybrid - Got unique area hybrid - %i"):format(cat));
             id = A:GetUniqueAreaMount(3);
-        -- No unique area going for fav
+        -- No unique area going for fav and area sets
         -- got ground/fly and hybrid fav
         elseif ( A:GotRandomMount(A.currentMountsSet[cat]) and A:GotRandomMount(A.currentMountsSet[3]) ) then
             -- hybrid

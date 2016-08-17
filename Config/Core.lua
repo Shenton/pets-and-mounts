@@ -80,63 +80,65 @@ local reSummonValues =
 };
 
 -- Icon list table
-A.iconList = {};
+--A.iconList = {};
 
 --[[-------------------------------------------------------------------------------
     Icons frame methods
 -------------------------------------------------------------------------------]]--
 
 --- Reset and add icons filename to the icons list table
-function A:GetIconsList()
-    A.iconsList = {};
-    A.iconsList[1] = "INV_MISC_QUESTIONMARK";
+-- function A:GetIconsList()
+    -- A.iconsList = {};
+    -- A.iconsList[1] = "INV_MISC_QUESTIONMARK";
 
-    local index = 2;
-    local numFlyouts = 0;
+    -- local index = 2;
+    -- local numFlyouts = 0;
 
-    for i=1,GetNumSpellTabs() do
-        local tab, tabTex, offset, numSpells, _ = GetSpellTabInfo(i);
-        local tabEnd = offset + numSpells;
+    -- for i=1,GetNumSpellTabs() do
+        -- local tab, tabTex, offset, numSpells, _ = GetSpellTabInfo(i);
+        -- local tabEnd = offset + numSpells;
 
-        offset = offset + 1;
+        -- offset = offset + 1;
 
-        for j=offset,tabEnd-1 do
-            local spellType, ID = GetSpellBookItemInfo(j, "player");
+        -- for j=offset,tabEnd-1 do
+            -- local spellType, ID = GetSpellBookItemInfo(j, "player");
 
-            if ( spellType ~= "FUTURESPELL" ) then
-                local spellTexture = string.upper(GetSpellBookItemTexture(j, "player"));
+            -- if ( spellType ~= "FUTURESPELL" ) then
+                -- local spellTexture = string.upper(GetSpellBookItemTexture(j, "player"));
 
-                if ( not string.match(spellTexture, "INTERFACE\\BUTTONS\\") ) then
-                    A.iconsList[index] = string.gsub(spellTexture, "INTERFACE\\ICONS\\", "");
-                    index = index + 1;
-                end
-            end
-            if ( spellType == "FLYOUT" ) then
-                local _, _, numSlots, isKnown = GetFlyoutInfo(ID);
+                -- if ( not string.match(spellTexture, "INTERFACE\\BUTTONS\\") ) then
+                    -- A.iconsList[index] = string.gsub(spellTexture, "INTERFACE\\ICONS\\", "");
+                    -- index = index + 1;
+                -- end
+            -- end
+            -- if ( spellType == "FLYOUT" ) then
+                -- local _, _, numSlots, isKnown = GetFlyoutInfo(ID);
 
-                if ( isKnown and numSlots > 0 ) then
-                    for k=1,numSlots do
-                        local spellID, overrideSpellID, isKnown = GetFlyoutSlotInfo(ID, k);
+                -- if ( isKnown and numSlots > 0 ) then
+                    -- for k=1,numSlots do
+                        -- local spellID, overrideSpellID, isKnown = GetFlyoutSlotInfo(ID, k);
 
-                        if ( isKnown ) then
-                            A.iconsList[index] = string.gsub(string.upper(GetSpellTexture(spellID)), "INTERFACE\\ICONS\\", ""); 
-                            index = index + 1;
-                        end
-                    end
-                end
-            end
-        end
-    end
+                        -- if ( isKnown ) then
+                            -- A.iconsList[index] = string.gsub(string.upper(GetSpellTexture(spellID)), "INTERFACE\\ICONS\\", ""); 
+                            -- index = index + 1;
+                        -- end
+                    -- end
+                -- end
+            -- end
+        -- end
+    -- end
 
-    GetLooseMacroIcons(A.iconsList);
-    GetLooseMacroItemIcons(A.iconsList);
-    GetMacroIcons(A.iconsList);
-    GetMacroItemIcons(A.iconsList);
-end
+    -- GetLooseMacroIcons(A.iconsList);
+    -- GetLooseMacroItemIcons(A.iconsList);
+    -- GetMacroIcons(A.iconsList);
+    -- GetMacroItemIcons(A.iconsList);
+-- end
 
 --- Scroll frame update method
 function A:IconsFrameScrollUpdate()
-    local icons, icon, button, index, texture;
+    if ( not A.iconsList ) then A:LoadIconsList(); end
+
+    local icons, icon, button, index, texture, texNum;
     local popupOffset = FauxScrollFrame_GetOffset(A.iconFrame.scrollFrame);
 
     if ( A.iconsListSearch ) then
@@ -150,20 +152,27 @@ function A:IconsFrameScrollUpdate()
         button = _G["PetsAndMountsSelectIconFrameButton"..i];
         index = (popupOffset * 8) + i;
 
-        if ( index ) then
-            texture = icons[index];
-        else
-            texture = nil;
-        end
+        -- if ( index ) then
+            -- texNum = tonumber(icons[index]);
+
+            -- if ( texNum ) then
+                -- texture = texNum;
+            -- else
+                -- texture = icons[index];
+            -- end
+        -- else
+            -- texture = nil;
+        -- end
+
+        texture = icons[index];
 
         if ( index <= #icons and texture ) then
-            if( type(texture) == "number" ) then
-                icon:SetToFileData(texture);
-                texture = icon:GetTexture();
-                texture = string.gsub(string.upper(texture), "INTERFACE\\ICONS\\", "");
-            else
-                icon:SetTexture("INTERFACE\\ICONS\\"..texture);
-            end
+            -- if( type(texture) == "number" ) then
+                -- icon:SetTexture(texture);
+            -- else
+                -- icon:SetTexture("INTERFACE\\ICONS\\"..texture);
+            -- end
+            icon:SetTexture("INTERFACE\\ICONS\\"..texture);
             button.textureName = texture;
             button:Show();
         else
@@ -2680,23 +2689,7 @@ function A:OptionsRoot()
                                         return;
                                     end
 
-                                    A.db.profile.PetsAndMountsSecureButtonPets =
-                                    {
-                                        hide = nil,
-                                        lock = nil,
-                                        tooltip = 1,
-                                        scale = 1,
-                                        anchor =
-                                        {
-                                            point = "CENTER",
-                                            relativeTo = "UIParent",
-                                            relativePoint = "CENTER",
-                                            offX = 0,
-                                            offY = 0,
-                                        },
-                                    };
-
-                                    A:SetButtons();
+                                    A:ResetButton("PetsAndMountsSecureButtonPets");
                                 end,
                             },
                             iconHeader =
@@ -2822,23 +2815,7 @@ function A:OptionsRoot()
                                         return;
                                     end
 
-                                    A.db.profile.PetsAndMountsSecureButtonMounts =
-                                    {
-                                        hide = nil,
-                                        lock = nil,
-                                        tooltip = 1,
-                                        scale = 1,
-                                        anchor =
-                                        {
-                                            point = "CENTER",
-                                            relativeTo = "UIParent",
-                                            relativePoint = "CENTER",
-                                            offX = 0,
-                                            offY = 0,
-                                        },
-                                    };
-
-                                    A:SetButtons();
+                                    A:ResetButton("PetsAndMountsSecureButtonMounts");
                                 end,
                             },
                             iconHeader =

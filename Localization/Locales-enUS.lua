@@ -45,6 +45,7 @@ L["Delete"] = true;
 L["Dock"] = true;
 
 L["Enable"] = true;
+L["Error"] = true;
 L["Expand"] = true;
 
 L["Falling"] = true;
@@ -113,6 +114,8 @@ L["Time"] = true;
 L["Timers"] = true;
 L["Tooltip"] = true;
 L["Top"] = true;
+
+L["Unknown"] = true;
 
 L["Vehicle"] = true;
 L["Version"] = true;
@@ -519,6 +522,9 @@ L["New mounts set %s added."] = true;
 L["You have no favorite selected."] = true;
 L["Cannot modify buttons anchors when they are not docked."] = true;
 L["Your LUA custom %s macro for %s got an error. Error: %s"] = true;
+L["Removed an unknown favorite pet from set %s."] = true;
+L["Removed unknown force one pet."] = true;
+L["Removed an unknown pet from area override %s."] = true;
 -- Popup messages
 L["The bindings system have been entirely redone.\n\nThe add-on tried to update them, but just in case you should check if everything is in place.\n\nDo you want to open the configuration panel?"] = true;
 L["|cffff3333Anti grief/scam protection triggered, you should be careful.|r\n\nMessage: |cffff3333%s|r was found in your %s %s custom macro.\n\n|cff33ff99This macro was not used.|r\n\nYou can disable the protection within the configuration panel."] = true;

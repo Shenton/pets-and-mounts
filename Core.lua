@@ -6,16 +6,25 @@
     Core.lua
 -------------------------------------------------------------------------------]]--
 
--- TODO: prevent pet summon when summoning someone (assist summon to be clear) (lock portal, stones...)
+-- TODO:
+-- Rewrite mounts code
+-- Stop using Blizzard's methods except Summon and Dismiss
+-- Better display for forced summons, single method returning everything
+-- Fix reset button pos
 
 -- 1.8.2 changelog
 --[[
-Fixed target/mouseover mount copy summon -- Pushed
+Fixed target/mouseover mount copy summon
 Fixed pet summon when clicked error
 Fixed area sets errors
 Fixed an error with hybrid selection
 Finally fixed login bug with Blizzard_Collections by adding a loader addon, which will load Blizzard_Collection, which will load PAM, yo dawg
 Fixed and updated pets filters store/restore
+Added mounts filters store/restore
+Fixed errors when getting mounts names
+Fixed forced pet and mount by area
+Fixed buttons reset when docked
+Fixed icons selection frame
 ]]--
 
 local A = _G["PetsAndMountsGlobal"];
@@ -283,10 +292,38 @@ function A:GetPetNameByID(id)
         return customName;
     end
 
-    return creatureName;
+    if ( creatureName ) then
+        return creatureName;
+    end
+
+    return nil;
 end
 
 --- Return mount ID from spell ID
+-- function A:GetMountIDFromSpellID(spellID)
+    -- if ( not A.mountsSpellIDToIDCache ) then
+        -- A.mountsSpellIDToIDCache = {};
+    -- end
+
+    -- if ( A.mountsSpellIDToIDCache[spellID] ) then
+        -- return A.mountsSpellIDToIDCache[spellID];
+    -- end
+
+    -- local numMounts = C_MountJournal.GetNumMounts();
+    -- local _, spellIDMatch;
+
+    -- for i=1,numMounts do
+        -- _, spellIDMatch = C_MountJournal.GetDisplayedMountInfo(i);
+
+        -- if ( spellID == spellIDMatch ) then
+            -- A.mountsSpellIDToIDCache[spellID] = i;
+            -- return i;
+        -- end
+    -- end
+
+    -- return nil;
+-- end
+
 function A:GetMountIDFromSpellID(spellID)
     if ( not A.mountsSpellIDToIDCache ) then
         A.mountsSpellIDToIDCache = {};
@@ -296,42 +333,13 @@ function A:GetMountIDFromSpellID(spellID)
         return A.mountsSpellIDToIDCache[spellID];
     end
 
-    local numMounts = C_MountJournal.GetNumMounts();
-    local _, spellIDMatch;
-
-    for i=1,numMounts do
-        _, spellIDMatch = C_MountJournal.GetDisplayedMountInfo(i);
-
-        if ( spellID == spellIDMatch ) then
-            A.mountsSpellIDToIDCache[spellID] = i;
-            return i;
-        end
-    end
-
-    return nil;
-end
-
---- Return mount ID from spell ID
-function A:GetMountMountIDFromSpellID(spellID)
-    if ( not spellID ) then return nil; end
-
-    if ( not A.mountsSpellIDToMountIDCache ) then
-        A.mountsSpellIDToMountIDCache = {};
-    end
-
-    if ( A.mountsSpellIDToMountIDCache[spellID] ) then
-        return A.mountsSpellIDToMountIDCache[spellID];
-    end
-
-    local numMounts = C_MountJournal.GetNumMounts();
-    local _, spellIDMatch, mountID;
-
-    for i=1,numMounts do
-        _, spellIDMatch, _, _, _, _, _, _, _, _, _, mountID = C_MountJournal.GetDisplayedMountInfo(i);
-
-        if ( spellID == spellIDMatch ) then
-            A.mountsSpellIDToMountIDCache[spellID] = mountID;
-            return mountID;
+    for _,cat in pairs(A.pamTable.mounts) do
+        for _,leadingLetter in pairs(cat) do
+            for _,mountInfos in ipairs(leadingLetter) do
+                if ( mountInfos.spellID == spellID ) then
+                    return mountInfos.mountID;
+                end
+            end
         end
     end
 
@@ -344,7 +352,7 @@ function A:GetMountNameBySpellID(spellID)
 
     if ( not id ) then return nil; end
 
-    return select(1, C_MountJournal.GetDisplayedMountInfo(id));
+    return select(1, C_MountJournal.GetMountInfoByID(id));
 end
 
 --- Check if the player is using a vehicle
@@ -618,22 +626,25 @@ end
 --- Build the companions table
 function A:BuildPetsTable(force)
     -- First, check if an update is needed
-    local _, numOwned = C_PetJournal.GetNumPets();
+    local _, numPets = C_PetJournal.GetNumPets();
 
-    if ( not force and A.lastPetsCount == numOwned ) then
+    if ( not force and A.lastPetsCount == numPets ) then
         A:DebugMessage("BuildPetsTable() - No update needed");
         return;
     end
 
-    A:DebugMessage(("BuildPetsTable() - Update needed %d %d"):format(A.lastPetsCount, numOwned));
+    A:DebugMessage(("BuildPetsTable() - Update needed %d %d"):format(A.lastPetsCount, numPets));
 
-    A.lastPetsCount = numOwned;
+    A.lastPetsCount = numPets;
 
     -- Update needed, store filters and set them for update
     A:StoreAndResetPetsFilters();
 
-    -- Getting total number of pets AFTER resetting filters (derp)
-    local numPets = C_PetJournal.GetNumPets();
+    -- Getting total number of pets
+    numPets = C_PetJournal.GetNumPets();
+
+    -- Security check if nil or == 0 abort
+    if ( not numPets or numPets == 0 ) then return; end
 
     A.pamTable.pets =
     {
@@ -715,8 +726,8 @@ function A:BuildPetsTable(force)
         end
     end
 
+    --A:RemoveUnknowPets();
     A:RestorePetsFilters();
-    A:CleanPetsFavorites();
     A:DebugMessage("BuildPetsTable() - Update successful");
 end
 
@@ -767,6 +778,31 @@ function A:IsWaterWalkingMount(spellID)
     return nil;
 end
 
+-- Pets filters handling methods
+local mountsFilters = {};
+mountsFilters.types = {};
+mountsFilters.sources = {};
+function A:StoreAndResetMountsFilters()
+    -- Store filters
+    for i=1,C_PetJournal.GetNumPetSources() do -- Blizzard is using this method as of 7.03
+        mountsFilters.sources[i] = C_MountJournal.IsSourceChecked(i);
+    end
+
+    -- Check them all
+    C_MountJournal.SetAllSourceFilters(true);
+end
+
+--- Restore pets filters
+function A:RestoreMountsFilters()
+    for i=1,C_PetJournal.GetNumPetSources() do -- Blizzard is using this method as of 7.03
+        if ( mountsFilters.sources[i] ) then
+            C_MountJournal.SetSourceFilter(i, true);
+        else
+            C_MountJournal.SetSourceFilter(i, false);
+        end
+    end
+end
+
 --- Return the number of collected mounts
 function A:GetCollectedMounts()
     if ( A.getCollectedMountsDelay and (time() - A.getCollectedMountsDelay < 2) ) then
@@ -775,12 +811,15 @@ function A:GetCollectedMounts()
 
     local count = 0;
 
+    A:StoreAndResetMountsFilters();
+
     for i=1,C_MountJournal.GetNumMounts() do
         if ( select(11, C_MountJournal.GetDisplayedMountInfo(i)) ) then
             count = count + 1;
         end
     end
 
+    A:RestoreMountsFilters();
     A.getCollectedMountsDelay = time();
     return count;
 end
@@ -797,7 +836,14 @@ function A:BuildMountsTable(force)
     A:DebugMessage(("BuildMountsTable() - Update needed %d %d"):format(A.lastMountsCount, mountsCount));
 
     A.lastMountsCount = mountsCount;
+
+    -- Update needed, store filters and set them for update
+    A:StoreAndResetMountsFilters();
+
     mountsCount = C_MountJournal.GetNumMounts();
+
+    -- Security check if nil or == 0 abort
+    if ( not mountsCount or mountsCount == 0 ) then return; end
 
     local _, creatureID, creatureName, spellID, icon, mountType, leadingLetter, cat, isUsable, hideOnChar, isCollected, mountID;
 
@@ -827,8 +873,6 @@ function A:BuildMountsTable(force)
     };
 
     for i=1,mountsCount do
-        -- local creatureName, spellID, icon, active, isUsable, sourceType, isFavorite, _, _, hideOnChar, isCollected = C_MountJournal.GetDisplayedMountInfo(i);
-        -- local creatureDisplayID, descriptionText, sourceText, isSelfMount = C_MountJournal.GetDisplayedMountInfoExtra(index);
         creatureName, spellID, icon, _, isUsable, _, _, _, _, hideOnChar, isCollected, mountID = C_MountJournal.GetDisplayedMountInfo(i);
         creatureID, _, _, _, mountType = C_MountJournal.GetDisplayedMountInfoExtra(i);
 
@@ -939,6 +983,7 @@ function A:BuildMountsTable(force)
         end
     end
 
+    A:RestoreMountsFilters();
     A:DebugMessage("BuildMountsTable() - Update successful");
 end
 
@@ -978,16 +1023,6 @@ function A:InitializeDB()
     A:ApplyCurrentBothInfos();
 end
 
---- Remove unknown pets from favorites
-function A:CleanPetsFavorites()
-    for k,v in ipairs(A.petsDB.profile.favorites) do
-        if ( not C_PetJournal.GetPetInfoByPetID(v) ) then
-            table.remove(A.petsDB.profile.favorites, k);
-            A:DebugMessage(("CleanPetsFavorites() - Removed petID: %s"):format(v));
-        end
-    end
-end
-
 --- Add summon filters to the database
 function A:AddSummonFilters()
     for k,v in ipairs(A.petsSummonFilters) do
@@ -1015,6 +1050,38 @@ function A:AddCustomMacros()
         end
     end
 end
+
+--- Remove unknown pets from fav, forced, sets
+-- Doing this after database update to be sure pets informations are available
+-- Note enabling this atm
+
+-- function A:RemoveUnknowPets()
+    -- -- Favorites database (sets)
+    -- for k,v in pairs(A.petsDB:GetProfiles()) do
+        -- if ( A.petsDB.profiles[v].favorites ) then
+            -- for kk,vv in ipairs(A.petsDB.profiles[v].favorites) do
+                -- if ( not C_PetJournal.GetPetInfoByPetID(vv) ) then
+                    -- A.petsDB.profiles[v].favorites[kk] = nil;
+                    -- A:Message(L["Removed an unknown favorite pet from set %s."]:format(v), 1);
+                -- end
+            -- end
+        -- end
+    -- end
+
+    -- -- Force one
+    -- if ( A.db.profile.forceOne.pet and not C_PetJournal.GetPetInfoByPetID(A.db.profile.forceOne.pet) ) then
+        -- A.db.profile.forceOne.pet = nil;
+        -- A:Message(L["Removed unknown force one pet."], 1);
+    -- end
+
+    -- -- Area forced
+    -- for k,v in pairs(A.db.profile.petByMapID) do
+        -- if ( not C_PetJournal.GetPetInfoByPetID(v) ) then
+            -- A.db.profile.petByMapID[k] = nil;
+            -- A:Message(L["Removed an unknown pet from area override %s."]:format(A.db.global.zonesIDsToName[k] or L["Unknown"]), 1);
+        -- end
+    -- end
+-- end
 
 --[[-------------------------------------------------------------------------------
     Sets methods

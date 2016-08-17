@@ -552,7 +552,7 @@
             </OnLoad>
             <OnShow>
                 self.selectedIcon:SetText("");
-                PetsAndMountsGlobal:GetIconsList();
+                --PetsAndMountsGlobal:GetIconsList();
                 PetsAndMountsGlobal:IconsFrameScrollUpdate();
                 self.currentIcon:SetText(PetsAndMountsGlobal.L["Current: %s"]:format("|TINTERFACE\\ICONS\\"..self.currentTexture..":32|t "..self.currentTexture));
             </OnShow>

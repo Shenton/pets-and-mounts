@@ -17,4 +17,5 @@ Libs\ForAllIndentsAndPurposes\ForAllIndentsAndPurposes.lua
 
 Frames.xml
 
+IconsList.lua
 Core.lua
