@@ -4094,7 +4094,9 @@ function A:OptionsSets()
                                                         name = customName.." ("..name..")";
                                                     end
 
-                                                    list = list..", "..name;
+                                                    if ( name ) then
+                                                        list = list..", "..name;
+                                                    end
                                                 end
                                             end
 
@@ -4357,12 +4359,17 @@ function A:OptionsSets()
 
                                             if ( #A.db.profile.defaultSets.mounts > 0) then
                                                 local set = A:BuildTempSetTable("MOUNTS", A.db.profile.defaultSets.mounts);
+                                                local name;
 
                                                 for k,v in pairs(set) do
                                                     local subList = "";
 
                                                     for kk,vv in pairs(v) do
-                                                        subList = subList..", "..A:GetMountNameBySpellID(vv);
+                                                        name = A:GetMountNameBySpellID(vv);
+
+                                                        if ( name ) then
+                                                            subList = subList..", "..name;
+                                                        end
                                                     end
 
                                                     if ( subList ~= "" ) then
