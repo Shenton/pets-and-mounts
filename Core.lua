@@ -7,24 +7,17 @@
 -------------------------------------------------------------------------------]]--
 
 -- TODO:
--- Rewrite mounts code
--- Stop using Blizzard's methods except Summon and Dismiss
--- Better display for forced summons, single method returning everything
--- Fix reset button pos
-
--- 1.8.2 changelog
 --[[
-Fixed target/mouseover mount copy summon
-Fixed pet summon when clicked error
-Fixed area sets errors
-Fixed an error with hybrid selection
-Finally fixed login bug with Blizzard_Collections by adding a loader addon, which will load Blizzard_Collection, which will load PAM, yo dawg
-Fixed and updated pets filters store/restore
-Added mounts filters store/restore
-Fixed errors when getting mounts names
-Fixed forced pet and mount by area
-Fixed buttons reset when docked
-Fixed icons selection frame
+    Fix stealthed option
+
+    Rewrite mounts code
+    Stop using Blizzard's methods except Summon and Dismiss
+    Better display for forced summons, single method returning everything
+]]--
+
+-- 1.8.3 changelog
+--[[
+    Moved bindings to the addons category
 ]]--
 
 local A = _G["PetsAndMountsGlobal"];
@@ -2812,6 +2805,7 @@ A.aceDefaultDB =
         hybridsSelectionTab = nil, -- d
         hybridsSelectionOnlyOwned = 1, -- d
         telaariTalbuk = 1,
+        useFavoritesForRandomPets = 1,
     },
 };
 
@@ -3321,7 +3315,7 @@ function A:OnEnable()
     -- Slash commands
     A:RegisterChatCommand("petsandmounts", "SlashCommand");
     A:RegisterChatCommand("pam", "SlashCommand");
-    A:RegisterChatCommand("pampet", "RandomPet");
+    A:RegisterChatCommand("pampet", function() A:RandomPet(1); end);
     -- /pammount cannot call the method directly, arg is not nil and RandomMount check if the arg is nil
     A:RegisterChatCommand("pammount", function() A:RandomMount(); end);
     A:RegisterChatCommand("pamground", function() A:RandomMount(1); end);

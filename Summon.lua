@@ -197,28 +197,6 @@ function A:GotRandomPet(tbl)
     return nil;
 end
 
---- Get a random pet from databases and summon it
--- @param playerCall When called by the player, unset the var disabling autopet
-function A:RandomPet(playerCall)
-    -- DB init
-    A:InitializeDB();
-
-    local id;
-
-    -- Get a random pet
-    --if ( A:GotRandomPet(A.currentPetsSet) ) then
-        --id = A:GetRandomPet(A.currentPetsSet);
-    if ( A:GotRandomPet(A.pamTable.petsIds) ) then
-        id = A:GetRandomPet(A.pamTable.petsIds);
-    else
-        return;
-    end
-
-    if ( A:SummonPet(id) ) then
-        if ( playerCall ) then A.playerRevokedPet = nil; end
-    end
-end
-
 --- Return if the pet summon should be filtered
 function A:IsPetSummonFiltered(disabledFilter)
     if ( not A.petsSummonFiltersCache ) then
@@ -263,8 +241,87 @@ function A:CheckReSummon(id)
     return nil;
 end
 
+--- Get a random pet from databases and summon it
+-- @param playerCall When called by the player, unset the var disabling autopet
+function A:RandomPet(playerCall)
+    -- DB init
+    A:InitializeDB();
+
+    local summoned;
+
+    if ( A.db.profile.useFavoritesForRandomPets ) then
+        A:RandomPetFromFavorites(nil, playerCall);
+    else
+        summoned = A:RandomPetFromAll();
+    end
+
+    if ( summoned ) then
+        if ( playerCall ) then A.playerRevokedPet = nil; end
+    end
+end
+
+--- Summon a random pet using all of them
+-- @return true on success false otherwise
+function A:RandomPetFromAll()
+    -- DB init
+    A:InitializeDB();
+
+    local id;
+
+    if ( A:GotRandomPet(A.pamTable.petsIds) ) then
+        id = A:GetRandomPet(A.pamTable.petsIds);
+    else
+        return;
+    end
+
+    return A:SummonPet(id);
+end
+
+--- Summon a random pet using favorites
+-- @return true on success false otherwise
+function A:RandomPetFromFavorites(currentPet, playerCall)
+    -- DB init
+    A:InitializeDB();
+
+    if ( not currentPet ) then
+        currentPet = C_PetJournal.GetSummonedPetGUID();
+    end
+
+    if ( A.db.profile.forceOne.pet ) then -- Forced pet
+        if ( currentPet and currentPet == A.db.profile.forceOne.pet ) then
+            A:DebugMessage("RandomPetFromFavorites() - Forced pet is current");
+            return nil;
+        else
+            A:DebugMessage("RandomPetFromFavorites() - Forced pet");
+            return A:SummonPet(A.db.profile.forceOne.pet);
+        end
+    elseif ( A.db.profile.petByMapID[A.currentMapID] ) then -- Area overrride pet
+        if ( A.db.profile.petByMapID[A.currentMapID] == currentPet ) then
+            A:DebugMessage("RandomPetFromFavorites() - Area override pet - Already got that pet");
+            return nil;
+        else
+            A:DebugMessage("RandomPetFromFavorites() - Area override pet - summon");
+            return A:SummonPet(A.db.profile.petByMapID[A.currentMapID]);
+        end
+    elseif ( A:GotRandomPet(A.currentPetsSet) ) then -- Fav pets
+        if ( not playerCall and currentPet and tContains(A.currentPetsSet, currentPet) and not A:CheckReSummon(currentPet) ) then
+            A:DebugMessage("RandomPetFromFavorites() - Already got a fav pet");
+            return nil;
+        else
+            A:DebugMessage("RandomPetFromFavorites() - Summon fav pet");
+            return A:SummonPet(A:GetRandomPet(A.currentPetsSet));
+        end
+    elseif ( playerCall or (not currentPet and A:GotRandomPet(A.pamTable.petsIds)) or (A:CheckReSummon(currentPet) and A:GotRandomPet(A.pamTable.petsIds)) ) then -- All pets
+        A:DebugMessage("RandomPetFromFavorites() - Summon random pet global");
+        return A:SummonPet(A:GetRandomPet(A.pamTable.petsIds));
+    else
+        A:DebugMessage("RandomPetFromFavorites() - No summon");
+        return nil;
+    end
+end
+
 --- Check if a pet can be summoned
-function A:AutoPet(disabledFilter)
+function A:AutoPet()
     -- DB init
     A:InitializeDB();
 
@@ -311,33 +368,8 @@ function A:AutoPet(disabledFilter)
     if ( A:IsPetSummonFiltered() ) then return; end
 
     -- Summon pet
-    if ( A.db.profile.forceOne.pet ) then -- Forced pet
-        if ( currentPet and currentPet == A.db.profile.forceOne.pet ) then
-            A:DebugMessage("AutoPet() - Forced pet is current");
-        else
-            A:DebugMessage("AutoPet() - Forced pet");
-            A:SummonPet(A.db.profile.forceOne.pet);
-        end
-    elseif ( A.db.profile.petByMapID[A.currentMapID] ) then -- Area overrride pet
-        if ( A.db.profile.petByMapID[A.currentMapID] == currentPet ) then
-            A:DebugMessage("AutoPet() - Area override pet - Already got that pet");
-        else
-            A:DebugMessage("AutoPet() - Area override pet - summon");
-            A:SummonPet(A.db.profile.petByMapID[A.currentMapID]);
-        end
-    elseif ( A:GotRandomPet(A.currentPetsSet) ) then -- Fav pets
-        if ( currentPet and tContains(A.currentPetsSet, currentPet) and not A:CheckReSummon(currentPet) ) then
-            A:DebugMessage("AutoPet() - Already got a fav pet");
-        else
-            A:DebugMessage("AutoPet() - Summon fav pet");
-            A:SummonPet(A:GetRandomPet(A.currentPetsSet));
-        end
-    elseif ( (not currentPet and A:GotRandomPet(A.pamTable.petsIds)) or (A:CheckReSummon(currentPet) and A:GotRandomPet(A.pamTable.petsIds)) ) then -- All pets
-        A:DebugMessage("AutoPet() - Summon random pet global");
-        A:SummonPet(A:GetRandomPet(A.pamTable.petsIds));
-    else
-        A:DebugMessage("AutoPet() - No summon");
-    end
+    A:DebugMessage("AutoPet() - Summoning pet");
+    A:RandomPetFromFavorites(currentPet);
 end
 
 --[[-------------------------------------------------------------------------------

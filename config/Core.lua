@@ -967,9 +967,18 @@ function A:OptionsRoot()
                                 end,
                                 get = function() return A.db.profile.notWhenStealthed; end,
                             },
-                            hauntedMemento =
+                            useFavoritesForRandomPets =
                             {
                                 order = 4,
+                                name = L["Favorites for clicks"],
+                                desc = L["With this enabled it will use your current selected favorites when using the button, the Data Broker or the command line. Otherwise it will choose between all your companions."],
+                                type = "toggle",
+                                set = function() A.db.profile.useFavoritesForRandomPets = not A.db.profile.useFavoritesForRandomPets; end,
+                                get = function() return A.db.profile.useFavoritesForRandomPets; end,
+                            },
+                            hauntedMemento =
+                            {
+                                order = 5,
                                 name = L["Haunted Memento"],
                                 desc = L["Do not automatically summon a pet when the Haunted Memento is in your bags."],
                                 type = "toggle",
