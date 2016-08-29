@@ -996,23 +996,29 @@ end
 
 --- Initialize the databases
 function A:InitializeDB()
-    if ( not A.initialized ) then return; end
+    if ( A.initialized ) then return; end
 
     A:DebugMessage("Initializing databases");
-    A.initialized = nil;
+    A.initialized = 1;
     A:BuildBothTables();
 
     -- Registering database update events here
-    -- I do not know if something change for me as I was able to get pets and mounts info when login in
+    -- I do not know if something changes, as I was able to get pets and mounts info when login in
     -- It is obviously not the same for everyone as some players were receiving errors (expected string got nil) within the DB update methods
     A:RegisterEvent("COMPANION_LEARNED");
     A:RegisterEvent("COMPANION_UNLEARNED");
     A:RegisterEvent("PET_JOURNAL_PET_DELETED");
     A:RegisterEvent("PET_JOURNAL_LIST_UPDATE");
-    A:RegisterEvent("COMPANION_UPDATE");
+
+    -- This is a special case, this event fire for every companion or mount that enter or quit your range
+    -- and for every summon, yours or not, needless to say it fires a hell lot
+    -- I can be wrong but I don't think AceEvent handles RegisterUnitEvent(), so we are going old school
+    A.eventFrame = CreateFrame("Frame");
+    A.eventFrame:RegisterUnitEvent("COMPANION_UPDATE", "player");
+    A.eventFrame:SetScript("OnEvent", A.COMPANION_UPDATE);
 
     -- This event is used to update Data Broker
-    -- It call the DB so setting it here
+    -- It calls the DB so setting it here
     A:RegisterEvent("UNIT_AURA");
 
     -- Same
@@ -2293,7 +2299,8 @@ function A:PLAYER_ENTERING_WORLD()
 
         A:LoginModificationsFixes();
         A:LoginMessages();
-        A:ScheduleTimer("InitializeDB", 5);
+        --A:ScheduleTimer("InitializeDB", 5); -- This cause an error with Mount Journal Enhanced, as of legion mounts infos are available sooner it should be ok
+        A:InitializeDB();
         A.onFirstLoadActions = nil;
         return;
     end

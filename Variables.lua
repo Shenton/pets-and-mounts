@@ -17,9 +17,6 @@ local L = A.L;
 -- When it is still true it will permit actions we only want when entering world
 A.onFirstLoadActions = 1;
 
--- If true will init the DB
-A.initialized = 1;
-
 -- AddOn version
 A.version = GetAddOnMetadata("PetsAndMounts", "Version");
 A.versionStage = "Release";

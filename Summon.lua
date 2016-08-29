@@ -18,7 +18,7 @@ local math = math;
 local select = select;
 local pairs = pairs;
 
--- GLOBALS: IsStealthed, UnitBuff, GetSpellInfo, UnitBuff, GetItemCount, InCombatLockdown
+-- GLOBALS: IsStealthed, UnitBuff, GetSpellInfo, GetItemCount, InCombatLockdown
 -- GLOBALS: C_PetJournal, IsFlyableArea, IsSpellKnown, IsUsableSpell, GetMirrorTimerInfo
 -- GLOBALS: IsSwimming, IsSubmerged, GetNumCompanions, GetCompanionInfo, CallCompanion
 -- GLOBALS: GetProfessions, GetProfessionInfo, GetAchievementInfo, IsMounted, IsFlying
