@@ -2299,8 +2299,7 @@ function A:PLAYER_ENTERING_WORLD()
 
         A:LoginModificationsFixes();
         A:LoginMessages();
-        --A:ScheduleTimer("InitializeDB", 5); -- This cause an error with Mount Journal Enhanced, as of legion mounts infos are available sooner it should be ok
-        A:InitializeDB();
+        A:ScheduleTimer("InitializeDB", 5);
         A.onFirstLoadActions = nil;
         return;
     end
