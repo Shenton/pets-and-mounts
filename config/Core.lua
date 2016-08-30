@@ -86,54 +86,6 @@ local reSummonValues =
     Icons frame methods
 -------------------------------------------------------------------------------]]--
 
---- Reset and add icons filename to the icons list table
--- function A:GetIconsList()
-    -- A.iconsList = {};
-    -- A.iconsList[1] = "INV_MISC_QUESTIONMARK";
-
-    -- local index = 2;
-    -- local numFlyouts = 0;
-
-    -- for i=1,GetNumSpellTabs() do
-        -- local tab, tabTex, offset, numSpells, _ = GetSpellTabInfo(i);
-        -- local tabEnd = offset + numSpells;
-
-        -- offset = offset + 1;
-
-        -- for j=offset,tabEnd-1 do
-            -- local spellType, ID = GetSpellBookItemInfo(j, "player");
-
-            -- if ( spellType ~= "FUTURESPELL" ) then
-                -- local spellTexture = string.upper(GetSpellBookItemTexture(j, "player"));
-
-                -- if ( not string.match(spellTexture, "INTERFACE\\BUTTONS\\") ) then
-                    -- A.iconsList[index] = string.gsub(spellTexture, "INTERFACE\\ICONS\\", "");
-                    -- index = index + 1;
-                -- end
-            -- end
-            -- if ( spellType == "FLYOUT" ) then
-                -- local _, _, numSlots, isKnown = GetFlyoutInfo(ID);
-
-                -- if ( isKnown and numSlots > 0 ) then
-                    -- for k=1,numSlots do
-                        -- local spellID, overrideSpellID, isKnown = GetFlyoutSlotInfo(ID, k);
-
-                        -- if ( isKnown ) then
-                            -- A.iconsList[index] = string.gsub(string.upper(GetSpellTexture(spellID)), "INTERFACE\\ICONS\\", ""); 
-                            -- index = index + 1;
-                        -- end
-                    -- end
-                -- end
-            -- end
-        -- end
-    -- end
-
-    -- GetLooseMacroIcons(A.iconsList);
-    -- GetLooseMacroItemIcons(A.iconsList);
-    -- GetMacroIcons(A.iconsList);
-    -- GetMacroItemIcons(A.iconsList);
--- end
-
 --- Scroll frame update method
 function A:IconsFrameScrollUpdate()
     if ( not A.iconsList ) then A:LoadIconsList(); end
@@ -151,27 +103,9 @@ function A:IconsFrameScrollUpdate()
         icon = _G["PetsAndMountsSelectIconFrameButton"..i.."Icon"];
         button = _G["PetsAndMountsSelectIconFrameButton"..i];
         index = (popupOffset * 8) + i;
-
-        -- if ( index ) then
-            -- texNum = tonumber(icons[index]);
-
-            -- if ( texNum ) then
-                -- texture = texNum;
-            -- else
-                -- texture = icons[index];
-            -- end
-        -- else
-            -- texture = nil;
-        -- end
-
         texture = icons[index];
 
         if ( index <= #icons and texture ) then
-            -- if( type(texture) == "number" ) then
-                -- icon:SetTexture(texture);
-            -- else
-                -- icon:SetTexture("INTERFACE\\ICONS\\"..texture);
-            -- end
             icon:SetTexture("INTERFACE\\ICONS\\"..texture);
             button.textureName = texture;
             button:Show();
@@ -939,6 +873,7 @@ function A:OptionsRoot()
                                 order = 1,
                                 name = L["Auto summon"],
                                 desc = L["Auto summon a random companion."],
+                                disabled = A.db.profile.enableAutoSummonOverride,
                                 type = "toggle",
                                 set = function()
                                     A.db.profile.autoPet = not A.db.profile.autoPet;
@@ -960,6 +895,7 @@ function A:OptionsRoot()
                                 order = 3,
                                 name = L["Revoke when stealthed"],
                                 desc = L["If you got a companion it will dismiss it when going stealthed."],
+                                disabled = A.db.profile.enableAutoSummonOverride,
                                 type = "toggle",
                                 set = function()
                                     A.db.profile.notWhenStealthed = not A.db.profile.notWhenStealthed;

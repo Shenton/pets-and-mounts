@@ -18,6 +18,8 @@
 -- 1.8.3 changelog
 --[[
     Moved bindings to the addons category
+    Added an option to use or not favorites on Data Broker clicks
+    Make Auto summon and Revoke when stealthed options disabled when override is active
 ]]--
 
 local A = _G["PetsAndMountsGlobal"];
@@ -2581,7 +2583,7 @@ end
     Ace DB and database revision methods
 -------------------------------------------------------------------------------]]--
 
--- -- d = added to config frame ok
+-- -- d = added to config frame
 A.aceDefaultDB =
 {
     global =
@@ -2593,7 +2595,7 @@ A.aceDefaultDB =
         },
         zonesIDsToName = {}, -- d
         popLoginMessages = {}, -- no cfg
-        forcedHybrid = {},
+        forcedHybrid = {}, -- d
     },
     profile =
     {
@@ -2657,12 +2659,6 @@ A.aceDefaultDB =
                 [7] = nil, -- Repair
             },
         },
-        --savedSets = -- d -- deprecated
-        --{
-        --    pets = {},
-        --    mounts = {},
-        --},
-        --enabledSets = -- d -- deprecated
         defaultSets = -- d
         {
             pets = {},
