@@ -19,7 +19,7 @@
 --[[
     Moved bindings to the addons category
     Added an option to use or not favorites on Data Broker clicks
-    Make Auto summon and Revoke when stealthed options disabled when override is active
+    Made Auto summon and Revoke when stealthed options disabled when override is active
 ]]--
 
 local A = _G["PetsAndMountsGlobal"];
@@ -294,31 +294,6 @@ function A:GetPetNameByID(id)
     return nil;
 end
 
---- Return mount ID from spell ID
--- function A:GetMountIDFromSpellID(spellID)
-    -- if ( not A.mountsSpellIDToIDCache ) then
-        -- A.mountsSpellIDToIDCache = {};
-    -- end
-
-    -- if ( A.mountsSpellIDToIDCache[spellID] ) then
-        -- return A.mountsSpellIDToIDCache[spellID];
-    -- end
-
-    -- local numMounts = C_MountJournal.GetNumMounts();
-    -- local _, spellIDMatch;
-
-    -- for i=1,numMounts do
-        -- _, spellIDMatch = C_MountJournal.GetDisplayedMountInfo(i);
-
-        -- if ( spellID == spellIDMatch ) then
-            -- A.mountsSpellIDToIDCache[spellID] = i;
-            -- return i;
-        -- end
-    -- end
-
-    -- return nil;
--- end
-
 function A:GetMountIDFromSpellID(spellID)
     if ( not A.mountsSpellIDToIDCache ) then
         A.mountsSpellIDToIDCache = {};
@@ -459,34 +434,6 @@ function A:IsBattlePetID(id)
 
     return 1;
 end
-
---- Check if a glyph is active
--- @param spellID The glyph spell ID
--- function A:IsGlyphed(spellID)
-    -- if ( not A.isGlyphedCache ) then
-        -- A:DebugMessage("IsGlyphed() - Creating cache");
-        -- A.isGlyphedCache = {};
-    -- end
-
-    -- if ( A.isGlyphedCache[spellID] ~= nil ) then
-        -- A:DebugMessage(("IsGlyphed() - %s (Cached)"):format(tostring(A.isGlyphedCache[spellID])));
-        -- return A.isGlyphedCache[spellID];
-    -- end
-
-    -- for i=1,NUM_GLYPH_SLOTS do
-        -- local enabled, _, _, glyphSpellID = GetGlyphSocketInfo(i);
-
-        -- if ( enabled and glyphSpellID == spellID ) then
-            -- A.isGlyphedCache[spellID] = true;
-            -- A:DebugMessage("IsGlyphed() - true");
-            -- return 1;
-        -- end
-    -- end
-
-    -- A.isGlyphedCache[spellID] = false;
-    -- A:DebugMessage("IsGlyphed() - false");
-    -- return nil;
--- end
 
 function A:GetPlayerSpecTalentsInfos()
     A.playerSpecTalentsInfos =
@@ -737,6 +684,7 @@ end
 -- 254 Subdued Seahorse
 -- 269 Water Striders
 -- 284 Chauffeured Mechano-Hog
+
 A.mountTypeToCategory =
 {
     [230] = 1,
@@ -762,12 +710,6 @@ end
 function A:IsWaterWalkingMount(spellID)
     if ( tContains(A.surfaceMounts, spellID) ) then -- Generic mounts
         return 1;
-    -- else -- Special cases
-        -- if ( spellID == 23161 or spellID == 5784 ) then -- Warlock's Dreadsteed and Felsteed, check for Glyph of Nightmares (spellID: 56232)
-            -- if ( A:IsGlyphed(56232) ) then
-                -- return 1;
-            -- end
-        -- end
     end
 
     return nil;
@@ -1054,7 +996,7 @@ end
 
 --- Remove unknown pets from fav, forced, sets
 -- Doing this after database update to be sure pets informations are available
--- Note enabling this atm
+-- Not enabling this atm
 
 -- function A:RemoveUnknowPets()
     -- -- Favorites database (sets)
@@ -1083,6 +1025,34 @@ end
         -- end
     -- end
 -- end
+
+--- Move Hybrids to the hybrids cat when they are selected, if they are favorited in the flying cat
+function A:MoveHybridsWhenSelected(id)
+    for k,v in ipairs(A.mountsDB:GetProfiles()) do
+        if ( A.mountsDB.profiles[v] and A.mountsDB.profiles[v].favorites ) then
+            if ( A.mountsDB.profiles[v].favorites[2] and #A.mountsDB.profiles[v].favorites[2] > 0 ) then
+                if ( tContains(A.mountsDB.profiles[v].favorites[2], id) ) then
+                    A:TableRemove(A.mountsDB.profiles[v].favorites[2], id);
+                    A.mountsDB.profiles[v].favorites[3][#A.mountsDB.profiles[v].favorites[3]+1] = id;
+                end
+            end
+        end
+    end
+end
+
+--- Move Hybrids to the flying cat when they are unselected, if they are favorited in the hybrid cat
+function A:MoveHybridsWhenUnselected(id)
+    for k,v in ipairs(A.mountsDB:GetProfiles()) do
+        if ( A.mountsDB.profiles[v] and A.mountsDB.profiles[v].favorites ) then
+            if ( A.mountsDB.profiles[v].favorites[3] and #A.mountsDB.profiles[v].favorites[3] > 0 ) then
+                if ( tContains(A.mountsDB.profiles[v].favorites[3], id) ) then
+                    A:TableRemove(A.mountsDB.profiles[v].favorites[3], id);
+                    A.mountsDB.profiles[v].favorites[2][#A.mountsDB.profiles[v].favorites[2]+1] = id;
+                end
+            end
+        end
+    end
+end
 
 --[[-------------------------------------------------------------------------------
     Sets methods

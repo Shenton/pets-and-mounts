@@ -3092,6 +3092,7 @@ function A:OptionsRoot()
                         type = "execute",
                         func = function()
                             A:TableRemove(A.db.global.forcedHybrid, spellID);
+                            A:MoveHybridsWhenUnselected(spellID);
                         end,
                     };
                 else
@@ -3134,6 +3135,7 @@ function A:OptionsRoot()
                         type = "execute",
                         func = function()
                             A.db.global.forcedHybrid[#A.db.global.forcedHybrid+1] = spellID;
+                            A:MoveHybridsWhenSelected(spellID);
                         end,
                     };
                 end

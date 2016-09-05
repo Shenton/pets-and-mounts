@@ -48,9 +48,12 @@ end
 
 -- Used to find a spell usable at the water surface but not under water - call A:ProcessSurfaceSpells()
 local surfaceSpells = 1;
-local surfaceSpellsStop = 500;
+local step = 1000;
+local surfaceSpellsStop = step;
 local spellTest;
 local results = {};
+local freq = 0.05;
+local running;
 function A:CreateSurfaceSpellsFrame()
     if ( not A.surfaceSpellsFrame ) then
         if ( not A.AceConfigDialog ) then
@@ -91,6 +94,7 @@ function A:CreateSurfaceSpellsFrame()
         A.surfaceSpellsFrame.btn:SetFullWidth(1);
         A.surfaceSpellsFrame.btn:SetText("Water");
         A.surfaceSpellsFrame.btn:SetCallback("OnClick", function()
+            running = 1;
             A.surfaceSpellsFrame.editBox.editBox:Insert(A.color.GREEN.."=== Water process started ===\n");
             A:ProcessSurfaceSpells2();
         end);
@@ -100,6 +104,7 @@ function A:CreateSurfaceSpellsFrame()
         A.surfaceSpellsFrame.btn2:SetFullWidth(1);
         A.surfaceSpellsFrame.btn2:SetText("Surface");
         A.surfaceSpellsFrame.btn2:SetCallback("OnClick", function()
+            running = 1;
             A.surfaceSpellsFrame.editBox.editBox:Insert(A.color.GREEN.."=== Surface process started ===\n");
             A:ProcessSurfaceSpells4();
         end);
@@ -109,8 +114,9 @@ function A:CreateSurfaceSpellsFrame()
         A.surfaceSpellsFrame.btn3:SetFullWidth(1);
         A.surfaceSpellsFrame.btn3:SetText("Reset");
         A.surfaceSpellsFrame.btn3:SetCallback("OnClick", function()
+            running = nil;
             surfaceSpells = 1;
-            surfaceSpellsStop = 500;
+            surfaceSpellsStop = step;
             spellTest = nil;
             results = {};
             A.surfaceSpellsFrame.editBox.editBox:SetText("");
@@ -127,10 +133,12 @@ function A:ProcessSurfaceSpells()
     A:CreateSurfaceSpellsFrame();
 end
 function A:ProcessSurfaceSpells2()
+    if ( not running ) then return; end
     spellTest = GetSpellInfo(surfaceSpells);
-    A:ScheduleTimer("ProcessSurfaceSpells3", 0.1);
+    A:ScheduleTimer("ProcessSurfaceSpells3", freq);
 end
 function A:ProcessSurfaceSpells3()
+    if ( not running ) then return; end
     --spellTest = GetSpellInfo(surfaceSpells);
     if ( spellTest ) then
         if ( not IsUsableSpell(surfaceSpells) ) then
@@ -148,10 +156,12 @@ function A:ProcessSurfaceSpells3()
     A:ProcessSurfaceSpells2();
 end
 function A:ProcessSurfaceSpells4()
-    A:ScheduleTimer("ProcessSurfaceSpells5", 0.1);
+    if ( not running ) then return; end
+    A:ScheduleTimer("ProcessSurfaceSpells5", freq);
 end
 local index = 1;
 function A:ProcessSurfaceSpells5()
+    if ( not running ) then return; end
     if ( results[index] ) then
         A.surfaceSpellsFrame.editBox.editBox:Insert(A.color.HEIRLOOM.."Testing spellID "..results[index]..": ");
         if ( IsUsableSpell(results[index]) ) then
@@ -167,14 +177,14 @@ function A:ProcessSurfaceSpells5()
 
     A.surfaceSpellsFrame.editBox.editBox:Insert(A.color.RED.."=== Surface process ended ===\n");
     index = 1;
-    surfaceSpellsStop = surfaceSpellsStop + 500;
+    surfaceSpellsStop = surfaceSpellsStop + step;
     results = {};
     A.surfaceSpellsFrame.editBox2:SetText(surfaceSpells);
     A.surfaceSpellsFrame.editBox3:SetText(surfaceSpellsStop);
     A.surfaceSpellsFrame:SetStatusText(surfaceSpells.."/"..surfaceSpellsStop.." - "..#results);
 end
 
--- Dump mounts categories IDs, will display the name of the first mount found - call A:ProcessMapID()
+-- Dump mounts categories IDs, will display the name of the first mount found - call A:ProcessMountsCategories()
 function A:CreateMountsCategoriesFrame()
     if ( not A.mountsCategoriesFrame ) then
         if ( not A.AceConfigDialog ) then
@@ -199,8 +209,8 @@ function A:ProcessMountsCategories()
     local count = 0;
     local result = "";
     for i=1,C_MountJournal.GetNumMounts() do
-        local name = C_MountJournal.GetMountInfo(i);
-        local _, _, _, _, cat = C_MountJournal.GetMountInfoExtra(i);
+        local name = C_MountJournal.GetDisplayedMountInfo(i);
+        local _, _, _, _, cat = C_MountJournal.GetDisplayedMountInfoExtra(i);
         if ( name ) then
             if ( not cats[cat] ) then
                 cats[cat] = name;

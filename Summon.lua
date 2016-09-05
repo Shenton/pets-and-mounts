@@ -390,19 +390,6 @@ function A:RandHybrid(ground, hybrid)
     return nil;
 end
 
--- Are we in Draenor?
--- function A:IsInDraenor()
-    -- SetMapToCurrentZone();
-
-    -- local currentMapID = GetCurrentMapAreaID();
-
-    -- if ( tContains(A.draenorMapIDs, currentMapID) ) then
-        -- return 1;
-    -- end
-
-    -- return nil;
--- end
-
 --- Check if the player can fly
 -- This is for handling a rare case, summoning a mount in outland and not having at least Expert Riding
 -- But in case another one pop this will ease the process
@@ -476,7 +463,7 @@ function A:IsSwimming()
         if ( A:AtSurface() ) then -- At the surface
             A:DebugMessage("IsSwimming() - At the surface");
             return 2;
-        elseif ( IsSubmerged() ) then -- Bottom of the water - Have to do this here since 5.4 it is tainted and work as IsSwimming
+        elseif ( IsSubmerged() ) then -- Bottom of the water - Have to do this here since 5.4 it is tainted and works as IsSwimming
             A:DebugMessage("IsSwimming() - IsSubmerged");
             return 1;
         else -- Really swimming
