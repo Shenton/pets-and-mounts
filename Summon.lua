@@ -17,6 +17,7 @@ local tContains = tContains;
 local math = math;
 local select = select;
 local pairs = pairs;
+local tonumber = tonumber;
 
 -- GLOBALS: IsStealthed, UnitBuff, GetSpellInfo, GetItemCount, InCombatLockdown
 -- GLOBALS: C_PetJournal, IsFlyableArea, IsSpellKnown, IsUsableSpell, GetMirrorTimerInfo
@@ -390,6 +391,15 @@ function A:RandHybrid(ground, hybrid)
     return nil;
 end
 
+--- Check if this is "really" a flying area
+function A:IsFlyableArea()
+    if ( IsFlyableArea() and not tContains(A.notFlyingArea, tonumber(A.currentMapID)) and not tContains(A.db.global.notFlyingArea, tonumber(A.currentMapID)) ) then
+        return 1;
+    end
+
+    return nil;
+end
+
 --- Check if the player can fly
 -- This is for handling a rare case, summoning a mount in outland and not having at least Expert Riding
 -- But in case another one pop this will ease the process
@@ -398,7 +408,7 @@ end
 -- Artisan Riding 34091
 -- Master Riding 90265
 function A:IsFlyable()
-    if ( IsFlyableArea() and (IsSpellKnown(34090) or IsSpellKnown(34091) or IsSpellKnown(90265)) ) then
+    if ( A:IsFlyableArea() and (IsSpellKnown(34090) or IsSpellKnown(34091) or IsSpellKnown(90265)) ) then
         return 1;
     end
 

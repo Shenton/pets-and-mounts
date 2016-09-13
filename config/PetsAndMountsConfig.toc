@@ -1,5 +1,5 @@
 ## Interface: 70000
-## Title: Pets & Mounts Configuration
+## Title: Pets & Mounts |cFFC79C6E[|cFF69CCF0Configuration|cFFC79C6E]
 ## Notes: Auto and random summon highly customizable for your pets and mounts, with Data Broker support.
 ## Author: Shenton
 ## LoadOnDemand: true

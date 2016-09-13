@@ -22,6 +22,7 @@ local tonumber = tonumber;
 local _G = _G;
 local math = math;
 local type = type;
+local tremove = tremove;
 
 -- GLOBALS: LibStub, InCombatLockdown, GetCurrentBindingSet, GetBindingKey, SetBinding, SaveBindings
 -- GLOBALS: GetMapNameByID, GetAddOnMetadata, GetMacroItemIcons, GetMacroIcons, FauxScrollFrame_GetOffset
@@ -1504,6 +1505,60 @@ function A:OptionsRoot()
                                 type = "toggle",
                                 set = function() A.db.profile.hybridsSelectionOnlyOwned = not A.db.profile.hybridsSelectionOnlyOwned; end,
                                 get = function() return A.db.profile.hybridsSelectionOnlyOwned; end,
+                            },
+                        },
+                    },
+                    notFlyingArea =
+                    {
+                        order = 50,
+                        name = L["Force mounted area"],
+                        disabled = function() return A.db.profile.customMountMacrosEnabled; end,
+                        type = "group",
+                        inline = true,
+                        args =
+                        {
+                            aWordHeader =
+                            {
+                                order = 0,
+                                name = L["A word"],
+                                type = "header",
+                            },
+                            aWord =
+                            {
+                                order = 1,
+                                name = L["The purpose of this is to fix Blizzard's bug with flyable area. You can add the current zone you are in and the add-on will consider it as not flyable."],
+                                type = "description",
+                                fontSize = "medium",
+                            },
+                            addCurrentHeader =
+                            {
+                                order = 10,
+                                name = L["Add"],
+                                type = "header",
+                            },
+                            addCurrent =
+                            {
+                                order = 11,
+                                name = L["Add the current zone, |cff3399ff%s|r, to the non flyable list."]:format(GetMapNameByID(tonumber(A.currentMapID)) or L["Unknown"]),
+                                type = "description",
+                                fontSize = "medium",
+                            },
+                            addButton =
+                            {
+                                order = 12,
+                                name = L["Add"],
+                                desc = L["Add the current zone, |cff3399ff%s|r, to the non flyable list."]:format(GetMapNameByID(tonumber(A.currentMapID)) or L["Unknown"]),
+                                type = "execute",
+                                disabled = not not tContains(A.db.global.notFlyingArea, tonumber(A.currentMapID)),
+                                func = function()
+                                    A.db.global.notFlyingArea[#A.db.global.notFlyingArea+1] = tonumber(A.currentMapID);
+                                end,
+                            },
+                            add =
+                            {
+                                order = 50,
+                                name = L["Remove"],
+                                type = "header",
                             },
                         },
                     },
@@ -3287,6 +3342,23 @@ function A:OptionsRoot()
             },
         };
         orderGroup = orderGroup + 1;
+    end
+
+    orderItem = 51;
+
+    for k,v in ipairs(A.db.global.notFlyingArea) do
+        root.args.mountsOptions.args.notFlyingArea.args["rem"..tostring(v)] =
+        {
+            order = orderItem,
+            name = GetMapNameByID(v) or L["Unknown"],
+            desc = L["Remove |cff3399ff%s|r, from the non flyable list."]:format(GetMapNameByID(v) or L["Unknown"]),
+            type = "execute",
+            func = function()
+                tremove(A.db.global.notFlyingArea, k);
+            end,
+        };
+
+        orderItem = orderItem + 1;
     end
 
     -- Profiles

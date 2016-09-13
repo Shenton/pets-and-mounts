@@ -40,7 +40,7 @@ function A:Message(text, color, silent)
     elseif ( color ) then
         color = A.color["RED"];
     else
-        color = A.color["GREEN"]
+        color = A.color["GREEN"];
     end
 
     if ( not silent ) then

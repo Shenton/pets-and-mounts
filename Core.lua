@@ -103,6 +103,8 @@ function A:SlashCommand(input)
         A:ProcessMountsCategories();
     elseif ( arg1 == "mess" ) then
         A:PopMessageFrame("newBindingsSystemv150");
+    elseif ( arg1 == "map" ) then
+        A:DebugMessage(A.currentMapID);
     --@end-debug@
     end
 end
@@ -2566,6 +2568,7 @@ A.aceDefaultDB =
         zonesIDsToName = {}, -- d
         popLoginMessages = {}, -- no cfg
         forcedHybrid = {}, -- d
+        notFlyingArea = {},
     },
     profile =
     {

@@ -461,6 +461,8 @@ L["Enable Control-Click"] = true;
 L["Enable Control-Click to lock/unlock the mount button. This will override every class modifiers using control."] = true;
 L["Favorites for clicks"] = true;
 L["With this enabled it will use your current selected favorites when using the button, the Data Broker or the command line. Otherwise it will choose between all your companions."] = true;
+L["Force mounted area"] = true;
+L["The purpose of this is to fix Blizzard's bug with flyable area. You can add the current zone you are in and the add-on will consider it as not flyable."] = true;
 -- About
 L["Auto and random summon for your pets and mounts, highly customizable. With Data Broker support."] = true;
 L["A new version is available, version |cff33ff99%s|r revision |cff33ff99%s %s|r."] = true;
@@ -482,6 +484,8 @@ L["Global mounts favorites"] = true;
 L["This will import the global mounts favorites to a set named OldGlobal.\n\nRemember that Hybrid category is no more automatic, those mounts will be copied to the Flying one.\n\n"] = true;
 L["Global mounts sets"] = true;
 L["This will import the mounts sets to the new system.\n\nRemember that Hybrid category is no more automatic, those mounts will be copied to the Flying one.\n\n"] = true;
+L["Add the current zone, |cff3399ff%s|r, to the non flyable list."] = true;
+L["Remove |cff3399ff%s|r, from the non flyable list."] = true;
 -- Zones
 L["Blood in the Snow"] = true;
 L["Dark Heart of Pandaria"] = true;

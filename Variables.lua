@@ -547,3 +547,9 @@ A.currentMountsSet =
     -- 970, -- Tanaan Jungle - Assault on the Dark Portal
     -- 1011, -- Warspear
 -- }
+
+-- Those are areas that are not flyable, but Blizzard tag them as flyable
+A.notFlyingArea =
+{
+    1022, -- Hellheim
+};

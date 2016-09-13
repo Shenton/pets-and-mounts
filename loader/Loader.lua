@@ -6,7 +6,7 @@
     Loader.lua
 -------------------------------------------------------------------------------]]--
 
---GLOBALS: LoadAddOn, DEFAULT_CHAT_FRAME
+--GLOBALS: IsAddOnLoaded, LoadAddOn, DEFAULT_CHAT_FRAME
 
 local A = CreateFrame("Frame");
 
@@ -16,6 +16,8 @@ A:RegisterEvent("PLAYER_ENTERING_WORLD");
 
 A:SetScript("OnEvent", function(self, event)
     if ( event == "PLAYER_ENTERING_WORLD" ) then
+        if ( IsAddOnLoaded("Blizzard_Collections") ) then return; end
+
         local loaded, reason = LoadAddOn("Blizzard_Collections");
 
         if ( not loaded ) then
