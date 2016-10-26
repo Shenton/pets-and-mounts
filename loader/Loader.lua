@@ -21,6 +21,7 @@ A:SetScript("OnEvent", function(self, event)
         local loaded, reason = LoadAddOn("Blizzard_Collections");
 
         if ( not loaded ) then
+            reason = _G["ADDON_"..reason];
             DEFAULT_CHAT_FRAME:AddMessage("|cffff3333Pets & Mounts: |r"..(A.errorMessage):format(reason or "None"));
         end
 

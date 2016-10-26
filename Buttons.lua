@@ -740,14 +740,13 @@ function A:PreClickMount(button, clickedBy)
 
                 button:SetAttribute("type", "macro");
                 button:SetAttribute("macrotext", ("/use %s"):format(A.magicBroomName or "Magic Broom"));
-            elseif ( A.db.profile.anglersFishingRaft and GetItemCount(85500, nil, nil) > 0 and A:IsSwimming() == 2 and (A:IsEquippedFishingPole() or (ShentonFishingGlobal and ShentonFishingGlobal.isFishing)) and not (A.db.profile.vehicleExit and A:IsPlayerInVehicle()) ) then -- 85500 - Anglers Fishing Raft
+            elseif ( A.db.profile.anglersFishingRaft and PlayerHasToy(85500) and A:IsSwimming() == 2 and (A:IsEquippedFishingPole() or (ShentonFishingGlobal and ShentonFishingGlobal.isFishing)) and not (A.db.profile.vehicleExit and A:IsPlayerInVehicle()) ) then -- 85500 - Anglers Fishing Raft
                 if ( not A.anglersFishingRaft ) then A.anglersFishingRaft = GetItemInfo(85500); end
 
                 button:SetAttribute("type", "macro");
                 button:SetAttribute("macrotext", ("/use %s"):format(A.anglersFishingRaft or "Anglers Fishing Raft"));
             elseif ( A.db.profile.oculusDrakes and (GetItemCount(37815, nil, nil) > 0 or GetItemCount(37859, nil, nil) > 0 or GetItemCount(37860, nil, nil) > 0)
             and (tonumber(A.currentMapID) == 528) and not (A.db.profile.vehicleExit and A:IsPlayerInVehicle()) ) then -- Oculus drakes: 37815 Emerald Essence - 37859 Amber Essence - 37860 Ruby Essence
-                if ( not A.magicBroomName ) then A.magicBroomName = GetItemInfo(37011); end
                 if ( GetItemCount(37815, nil, nil) > 0 ) then
                     A.oculusDrake = GetItemInfo(37815);
                 elseif ( GetItemCount(37859, nil, nil) > 0 ) then
