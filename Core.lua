@@ -516,6 +516,9 @@ petsFilters.types = {};
 petsFilters.sources = {};
 function A:StoreAndResetPetsFilters()
     -- Store filters
+    petsFilters.search = PetJournal.searchBox:GetText();
+    petsFilters.collected = C_PetJournal.IsFilterChecked(LE_PET_JOURNAL_FILTER_COLLECTED);
+
     for i=1,C_PetJournal.GetNumPetTypes() do
         petsFilters.types[i] = C_PetJournal.IsPetTypeChecked(i);
     end
@@ -525,12 +528,17 @@ function A:StoreAndResetPetsFilters()
     end
 
     -- Check them all
+    C_PetJournal.SetSearchFilter("");
+    C_PetJournal.SetFilterChecked(LE_PET_JOURNAL_FILTER_NOT_COLLECTED, true);
     C_PetJournal.SetAllPetTypesChecked(true);
     C_PetJournal.SetAllPetSourcesChecked(true);
 end
 
 --- Restore pets filters
 function A:RestorePetsFilters()
+    C_PetJournal.SetSearchFilter(petsFilters.search);
+    C_PetJournal.SetFilterChecked(LE_PET_JOURNAL_FILTER_NOT_COLLECTED, petsFilters.collected);
+
     for i=1,C_PetJournal.GetNumPetTypes() do
         if ( petsFilters.types[i] ) then
             C_PetJournal.SetPetTypeFilter(i, true);
@@ -719,20 +727,27 @@ end
 
 -- Pets filters handling methods
 local mountsFilters = {};
-mountsFilters.types = {};
 mountsFilters.sources = {};
 function A:StoreAndResetMountsFilters()
     -- Store filters
+    mountsFilters.search = MountJournal.searchBox:GetText();
+    mountsFilters.collected = C_MountJournal.GetCollectedFilterSetting(LE_MOUNT_JOURNAL_FILTER_COLLECTED);
+
     for i=1,C_PetJournal.GetNumPetSources() do -- Blizzard is using this method as of 7.03
         mountsFilters.sources[i] = C_MountJournal.IsSourceChecked(i);
     end
 
     -- Check them all
+    C_MountJournal.SetSearch("");
+    C_MountJournal.SetCollectedFilterSetting(LE_MOUNT_JOURNAL_FILTER_COLLECTED, true);
     C_MountJournal.SetAllSourceFilters(true);
 end
 
 --- Restore pets filters
 function A:RestoreMountsFilters()
+    C_MountJournal.SetSearch(mountsFilters.search);
+    C_MountJournal.SetCollectedFilterSetting(LE_MOUNT_JOURNAL_FILTER_COLLECTED, mountsFilters.collected);
+
     for i=1,C_PetJournal.GetNumPetSources() do -- Blizzard is using this method as of 7.03
         if ( mountsFilters.sources[i] ) then
             C_MountJournal.SetSourceFilter(i, true);
@@ -782,7 +797,10 @@ function A:BuildMountsTable(force)
     mountsCount = C_MountJournal.GetNumMounts();
 
     -- Security check if nil or == 0 abort
-    if ( not mountsCount or mountsCount == 0 ) then return; end
+    if ( not mountsCount or mountsCount == 0 ) then
+        A:DebugMessage("BuildMountsTable() - Count == 0");
+        return;
+    end
 
     local _, creatureID, creatureName, spellID, icon, mountType, leadingLetter, cat, isUsable, hideOnChar, isCollected, mountID;
 
