@@ -177,6 +177,7 @@ A.databaseRevision = 2;
 A.surfaceMounts =
 {
     118089, -- Azure Water Strider
+    127271, -- Crimson Water Strider
 };
 
 -- Docked buttons anchors

@@ -227,7 +227,7 @@ A.classesSpellsTable =
     {
         monkRoll = 109132, -- lvl 5
         monkFlyingSerpentKick = 101545, -- lvl 18
-        --monkZenFlight = 125883, -- lvl 25 - need glyph 125893
+        monkZenFlight = 125883, -- lvl 25 - Learnable with a book 125893
     },
     PALADIN =
     {
@@ -401,9 +401,9 @@ end
 --- Monk pre click macro
 -- For monks we handle Roll and Flying Serpent Kick
 function A:SetMonkPreClickMacro()
-    --if ( IsFalling() and A:IsGlyphed(125893) ) then
-        --return ("%s\n/cast %s"):format(A.macroDismountString, A.monkZenFlight);
-    if ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
+    if ( IsFalling() and IsSpellKnown(125883, false) ) then
+        return ("%s\n/cast %s"):format(A.macroDismountString, A.monkZenFlight);
+    elseif ( not IsMounted() and GetUnitSpeed("player") > 0 ) then
         if ( A.db.profile.monkPreferSerpentKick and A.playerLevel >= 18 and A.playerSpecTalentsInfos["spec"] == 3 ) then
             return ("%s\n/cast %s"):format(A.macroDismountString, A.monkFlyingSerpentKick);
         elseif ( A.playerLevel >= 5 ) then
