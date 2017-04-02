@@ -1,4 +1,4 @@
-## Interface: 70100
+## Interface: 70200
 ## Title: Pets & Mounts |cFFC79C6E[|cFF69CCF0Loader|cFFC79C6E]
 ## Notes: Load Pets & Mounts with Blizzard's needed addons.
 ## Notes-frFR: Charge Pets & Mounts avec les addons Blizzard nécessaires.

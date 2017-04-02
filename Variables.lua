@@ -554,3 +554,5 @@ A.notFlyingArea =
 {
     1022, -- Hellheim
 };
+
+A.currentMapID = 0;

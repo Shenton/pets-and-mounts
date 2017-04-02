@@ -203,21 +203,40 @@ function A:CreateMountsCategoriesFrame()
         A.mountsCategoriesFrame:Show();
     end
 end
-function A:ProcessMountsCategories()
+function A:ProcessMountsCategories(providedCat)
     A:CreateMountsCategoriesFrame();
-    local cats = {};
-    local count = 0;
-    local result = "";
-    for i=1,C_MountJournal.GetNumMounts() do
-        local name = C_MountJournal.GetDisplayedMountInfo(i);
-        local _, _, _, _, cat = C_MountJournal.GetDisplayedMountInfoExtra(i);
-        if ( name ) then
-            if ( not cats[cat] ) then
-                cats[cat] = name;
+
+    if ( providedCat and providedCat ~= "" ) then
+        local count = 0;
+        local result = "";
+
+        providedCat = tonumber(providedCat);
+
+        for i=1,C_MountJournal.GetNumMounts() do
+            local name = C_MountJournal.GetDisplayedMountInfo(i);
+            local _, _, _, _, cat = C_MountJournal.GetDisplayedMountInfoExtra(i);
+            if ( name and cat == providedCat ) then
                 result = result..cat.." - "..name.."\n";
                 count = count + 1;
                 A.mountsCategoriesFrame.editBox:SetText(result);
                 A.mountsCategoriesFrame:SetStatusText(count);
+            end
+        end
+    else
+        local cats = {};
+        local count = 0;
+        local result = "";
+        for i=1,C_MountJournal.GetNumMounts() do
+            local name = C_MountJournal.GetDisplayedMountInfo(i);
+            local _, _, _, _, cat = C_MountJournal.GetDisplayedMountInfoExtra(i);
+            if ( name ) then
+                if ( not cats[cat] ) then
+                    cats[cat] = name;
+                    result = result..cat.." - "..name.."\n";
+                    count = count + 1;
+                    A.mountsCategoriesFrame.editBox:SetText(result);
+                    A.mountsCategoriesFrame:SetStatusText(count);
+                end
             end
         end
     end

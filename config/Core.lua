@@ -4576,7 +4576,7 @@ function A:OptionsSets()
                                         mapID = A.currentMapID;
                                     end
 
-                                    return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)));
+                                    return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)) or L["Unknown"]);
                                 end,
                                 type = "description",
                                 fontSize = "medium",
@@ -4809,7 +4809,7 @@ function A:OptionsSets()
                                         mapID = A.currentMapID;
                                     end
 
-                                    return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)));
+                                    return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)) or L["Unknown"]);
                                 end,
                                 type = "description",
                                 fontSize = "medium",
@@ -5085,7 +5085,7 @@ function A:OptionsFavOverride()
                                         mapID = A.currentMapID;
                                     end
 
-                                    return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)));
+                                    return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)) or L["Unknown"]);
                                 end,
                                 type = "description",
                                 fontSize = "medium",
@@ -5156,7 +5156,7 @@ function A:OptionsFavOverride()
                                         mapID = A.currentMapID;
                                     end
 
-                                    return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)));
+                                    return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)) or L["Unknown"]);
                                 end,
                                 type = "description",
                                 fontSize = "medium",

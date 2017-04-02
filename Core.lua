@@ -55,7 +55,7 @@ local _G = _G;
 -- GLOBALS: PetsAndMountsPopupMessageFrame, UIDropDownMenu_SetAnchor, ToggleDropDownMenu, UnitBuff
 -- GLOBALS: GetSpecialization, GetSpecializationInfo, GetItemInfo, C_MountJournal, UnitFullName
 -- GLOBALS: PetsAndMountsSecureButtonPets, PetsAndMountsSecureButtonMounts, time, GetActiveSpecGroup
--- GLOBALS: GetMaxTalentTier, GetTalentTierInfo
+-- GLOBALS: GetMaxTalentTier, GetTalentTierInfo, PetJournal, MountJournal, LE_MOUNT_JOURNAL_FILTER_COLLECTED
 
 --[[-------------------------------------------------------------------------------
     Common methods
@@ -100,7 +100,7 @@ function A:SlashCommand(input)
     elseif ( arg1 == "surface" ) then
         A:ProcessSurfaceSpells();
     elseif ( arg1 == "mcat" ) then
-        A:ProcessMountsCategories();
+        A:ProcessMountsCategories(arg2);
     elseif ( arg1 == "mess" ) then
         A:PopMessageFrame("newBindingsSystemv150");
     elseif ( arg1 == "map" ) then
@@ -831,10 +831,11 @@ function A:BuildMountsTable(force)
 
     for i=1,mountsCount do
         creatureName, spellID, icon, _, isUsable, _, _, _, _, hideOnChar, isCollected, mountID = C_MountJournal.GetDisplayedMountInfo(i);
-        creatureID, _, _, _, mountType = C_MountJournal.GetDisplayedMountInfoExtra(i);
+        --creatureID, _, _, _, mountType = C_MountJournal.GetDisplayedMountInfoExtra(i); -- This is a nice one blizzard, mountType return full bullshit, still the right count of mounts in the category but totally different mounts, meh...
 
-        if ( hideOnChar ~= true and isCollected ) then
+        if ( hideOnChar ~= true and isCollected and mountID ) then
             leadingLetter = string.sub(creatureName, 1, 1);
+            creatureID, _, _, _, mountType = C_MountJournal.GetMountInfoExtraByID(mountID);
 
             -- Forced passenger mounts
             if ( tContains(A.passengerMounts, spellID) ) then
@@ -1359,7 +1360,7 @@ end
 -- Hook a script on hide of the worldmap frame
 -- used to update the current mapID without
 -- switching it while the player got his map open
-WorldMapFrame:HookScript("OnHide", function()
+hooksecurefunc(WorldMapFrame, "Hide", function()
     if ( A.getCurrentMapIDDelayed ) then
         A.getCurrentMapIDDelayed = nil;
         A:GetCurrentMapID();
@@ -1378,7 +1379,12 @@ function A:GetCurrentMapID()
 
     local mapID = GetCurrentMapAreaID();
 
-    if ( not mapID ) then return; end
+    A:DebugMessage(("GetCurrentMapID() - mapID: %s"):format(tostring(mapID)));
+
+    if ( not mapID ) then
+        A.currentMapID = 0;
+        return;
+    end
 
     A.currentMapID = tostring(mapID);
 
@@ -1721,6 +1727,7 @@ function A:SetEverything()
     A:ShowHideMinimap();
     A:SetAutoSummonOverride(1);
     A:SetStealthEvents();
+    A:GetCurrentMapID();
 
     A:SetFishingPoleSubType();
     A:SetMacroDismountString();
