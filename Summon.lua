@@ -44,7 +44,7 @@ function A:IsStealthed()
         return 1;
     elseif ( A.playerClass == "HUNTER" or A.playerClass == "MAGE" ) then
         for k,v in ipairs(stealthAuras) do
-            if ( UnitBuff("player", v) ) then
+            if ( A:PlayerGotBuff(v) ) then
                 A:DebugMessage("IsStealthed() - Stealth/Invis buff found");
                 return 1;
             end
@@ -61,11 +61,11 @@ function A:InitHasRegenBuff()
 end
 function A:HasRegenBuff()
     if ( not A.foodBuffLocalized or not A.drinkBuffLocalized ) then A:InitHasRegenBuff(); end
-    if ( UnitBuff("player", A.foodBuffLocalized) ) then
+    if ( A:PlayerGotBuff(A.foodBuffLocalized) ) then
         A:DebugMessage("HasRegenBuff() - Has food buff");
         return 1;
     end
-    if ( UnitBuff("player", A.drinkBuffLocalized) ) then
+    if ( A:PlayerGotBuff(A.drinkBuffLocalized) ) then
         A:DebugMessage("HasRegenBuff() - Has drink buff");
         return 1;
     end
@@ -432,7 +432,7 @@ function A:GotWaterBreathingBuff()
     end
 
     for k,v in ipairs(A.waterBreathingBuffsCache) do
-        if ( UnitBuff("player", v) ) then
+        if ( A:PlayerGotBuff(v) ) then
             A:DebugMessage("GotWaterBreathingBuff() - Got water breathing buff");
             return 1;
         end
@@ -560,7 +560,7 @@ end
 -- @param spellID The mount spellID
 -- @return bool
 function A:IsMountRestricted(spellID)
-    if ( select(5, C_MountJournal.GetMountInfoByID(A:GetMountIDFromSpellID(spellID))) ) then
+    if ( select(5, C_MountJournal.GetMountInfoByID(A:GetMountIDFromSpellID(spellID) or 0)) ) then
         return nil;
     end
 
@@ -644,25 +644,25 @@ end
 -- @param unitID target or mouseover
 function A:GetOtherPlayerMount(unitID)
     local index = 1;
-    local id = select(11, UnitBuff(unitID, index));
+    local spellID = select(10, UnitBuff(unitID, index));
 
     -- One shot, woot!
     for k,v in ipairs(A.pamTable.mountsIds) do
-        if ( tContains(A:GetUsableMountsTable(v), id) ) then
-            A:DebugMessage("GetOtherPlayerMount() - One shot! - "..id);
-            return id;
+        if ( tContains(A:GetUsableMountsTable(v), spellID) ) then
+            A:DebugMessage("GetOtherPlayerMount() - One shot! - "..spellID);
+            return spellID;
         end
     end
 
     -- Continue checking
-    while id do
+    while spellID do
         index = index + 1;
-        id = select(11, UnitBuff(unitID, index));
+        spellID = select(10, UnitBuff(unitID, index));
 
         for k,v in ipairs(A.pamTable.mountsIds) do
-            if ( tContains(A:GetUsableMountsTable(v), id) ) then
-                A:DebugMessage("GetOtherPlayerMount() - ID: "..id.." - Cycles: "..index);
-                return id;
+            if ( tContains(A:GetUsableMountsTable(v), spellID) ) then
+                A:DebugMessage("GetOtherPlayerMount() - ID: "..spellID.." - Cycles: "..index);
+                return spellID;
             end
         end
     end

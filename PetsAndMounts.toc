@@ -1,10 +1,10 @@
-## Interface: 70200
+## Interface: 80000
 ## Title: Pets & Mounts
 ## Notes: Auto and random summon highly customizable for your pets and mounts, with Data Broker support.
 ## Notes-frFR: Invocation automatique et aléatoire pour vos compagnons et montures, extrêmement personnalisable. Avec support Data Broker.
 ## Author: Shenton
 ## SavedVariables: petsAndMountsDB, petsAndMountsPetsDB, petsAndMountsMountsDB
-## Version: 1.8.7
+## Version: 1.8.8
 ## LoadOnDemand: 1
 ## LoadWith: Blizzard_Collections
 ## OptionalDeps: Ace3, Masque, LibDBIcon-1.0

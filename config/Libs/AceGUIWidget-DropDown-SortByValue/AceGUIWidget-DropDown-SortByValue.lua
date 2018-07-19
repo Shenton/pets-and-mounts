@@ -16,7 +16,7 @@ local _G = _G
 
 -- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
 -- List them here for Mikk's FindGlobals script
--- GLOBALS: CLOSE, C_PetJournal
+-- GLOBALS: CLOSE, C_PetJournal, SOUNDKIT
 
 local function fixlevels(parent,...)
     local i = 1
@@ -65,7 +65,7 @@ do
 
     local function Dropdown_TogglePullout(this)
         local self = this.obj
-        PlaySound("igMainMenuOptionCheckBoxOn") -- missleading name, but the Blizzard code uses this sound
+        PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON) -- missleading name, but the Blizzard code uses this sound
         if self.open then
             self.open = nil
             self.pullout:Close()

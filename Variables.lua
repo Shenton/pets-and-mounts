@@ -36,6 +36,7 @@ A.color =
     WHITE = "|cffffffff",
     DRUID = "|cffff7d0a",
     DEATHKNIGHT = "|cffc41f3b",
+    DEMONHUNTER = "|cffa330c9",
     HUNTER = "|cffabd473",
     MAGE = "|cff69ccf0",
     MONK = "|cff00ff96",
@@ -556,3 +557,5 @@ A.notFlyingArea =
 };
 
 A.currentMapID = 0;
+
+A.mapIdToName = {};

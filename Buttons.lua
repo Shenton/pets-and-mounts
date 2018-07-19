@@ -21,11 +21,11 @@ local ipairs = ipairs;
 local tonumber = tonumber;
 
 -- GLOBALS: BINDING_HEADER_PETSANDMOUNTS, InCombatLockdown, GetSpellInfo, IsFlyableArea, IsSpellKnown
--- GLOBALS: IsShiftKeyDown, IsControlKeyDown, GetItemCount, GetItemInfo, UnitBuff, UIDropDownMenu_SetAnchor
+-- GLOBALS: IsShiftKeyDown, IsControlKeyDown, GetItemCount, GetItemInfo, UIDropDownMenu_SetAnchor
 -- GLOBALS: ToggleDropDownMenu, GameTooltip, PetsAndMountsSecureButtonMounts, PetsAndMountsSecureButtonPets
 -- GLOBALS: GetScreenWidth, IsMounted, GetUnitSpeed, GetTalentInfo, GetTalentRowSelectionInfo, GetInstanceInfo
 -- GLOBALS: GetGlyphSocketInfo, IsFalling, NUM_GLYPH_SLOTS, GetShapeshiftForm, IsEquippedItemType
--- GLOBALS: ShentonFishingGlobal, GetActiveSpecGroup, IsIndoors, IsAltKeyDown
+-- GLOBALS: ShentonFishingGlobal, GetActiveSpecGroup, IsIndoors, IsAltKeyDown, PlayerHasToy
 
 --[[-------------------------------------------------------------------------------
     Bindings
@@ -761,12 +761,12 @@ function A:PreClickMount(button, clickedBy)
             elseif ( A.db.profile.surfaceMount and ((A.playerClass == "DEATHKNIGHT" and A.playerLevel >= 66)
             or (A.playerClass == "SHAMAN" and A.playerLevel >= 24)) and A:IsSwimming() == 2 and A.classSpellsOK ) then
                 if ( A.db.profile.preferSurfaceSpell or (not A.db.profile.preferSurfaceSpell and not A:GotMountAllTable(6)) ) then
-                    if ( A.playerClass == "DEATHKNIGHT" and not UnitBuff("player", A.deathKnightPathOfFrost) ) then
+                    if ( A.playerClass == "DEATHKNIGHT" and not A:PlayerGotBuff(A.deathKnightPathOfFrost) ) then
                         button:SetAttribute("type", "macro");
                         button:SetAttribute("macrotext", "/cast !"..A.deathKnightPathOfFrost);
                         A:DebugMessage(("Preclick macro set to: %s"):format("/cast !"..A.deathKnightPathOfFrost));
                     elseif ( A.playerClass == "SHAMAN" ) then
-                        if ( UnitBuff("player", A.shamanWaterWalking) ) then
+                        if ( A:PlayerGotBuff(A.shamanWaterWalking) ) then
                             local macro = A:PreClickFunc();
                             button:SetAttribute("type", "macro");
                             button:SetAttribute("macrotext", macro);

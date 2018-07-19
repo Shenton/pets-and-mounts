@@ -25,7 +25,7 @@ local type = type;
 local tremove = tremove;
 
 -- GLOBALS: LibStub, InCombatLockdown, GetCurrentBindingSet, GetBindingKey, SetBinding, SaveBindings
--- GLOBALS: GetMapNameByID, GetAddOnMetadata, GetMacroItemIcons, GetMacroIcons, FauxScrollFrame_GetOffset
+-- GLOBALS: GetAddOnMetadata, GetMacroItemIcons, GetMacroIcons, FauxScrollFrame_GetOffset
 -- GLOBALS: FauxScrollFrame_Update, GetNumSpellTabs, GetSpellTabInfo, GetSpellBookItemInfo, GetSpellBookItemTexture
 -- GLOBALS: GetFlyoutInfo, GetFlyoutSlotInfo, GetSpellTexture, GetLooseMacroIcons, GetLooseMacroItemIcons
 -- GLOBALS: GetBindingAction, C_PetJournal, C_MountJournal, SearchBoxTemplate_OnTextChanged
@@ -1539,7 +1539,7 @@ function A:OptionsRoot()
                             addCurrent =
                             {
                                 order = 11,
-                                name = L["Add the current zone, |cff3399ff%s|r, to the non flyable list."]:format(GetMapNameByID(tonumber(A.currentMapID)) or L["Unknown"]),
+                                name = L["Add the current zone, |cff3399ff%s|r, to the non flyable list."]:format(A:GetMapNameByID(A.currentMapID) or L["Unknown"]),
                                 type = "description",
                                 fontSize = "medium",
                             },
@@ -1547,7 +1547,7 @@ function A:OptionsRoot()
                             {
                                 order = 12,
                                 name = L["Add"],
-                                desc = L["Add the current zone, |cff3399ff%s|r, to the non flyable list."]:format(GetMapNameByID(tonumber(A.currentMapID)) or L["Unknown"]),
+                                desc = L["Add the current zone, |cff3399ff%s|r, to the non flyable list."]:format(A:GetMapNameByID(A.currentMapID) or L["Unknown"]),
                                 type = "execute",
                                 disabled = not not tContains(A.db.global.notFlyingArea, tonumber(A.currentMapID)),
                                 func = function()
@@ -3350,8 +3350,8 @@ function A:OptionsRoot()
         root.args.mountsOptions.args.notFlyingArea.args["rem"..tostring(v)] =
         {
             order = orderItem,
-            name = GetMapNameByID(v) or L["Unknown"],
-            desc = L["Remove |cff3399ff%s|r, from the non flyable list."]:format(GetMapNameByID(v) or L["Unknown"]),
+            name = A:GetMapNameByID(v) or L["Unknown"],
+            desc = L["Remove |cff3399ff%s|r, from the non flyable list."]:format(A:GetMapNameByID(v) or L["Unknown"]),
             type = "execute",
             func = function()
                 tremove(A.db.global.notFlyingArea, k);
@@ -4576,7 +4576,7 @@ function A:OptionsSets()
                                         mapID = A.currentMapID;
                                     end
 
-                                    return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)) or L["Unknown"]);
+                                    return L["Currently working with: %s\n\n"]:format(A:GetMapNameByID(mapID) or L["Unknown"]);
                                 end,
                                 type = "description",
                                 fontSize = "medium",
@@ -4756,7 +4756,7 @@ function A:OptionsSets()
                                     local list = "";
 
                                     for k in pairs(A.db.profile.petsSetsByMapID) do
-                                        list = list..", "..GetMapNameByID(tonumber(k));
+                                        list = list..", "..(A:GetMapNameByID(k) or L["Unknown"]);
                                     end
 
                                     if ( list == "" ) then list = L["None"]; end
@@ -4809,7 +4809,7 @@ function A:OptionsSets()
                                         mapID = A.currentMapID;
                                     end
 
-                                    return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)) or L["Unknown"]);
+                                    return L["Currently working with: %s\n\n"]:format(A:GetMapNameByID(mapID) or L["Unknown"]);
                                 end,
                                 type = "description",
                                 fontSize = "medium",
@@ -4991,7 +4991,7 @@ function A:OptionsSets()
                                     local list = "";
 
                                     for k in pairs(A.db.profile.mountsSetsByMapID) do
-                                        list = list..", "..GetMapNameByID(tonumber(k));
+                                        list = list..", "..(A:GetMapNameByID(k) or L["Unknown"]);
                                     end
 
                                     if ( list == "" ) then list = L["None"]; end
@@ -5085,7 +5085,7 @@ function A:OptionsFavOverride()
                                         mapID = A.currentMapID;
                                     end
 
-                                    return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)) or L["Unknown"]);
+                                    return L["Currently working with: %s\n\n"]:format(A:GetMapNameByID(mapID) or L["Unknown"]);
                                 end,
                                 type = "description",
                                 fontSize = "medium",
@@ -5156,7 +5156,7 @@ function A:OptionsFavOverride()
                                         mapID = A.currentMapID;
                                     end
 
-                                    return L["Currently working with: %s\n\n"]:format(GetMapNameByID(tonumber(mapID)) or L["Unknown"]);
+                                    return L["Currently working with: %s\n\n"]:format(A:GetMapNameByID(mapID) or L["Unknown"]);
                                 end,
                                 type = "description",
                                 fontSize = "medium",

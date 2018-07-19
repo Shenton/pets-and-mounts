@@ -45,7 +45,7 @@ local _G = _G;
 -- GLOBALS: UnitInVehicle, UnitHasVehicleUI, GetTime, MODELFRAME_DRAG_ROTATION_CONSTANT, PI
 -- GLOBALS: LE_PET_JOURNAL_FILTER_COLLECTED, LE_PET_JOURNAL_FLAG_FAVORITES, LE_PET_JOURNAL_FILTER_NOT_COLLECTED
 -- GLOBALS: PetJournalSearchBox, SEARCH, NUM_GLYPH_SLOTS, GetGlyphSocketInfo, GetNumCompanions
--- GLOBALS: GetMapNameByID, WorldMapFrame, SetMapToCurrentZone, GetCurrentMapAreaID, GetInstanceInfo
+-- GLOBALS: WorldMapFrame, SetMapToCurrentZone, GetCurrentMapAreaID, GetInstanceInfo, C_Map
 -- GLOBALS: UnitClass, UnitGUID, UnitLevel, UnitFactionGroup, UnitRace, UnitName, UIDropDownMenu_AddButton
 -- GLOBALS: UIDROPDOWNMENU_MENU_VALUE, CloseDropDownMenus, DropDownList4, CallCompanion, InCombatLockdown
 -- GLOBALS: IsInGuild, GetNumGroupMembers, IsInRaid, LoadAddOn, INTERFACEOPTIONS_ADDONCATEGORIES, CreateFrame
@@ -460,6 +460,51 @@ function A:GetPlayerSpecTalentsInfos()
     end
 end
 
+function A:PlayerGotBuff(searchTerm)
+    if ( type(searchTerm) == "string" ) then
+        for i=1,40 do
+            local buffName = UnitBuff("player", i);
+
+            if ( buffName ) then
+                if ( searchTerm == buffName ) then
+                    return 1;
+                end
+            else
+                return nil;
+            end
+        end
+    elseif ( type(searchTerm) == "table" ) then
+        for i=1,40 do
+            local buffName = UnitBuff("player", i);
+
+            if ( buffName ) then
+                if ( tContains(searchTerm, buffName) ) then
+                    return 1;
+                end
+            else
+                return nil;
+            end
+        end
+    end
+
+    return nil;
+end
+
+function A:GetMapNameByID(mapID)
+    mapID = tonumber(mapID);
+
+    if ( A.mapIdToName[mapID] ~= nil ) then return A.mapIdToName[mapID]; end
+
+    local mapInfo = C_Map.GetMapInfo(mapID);
+
+    if ( mapInfo ) then
+        A.mapIdToName[mapID] = mapInfo.name;
+        return mapInfo.name;
+    end
+
+    return nil;
+end
+
 --[[-------------------------------------------------------------------------------
     Frames methods
 -------------------------------------------------------------------------------]]--
@@ -831,7 +876,7 @@ function A:BuildMountsTable(force)
 
     for i=1,mountsCount do
         creatureName, spellID, icon, _, isUsable, _, _, _, _, hideOnChar, isCollected, mountID = C_MountJournal.GetDisplayedMountInfo(i);
-        --creatureID, _, _, _, mountType = C_MountJournal.GetDisplayedMountInfoExtra(i); -- This is a nice one blizzard, mountType return full bullshit, still the right count of mounts in the category but totally different mounts, meh...
+        --creatureName, spellID, icon, _, isUsable, _, _, _, _, hideOnChar, isCollected, mountID = C_MountJournal.GetDisplayedMountInfo(index)
 
         if ( hideOnChar ~= true and isCollected and mountID ) then
             leadingLetter = string.sub(creatureName, 1, 1);
@@ -963,17 +1008,11 @@ function A:InitializeDB()
     -- Registering database update events here
     -- I do not know if something changes, as I was able to get pets and mounts info when login in
     -- It is obviously not the same for everyone as some players were receiving errors (expected string got nil) within the DB update methods
+    A:RegisterEvent("COMPANION_UPDATE");
     A:RegisterEvent("COMPANION_LEARNED");
     A:RegisterEvent("COMPANION_UNLEARNED");
     A:RegisterEvent("PET_JOURNAL_PET_DELETED");
     A:RegisterEvent("PET_JOURNAL_LIST_UPDATE");
-
-    -- This is a special case, this event fire for every companion or mount that enter or quit your range
-    -- and for every summon, yours or not, needless to say it fires a hell lot
-    -- I can be wrong but I don't think AceEvent handles RegisterUnitEvent(), so we are going old school
-    A.eventFrame = CreateFrame("Frame");
-    A.eventFrame:RegisterUnitEvent("COMPANION_UPDATE", "player");
-    A.eventFrame:SetScript("OnEvent", A.COMPANION_UPDATE);
 
     -- This event is used to update Data Broker
     -- It calls the DB so setting it here
@@ -1342,42 +1381,25 @@ function A:BuildMapIDsDB()
                 A.db.global.zonesIDsToName[tostring(i)] = A.zonesIDsOverride[i];
             end
         else
-            local name = GetMapNameByID(i);
+            local mapInfo C_Map.GetMapInfo(i);
 
-            if ( name ) then
+            if ( mapInfo ) then
                 if ( A.db.profile.debug ) then
-                    if ( A:TableValueToKey(A.db.global.zonesIDsToName, name) ) then
-                        A:DebugMessage(("BuildMapIDsDB() - %d %s already stored - with ID %s"):format(i, name, A:TableValueToKey(A.db.global.zonesIDsToName, name)));
+                    if ( A:TableValueToKey(A.db.global.zonesIDsToName, mapInfo.name) ) then
+                        A:DebugMessage(("BuildMapIDsDB() - %d %s already stored - with ID %s"):format(i, mapInfo.name, A:TableValueToKey(A.db.global.zonesIDsToName, mapInfo.name)));
                     end
                 end
 
-                A.db.global.zonesIDsToName[tostring(i)] = name;
+                A.db.global.zonesIDsToName[tostring(i)] = mapInfo.name;
             end
         end
     end
 end
 
--- Hook a script on hide of the worldmap frame
--- used to update the current mapID without
--- switching it while the player got his map open
-hooksecurefunc(WorldMapFrame, "Hide", function()
-    if ( A.getCurrentMapIDDelayed ) then
-        A.getCurrentMapIDDelayed = nil;
-        A:GetCurrentMapID();
-    end
-end);
-
 -- Get the current mapID
--- Postponed it if the map is open
 function A:GetCurrentMapID()
-    if ( WorldMapFrame:IsVisible() ) then
-        A.getCurrentMapIDDelayed = 1;
-        return;
-    end
-
-    SetMapToCurrentZone();
-
-    local mapID = GetCurrentMapAreaID();
+    local mapID = C_Map.GetBestMapForUnit("player");
+    local mapInfo = C_Map.GetMapInfo(mapID);
 
     A:DebugMessage(("GetCurrentMapID() - mapID: %s"):format(tostring(mapID)));
 
@@ -1388,16 +1410,16 @@ function A:GetCurrentMapID()
 
     A.currentMapID = tostring(mapID);
 
-    if ( not A.db.global.zonesIDsToName[A.currentMapID] and GetMapNameByID(mapID)
+    if ( not A.db.global.zonesIDsToName[A.currentMapID] and (mapInfo and mapInfo.name)
     and (not A.zonesIDsOverride[A.currentMapID] or (A.zonesIDsOverride[A.currentMapID] and A.zonesIDsOverride[A.currentMapID] ~= "JUSTIGNOREME")) ) then
         if ( A.zonesIDsOverride[A.currentMapID] ) then
             A.db.global.zonesIDsToName[A.currentMapID] = A.zonesIDsOverride[A.currentMapID];
         else
-            A.db.global.zonesIDsToName[A.currentMapID] = GetMapNameByID(mapID);
+            A.db.global.zonesIDsToName[A.currentMapID] = mapInfo.name;
         end
 
         A:NotifyChangeForAll();
-        A:DebugMessage(("GetCurrentMapID() - Added %d - %s"):format(mapID, GetMapNameByID(mapID) or "Unavailable"));
+        A:DebugMessage(("GetCurrentMapID() - Added %d - %s"):format(mapID, mapInfo.name or "Unavailable"));
     end
 end
 
@@ -1540,11 +1562,11 @@ function A:SetCurrentMountInfos()
     A:InitializeDB();
 
     local index = 1;
-    local name, _, icon, _, _, _, _, _, _, _, id = UnitBuff("player", index);
+    local name, icon, _, _, _, _, _, _, _, spellID = UnitBuff("player", index);
 
     -- One shot, woot!
     for k,v in ipairs(A.pamTable.mountsIds) do
-        if ( tContains(v, id) ) then
+        if ( tContains(v, spellID) ) then
             A.currentMountName = name;
             A.currentMountIcon = icon;
             return;
@@ -1552,12 +1574,12 @@ function A:SetCurrentMountInfos()
     end
 
     -- Continue checking
-    while id do
+    while spellID do
         index = index + 1;
-        name, _, icon, _, _, _, _, _, _, _, id = UnitBuff("player", index);
+        name, icon, _, _, _, _, _, _, _, spellID = UnitBuff("player", index);
 
         for k,v in ipairs(A.pamTable.mountsIds) do
-            if ( tContains(v, id) ) then
+            if ( tContains(v, spellID) ) then
                 A.currentMountName = name;
                 A.currentMountIcon = icon;
                 return;
