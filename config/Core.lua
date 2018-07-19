@@ -3116,8 +3116,8 @@ function A:OptionsRoot()
         orderGroup = 0;
 
         for i=1,mountsCount do
-            local creatureName, spellID, _, _, _, _, _, _, _, _, isCollected = C_MountJournal.GetDisplayedMountInfo(i);
-            local creatureID, _, _, _, mountType = C_MountJournal.GetDisplayedMountInfoExtra(i);
+            local creatureName, spellID, _, _, _, _, _, _, _, _, isCollected, mountID = C_MountJournal.GetDisplayedMountInfo(i);
+            local creatureID, _, _, _, mountType = C_MountJournal.GetMountInfoExtraByID(mountID or 0);
 
             if ( mountType == 247 or mountType == 248 and
             (not A.db.profile.hybridsSelectionOnlyOwned or (A.db.profile.hybridsSelectionOnlyOwned and isCollected))) then
