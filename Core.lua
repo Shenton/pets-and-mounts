@@ -15,13 +15,6 @@
     Better display for forced summons, single method returning everything
 ]]--
 
--- 1.8.3 changelog
---[[
-    Moved bindings to the addons category
-    Added an option to use or not favorites on Data Broker clicks
-    Made Auto summon and Revoke when stealthed options disabled when override is active
-]]--
-
 local A = _G["PetsAndMountsGlobal"];
 local L = A.L;
 

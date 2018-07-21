@@ -44,7 +44,7 @@ function A:Message(text, color, silent)
     end
 
     if ( not silent ) then
-        PlaySound("TellMessage");
+        PlaySound(SOUNDKIT.TELL_MESSAGE);
     end
 
     DEFAULT_CHAT_FRAME:AddMessage(color..L["Pets & Mounts"]..": "..A.color["RESET"]..text);
