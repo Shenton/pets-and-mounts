@@ -15,6 +15,13 @@
     Better display for forced summons, single method returning everything
 ]]--
 
+--[[
+    1.8.10 Changelog
+
+    Fixed bindings warning
+    Fixed A:GetCurrentMapID() misordered statements (Ticket 66)
+]]--
+
 local A = _G["PetsAndMountsGlobal"];
 local L = A.L;
 
@@ -1392,7 +1399,6 @@ end
 -- Get the current mapID
 function A:GetCurrentMapID()
     local mapID = C_Map.GetBestMapForUnit("player");
-    local mapInfo = C_Map.GetMapInfo(mapID);
 
     A:DebugMessage(("GetCurrentMapID() - mapID: %s"):format(tostring(mapID)));
 
@@ -1401,6 +1407,7 @@ function A:GetCurrentMapID()
         return;
     end
 
+    local mapInfo = C_Map.GetMapInfo(mapID);
     A.currentMapID = tostring(mapID);
 
     if ( not A.db.global.zonesIDsToName[A.currentMapID] and (mapInfo and mapInfo.name)

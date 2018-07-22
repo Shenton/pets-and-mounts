@@ -1,11 +1,11 @@
 <Bindings>
-    <Binding name="CLICK PetsAndMountsSecureButtonPets:LeftButton" header="PETSANDMOUNTS" category="ADDONS"/>
-    <Binding name="CLICK PetsAndMountsSecureButtonMounts:LeftButton" header="PETSANDMOUNTS" category="ADDONS"/>
-    <Binding name="CLICK PetsAndMountsSecureButtonPassengers:LeftButton" header="PETSANDMOUNTS" category="ADDONS"/>
-    <Binding name="CLICK PetsAndMountsSecureButtonFlying:LeftButton" header="PETSANDMOUNTS" category="ADDONS"/>
-    <Binding name="CLICK PetsAndMountsSecureButtonGround:LeftButton" header="PETSANDMOUNTS" category="ADDONS"/>
-    <Binding name="CLICK PetsAndMountsSecureButtonAquatic:LeftButton" header="PETSANDMOUNTS" category="ADDONS"/>
-    <Binding name="CLICK PetsAndMountsSecureButtonSurface:LeftButton" header="PETSANDMOUNTS" category="ADDONS"/>
-    <Binding name="CLICK PetsAndMountsSecureButtonRepair:LeftButton" header="PETSANDMOUNTS" category="ADDONS"/>
-    <Binding name="CLICK PetsAndMountsSecureButtonHybrid:LeftButton" header="PETSANDMOUNTS" category="ADDONS"/>
+    <Binding name="CLICK PetsAndMountsSecureButtonPets:LeftButton" category="ADDONS" header="PETSANDMOUNTS"/>
+    <Binding name="CLICK PetsAndMountsSecureButtonMounts:LeftButton" category="ADDONS"/>
+    <Binding name="CLICK PetsAndMountsSecureButtonPassengers:LeftButton" category="ADDONS"/>
+    <Binding name="CLICK PetsAndMountsSecureButtonFlying:LeftButton" category="ADDONS"/>
+    <Binding name="CLICK PetsAndMountsSecureButtonGround:LeftButton" category="ADDONS"/>
+    <Binding name="CLICK PetsAndMountsSecureButtonAquatic:LeftButton" category="ADDONS"/>
+    <Binding name="CLICK PetsAndMountsSecureButtonSurface:LeftButton" category="ADDONS"/>
+    <Binding name="CLICK PetsAndMountsSecureButtonRepair:LeftButton" category="ADDONS"/>
+    <Binding name="CLICK PetsAndMountsSecureButtonHybrid:LeftButton" category="ADDONS"/>
 </Bindings>
