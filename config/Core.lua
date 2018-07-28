@@ -841,6 +841,26 @@ function A:OptionsRoot()
                                 end,
                                 get = function() return A.db.profile.debug; end,
                             },
+                            mapID = 
+                            {
+                                order = 1,
+                                name = ("Current map id %s"):format(A.currentMapID),
+                                width = "full",
+                                type = "description",
+                                hidden = not A.db.profile.debug,
+                            },
+                            refresh =
+                            {
+                                order = 2,
+                                name = "Refresh",
+                                desc = "Refresh the debug info.",
+                                type = "execute",
+                                func = function()
+                                    A:GetCurrentMapID();
+                                    A:NotifyChangeForAll();
+                                end,
+                                hidden = not A.db.profile.debug,
+                            },
                         },
                     },
                 },

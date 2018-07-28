@@ -16,10 +16,9 @@
 ]]--
 
 --[[
-    1.8.10 Changelog
+    1.8.11 Changelog
 
-    Fixed bindings warning
-    Fixed A:GetCurrentMapID() misordered statements (Ticket 66)
+    Fixed The Oculus drakes summon (mapID changed, this is seriously annoying blizzard)
 ]]--
 
 local A = _G["PetsAndMountsGlobal"];

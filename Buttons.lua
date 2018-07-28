@@ -746,7 +746,7 @@ function A:PreClickMount(button, clickedBy)
                 button:SetAttribute("type", "macro");
                 button:SetAttribute("macrotext", ("/use %s"):format(A.anglersFishingRaft or "Anglers Fishing Raft"));
             elseif ( A.db.profile.oculusDrakes and (GetItemCount(37815, nil, nil) > 0 or GetItemCount(37859, nil, nil) > 0 or GetItemCount(37860, nil, nil) > 0)
-            and (tonumber(A.currentMapID) == 528) and not (A.db.profile.vehicleExit and A:IsPlayerInVehicle()) ) then -- Oculus drakes: 37815 Emerald Essence - 37859 Amber Essence - 37860 Ruby Essence
+            and (A.currentMapID == "143") and not (A.db.profile.vehicleExit and A:IsPlayerInVehicle()) ) then -- Oculus drakes: 37815 Emerald Essence - 37859 Amber Essence - 37860 Ruby Essence
                 if ( GetItemCount(37815, nil, nil) > 0 ) then
                     A.oculusDrake = GetItemInfo(37815);
                 elseif ( GetItemCount(37859, nil, nil) > 0 ) then
