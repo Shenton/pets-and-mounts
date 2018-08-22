@@ -9,6 +9,7 @@
 local A = _G["PetsAndMountsGlobal"];
 
 -- Dump zones with the same name in an AceGUI dialog - call A:ProcessMapID()
+-- TODO readd the same names (checkbox, button, whatever)
 function A:CreateMapIDFrame()
     if ( not A.mapIDFrame ) then
         if ( not A.AceConfigDialog ) then
@@ -23,28 +24,58 @@ function A:CreateMapIDFrame()
         A.mapIDFrame.editBox:SetNumLines(26);
         A.mapIDFrame.editBox:SetFullWidth(1);
         A.mapIDFrame:AddChild(A.mapIDFrame.editBox);
+
+        A.mapIDFrame.editBox2 = A.AceGUI:Create("EditBox");
+        A.mapIDFrame.editBox2:SetFullWidth(1);
+        A.mapIDFrame:AddChild(A.mapIDFrame.editBox2);
+        A.mapIDFrame.editBox2:SetText("Search");
+        A.mapIDFrame.editBox2:SetCallback("OnEnterPressed", function(self, script, val)
+            A:SearchMaps(val);
+        end);
     else
         A.mapIDFrame:Show();
     end
 end
 function A:ProcessMapID()
     A:CreateMapIDFrame();
-    local maps = {};
-    local count = 0;
-    local result = "";
+    A.mapIDFrame.maps = {};
+
     for i=1,2000 do
-        local name = GetMapNameByID(i);
-        if ( name ) then
-            if ( maps[name] ) then
-                result = result..name.." - "..i.." - "..maps[name].."\n";
-            end
-            maps[name] = i;
-            count = count + 1;
-            A.mapIDFrame.editBox:SetText(result);
-            A.mapIDFrame:SetStatusText(count);
+        local mapInfo = C_Map.GetMapInfo(i);
+
+        if ( mapInfo ) then
+            A.mapIDFrame.maps[i] = mapInfo.name;
         end
     end
+
+    A:SearchMaps();
 end
+function A:SearchMaps(term)
+    local results = "";
+    local count = 0;
+
+    if ( term ) then
+        term = string.lower(term);
+
+        for k,v in pairs(A.mapIDFrame.maps) do
+            local name = string.lower(v);
+
+            if ( string.find(name, term) ) then
+                results = results..k.." - "..v.."\n";
+                count = count + 1;
+            end
+        end
+    else
+        for k,v in pairs(A.mapIDFrame.maps) do
+            results = results..k.." - "..v.."\n";
+            count = count + 1;
+        end
+    end
+
+    A.mapIDFrame.editBox:SetText(results);
+    A.mapIDFrame:SetStatusText(count);
+end
+
 
 -- Used to find a spell usable at the water surface but not under water - call A:ProcessSurfaceSpells()
 local surfaceSpells = 1;
@@ -206,15 +237,17 @@ end
 function A:ProcessMountsCategories(providedCat)
     A:CreateMountsCategoriesFrame();
 
+    local mountIDs = C_MountJournal.GetMountIDs();
+
     if ( providedCat and providedCat ~= "" ) then
         local count = 0;
         local result = "";
 
         providedCat = tonumber(providedCat);
 
-        for i=1,C_MountJournal.GetNumMounts() do
-            local name = C_MountJournal.GetDisplayedMountInfo(i);
-            local _, _, _, _, cat = C_MountJournal.GetDisplayedMountInfoExtra(i);
+        for _,mountID in ipairs(mountIDs) do
+            local name = C_MountJournal.GetMountInfoByID(mountID);
+            local _, _, _, _, cat = C_MountJournal.GetMountInfoExtraByID(mountID);
             if ( name and cat == providedCat ) then
                 result = result..cat.." - "..name.."\n";
                 count = count + 1;
@@ -226,9 +259,9 @@ function A:ProcessMountsCategories(providedCat)
         local cats = {};
         local count = 0;
         local result = "";
-        for i=1,C_MountJournal.GetNumMounts() do
-            local name = C_MountJournal.GetDisplayedMountInfo(i);
-            local _, _, _, _, cat = C_MountJournal.GetDisplayedMountInfoExtra(i);
+        for _,mountID in ipairs(mountIDs) do
+            local name = C_MountJournal.GetMountInfoByID(mountID);
+            local _, _, _, _, cat = C_MountJournal.GetMountInfoExtraByID(mountID);
             if ( name ) then
                 if ( not cats[cat] ) then
                     cats[cat] = name;

@@ -262,17 +262,25 @@ A.classesSpellsTable =
         warriorHeroicLeap = 6544, -- lvl 85
     },
 };
+
 function A:SetClassSpells()
     if ( A.classesSpellsTable[A.playerClass] ) then
         for k,v in pairs(A.classesSpellsTable[A.playerClass]) do
-            A[k] = GetSpellInfo(v);
+            local name = GetSpellInfo(v);
+            local subtext = GetSpellSubtext(v);
 
-            if ( not A[k] ) then
+            if ( not name or name == "" ) then
                 A:ScheduleTimer("SetClassSpells", 0.5);
                 A:SetPreClickFunction();
                 A:DebugMessage(("SetClassSpells() - Error with a spell. Spell: %d"):format(v));
                 return;
             end
+
+            if ( subtext and subtext ~= "" ) then
+                name = name.."("..subtext..")";
+            end
+
+            A[k] = name;
         end
     end
 

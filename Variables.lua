@@ -104,6 +104,8 @@ A.passengerMounts =
     61447, -- Traveler's Tundra Mammoth (Horde)
     55531, -- Mechano-Hog
     75973, -- X-53 Touring Rocket
+    245725, -- Orgrimmar Interceptor
+    245723, -- Stormwind Skychaser
 };
 
 -- Mounts with another bit field than the aquatic ones
@@ -112,6 +114,7 @@ A.aquaticMounts =
 {
     30174, -- Riding Turtle
     64731, -- Sea Turtle
+    --163131, -- Great Sea Ray
 };
 
 -- Repair mounts spellID
@@ -127,7 +130,7 @@ A.uniqueAreaMounts =
 {
     [1] = -- Ground
     {
-        ["766"] = -- Qiraji Battle Tanks in Temple of Ahn'Qiraj
+        ["320"] = -- Qiraji Battle Tanks in Temple of Ahn'Qiraj
         {
             25953, -- Blue Qiraji Battle Tank
             26056, -- Green Qiraji Battle Tank
@@ -140,10 +143,10 @@ A.uniqueAreaMounts =
     [4] = -- Aquatic
     {
         -- Abyssal Seahorse in Vashj'ir
-        ["614"] = 75207, -- Abyssal Depths
-        ["610"] = 75207, -- Kelp'thar Forest
-        ["615"] = 75207, -- Shimmering Expanse
-        ["613"] = 75207, -- Vashj'ir
+        ["204"] = 75207, -- Abyssal Depths
+        ["201"] = 75207, -- Kelp'thar Forest
+        ["205"] = 75207, -- Shimmering Expanse
+        ["203"] = 75207, -- Vashj'ir
     },
     [5] = {}, -- with passengers
     [6] = {}, -- Surface
