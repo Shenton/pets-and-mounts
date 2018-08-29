@@ -4,7 +4,7 @@
 ## Notes-frFR: Invocation automatique et aléatoire pour vos compagnons et montures, extrêmement personnalisable. Avec support Data Broker.
 ## Author: Shenton
 ## SavedVariables: petsAndMountsDB, petsAndMountsPetsDB, petsAndMountsMountsDB
-## Version: 1.8.10
+## Version: 1.8.11
 ## LoadOnDemand: 1
 ## LoadWith: Blizzard_Collections
 ## OptionalDeps: Ace3, Masque, LibDBIcon-1.0
