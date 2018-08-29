@@ -1328,42 +1328,42 @@ end
 A.zonesIDsOverride =
 {
     -- JUSTIGNOREME are those area used only once
-    [539] = "JUSTIGNOREME", -- Gilneas
-    [678] = "JUSTIGNOREME", -- Gilneas
-    [679] = "JUSTIGNOREME", -- Gilneas
-    [751] = "JUSTIGNOREME", -- The Maelstrom
-    [737] = "JUSTIGNOREME", -- The Maelstrom
-    [681] = "JUSTIGNOREME", -- The Lost Isles
-    [682] = "JUSTIGNOREME", -- The Lost Isles
-    [683] = "JUSTIGNOREME", -- Mount Hyjal
-    [748] = "JUSTIGNOREME", -- Uldum
-    [770] = "JUSTIGNOREME", -- Twilight Highlands
-    [697] = "JUSTIGNOREME", -- Zul'Gurub
-    [803] = "JUSTIGNOREME", -- The Nexus
-    [813] = "JUSTIGNOREME", -- Eye of the Storm
-    [762] = "JUSTIGNOREME", -- Scarlet Monastery
-    [879] = "JUSTIGNOREME", -- Kun-Lai Summit
-    [881] = "JUSTIGNOREME", -- Temple of Kotmogu
-    [907] = "JUSTIGNOREME", -- Dustwallow Marsh
-    [910] = "JUSTIGNOREME", -- Krasarang Wilds
-    [919] = "JUSTIGNOREME", -- Black Temple
-    [924] = "JUSTIGNOREME", -- Dalaran
-    [933] = "JUSTIGNOREME", -- Isle of Thunder
-    [1010] = "JUSTIGNOREME", -- Hillsbrad Foothills (10 years bg event)
+    -- [539] = "JUSTIGNOREME", -- Gilneas
+    -- [678] = "JUSTIGNOREME", -- Gilneas
+    -- [679] = "JUSTIGNOREME", -- Gilneas
+    -- [751] = "JUSTIGNOREME", -- The Maelstrom
+    -- [737] = "JUSTIGNOREME", -- The Maelstrom
+    -- [681] = "JUSTIGNOREME", -- The Lost Isles
+    -- [682] = "JUSTIGNOREME", -- The Lost Isles
+    -- [683] = "JUSTIGNOREME", -- Mount Hyjal
+    -- [748] = "JUSTIGNOREME", -- Uldum
+    -- [770] = "JUSTIGNOREME", -- Twilight Highlands
+    -- [697] = "JUSTIGNOREME", -- Zul'Gurub
+    -- [803] = "JUSTIGNOREME", -- The Nexus
+    -- [813] = "JUSTIGNOREME", -- Eye of the Storm
+    -- [762] = "JUSTIGNOREME", -- Scarlet Monastery
+    -- [879] = "JUSTIGNOREME", -- Kun-Lai Summit
+    -- [881] = "JUSTIGNOREME", -- Temple of Kotmogu
+    -- [907] = "JUSTIGNOREME", -- Dustwallow Marsh
+    -- [910] = "JUSTIGNOREME", -- Krasarang Wilds
+    -- [919] = "JUSTIGNOREME", -- Black Temple
+    -- [924] = "JUSTIGNOREME", -- Dalaran
+    -- [933] = "JUSTIGNOREME", -- Isle of Thunder
+    -- [1010] = "JUSTIGNOREME", -- Hillsbrad Foothills (10 years bg event)
     -- MoP
-    [939] = L["Blood in the Snow"],
-    [937] = L["Dark Heart of Pandaria"],
-    [920] = L["Domination Point (H)"],
-    [880] = L["Greenstone Village"],
-    [911] = L["Lion's Landing (A)"],
-    [906] = L["Theramore's Fall (A)"],
-    [851] = L["Theramore's Fall (H)"],
+    -- [939] = L["Blood in the Snow"],
+    -- [937] = L["Dark Heart of Pandaria"],
+    -- [920] = L["Domination Point (H)"],
+    -- [880] = L["Greenstone Village"],
+    -- [911] = L["Lion's Landing (A)"],
+    -- [906] = L["Theramore's Fall (A)"],
+    -- [851] = L["Theramore's Fall (H)"],
     -- WoD
-    [947] = L["Shadowmoon Valley (WoD)"],
-    [950] = L["Nagrand (WoD)"],
-    [971] = L["Lunarfall (Main)"],
-    [986] = L["Shattrath City (WoD)"],
-    [992] = L["Blasted Lands (WoD)"],
+    -- [947] = L["Shadowmoon Valley (WoD)"],
+    -- [950] = L["Nagrand (WoD)"],
+    -- [971] = L["Lunarfall (Main)"],
+    -- [986] = L["Shattrath City (WoD)"],
+    -- [992] = L["Blasted Lands (WoD)"],
 };
 
 -- Build the mapIDs DB
@@ -1372,7 +1372,7 @@ function A:BuildMapIDsDB()
         A.db.global.zonesIDsToName = {};
     end
 
-    for i=1,2000 do -- Yes, there is no mapIDs > 9xx, but just in case one pop up
+    for i=1,2000 do
         if ( A.zonesIDsOverride[i] ) then
             if ( A.zonesIDsOverride[i] == "JUSTIGNOREME" ) then
                 A.db.global.zonesIDsToName[tostring(i)] = nil;
@@ -1380,7 +1380,7 @@ function A:BuildMapIDsDB()
                 A.db.global.zonesIDsToName[tostring(i)] = A.zonesIDsOverride[i];
             end
         else
-            local mapInfo C_Map.GetMapInfo(i);
+            local mapInfo = C_Map.GetMapInfo(i);
 
             if ( mapInfo ) then
                 if ( A.db.profile.debug ) then

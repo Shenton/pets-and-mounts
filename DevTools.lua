@@ -10,6 +10,19 @@ local A = _G["PetsAndMountsGlobal"];
 
 -- Dump zones with the same name in an AceGUI dialog - call A:ProcessMapID()
 -- TODO readd the same names (checkbox, button, whatever)
+
+A.uiMapType =
+{
+    [4] = "Dungeon",
+    [6] = "Orphan",
+    [3] = "Zone",
+    [2] = "Continent",
+    [0] = "Cosmic",
+    [5] = "Micro",
+    [1] = "World",
+    [99] = "None",
+};
+
 function A:CreateMapIDFrame()
     if ( not A.mapIDFrame ) then
         if ( not A.AceConfigDialog ) then
@@ -20,6 +33,8 @@ function A:CreateMapIDFrame()
         A.mapIDFrame = A.AceGUI:Create("Frame");
         A.mapIDFrame:SetTitle("MapID Frame");
         A.mapIDFrame:SetLayout("FLow");
+        A.mapIDFrame:SetHeight(600);
+
         A.mapIDFrame.editBox = A.AceGUI:Create("MultiLineEditBox");
         A.mapIDFrame.editBox:SetNumLines(26);
         A.mapIDFrame.editBox:SetFullWidth(1);
@@ -28,9 +43,30 @@ function A:CreateMapIDFrame()
         A.mapIDFrame.editBox2 = A.AceGUI:Create("EditBox");
         A.mapIDFrame.editBox2:SetFullWidth(1);
         A.mapIDFrame:AddChild(A.mapIDFrame.editBox2);
-        A.mapIDFrame.editBox2:SetText("Search");
+        A.mapIDFrame.editBox2:SetText();
         A.mapIDFrame.editBox2:SetCallback("OnEnterPressed", function(self, script, val)
             A:SearchMaps(val);
+        end);
+
+        A.mapIDFrame.select = A.AceGUI:Create("Dropdown");
+        A.mapIDFrame.select:SetLabel("Type");
+        A.mapIDFrame:AddChild(A.mapIDFrame.select);
+        A.mapIDFrame.select:SetList(A.uiMapType);
+        A.mapIDFrame.select:SetValue(nil);
+        A.mapIDFrame.select:SetCallback("OnValueChanged", function(info, event, val)
+            if ( val == 99 ) then
+                A.mapIDFrame.mapType = nil;
+            else
+                A.mapIDFrame.mapType = val;
+            end
+
+            local term = A.mapIDFrame.editBox2:GetText();
+
+            if ( term and term ~= "" ) then
+                A:SearchMaps(term);
+            else
+                A:SearchMaps();
+            end
         end);
     else
         A.mapIDFrame:Show();
@@ -44,7 +80,7 @@ function A:ProcessMapID()
         local mapInfo = C_Map.GetMapInfo(i);
 
         if ( mapInfo ) then
-            A.mapIDFrame.maps[i] = mapInfo.name;
+            A.mapIDFrame.maps[i] = mapInfo;
         end
     end
 
@@ -58,17 +94,19 @@ function A:SearchMaps(term)
         term = string.lower(term);
 
         for k,v in pairs(A.mapIDFrame.maps) do
-            local name = string.lower(v);
+            local name = string.lower(v.name);
 
-            if ( string.find(name, term) ) then
-                results = results..k.." - "..v.."\n";
+            if ( (not A.mapIDFrame.mapType or A.mapIDFrame.mapType == v.mapType) and string.find(name, term) ) then
+                results = results..k.." - "..v.name.."\n";
                 count = count + 1;
             end
         end
     else
         for k,v in pairs(A.mapIDFrame.maps) do
-            results = results..k.." - "..v.."\n";
-            count = count + 1;
+            if ( not A.mapIDFrame.mapType or A.mapIDFrame.mapType == v.mapType ) then
+                results = results..k.." - "..v.name.."\n";
+                count = count + 1;
+            end
         end
     end
 
